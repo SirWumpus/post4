@@ -1,0 +1,139 @@
+#
+# @package_copyright@
+#
+# @configure_input@
+#
+
+.POSIX :
+
+TARNAME 	= @PACKAGE_TARNAME@
+VERSION		= @PACKAGE_VERSION@
+
+########################################################################
+### No further configuration beyond this point.
+########################################################################
+
+.SUFFIXES :
+A = .@LIBEXT@
+O = .@OBJEXT@
+E = @EXEEXT@
+.SUFFIXES : .c $O $E
+
+platform	= @platform@
+prefix		= @prefix@
+exec_prefix	= @exec_prefix@
+
+#
+# Paths for supporting headers and libraries.
+#
+top_srcdir	= @top_srcdir@
+abs_top_srcdir 	= @top_srcdir@
+SNERT_TARDIR	= @rel_tardir@
+SNERT_INCDIR	= @rel_incdir@
+SNERT_LIBDIR	= @rel_libdir@
+
+SRCDIR   	= @abs_srcdir@
+SBINDIR  	= @sbindir@
+TOPDIR	 	= @abs_top_srcdir@
+TARDIR   	= ${TOPDIR}/../
+
+TARFILE		= ${TARNAME}-${VERSION}'.'${BUILD}.tar.gz
+TARNAME 	= @PACKAGE_TARNAME@
+MAJOR   	= @package_major@
+MINOR   	= @package_minor@
+BUILD		= `cat ${TOPDIR}/src/BUILD_ID.TXT`
+VERSION 	= ${MAJOR}.${MINOR}
+MD5SUM		= @MD5SUM@
+AUTOCONF	= @AUTOCONF@
+TAR_I		= @TAR_I@
+
+########################################################################
+### No further configuration beyond this point.
+########################################################################
+
+.SUFFIXES :
+O = .@OBJEXT@
+E = @EXEEXT@
+.SUFFIXES : .c $O $E
+
+BUILD_DIRS = \
+	${TOPDIR}/src
+
+CLEAN_DIRS = \
+	${TOPDIR}/examples \
+	${TOPDIR}/doc \
+	${TOPDIR}/src
+
+.MAIN : build
+
+build :
+	@for i in $(BUILD_DIRS); do ( cd $$i; ${MAKE} ${MAKEFLAGS} $@ ); done
+
+clean : title _clean
+	@for i in $(BUILD_DIRS); do ( cd $$i; ${MAKE} ${MAKEFLAGS} $@ ); done
+
+distclean : title _distclean
+	@for i in $(BUILD_DIRS); do ( cd $$i; ${MAKE} ${MAKEFLAGS} $@ ); done
+
+realclean : title _realclean
+	@for i in $(BUILD_DIRS); do ( cd $$i; ${MAKE} ${MAKEFLAGS} $@ ); done
+
+test : build
+	@cd $@; $(MAKE) $@
+
+title :
+	@echo
+	@echo '***************************************************************'
+	@echo '==>' ${SRCDIR}
+	@echo '***************************************************************'
+	@echo
+
+_clean :
+	rm -rf autom4te.cache configure.lineno core *.core core.*
+	find . \( -name 'tmp.*' -o -name '*.core' \) -exec rm -f \{\} \;
+
+_distclean : _clean
+	rm -f doc/manual.shtml
+	rm -f examples/startup.sh
+	rm -f config.log config.status install.sh makefile
+
+_realclean : _distclean
+	-rm -f configure *.md5 MANIFEST.TXT VERSION.TXT FILE.TXT
+
+next-id:
+	expr `cat ${TOPDIR}/src/BUILD_ID.TXT` + 1 >${TOPDIR}/src/BUILD_ID.TXT
+
+install: build install.sh
+	-@DESTDIR="${DESTDIR}" sh install.sh
+
+install.sh: install.sh.in config.status
+	./config.status install.sh
+
+config.status : configure
+	./configure
+
+configure : configure.ac aclocal.m4
+	${AUTOCONF} -f
+
+makefile: makefile.in config.status
+	./config.status makefile
+
+list:
+	tar -zvtf ${SNERT_TARDIR}/${TARFILE}
+
+pack: next-id tar
+
+tar: MANIFEST.TXT
+	@echo
+	@echo '***************************************************************'
+	@echo
+	echo '${VERSION}.'`cat src/BUILD_ID.TXT` >VERSION.TXT
+	echo '${TARNAME}-${VERSION}.tar.gz' >FILE.TXT
+	tar -C ${SNERT_TARDIR} ${TAR_I} MANIFEST.TXT -zcf ${SNERT_TARDIR}/${TARFILE}
+	@echo
+	@echo '***************************************************************'
+	@cd ${SNERT_TARDIR}; ${MD5SUM} ${TARFILE} | tee com/snert/src/${TARNAME}/${TARNAME}.md5
+	@echo '***************************************************************'
+	@cd $(SNERT_TARDIR); wc -c $(TARFILE)
+	@echo '***************************************************************'
+	@echo

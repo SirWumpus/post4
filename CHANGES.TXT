@@ -1,0 +1,18 @@
+-------
+
+The major number changes for such things as code rewrites, changes in
+syntax, and/or dramatic changes in functionality. The minor number
+changes for corrections, enhancements, etc. made to the code. There
+is no set schedule for releases.
+
+
+
+--0.4.0--
+
+   !	Complete overhaul of threading model and source code to function
+	better in C and with a view towards post4 becoming an embedded
+	object oriented threaded scripting language.
+
+--0.1--
+
+   +	Initial indirect threaded version.
