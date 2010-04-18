@@ -20,7 +20,7 @@ static char base36_digits[] = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ";
  *** Conversion API
  ***********************************************************************/
 
-void
+static void
 error_abort(int lineno)
 {
 	fprintf(stderr, "%s(%d) %s (%d)\n", __FILE__, lineno, strerror(errno), errno);
@@ -54,7 +54,7 @@ p4CharLiteral(int ch)
 }
 
 /**
- * @param number
+ * @param value
  *	A number.
  *
  * @param base
@@ -79,11 +79,10 @@ p4CharLiteral(int ch)
  * 	base 8	33653337357
  *	base 2	1101 1110 1010 1101 1011 1110 1110 1111 (spaces added for clarity)
  */
-P4_Size
-p4IntegerToString(P4_Signed number, P4_Unsigned base, P4_Byte *buffer, P4_Size size)
+static P4_Size
+p4_unsigned_to_string(P4_Unsigned value, P4_Unsigned base, P4_Byte *buffer, P4_Size size)
 {
-	int i, sign;
-	P4_Unsigned value;
+	P4_Size i;
 
 	if (size == 0)
 		return 0;
@@ -92,20 +91,6 @@ p4IntegerToString(P4_Signed number, P4_Unsigned base, P4_Byte *buffer, P4_Size s
 	size--;
 
 	if (i < size) {
-		sign = 1;
-		value = (P4_Unsigned) number;
-
-		if (base == 10 && number < 0) {
-			/* Negating a long can overflow on a two's complement
-			 * machine. Instead convert to unsigned long and negate
-			 * the new form, which cannot overflow.  So long as an
-			 * arbitrary unsigned long can be safely converted to
-			 * long and back again, this works fine.
-			 */
-			value = -value;
-			sign = -1;
-		}
-
 		buffer[i++] = base36_digits[value % base];
 		value /= base;
 
@@ -114,15 +99,50 @@ p4IntegerToString(P4_Signed number, P4_Unsigned base, P4_Byte *buffer, P4_Size s
 			buffer[i++] = base36_digits[qr.rem];
 			value = qr.quot;
 		}
-
-		if (sign == -1 && i < size)
-			buffer[i++] = '-';
 	}
 
 	buffer[i] = '\0';
-	p4StringReverse(buffer, i);
 
 	return i;
+}
+
+P4_Size
+p4UnsignedToString(P4_Unsigned number, P4_Unsigned base, P4_Byte *buffer, P4_Size size)
+{
+	P4_Size length;
+
+	length = p4_unsigned_to_string(number, base, buffer, size);
+	p4StringReverse(buffer, length);
+
+	return length;
+}
+
+P4_Size
+p4SignedToString(P4_Signed number, P4_Unsigned base, P4_Byte *buffer, P4_Size size)
+{
+	int sign = 1;
+	P4_Unsigned value;
+	P4_Size length = 0;
+
+	value = (P4_Unsigned) number;
+
+	if (base == 10 && number < 0) {
+		/* Negating a long can overflow on a two's complement
+		 * machine. Instead convert to unsigned long and negate
+		 * the new form, which cannot overflow.  So long as an
+		 * arbitrary unsigned long can be safely converted to
+		 * long and back again, this works fine.
+		 */
+		value = -value;
+		sign = -1;
+	}
+
+	length = p4_unsigned_to_string(value, base, buffer, size);
+	if (sign == -1 && length < size)
+		buffer[length++] = '-';
+	p4StringReverse(buffer, length);
+
+	return length;
 }
 
 /**
@@ -140,7 +160,7 @@ p4IntegerToString(P4_Signed number, P4_Unsigned base, P4_Byte *buffer, P4_Size s
  *	A number.
  */
 P4_Signed
-p4StringToInteger(const P4_Byte *s, P4_Byte **stop, P4_Unsigned base)
+p4StringToSigned(const P4_Byte *s, P4_Byte **stop, P4_Unsigned base)
 {
 	P4_Signed num;
 	int digit, sign;
@@ -251,22 +271,22 @@ p4ArrayCreate(size_t size)
  * @param table
  *	Pointer to a P4_Array structure.
  *
- * @param length
+ * @param count
  *	Number of table cells required.
  *
  * @param extra
- *	Number of addtional table cells to append to the table when
- *	there is insufficient space remaining to satisfy the length
+ *	Number of addtitional table cells to append to the table when
+ *	there is insufficient space remaining to satisfy the count
  *	required.
  */
 void
-p4ArrayGrow(P4_Array *table, size_t length, size_t extra)
+p4ArrayGrow(P4_Array *table, size_t count, size_t extra)
 {
 	P4_Cell *replace;
 	P4_Unsigned depth;
 
-	if (table->size < (depth = P4_LENGTH_(table)) + length) {
-		table->size += length + extra;
+	if (table->size < (depth = P4_LENGTH_(table)) + count) {
+		table->size += count + extra;
 
 		if ((replace = realloc(table->base, table->size * P4_CELL)) == NULL)
 			error_abort(__LINE__);
@@ -280,7 +300,7 @@ void
 p4ArrayPick(P4_Array *table, P4_Unsigned index)
 {
 	P4_Cell cell = index < P4_LENGTH_(table) ? P4_PEEK_(table, -index) : p4_null_cell;
-	P4_PUSH_(table) = cell;
+	P4_PUSH_SAFE_(table) = cell;
 }
 
 void
@@ -369,7 +389,7 @@ p4FindXt(P4_Context *ctx, P4_Exec_Token xt)
 	return NULL;
 }
 
-P4_Unsigned
+P4_Signed
 p4IsNoname(P4_Context *ctx, P4_Exec_Token xt)
 {
 	P4_Cell *cell;
@@ -415,7 +435,7 @@ p4See(FILE *fp, P4_Context *ctx, P4_Exec_Token xt)
 	else
 		fprintf(fp, ": %s ", word->name.string);
 
-	for (ip = (P4_Exec_Token *) xt->data->base; *ip != &p4_xt__exit; ip++) {
+	for (ip = (P4_Exec_Token *) xt->data->base; *ip != P4_WORD_XT(_exit); ip++) {
 		found = p4FindXt(ctx, *ip);
 
 		if (found == NULL) {
@@ -427,15 +447,15 @@ p4See(FILE *fp, P4_Context *ctx, P4_Exec_Token xt)
 			}
 		} else if (P4_WORD_IS_IMM(found)) {
 			fprintf(fp, "POSTPONE %s ", found->name.string);
-		} else if (*ip == &p4_xt_JUMP) {
+		} else if (*ip == P4_WORD_XT(JUMP)) {
 			fprintf(fp, "%s 0x%.8lx ", found->name.string, (P4_Unsigned) *++ip);
 			ip = (P4_Exec_Token *) *ip - 1;
-		} else if (*ip == &p4_xt_BRANCH || *ip == &p4_xt_BRANCHZ || strcasecmp(found->name.string, "SLIT") == 0) {
+		} else if (*ip == P4_WORD_XT(BRANCH) || *ip == P4_WORD_XT(BRANCHZ) || strcasecmp(found->name.string, "SLIT") == 0) {
 			fprintf(fp, "%s %ld ", found->name.string, (P4_Signed) *++ip);
-		} else if (*ip == &p4_xt__does) {
+		} else if (*ip == P4_WORD_XT(_does)) {
 			fprintf(fp, "DOES> ");
 			ip++;
-		} else if (*ip == &p4_xt__lit) {
+		} else if (*ip == P4_WORD_XT(_lit)) {
 			if ((found = p4FindXt(ctx, *++ip)) == NULL)
 				fprintf(fp, "lit 0x%lx ", (P4_Unsigned) *ip);
 			else
@@ -579,6 +599,8 @@ p4InputLine(FILE *fp, P4_Byte *line, P4_Size size)
  *** Core Words
  ***********************************************************************/
 
+P4_WORD_DECL(extern, THROW);
+
 /**
  * ... NOOP ...
  *
@@ -592,7 +614,7 @@ P4_WORD_DEFINE(NOOP)
 }
 
 struct p4_xt p4_xt_NOOP = { p4_do_NOOP, NULL };
-P4_Word p4_word_NOOP = { 0, { sizeof ("NOOP")-1, "NOOP" }, NULL, &p4_xt_NOOP };
+P4_Word p4_word_NOOP = { 0, { sizeof ("NOOP")-1, "NOOP" }, NULL, P4_WORD_XT(NOOP) };
 
 /**
  * ... TRUE ...
@@ -887,11 +909,23 @@ P4_WORD_DEFINE(PICK)
 /**
  * ... CS-PICK ...
  *
- * (CS: xu ... x1 x0 -- xu ... x1 x0 xu ) (S: u -- )
+ * (C: xu ... x1 x0 -- xu ... x1 x0 xu ) (S: u -- )
  *
  * @standard ANS-Forth 1994
  */
 P4_WORD_DEFINE(CS_PICK)
+{
+	p4ArrayPick(&ctx->rs, P4_POP(ctx->ds).u);
+}
+
+/**
+ * ... RS-PICK ...
+ *
+ * (R: xu ... x1 x0 -- xu ... x1 x0 xu ) (S: u -- )
+ *
+ * @standard ANS-Forth 1994
+ */
+P4_WORD_DEFINE(RS_PICK)
 {
 	p4ArrayPick(&ctx->rs, P4_POP(ctx->ds).u);
 }
@@ -916,11 +950,23 @@ P4_WORD_DEFINE(ROLL)
 /**
  * ... CS-ROLL ...
  *
- * (CS: xu xu-1 ... x0 u -- xu-1 ... x0 xu ) (S: u -- )
+ * (C: xu xu-1 ... x0 u -- xu-1 ... x0 xu ) (S: u -- )
  *
  * @standard ANS-Forth 1994
  */
 P4_WORD_DEFINE(CS_ROLL)
+{
+	p4ArrayRoll(&ctx->rs, P4_POP(ctx->ds).u);
+}
+
+/**
+ * ... RS-ROLL ...
+ *
+ * (R: xu xu-1 ... x0 u -- xu-1 ... x0 xu ) (S: u -- )
+ *
+ * @standard ANS-Forth 1994
+ */
+P4_WORD_DEFINE(RS_ROLL)
 {
 	p4ArrayRoll(&ctx->rs, P4_POP(ctx->ds).u);
 }
@@ -938,8 +984,15 @@ P4_WORD_DEFINE(CS_ROLL)
  */
 P4_WORD_DEFINE(DUP)
 {
-	P4_Cell top = P4_TOP(ctx->ds);
-	P4_PUSH_SAFE(ctx->ds) = top;
+	P4_Cell top;
+
+	if (P4_LENGTH(ctx->ds) < 1) {
+		P4_PUSH_SAFE(ctx->ds).n = -4;
+		P4_WORD_DO(THROW);
+	} else {
+		top = P4_TOP(ctx->ds);
+		P4_PUSH_SAFE(ctx->ds) = top;
+	}
 }
 
 /**
@@ -1164,7 +1217,7 @@ P4_WORD_DEFINE(TWO_DIV)
  */
 P4_WORD_DEFINE(ZERO_EQ)
 {
-	P4_TOP(ctx->ds).n = (P4_TOP(ctx->ds).n == 0);
+	P4_TOP(ctx->ds).u = (P4_TOP(ctx->ds).u == 0);
 }
 
 /**
@@ -1177,6 +1230,32 @@ P4_WORD_DEFINE(ZERO_EQ)
 P4_WORD_DEFINE(ZERO_LT)
 {
 	P4_TOP(ctx->ds).n = (P4_TOP(ctx->ds).n < 0);
+}
+
+/**
+ * ... U> ...
+ *
+ * (S: u1 u2 -- flag)
+ *
+ * @standard ANS-Forth 1994
+ */
+P4_WORD_DEFINE(U_GT)
+{
+	P4_Unsigned top = P4_POP_SAFE(ctx->ds).u;
+	P4_TOP(ctx->ds).u = (P4_TOP(ctx->ds).u > top);
+}
+
+/**
+ * ... U< ...
+ *
+ * (S: u1 u2 -- flag)
+ *
+ * @standard ANS-Forth 1994
+ */
+P4_WORD_DEFINE(U_LT)
+{
+	P4_Unsigned top = P4_POP_SAFE(ctx->ds).u;
+	P4_TOP(ctx->ds).u = (P4_TOP(ctx->ds).u < top);
 }
 
 /**
@@ -1256,7 +1335,10 @@ P4_WORD_DEFINE(SWAP)
 {
 	P4_Cell tmp;
 
-	if (!P4_IS_EMPTY(ctx->ds)) {
+	if (P4_LENGTH(ctx->ds) < 2) {
+		P4_PUSH_SAFE(ctx->ds).n = -4;
+		P4_WORD_DO(THROW);
+	} else {
 		/* (S: x y -- y x ) */
 		tmp = P4_TOP(ctx->ds);
 		P4_TOP(ctx->ds) = P4_PEEK(ctx->ds, -1);
@@ -1336,6 +1418,60 @@ P4_WORD_DEFINE(RS_GET)
 P4_WORD_DEFINE(RS_COPY)
 {
 	P4_PUSH_SAFE(ctx->ds).p = P4_IS_EMPTY(ctx->rs) ? NULL : P4_TOP(ctx->rs).p;
+}
+
+/**
+ *  ... 2R@  ...
+ *
+ * (S: -- x1 x2 ) ( R: x1 x2 -- x1 x2 )
+ *
+ * @standard ANS-Forth 1994
+ */
+P4_WORD_DEFINE(TWO_RS_COPY)
+{
+	if (P4_LENGTH(ctx->rs) < 2) {
+		P4_PUSH_SAFE(ctx->ds).n = -6;
+		P4_WORD_DO(THROW);
+	} else {
+		p4GrowDS(ctx, 2);
+		P4_PUSH(ctx->ds).u = P4_PEEK(ctx->rs, -1).u;
+		P4_PUSH(ctx->ds).u = P4_TOP(ctx->rs).u;
+	}
+}
+
+/**
+ *  ... 2R> ...
+ *
+ * (S: -- x1 x2 ) ( R: x1 x2 -- )
+ *
+ * @standard ANS-Forth 1994
+ */
+P4_WORD_DEFINE(TWO_RS_GET)
+{
+	if (P4_LENGTH(ctx->rs) < 2) {
+		P4_PUSH_SAFE(ctx->ds).n = -6;
+		P4_WORD_DO(THROW);
+	} else {
+		p4GrowDS(ctx, 2);
+		P4_PUSH(ctx->ds).u = P4_POP(ctx->rs).u;
+		P4_PUSH(ctx->ds).u = P4_POP(ctx->rs).u;
+		P4_WORD_DO(SWAP);
+	}
+}
+
+/**
+ *  ... 2>R ...
+ *
+ * (S: x1 x2 -- ) ( R:  -- x1 x2 )
+ *
+ * @standard ANS-Forth 1994
+ */
+P4_WORD_DEFINE(TWO_RS_PUT)
+{
+	p4GrowRS(ctx, 2);
+	P4_WORD_DO(SWAP);
+	P4_PUSH(ctx->rs).u = P4_POP(ctx->ds).u;
+	P4_PUSH(ctx->rs).u = P4_POP(ctx->ds).u;
 }
 
 /**
@@ -1444,7 +1580,7 @@ P4_WORD_DEFINE(GT_HERE)
 /**
  * ... HERE ...
  *
- * (S: -- u )
+ * (S: -- a-addr )
  *
  * @note
  *	During the compiliation of a word with C based implementations
@@ -1457,6 +1593,26 @@ P4_WORD_DEFINE(HERE)
 {
 	P4_PUSH_SAFE(ctx->ds).s = ctx->xt != NULL && ctx->xt->data != NULL
 		? (ctx->xt->data->base + ctx->xt->data->length)
+		: 0
+	;
+}
+
+/**
+ * ... UNUSED ...
+ *
+ * (S: -- u )
+ *
+ * @note
+ *	During the compiliation of a word with C based implementations
+ *	data-space regions may be relocated when as they are enlarged,
+ *	thus invalidating previous values of HERE.
+ *
+ * @standard extension
+ */
+P4_WORD_DEFINE(UNUSED)
+{
+	P4_PUSH_SAFE(ctx->ds).u = ctx->xt != NULL && ctx->xt->data != NULL
+		? (ctx->xt->data->size - ctx->xt->data->length)
 		: 0
 	;
 }
@@ -1510,6 +1666,11 @@ P4_WORD_DEFINE(NEW_WORD)
 	P4_WORD_DO(PARSE_WORD);
 	name.length = (P4_Byte) P4_POP(ctx->ds).u;
 	name.string = P4_TOP(ctx->ds).s;
+
+	if (name.length == 0) {
+		P4_PUSH(ctx->ds).n = -16;
+		P4_WORD_DO(THROW);
+	}
 
 	if ((word = malloc(sizeof (*word) + name.length + 1)) == NULL)
 		error_abort(__LINE__);
@@ -1764,30 +1925,6 @@ P4_WORD_DEFINE(CREATE)
 }
 
 /**
- * ... IP>R ...
- *
- * (S: -- ) (R: -- a-addr )
- *
- * @standard extension
- */
-P4_WORD_DEFINE(IP_TO_R)
-{
-	P4_PUSH_SAFE(ctx->rs).p = ctx->ip;
-}
-
-/**
- * ... R>IP ...
- *
- * (S: -- ) (R: a-addr -- )
- *
- * @standard extension
- */
-P4_WORD_DEFINE(R_TO_IP)
-{
-	ctx->ip = P4_POP_SAFE(ctx->rs).p;
-}
-
-/**
  * ... BRANCH ...
  *
  * (S: -- )
@@ -1931,7 +2068,7 @@ P4_WORD_DEFINE(TICK)
 	if (P4_POP(ctx->ds).n == 0) {
 		/* If word was not found then assume ' NOOP. */
 		P4_POP(ctx->ds);	/* ( c-addr u -- c-addr ) */
-		P4_TOP(ctx->ds).f = &p4_do_NOOP; /* ( c-addr -- xt ) */
+		P4_TOP(ctx->ds).xt = P4_WORD_XT(NOOP); /* ( c-addr -- xt ) */
 	}
 }
 
@@ -1963,17 +2100,6 @@ P4_WORD_DEFINE(EXECUTE)
 
 	for (ctx->ip = xts; *ctx->ip != NULL; )
 		(*(*ctx->ip++)->code)(ctx);
-}
-
-/**
- * ... POSTPONE word ...
- *
- * (C: "<spaces>name" -- )
- *
- * @standard ANS-Forth 1994
- */
-P4_WORD_DEFINE(POSTPONE)
-{
 }
 
 /**
@@ -2019,7 +2145,7 @@ P4_WORD_DEFINE(KEY)
 /**
  *  ...  .  ...
  *
- * (S: x -- )
+ * (S: n -- )
  *
  * @standard ANS-Forth 1994
  */
@@ -2027,7 +2153,23 @@ P4_WORD_DEFINE(DOT)
 {
 	char buffer[sizeof (P4_Signed) * 8 + 1];
 
-	(void) p4IntegerToString(P4_POP_SAFE(ctx->ds).n, ctx->obase, buffer, sizeof (buffer));
+	(void) p4SignedToString(P4_POP_SAFE(ctx->ds).n, ctx->obase, buffer, sizeof (buffer));
+	fputs(buffer, stdout);
+	fputc(' ', stdout);
+}
+
+/**
+ *  ...  U.  ...
+ *
+ * (S: u -- )
+ *
+ * @standard ANS-Forth 1994
+ */
+P4_WORD_DEFINE(U_DOT)
+{
+	char buffer[sizeof (P4_Unsigned) * 8 + 1];
+
+	(void) p4UnsignedToString(P4_POP_SAFE(ctx->ds).u, ctx->obase, buffer, sizeof (buffer));
 	fputs(buffer, stdout);
 	fputc(' ', stdout);
 }
@@ -2214,7 +2356,7 @@ P4_WORD_DEFINE(EVALUATE)
 			start = P4_POP(ctx->ds).s;
 			if (length == 0)
 				continue;
-			n = p4StringToInteger(start, &stop, ctx->ibase);
+			n = p4StringToSigned(start, &stop, ctx->ibase);
 
 			/* Was it a numeric string in the input base? */
 			if (stop - start == length) {
@@ -2411,6 +2553,64 @@ P4_WORD_DEFINE(BYE)
 	longjmp(ctx->on_abort, 1);
 }
 
+/**
+ * ... CONTEXT ...
+ *
+ * (S: -- ctx )
+ *
+ * @standard extension
+ */
+P4_WORD_DEFINE(CONTEXT)
+{
+	P4_PUSH(ctx->ds).p = ctx;
+}
+
+/**
+ * ... _forget ...
+ *
+ * @standard ANS-Forth 1994
+ */
+P4_WORD_DEFINE(_forget)
+{
+	P4_Size noname_depth;
+	P4_Word *stop, *prev, *word;
+	P4_Exec_Token xt = ctx->ip[-1];
+
+	stop = ((P4_Cell *) xt->data->base)[0].w;
+	noname_depth = ((P4_Cell *) xt->data->base)[1].u;
+
+	while (noname_depth < P4_LENGTH(ctx->noname)) {
+		xt = P4_POP(ctx->noname).xt;
+		free(xt->data);
+		free(xt);
+	}
+
+	for (word = ctx->words; word != stop; word = prev) {
+		prev = word->prev;
+		free(word);
+	}
+
+	ctx->words = stop;
+}
+
+/**
+ * ... MARKER name ...
+ *
+ * @standard ANS-Forth 1994
+ */
+P4_WORD_DEFINE(MARKER)
+{
+	P4_PUSH(ctx->ds).u = P4_LENGTH(ctx->noname);
+	P4_PUSH(ctx->ds).w = ctx->words;
+
+	P4_WORD_DO(CREATE);
+	P4_WORD_DO(COMMA);
+	P4_WORD_DO(COMMA);
+	P4_WORD_DO(IMMEDIATE);
+
+	ctx->words->xt->code = p4_do__forget;
+}
+
 P4_WORD_NAME(_lit,		NOOP,		0		);
 P4_WORD_NAME(_var,		_lit,		0		);
 P4_WORD_NAME(_does,		_var,		0		);
@@ -2424,7 +2624,8 @@ P4_WORD_NAME(CATCH,		AND,		0		);
 P4_WORD_NAME(CELL,		CATCH,		0		);
 P4_WORD_NAME(CMOVE,		CELL,		0		);
 P4_WORD_NAME(CONSOLE,		CMOVE,		0		);
-P4_WORD_NAME(CREATE,		CONSOLE,	0		);
+P4_WORD_NAME(CONTEXT,		CONSOLE,	0		);
+P4_WORD_NAME(CREATE,		CONTEXT,	0		);
 P4_WORD_NAME(DEPTH,		CREATE,		0		);
 P4_WORD_NAME(DROP,		DEPTH,		0		);
 P4_WORD_NAME(DUP,		DROP,		0		);
@@ -2447,15 +2648,15 @@ P4_WORD_NAME(JUMPZ,		JUMP,		0 		);
 P4_WORD_NAME(KEY,		JUMPZ,		0 		);
 P4_WORD_NAME(LITERAL,		KEY,		P4_BIT_IMM	);
 P4_WORD_NAME(LSHIFT,		LITERAL,	0		);
-P4_WORD_NAME(MOD,		LSHIFT,		0		);
+P4_WORD_NAME(MARKER,		LSHIFT,		0		);
+P4_WORD_NAME(MOD,		MARKER,		0		);
 P4_WORD_NAME(MOVE,		MOD,		0		);
 P4_WORD_NAME(NEGATE,		MOVE,		0		);
 P4_WORD_NAME(OBASE,		NEGATE,		0		);
 P4_WORD_NAME(OR,		OBASE,		0 		);
 P4_WORD_NAME(PARSE,		OR,		0		);
 P4_WORD_NAME(PICK,		PARSE,		0		);
-P4_WORD_NAME(POSTPONE,		PICK,		P4_BIT_IMM	);
-P4_WORD_NAME(QUIT,		POSTPONE,	0		);
+P4_WORD_NAME(QUIT,		PICK,		0		);
 P4_WORD_NAME(RESERVE,		QUIT,		0		);
 P4_WORD_NAME(RESIZE,		RESERVE,	0		);
 P4_WORD_NAME(ROLL,		RESIZE,		0		);
@@ -2466,11 +2667,10 @@ P4_WORD_NAME(STATE,		SOURCE,		0		);
 P4_WORD_NAME(SWAP,		STATE,		0		);
 P4_WORD_NAME(THROW,		SWAP,		0		);
 P4_WORD_NAME(TYPE,		THROW,		0		);
-P4_WORD_NAME(WORDS,		TYPE,		0		);
+P4_WORD_NAME(UNUSED,		TYPE,		0		);
+P4_WORD_NAME(WORDS,		UNUSED,		0		);
 P4_WORD_NAME(XOR,		WORDS,		0		);
-P4_WORD_TEXT(IP_TO_R,		XOR,		P4_BIT_IMM,	"IP>R");
-P4_WORD_TEXT(R_TO_IP,		IP_TO_R,	P4_BIT_IMM,	"R>IP");
-P4_WORD_TEXT(ADD,		R_TO_IP,	0, 		"+");
+P4_WORD_TEXT(ADD,		XOR,		0, 		"+");
 P4_WORD_TEXT(C_COMMA,		ADD,		0, 		"C,");
 P4_WORD_TEXT(C_FETCH,		C_COMMA,	0, 		"C@");
 P4_WORD_TEXT(C_STORE,		C_FETCH,	0,	 	"C!");
@@ -2499,14 +2699,22 @@ P4_WORD_TEXT(RSQUARE,		PARSE_WORD,	P4_BIT_IMM, 	"]");
 P4_WORD_TEXT(RS_COPY,		RSQUARE,	0, 		"R@");
 P4_WORD_TEXT(RS_GET,		RS_COPY,	0, 		"R>");
 P4_WORD_TEXT(RS_PUT,		RS_GET,		0, 		">R");
-P4_WORD_TEXT(SEMICOLON,		RS_PUT,		P4_BIT_IMM,	";");
+P4_WORD_TEXT(RS_PICK,		RS_PUT,		0, 		"RS-PICK");
+P4_WORD_TEXT(RS_ROLL,		RS_PICK,	0, 		"RS-ROLL");
+P4_WORD_TEXT(SEMICOLON,		RS_ROLL,	P4_BIT_IMM,	";");
 P4_WORD_TEXT(SOURCE_ID,		SEMICOLON,	0,		"SOURCE-ID");
 P4_WORD_TEXT(STORE,		SOURCE_ID,	0, 		"!");
 P4_WORD_TEXT(SUB,		STORE,		0, 		"-");
 P4_WORD_TEXT(TICK,		SUB,		0, 		"'");
 P4_WORD_TEXT(TWO_DIV,		TICK,		0, 		"2/");
 P4_WORD_TEXT(TWO_MUL,		TWO_DIV,	0, 		"2*");
-P4_WORD_TEXT(ZERO_EQ,		TWO_MUL,	0, 		"0=");
+P4_WORD_TEXT(TWO_RS_COPY,	TWO_MUL,	0,		"2R@");
+P4_WORD_TEXT(TWO_RS_GET,	TWO_RS_COPY,	0,		"2R>");
+P4_WORD_TEXT(TWO_RS_PUT,	TWO_RS_GET,	0,		"2>R");
+P4_WORD_TEXT(U_DOT,		TWO_RS_PUT,	0, 		"U.");
+P4_WORD_TEXT(U_GT,		U_DOT,		0, 		"U>");
+P4_WORD_TEXT(U_LT,		U_GT,		0, 		"U<");
+P4_WORD_TEXT(ZERO_EQ,		U_LT,		0, 		"0=");
 P4_WORD_TEXT(ZERO_LT,		ZERO_EQ,	0, 		"0<");
 P4_WORD_NAME(ABORT,		ZERO_LT,	0		);
 
@@ -2585,6 +2793,46 @@ static const char p4_defined_words[] =
  */
 ": VARIABLE CREATE 0 , ;\n"
 
+/**
+ * value VALUE name
+ *
+ * (C: x "<spaces>name" -- ) // (S: -- x )
+ *
+ * @note
+ *	Similar definition to CONSTANT. Essentially VALUE when defined
+ *	does:
+ *
+ *		VARIABLE name n name !
+ *
+ *	Referencing VALUE does:
+ *
+ *		name @
+ *
+ * @standard ANS-Forth 1994
+ *
+ * @see
+ *	TO
+ */
+": VALUE CREATE , DOES> @ ;\n"
+
+/**
+ * ... x TO name ...
+ *
+ * (S x "<spaces>name" -- )
+ *
+ * @note
+ *	This definitioon relies on how DOES> is compiled. Semantically
+ *	similar to:
+ *
+ *		x name !
+ *
+ * @standard ANS-Forth 1994
+ *
+ * @see
+ *	TO
+ */
+": TO ' >BODY @ >BODY ! ;\n"
+
 ": ALIGNED 1 - CELL 1 - OR 1 + ;\n"		/* (S: addr -- a-addr ) */
 
 ": CHAR+ 1 + ;\n"				/* (S: c-addr1 -- c-addr2 ) */
@@ -2593,26 +2841,85 @@ static const char p4_defined_words[] =
 
 ": CELLS CELL * ;\n"				/* (S: n1 -- n2 ) */
 
-": OVER 1 PICK ;\n"				/* (S: x y -- x y x ) */
+/**
+ *  ... OVER ...
+ *
+ * (S: x1 x2 -- x1 x2 x1 )
+ *
+ * @standard ANS-Forth 1994
+ */
+": OVER 1 PICK ;\n"
 
-": 2DUP OVER OVER ;\n"				/* (S: x1 x2 -- x1 x2 x1 x2 ) */
+/**
+ *  ... NIP ...
+ *
+ * (S: x1 x2 -- x2 )
+ *
+ * @standard ANS-Forth 1994
+ */
+": NIP SWAP DROP ;\n"
 
-": 2DROP DROP DROP ;\n"				/* (S: x y -- ) */
+/**
+ *  ... TUCK ...
+ *
+ * (S: x1 x2 -- x2 x1 x2 )
+ *
+ * @standard ANS-Forth 1994
+ */
+": TUCK SWAP OVER ;\n"
 
-": 2! SWAP OVER ! CELL+ ! ;\n"			/* (S: x y a-addr -- ) */
+/**
+ *  ... 2DUP ...
+ *
+ * (S: x1 x2 -- x1 x2 x1 x2 )
+ *
+ * @standard ANS-Forth 1994
+ */
+": 2DUP OVER OVER ;\n"
 
-": 2@ DUP CELL+ @ SWAP @ ;\n"			/* (S: a-addr -- x y ) */
+/**
+ *  ... 2DROP ...
+ *
+ * (S: x1 x2 -- )
+ *
+ * @standard ANS-Forth 1994
+ */
+": 2DROP DROP DROP ;\n"
 
-": 2>R SWAP >R >R ;\n"				/* (S: x1 x2 -- ) ( R:  -- x1 x2 ) */
+/**
+ *  ... 2! ...
+ *
+ * (S: x y a-addr -- )
+ *
+ * @standard ANS-Forth 1994
+ */
+": 2! SWAP OVER ! CELL+ ! ;\n"
 
-": 2R> R> R> SWAP ;\n"				/* (S: -- x1 x2 ) ( R: x1 x2 -- ) */
+/**
+ *  ... 2@ ...
+ *
+ * (S: a-addr -- x y )
+ *
+ * @standard ANS-Forth 1994
+ */
+": 2@ DUP CELL+ @ SWAP @ ;\n"
 
-": 2R@ R> R> 2DUP >R >R SWAP ;\n"		/* (S: -- x1 x2 ) ( R: x1 x2 -- x1 x2 ) */
+/**
+ *  ... +!...
+ *
+ * (S: nu a-addr -- )
+ *
+ * @standard ANS-Forth 1994
+ */
+": +!"
+	" DUP @"			/* (S: nu a-addr nu' ) */
+	" 2 ROLL"			/* (S: a-addr nu' nu ) */
+	" + SWAP ! ;\n"			/* (S: -- */
 
 /**
  *  ... 1+ ...
  *
- * (S: n1 | u1 -- n2 | u2 )
+ * (S: nu1 -- nu2 )
  *
  * @standard ANS-Forth 1994
  */
@@ -2621,7 +2928,7 @@ static const char p4_defined_words[] =
 /**
  *  ... 1- ...
  *
- * (S: n1 | u1 -- n2 | u2 )
+ * (S: nu1 -- nu2 )
  *
  * @standard ANS-Forth 1994
  */
@@ -2679,7 +2986,7 @@ static const char p4_defined_words[] =
  *
  * @standard ANS-Forth 1994
  */
-": > < 0= ;\n"
+": > - 0> ;\n"
 
 /**
  *  ... <= ...
@@ -2699,7 +3006,38 @@ static const char p4_defined_words[] =
  */
 ": >= <= 0= ;\n"
 
-": \\ \\n PARSE 2DROP ; IMMEDIATE\n"		/* (S: -- ) */
+/**
+ *  ... WITH-IN ...
+ *
+ * (S: nu1 nu2 nu3 -- flag )
+ *
+ * @note
+ *	True if nu2 <= nu1 < nu3, otherwise false.
+ *
+ * @standard extension
+ */
+": WITH-IN 2 PICK > >R >= R> AND ;\n"
+
+/**
+ *  ... WITH-OUT ...
+ *
+ * (S: nu1 nu2 nu3 -- flag )
+ *
+ * @note
+ *	True if nu1 < nu2 or nu3 <= n1, otherwise false.
+ *
+ * @standard extension
+ */
+": WITH-OUT 2 PICK <= >R < R> OR ;\n"
+
+/**
+ *  ... \ comment to end of line
+ *
+ * (S: "ccc<eol>" -- )
+ *
+ * @standard ANS-Forth 1994
+ */
+": \\ \\n PARSE 2DROP ; IMMEDIATE\n"
 
 ": CR \\r EMIT \\n EMIT ;\n"			/* (S: -- ) */
 
@@ -2729,23 +3067,299 @@ static const char p4_defined_words[] =
  */
 ": .( [CHAR] ) PARSE-ESCAPE TYPE ; IMMEDIATE\n"
 
-": ['] ' POSTPONE LITERAL ; IMMEDIATE\n" 	/* (C: "<spaces>name" -- ) // (S: -- xt ) */
+/**
+ * ... POSTPONE name ...
+ *
+ * (C: "<spaces>name" -- ) // (S: -- xt )
+ *
+ * @standard ANS-Forth 1994
+ */
+": ['] ' POSTPONE LITERAL ; IMMEDIATE\n"
 
-": BEGIN R> >HERE >R >R ; IMMEDIATE\n"				/* (R: ip -- dest ip ) */
+/**
+ * ... BEGIN ... AGAIN
+ *
+ * ... BEGIN ... test UNTIL ...
+ *
+ * ... BEGIN ... test WHILE ... REPEAT ...
+ *
+ * (R: ip -- dest ip )
+ *
+ * @standard ANS-Forth 1994
+ *
+ * @see
+ *	A.3.2.3.2 Control-flow stack
+ */
+": BEGIN R> >HERE >R >R ; IMMEDIATE\n"
 
-": AGAIN ['] BRANCH COMPILE, R> R> >HERE - , >R ; IMMEDIATE\n"	/* (R: dest ip -- ip ) */
+/**
+ * ... BEGIN ... AGAIN
+ *
+ * (R: dest ip -- ip )
+ *
+ * @standard ANS-Forth 1994
+ *
+ * @see
+ *	A.3.2.3.2 Control-flow stack
+ */
+": AGAIN ['] BRANCH COMPILE, R> R> >HERE - , >R ; IMMEDIATE\n"
 
-": UNTIL ['] BRANCHZ COMPILE, R> R> >HERE - , >R ; IMMEDIATE\n"	/* (R: dest ip -- ip ) */
+/**
+ * ... BEGIN ... test UNTIL ...
+ *
+ * (R: dest ip -- ip ) // (S: flag -- )
+ *
+ * @standard ANS-Forth 1994
+ *
+ * @see
+ *	A.3.2.3.2 Control-flow stack
+ */
+": UNTIL"				/* R: dest_off ip S: -- */
+	" 2R> >R"			/* R: ip S: dest_off */
+	" ['] BRANCHZ COMPILE,"
+	" >HERE -"			/* R: ip S: neg_off */
+	" ,"				/* R: ip S: -- */
+	" ; IMMEDIATE\n"
 
-": AHEAD ['] BRANCH COMPILE, R> >HERE 0 , >R >R ; IMMEDIATE\n"	/* (R: ip -- forw ip ) */
+/**
+ * ... AHEAD ... THEN ...
+ *
+ * (R: ip -- forw ip )
+ *
+ * @standard ANS-Forth 1994
+ *
+ * @see
+ *	A.3.2.3.2 Control-flow stack
+ */
+": AHEAD ['] BRANCH COMPILE, R> >HERE 0 , >R >R ; IMMEDIATE\n"
 
-": IF ['] BRANCHZ COMPILE, R> >HERE 0 , >R >R ; IMMEDIATE\n"	/* (R: ip -- forw ip ) */
+/**
+ * ... test IF ... THEN ...
+ *
+ * ... test IF ... ELSE ... THEN ...
+ *
+ * (R: ip -- forw ip ) // (S: flag -- )
+ *
+ * @standard ANS-Forth 1994
+ *
+ * @see
+ *	A.3.2.3.2 Control-flow stack
+ */
+": IF ['] BRANCHZ COMPILE, R> >HERE 0 , >R >R ; IMMEDIATE\n"
 
-": THEN R> >HERE R> - HERE OVER - ! >R ; IMMEDIATE\n"		/* (R: forw ip -- ip ) */
+/**
+ * ... AHEAD ... THEN ...
+ *
+ * ... test IF ... THEN ...
+ *
+ * ... test IF ... ELSE ... THEN ...
+ *
+ * (R: forw ip -- ip )
+ *
+ * @standard ANS-Forth 1994
+ *
+ * @see
+ *	A.3.2.3.2 Control-flow stack
+ */
+": THEN"				/* R: forw_off ip S: -- */
+	" R>"				/* R: forw_off S: ip */
+	" >HERE R>"			/* R: -- S: ip here_off forw_off */
+	" -"				/* R: -- S: ip pos_off */
+	" HERE OVER"			/* R: -- S: ip pos_off addr pos_off */
+	" -"				/* R: -- S: ip pos_off forw_addr */
+	" !"				/* R: -- S: ip */
+	" >R"				/* R: ip S: -- */
+	" ; IMMEDIATE\n"
 
-": ELSE POSTPONE AHEAD 1 CS-ROLL POSTPONE THEN ; IMMEDIATE\n"	/* (R: forw1 ip -- forw2 ip ) */
+/**
+ * ... test IF ... ELSE ... THEN ...
+ *
+ * (R: forw1 ip -- forw2 ip )
+ *
+ * @standard ANS-Forth 1994
+ *
+ * @see
+ *	A.3.2.3.2 Control-flow stack
+ */
+": ELSE"				/* R: forw1 ip S: -- */
+	" R>"				/* R: forw1 S: ip */
+	" POSTPONE AHEAD"		/* R: forw1 forw2 S: ip */
+	" 1 CS-ROLL"			/* R: forw2 forw1 S: ip */
+	" POSTPONE THEN"		/* R: forw2 S: ip */
+	" >R"				/* R: forw2 ip S: -- */
+	" ; IMMEDIATE\n"
 
-": _slit R@ 3 CELLS + R@ @ R> CELL+ >R ;\n"	/* (S: -- c-addr u ) (R: ip -- ip++ ) */
+/**
+ * ... BEGIN ... test WHILE ... REPEAT ...
+ *
+ * (R: dest ip -- forw dest ip ) // (S: flag -- )
+ *
+ * ... BEGIN ... test WHILE ... test WHILE ... REPEAT THEN ...
+ *
+ * ... BEGIN ... test WHILE ... test WHILE ... AGAIN THEN THEN ...
+ *
+ * (R: forw1 dest ip -- forw1 forw2 dest ip )
+ *
+ * Multiple WHILE possible to provide short-circuit testing, but each
+ * additional WHILE needs a THEN in order to resolve each forward
+ * reference remaining on the stack.
+ *
+ * @standard ANS-Forth 1994
+ *
+ * @see
+ *	A.3.2.3.2 Control-flow stack
+ */
+": WHILE"				/* R: dest ip S: -- */
+	" R>"				/* R: dest S: ip */
+	" POSTPONE IF"			/* R: dest forw S: ip */
+	" 1 CS-ROLL"			/* R: forw dest S: ip */
+	" >R"				/* R: forw dest ip S: -- */
+	" ; IMMEDIATE\n"
+
+/**
+ * ... BEGIN ... test WHILE ... REPEAT ...
+ *
+ * (R: forw dest ip -- ip )
+ *
+ * @standard ANS-Forth 1994
+ *
+ * @see
+ *	A.3.2.3.2 Control-flow stack
+ */
+": REPEAT"				/* R: forw dest ip S: -- */
+	" R>"				/* R: forw dest S: ip */
+	" POSTPONE AGAIN"		/* R: forw S: ip */
+	" POSTPONE THEN"		/* R: -- S: ip */
+	" >R"				/* R: ip S: -- */
+	" ; IMMEDIATE\n"
+
+/**
+ * : X ... test IF ... EXIT THEN ... ;
+ *
+ * (S: -- ) (R: word_caller exit_caller -- )
+ *
+ * @standard ANS-Forth 1994
+ */
+": EXIT R> DROP R> CONTEXT ! ;\n"
+
+/**
+ * ... limit first DO ... LOOP ...
+ *
+ * (R: ip -- count dest ip ) // (S: limit first -- ) (R: -- limit first )
+ *
+ * @standard ANS-Forth 1994
+ */
+": DO"					/* R: ip S: -- */
+	" R> 0 >R"			/* R: 0  S: ip */
+	" ['] 2>R COMPILE,"
+	" POSTPONE BEGIN"		/* R: 0 dest S: ip */
+	" >R"				/* R: 0 dest ip S: -- */
+	" ; IMMEDIATE\n"
+
+/**
+ * : X ... limit first DO ... test IF ... UNLOOP EXIT THEN ... LOOP ... ;
+ *
+ * (S: --  ) (R: limit index ip -- ip )
+ *
+ * @standard ANS-Forth 1994
+ */
+": UNLOOP R> 2R> 2DROP >R ;\n"
+
+/**
+ * ... limit first DO ... LEAVE ... LOOP ...
+ *
+ * (R: forw1 ... count dest ip -- forw1 ... forwN count' dest ip )
+ * // (S: -- ) (R: loop-sys -- )
+ *
+ * @standard ANS-Forth 1994
+ */
+": LEAVE"				/* R: forw1 ... count dest ip S: -- */
+	" 2R> R>"			/* R: forw1 ... S: dest ip count */
+	" POSTPONE AHEAD"		/* R: forw1 ... forwN S: dest ip count */
+	" 1+"				/* R: forw1 ... forwN S: dest ip count' */
+	" >R 2>R"			/* R: forw1 ... forwN count' dest ip S: -- */
+	" ; IMMEDIATE\n"
+
+/**
+ * ... limit first DO ... LOOP ...
+ *
+ * (S: n --  ) (R: limit index ip -- limit index' ip )
+ *
+ * @standard internal
+ */
+": _loop"				/* (R: limit index ip )(S: n ) */
+	" R> 2R>"			/* (R: -- )(S: n ip limit index ) */
+	" 3 ROLL"			/* (R: -- )(S: ip limit index n ) */
+	" +"				/* (R: -- )(S: ip limit index' ) */
+	" 2DUP 2>R"			/* (R: limit index' )(S: ip limit index' ) */
+	" <="				/* (R: limit index' )(S: ip flag ) */
+	" SWAP >R"			/* (R: limit index' ip )(S: flag ) */
+	" ;\n"
+
+/**
+ * ... limit first DO ... LOOP ...
+ *
+ * (R: forw1 ... forwN count dest ip -- ip ) // (S: n -- ) (R: loop-sys1 -- | loop-sys2 )
+ *
+ * @standard ANS-Forth 1994
+ */
+": +LOOP"				/* R: forw1 ... forwN count dest ip S: -- */
+	" R>"				/* R: forw1 ... forwN count dest S: ip */
+
+	/* Loop increment and test. */
+	" ['] _loop COMPILE,"		/* R: forw1 ... forwN count dest S: ip */
+	" POSTPONE UNTIL"		/* R: forw1 ... forwN count S: ip */
+
+	/* Resolve LEAVE forward references. */
+	" R>"				/* R: forw1 ... forwN S: ip count */
+	" BEGIN"			/* R: forw1 ... forwN S: ip count */
+	"  DUP 0<> WHILE"		/* R: forw1 ... forwN S: ip count flag */
+	"  1-"				/* R: forw1 ... forwN S: ip count' */
+	"  POSTPONE THEN"		/* R: forw1 ... S: ip count */
+	" REPEAT"			/* R: -- S: ip count' */
+	" DROP"				/* R: -- S: ip */
+
+	/* LEAVE branches to just after UNTIL and before UNLOOP. */
+	" ['] UNLOOP COMPILE,"
+
+	" >R"				/* R: ip S: -- */
+	" ; IMMEDIATE\n"
+
+/**
+ * ... limit first DO ... LOOP ...
+ *
+ * (R: dest ip -- ip ) // (S: --  ) (R: loop-sys1 -- | loop-sys2 )
+ *
+ * @standard ANS-Forth 1994
+ */
+": LOOP R> 1 POSTPONE LITERAL POSTPONE +LOOP >R ; IMMEDIATE\n"
+
+/**
+ * ... limit first DO ... LOOP ...
+ *
+ * (S: -- index ) (R: limit index ip -- limit index ip )
+ *
+ * @standard ANS-Forth 1994
+ */
+": I 1 CS-PICK ;\n"
+
+/**
+ * ... limit first DO ... LOOP ...
+ *
+ * (S: -- index1 ) (R: limit1 index1 limit2 index2 ip -- limit1 index1 limit2 index2 ip )
+ *
+ * @standard ANS-Forth 1994
+ */
+": J 3 CS-PICK ;\n"
+
+/**
+ * ... SLITERAL ...
+ *
+ * (C: c-addr u -- ) // (S: -- c-addr u )
+ *
+ * @standard ANS-Forth 1994
+ */
+": _slit R@ 3 CELLS + R@ @ R> CELL+ >R ;\n"	/* (S: -- c-addr u ) (R: ip -- ip+1 ) */
 
 ": SLITERAL" 					/* (C: c-addr u -- ) // (S: -- c-addr u ) */
 	" ['] _slit COMPILE, DUP ,"		/* (C: c-addr u ) */
@@ -2772,15 +3386,50 @@ static const char p4_defined_words[] =
  */
 ": .\" POSTPONE S\" ['] TYPE COMPILE, ; IMMEDIATE\n"
 
-": MAX 2DUP < IF SWAP THEN DROP ;\n"		/* (S: n1 n2 -- n3 ) */
+/**
+ * ... MAX ...
+ *
+ * (S: n1 n2 -- n3 )
+ *
+ * @standard ANS-Forth 1994
+ */
+": MAX 2DUP < IF SWAP THEN DROP ;\n"
 
-": MIN 2DUP > IF SWAP THEN DROP ;\n"		/* (S: n1 n2 -- n3 ) */
+/**
+ * ... MIN ...
+ *
+ * (S: n1 n2 -- n3 )
+ *
+ * @standard ANS-Forth 1994
+ */
+": MIN 2DUP > IF SWAP THEN DROP ;\n"
 
-": ABS DUP 0< IF NEGATE THEN ;\n"		/* (S: n -- u ) */
+/**
+ * ... ABS ...
+ *
+ * (S: n -- u )
+ *
+ * @standard ANS-Forth 1994
+ */
+": ABS DUP 0< IF NEGATE THEN ;\n"
 
-": ROT 2 ROLL ;\n"				/* (S: a b c -- b c a ) */
+/**
+ * ... ROT ...
+ *
+ * (S: a b c -- b c a )
+ *
+ * @standard ANS-Forth 1994
+ */
+": ROT 2 ROLL ;\n"
 
-": ?"						/* (S: a-addr -- ) */
+/**
+ * ... ? ...
+ *
+ * (S: a-addr -- )
+ *
+ * @standard ANS-Forth 1994
+ */
+": ?"
 	" 16 OBASE !"
 	" DUP .\" 0x\" . SPACE SPACE @"
 	" DUP .\" 0x\" ."
@@ -2796,7 +3445,7 @@ static const char p4_defined_words[] =
  * @standard ANS-Forth 1994, extended
  */
 ": BLANK"
-	" SWAP BL OVER"				/* (S: u c-addr ' ' c-addr ) */
+	" 1- SWAP BL OVER"			/* (S: u c-addr ' ' c-addr ) */
 	" ! DUP 1+"				/* (S: u c-addr0 c-addr1 ) */
 	" 2 ROLL"				/* (S: c-addr0 c-addr1 u ) */
 	" CMOVE ;\n"				/* (S: -- ) */

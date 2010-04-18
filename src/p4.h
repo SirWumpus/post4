@@ -227,7 +227,6 @@ struct p4_word {
 	P4_Word p4_word_ ## alias = { P4_BIT_ALIAS, { sizeof (#alias)-1, #alias }, &p4_word_ ## prev, &p4_xt_ ## prev }
 
 union p4_cell {
-	P4_Func		f;
 	P4_Cell *	a;
 	P4_Word *	w;
 	P4_Byte *	s;
@@ -237,7 +236,7 @@ union p4_cell {
 	P4_Exec_Token	xt;
 };
 
-#define P$_ADDRESS_UNIT	(sizeof (P4_Byte))
+#define P4_ADDRESS_UNIT	(sizeof (P4_Byte))
 #define P4_CELL		(sizeof (P4_Cell))
 
 struct p4_data {
@@ -310,9 +309,6 @@ extern P4_Cell p4_null_cell;
  *** Array API
  ***********************************************************************/
 
-#define p4GrowDS(ctx, require)		p4ArrayGrow(&(ctx)->ds, (require), P4_STACK_SIZE)
-#define p4GrowRS(ctx, require)		p4ArrayGrow(&(ctx)->rs, (require), P4_STACK_SIZE)
-
 /**
  * @param table
  *	A pointer to a static P4_Array.
@@ -322,13 +318,16 @@ extern P4_Cell p4_null_cell;
  *
  * @return
  *	Zero on success, otherwise -1 on error. It is the caller's
- *	responsibility to p4ArrayRelease this array when done.
+ *	responsibility to p4ArrayRelease() this array when done.
  */
 extern int p4ArrayAssign(P4_Array *table, size_t size);
 
 /**
  * @param table
  *	A pointer to a static P4_Array to clean-up.
+ *
+ * @see
+ *	p4ArrayAssign()
  */
 extern void p4ArrayRelease(P4_Array *table);
 
@@ -346,21 +345,32 @@ extern P4_Array *p4ArrayCreate(size_t size);
 /**
  * @param _table
  *	A pointer to a dynamic P4_Array to free.
+ *
+ * @see
+ *	p4ArrayCreate()
  */
 extern void p4ArrayFree(void *_table);
 
 /**
  * @param table
- *	A pointer to a P4_Array.
+ *	Pointer to a P4_Array structure.
  *
- * @param length
+ * @param count
  *	Number of table cells required.
  *
- * @param growth
- *	Number of table cells to append to the table when there is
- *	insufficient space remaining to satisfy the length requested.
+ * @param extra
+ *	Number of addtitional table cells to append to the table when
+ *	there is insufficient space remaining to satisfy the count
+ *	required.
  */
-extern void p4ArrayGrow(P4_Array *table, size_t length, size_t growth);
+extern void p4ArrayGrow(P4_Array *table, size_t count, size_t extra);
+
+#define p4GrowDS(ctx, require)		p4ArrayGrow(&(ctx)->ds, (require), P4_STACK_SIZE)
+#define p4GrowRS(ctx, require)		p4ArrayGrow(&(ctx)->rs, (require), P4_STACK_SIZE)
+
+extern void p4ArrayPick(P4_Array *table, P4_Unsigned index);
+extern void p4ArrayRoll(P4_Array *table, P4_Unsigned count);
+extern void p4ArrayDump(P4_Array *table, FILE *fp);
 
 /***********************************************************************
  *** Conversion API
@@ -405,7 +415,8 @@ extern int p4CharLiteral(int ch);
  * @return
  *	A number.
  */
-extern P4_Size p4IntegerToString(P4_Signed number, P4_Unsigned base, P4_Byte *buffer, P4_Size size);
+extern P4_Size p4SignedToString(P4_Signed number, P4_Unsigned base, P4_Byte *buffer, P4_Size size);
+extern P4_Size p4UnsignedToString(P4_Unsigned number, P4_Unsigned base, P4_Byte *buffer, P4_Size size);
 
 /**
  * @param s
@@ -421,7 +432,7 @@ extern P4_Size p4IntegerToString(P4_Signed number, P4_Unsigned base, P4_Byte *bu
  * @return
  *	A number.
  */
-extern P4_Signed p4StringToInteger(const P4_Byte *s, P4_Byte **stop, P4_Unsigned base);
+extern P4_Signed p4StringToSigned(const P4_Byte *s, P4_Byte **stop, P4_Unsigned base);
 
 /**
  * @param s
@@ -489,14 +500,6 @@ extern int p4EvalFile(P4_Context *ctx, const char *filepath);
  */
 extern int p4EvalString(P4_Context *ctx, const char *string);
 
-/**
- * @param ctx
- *	A pointer to an allocated P4_Context structure.
- */
-extern void p4Next(P4_Context *ctx, P4_Cell *ip);
-
-extern void p4CompileWord(P4_Context *ctx, P4_Word *word);
-
 /***********************************************************************
  *** Convenience Functions
  ***********************************************************************/
@@ -525,9 +528,7 @@ extern P4_Signed p4InputLine(FILE *fp, P4_Byte *buffer, P4_Size size);
  *
  * @note
  *	Backslash escaped characters are converted to a literal and
- *	the input buffer reduced in size. The exception is control
- *	characters and space.
- *
+ *	the input buffer reduced in size.
  *
  * @standard ANS-Forth 1994, extended
  */
@@ -564,6 +565,9 @@ extern P4_String p4Parse(P4_Input *input, P4_Unsigned delim, P4_Unsigned escape)
 extern P4_String p4ParseWord(P4_Input *input);
 
 extern P4_Word *p4FindWord(P4_Context *ctx, P4_Byte *caddr, P4_Size length);
+extern P4_Word *p4FindXt(P4_Context *ctx, P4_Exec_Token xt);
+extern P4_Signed p4IsNoname(P4_Context *ctx, P4_Exec_Token xt);
+extern void p4Dump(FILE *fp, P4_Byte *addr, P4_Size length);
 
 /***********************************************************************
  *** Core Words & Actions
