@@ -6,6 +6,39 @@ changes for corrections, enhancements, etc. made to the code. There
 is no set schedule for releases.
 
 
+--0.4.1--
+
+   !	MANIFEST.TXT.in: remove reference material related more to
+	implementation of a Forth system as opposed to the Forth
+	language.
+
+   !	Fixed words: ELSE BLANK.
+
+   !	Renamed p4IntegerToString to p4SignedToString
+
+   !	Fixed REFILL / EVALUATION interaction.
+
+   !	Renamed the size of a cell constant CELL to /CELL.
+
+   !	Switched from using the return stack for compilation stack to
+	using the data stack for everything except colon definitions.
+	Almost all the compilation, especially with the pre-defined
+	words was greatly simplified as there was no longer need to
+	pay special attention to caller's return address while
+	manipulating things like do-sys, loop-sys, dest, orig, etc.
+
+	Colon definitions are currently handled specially through the
+	P4_Context ->word and ->xt members and not on any stack. This
+	should be revisited to see if implementing "colon-sys" on the
+	data stack simplifies the code.
+
+   !	Fixed implementation of TO.
+
+   +	Added p4UnsignedToString.
+
+   +	Added words U. U< +! VALUE TO NIP TUCK WITH-IN WITH-OUT CONTEXT
+	RS-PICK RS-ROLL ?DO DO LOOP +LOOP LEAVE UNLOOP I J EXIT MARKER
+	.# U.# 'SEE SLEEP
 
 --0.4.0--
 

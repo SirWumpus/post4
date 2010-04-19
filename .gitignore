@@ -43,7 +43,8 @@ VERSION.TXT
 
 # Compiled
 src/p4
+src/post4
 
 # Unimportant
-examples/*
-doc/*
+#examples/*
+#doc/*

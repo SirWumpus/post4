@@ -21,7 +21,7 @@ end
 
 define showdata
 p *ctx->xt->data
-x/8x ctx->xt->data.base
+x/12x ctx->xt->data.base
 end
 
 search ^P4_WORD_DEFINE(EVALUATE)
