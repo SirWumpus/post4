@@ -1451,6 +1451,19 @@ AC_DEFUN(SNERT_REGEX,[
 ])
 
 dnl
+dnl SNERT_REGEX
+dnl
+AC_DEFUN(SNERT_TERMIOS,[
+	echo
+	echo "Check for termios..."
+	echo
+	AC_CHECK_HEADERS([termios.h],[
+		AC_CHECK_FUNCS(tcgetattr tcsetattr ctermid)
+	])
+])
+
+
+dnl
 dnl SNERT_OPTION_WITH_SQLITE3
 dnl
 dnl Depends on SNERT_PTHREAD

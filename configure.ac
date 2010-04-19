@@ -66,6 +66,7 @@ SNERT_ANSI_TIME
 SNERT_ANSI_STRING
 SNERT_EXTRA_STRING
 SNERT_REGEX
+SNERT_TERMIOS
 
 #######################################################################
 #	Check for library functions
