@@ -9,6 +9,7 @@ com/snert/src/@PACKAGE_NAME@/src/config.h.in.in
 com/snert/src/@PACKAGE_NAME@/src/makefile.in
 com/snert/src/@PACKAGE_NAME@/src/p4.c
 com/snert/src/@PACKAGE_NAME@/src/p4.h
+com/snert/src/@PACKAGE_NAME@/examples/life.p4
 com/snert/src/@PACKAGE_NAME@/reference/dpans-1994/A0001.HTM
 com/snert/src/@PACKAGE_NAME@/reference/dpans-1994/A0002.HTM
 com/snert/src/@PACKAGE_NAME@/reference/dpans-1994/A0003.HTM
