@@ -417,6 +417,9 @@ p4See(FILE *fp, P4_Context *ctx, P4_Exec_Token xt)
 	P4_Exec_Token *ip;
 	P4_Word *word, *found;
 
+	if (xt == NULL)
+		return;
+
 	word = p4FindXt(ctx, xt);
 
 	if (xt->data == NULL) {
@@ -459,7 +462,7 @@ p4See(FILE *fp, P4_Context *ctx, P4_Exec_Token xt)
 			if ((found = p4FindXt(ctx, *++ip)) == NULL)
 				fprintf(fp, "lit 0x%lx ", (P4_Unsigned) *ip);
 			else
-				fprintf(fp, "[!] %s ", found->name.string);
+				fprintf(fp, "['] %s ", found->name.string);
 		} else {
 			fprintf(fp, "%s ", found->name.string);
 		}
@@ -555,7 +558,7 @@ p4GetC(P4_Context *ctx)
 	return fgetc(ctx->input.fp);
 }
 
-P4_Signed
+P4_Unsigned
 p4GetLine(P4_Context *ctx, P4_Byte *line, P4_Size size)
 {
 	P4_Signed ch, i;
@@ -575,7 +578,7 @@ p4GetLine(P4_Context *ctx, P4_Byte *line, P4_Size size)
 	return i;
 }
 
-P4_Signed
+P4_Unsigned
 p4InputLine(FILE *fp, P4_Byte *line, P4_Size size)
 {
 	P4_Signed i;
@@ -712,8 +715,26 @@ P4_WORD_DEFINE(FIND_WORD)
  */
 P4_WORD_DEFINE(ALLOCATE)
 {
-	P4_TOP(ctx->ds).p = malloc(P4_TOP(ctx->ds).u * P4_CELL);
-	P4_PUSH_SAFE(ctx->ds).n = (P4_TOP(ctx->ds).p == NULL);
+	if (P4_LENGTH(ctx->ds) < 1) {
+		P4_PUSH_SAFE(ctx->ds).n = -4;
+		P4_WORD_DO(THROW);
+	} else {
+		P4_TOP(ctx->ds).p = calloc(1, P4_TOP(ctx->ds).u * P4_CELL);
+		P4_PUSH_SAFE(ctx->ds).n = (P4_TOP(ctx->ds).p == NULL);
+	}
+}
+
+/**
+ * ... seconds SLEEP ...
+ *
+ * (S: u -- u )
+ *
+ * @standard extension
+ */
+P4_WORD_DEFINE(SLEEP)
+{
+	P4_Unsigned seconds = P4_POP_SAFE(ctx->ds).u;
+	P4_PUSH(ctx->ds).u = sleep(seconds);
 }
 
 /**
@@ -875,23 +896,15 @@ P4_WORD_DEFINE(DUMP)
 }
 
 /**
- * ... SEE ...
+ * ... 'SEE ...
  *
- * (S: "<spaces>name" -- )
+ * (S: xt -- )
  *
- * @standard ANS-Forth 1994
+ * @standard extension
  */
-P4_WORD_DEFINE(SEE)
+P4_WORD_DEFINE(TICK_SEE)
 {
-	P4_WORD_DO(PARSE_WORD);
-	P4_WORD_DO(FIND_WORD);
-
-	if (P4_POP(ctx->ds).n == 0) {
-		P4_POP(ctx->ds);
-		P4_POP(ctx->ds);
-	} else {
-		p4See(stdout, ctx, P4_POP(ctx->ds).xt);
-	}
+	p4See(stdout, ctx, P4_POP_SAFE(ctx->ds).xt);
 }
 
 /**
@@ -915,7 +928,7 @@ P4_WORD_DEFINE(PICK)
  */
 P4_WORD_DEFINE(CS_PICK)
 {
-	p4ArrayPick(&ctx->rs, P4_POP(ctx->ds).u);
+	p4ArrayPick(&ctx->ds, P4_POP(ctx->ds).u);
 }
 
 /**
@@ -956,7 +969,7 @@ P4_WORD_DEFINE(ROLL)
  */
 P4_WORD_DEFINE(CS_ROLL)
 {
-	p4ArrayRoll(&ctx->rs, P4_POP(ctx->ds).u);
+	p4ArrayRoll(&ctx->ds, P4_POP(ctx->ds).u);
 }
 
 /**
@@ -1259,13 +1272,13 @@ P4_WORD_DEFINE(U_LT)
 }
 
 /**
- * ... CELL ...
+ * ... /CELL ...
  *
  * (S:  -- u)
  *
- * @standard ANS-Forth 1994
+ * @standard extension
  */
-P4_WORD_DEFINE(CELL)
+P4_WORD_DEFINE(SLASH_CELL)
 {
 	P4_PUSH_SAFE(ctx->ds).u = P4_CELL;
 }
@@ -1843,9 +1856,11 @@ P4_WORD_DEFINE(SEMICOLON)
 P4_WORD_DEFINE(CMOVE)
 {
 	P4_Size size = P4_POP_SAFE(ctx->ds).u;
-	P4_Pointer dst = P4_POP_SAFE(ctx->ds).p;
-	P4_Pointer src = P4_POP_SAFE(ctx->ds).p;
-	memcpy(dst, src, size);
+	P4_Byte *dst = P4_POP_SAFE(ctx->ds).s;
+	P4_Byte *src = P4_POP_SAFE(ctx->ds).s;
+
+	while (0 < size--)
+		*dst++ = *src++;
 }
 
 /**
@@ -2098,8 +2113,15 @@ P4_WORD_DEFINE(EXECUTE)
 	xts[0] = P4_POP(ctx->ds).xt;
 	xts[1] = NULL;
 
-	for (ctx->ip = xts; *ctx->ip != NULL; )
+	for (ctx->ip = xts; *ctx->ip != NULL; ) {
 		(*(*ctx->ip++)->code)(ctx);
+
+		if (ctx->sig_int) {
+			P4_PUSH(ctx->ds).n = ctx->sig_int;
+			ctx->sig_int = 0;
+			P4_WORD_DO(THROW);
+		}
+	}
 }
 
 /**
@@ -2143,35 +2165,32 @@ P4_WORD_DEFINE(KEY)
 }
 
 /**
- *  ...  .  ...
+ *  ...  .#  ...
  *
  * (S: n -- )
  *
- * @standard ANS-Forth 1994
+ * @standard extension
  */
-P4_WORD_DEFINE(DOT)
+P4_WORD_DEFINE(DOT_HASH)
 {
-	char buffer[sizeof (P4_Signed) * 8 + 1];
-
+	char buffer[sizeof (P4_Signed) * CHAR_BIT + 2];
 	(void) p4SignedToString(P4_POP_SAFE(ctx->ds).n, ctx->obase, buffer, sizeof (buffer));
 	fputs(buffer, stdout);
-	fputc(' ', stdout);
 }
 
 /**
- *  ...  U.  ...
+ *  ...  U.#  ...
  *
  * (S: u -- )
  *
- * @standard ANS-Forth 1994
+ * @standard extension
  */
-P4_WORD_DEFINE(U_DOT)
+P4_WORD_DEFINE(U_DOT_HASH)
 {
-	char buffer[sizeof (P4_Unsigned) * 8 + 1];
+	char buffer[sizeof (P4_Unsigned) * CHAR_BIT + 2];
 
 	(void) p4UnsignedToString(P4_POP_SAFE(ctx->ds).u, ctx->obase, buffer, sizeof (buffer));
 	fputs(buffer, stdout);
-	fputc(' ', stdout);
 }
 
 /**
@@ -2215,7 +2234,7 @@ P4_WORD_DEFINE(CONSOLE)
 P4_WORD_DEFINE(SOURCE)
 {
 	p4GrowDS(ctx, 2);
-	P4_PUSH(ctx->ds).p = &ctx->input.buffer[ctx->input.offset];
+	P4_PUSH(ctx->ds).s = &ctx->input.buffer[ctx->input.offset];
 	P4_PUSH(ctx->ds).u = ctx->input.length - ctx->input.offset;
 }
 
@@ -2291,7 +2310,7 @@ P4_WORD_DEFINE(REFILL)
 {
 	if (0 <= ctx->source_id) {
 		ctx->input.offset = 0;
-		ctx->input.length = p4InputLine(ctx->input.fp, ctx->input.buffer, P4_INPUT_SIZE);
+		ctx->input.length = p4GetLine(ctx, ctx->input.buffer, P4_INPUT_SIZE);
 		P4_PUSH_SAFE(ctx->ds).n = 0 < ctx->input.length && !feof(ctx->input.fp) && !ferror(ctx->input.fp);
 	} else {
 		P4_PUSH_SAFE(ctx->ds).n = 0;
@@ -2324,29 +2343,14 @@ P4_WORD_DEFINE(WORDS)
 	fputc('\n', stdout);
 }
 
-/**
- * ... EVALUATE ...
- *
- * (S: i*x c-addr u -- j*x )
- *
- * @standard ANS-Forth 1994
- */
-P4_WORD_DEFINE(EVALUATE)
+void
+p4Interpret(P4_Context *ctx)
 {
 	P4_Signed n;
 	P4_Size length;
-	P4_Unsigned in_off;
 	P4_Byte *stop, *start;
-	P4_Input previous_source;
-
-	previous_source = ctx->input;
-	ctx->input.length = P4_POP_SAFE(ctx->ds).u;
-	ctx->input.buffer = P4_POP_SAFE(ctx->ds).s;
-	ctx->input.offset = 0;
-	ctx->source_id = -1;
 
 	while (ctx->input.offset < ctx->input.length) {
-		in_off = ctx->input.offset;
 		P4_WORD_DO(PARSE_WORD);
 		P4_WORD_DO(FIND_WORD);
 
@@ -2363,9 +2367,17 @@ P4_WORD_DEFINE(EVALUATE)
 				P4_PUSH(ctx->ds).n = n;
 				P4_WORD_DO(LITERAL);
 			} else {
+				if (P4_IS_COMPILING(ctx)) {
+					fprintf(
+						stdout, "in %s error near ",
+						ctx->word == NULL ? ":NONAME" : (char *)ctx->word->name.string
+					);
+				}
+
 				for (n = 0; n < length; n++)
 					fputc(*start++, stdout);
-				fprintf(stdout, " ? (>IN=" P4_UNSIGNED_FMT ")\n", in_off);
+
+				fprintf(stdout, " ?\n");
 				break;
 			}
 		} else if (P4_IS_COMPILING(ctx) && n == -1) {
@@ -2374,6 +2386,26 @@ P4_WORD_DEFINE(EVALUATE)
 			P4_WORD_DO(EXECUTE);
 		}
 	}
+}
+
+/**
+ * ... EVALUATE ...
+ *
+ * (S: i*x c-addr u -- j*x )
+ *
+ * @standard ANS-Forth 1994
+ */
+P4_WORD_DEFINE(EVALUATE)
+{
+	P4_Input previous_source;
+
+	previous_source = ctx->input;
+	ctx->input.length = P4_POP_SAFE(ctx->ds).u;
+	ctx->input.buffer = P4_POP_SAFE(ctx->ds).s;
+	ctx->input.offset = 0;
+	ctx->source_id = -1;
+
+	p4Interpret(ctx);
 
 	ctx->input = previous_source;
 	ctx->source_id = fileno(ctx->input.fp);
@@ -2393,17 +2425,24 @@ P4_WORD_DEFINE(MAIN)
 	ctx->source_id = fileno(ctx->input.fp);
 
 	for (;;) {
+		ctx->ip = NULL;
 		P4_RESET(ctx->rs);
 
 		if (ctx->source_id == 0 && P4_IS_INTERPRETING(ctx))
 			fputs("ok\n", stdout);
 
 		P4_WORD_DO(REFILL);
+
+		if (ctx->sig_int) {
+			P4_PUSH(ctx->ds).n = ctx->sig_int;
+			ctx->sig_int = 0;
+			P4_WORD_DO(THROW);
+		}
+
 		if (!P4_POP_SAFE(ctx->ds).n)
 			break;
 
-		P4_WORD_DO(SOURCE);
-		P4_WORD_DO(EVALUATE);
+		p4Interpret(ctx);
 	}
 }
 
@@ -2493,6 +2532,69 @@ P4_WORD_DEFINE(CATCH)
 	ctx->jmp_set = jmp_set;
 }
 
+const char *p4_exceptions[] = {
+	"zero",
+	"ABORT",
+	"ABORT\"",
+	"stack overflow",
+	"stack underflow",
+	"return stack overflow",
+	"return stack underflow",
+	"do-loops nested too deeply during execution",
+	"dictionary overflow",
+	"invalid memory address",
+	"division by zero",
+	"result out of range",
+	"argument type mismatch",
+	"undefined word",
+	"interpreting a compile-only word",
+	"invalid FORGET",
+	"attempt to use zero-length string as a name",
+	"pictured numeric output string overflow",
+	"parsed string overflow",
+	"definition name too long",
+	"write to a read-only location",
+	"unsupported operation",
+	"control structure mismatch",
+	"address alignment exception",
+	"invalid numeric argument",
+	"return stack imbalance",
+	"loop parameters unavailable",
+	"invalid recursion",
+	"user interrupt",
+	"compiler nesting",
+	"obsolescent feature",
+	">BODY used on non-CREATEd definition",
+	"invalid name argument",
+	"block read exception",
+	"block write exception",
+	"invalid block number",
+	"invalid file position",
+	"file I/O exception",
+	"non-existent file",
+	"unexpected end of file",
+	"invalid BASE for floating point conversion",
+	"loss of precision",
+	"floating-point divide by zero",
+	"floating-point result out of range",
+	"floating-point stack overflow",
+	"floating-point stack underflow",
+	"floating-point invalid argument",
+	"compilation word list deleted",
+	"invalid POSTPONE",
+	"search-order overflow",
+	"search-order underflow",
+	"compilation word list changed",
+	"control-flow stack overflow",
+	"exception: stack overflow",
+	"floating-point underflow",
+	"floating-point unidentified fault",
+	"QUIT",
+	"exception: in sending or receiving a character",
+	"[IF], [ELSE], or [THEN] exception",
+	NULL
+};
+
 /**
  * ... value THROW ...
  *
@@ -2508,14 +2610,23 @@ P4_WORD_DEFINE(THROW)
 		if (ctx->jmp_set & P4_JMP_THROW)
 			longjmp(ctx->on_throw, rc);
 
-		if (rc != -1)
-			fprintf(stdout, "%ld thrown\n", rc);
-		longjmp(ctx->on_abort, rc);
+		if (rc != -1) {
+			printf("%ld thrown: %s\n", rc, p4_exceptions[-rc]);
+			if (ctx->state) {
+				printf("compiling %s\n", (ctx->word == NULL) ? ":NONAME" : (char *)ctx->word->name.string);
+			} else if (ctx->ip != NULL) {
+				P4_Word *word = p4FindXt(ctx, ctx->ip[-1]);
+				printf("executing %s\n", (word == NULL) ? ":NONAME" : (char *)word->name.string);
+			}
+		}
+
+		if (ctx->jmp_set & P4_JMP_ABORT)
+			longjmp(ctx->on_abort, rc);
 	}
 }
 
 static const char help_summary[] =
-"To quit send EOF, interrupt signal, or BYE.\n"
+"To quit send EOF, TERM interrupt signal, or BYE.\n"
 "\n"
 "User defined words are case sensitive, while core words are case insensitive.\n"
 "\n"
@@ -2621,8 +2732,7 @@ P4_WORD_NAME(ALIGN,		ACCEPT,		0		);
 P4_WORD_NAME(ALLOCATE,		ALIGN,		0		);
 P4_WORD_NAME(AND,		ALLOCATE,	0 		);
 P4_WORD_NAME(CATCH,		AND,		0		);
-P4_WORD_NAME(CELL,		CATCH,		0		);
-P4_WORD_NAME(CMOVE,		CELL,		0		);
+P4_WORD_NAME(CMOVE,		CATCH,		0		);
 P4_WORD_NAME(CONSOLE,		CMOVE,		0		);
 P4_WORD_NAME(CONTEXT,		CONSOLE,	0		);
 P4_WORD_NAME(CREATE,		CONTEXT,	0		);
@@ -2657,12 +2767,13 @@ P4_WORD_NAME(OR,		OBASE,		0 		);
 P4_WORD_NAME(PARSE,		OR,		0		);
 P4_WORD_NAME(PICK,		PARSE,		0		);
 P4_WORD_NAME(QUIT,		PICK,		0		);
-P4_WORD_NAME(RESERVE,		QUIT,		0		);
+P4_WORD_NAME(REFILL,		QUIT,		0		);
+P4_WORD_NAME(RESERVE,		REFILL,		0		);
 P4_WORD_NAME(RESIZE,		RESERVE,	0		);
 P4_WORD_NAME(ROLL,		RESIZE,		0		);
 P4_WORD_NAME(RSHIFT,		ROLL,		0		);
-P4_WORD_NAME(SEE,		RSHIFT,		0		);
-P4_WORD_NAME(SOURCE,		SEE,		0		);
+P4_WORD_NAME(SLEEP,		RSHIFT,		0		);
+P4_WORD_NAME(SOURCE,		SLEEP,		0		);
 P4_WORD_NAME(STATE,		SOURCE,		0		);
 P4_WORD_NAME(SWAP,		STATE,		0		);
 P4_WORD_NAME(THROW,		SWAP,		0		);
@@ -2683,8 +2794,8 @@ P4_WORD_TEXT(CS_ROLL,		CS_PICK,	0,	 	"CS-ROLL");
 P4_WORD_TEXT(DIV,		CS_ROLL,	0, 		"/");
 P4_WORD_TEXT(DIV_MOD,		DIV,		0, 		"/MOD");
 P4_WORD_TEXT(DOES_GT,		DIV_MOD,	P4_BIT_IMM,	"DOES>");
-P4_WORD_TEXT(DOT,		DOES_GT,	0, 		".");
-P4_WORD_TEXT(DOT_DS,		DOT,		P4_BIT_IMM,	".S");
+P4_WORD_TEXT(DOT_HASH,		DOES_GT,	0, 		".#");
+P4_WORD_TEXT(DOT_DS,		DOT_HASH,	P4_BIT_IMM,	".S");
 P4_WORD_TEXT(DOT_RS,		DOT_DS,		P4_BIT_IMM,	".RS");
 P4_WORD_TEXT(FETCH,		DOT_RS,		0, 		"@");
 P4_WORD_TEXT(FIND_WORD,		FETCH,		0, 		"FIND-WORD");
@@ -2702,17 +2813,19 @@ P4_WORD_TEXT(RS_PUT,		RS_GET,		0, 		">R");
 P4_WORD_TEXT(RS_PICK,		RS_PUT,		0, 		"RS-PICK");
 P4_WORD_TEXT(RS_ROLL,		RS_PICK,	0, 		"RS-ROLL");
 P4_WORD_TEXT(SEMICOLON,		RS_ROLL,	P4_BIT_IMM,	";");
-P4_WORD_TEXT(SOURCE_ID,		SEMICOLON,	0,		"SOURCE-ID");
+P4_WORD_TEXT(SLASH_CELL,	SEMICOLON,	0,		"/CELL");
+P4_WORD_TEXT(SOURCE_ID,		SLASH_CELL,	0,		"SOURCE-ID");
 P4_WORD_TEXT(STORE,		SOURCE_ID,	0, 		"!");
 P4_WORD_TEXT(SUB,		STORE,		0, 		"-");
 P4_WORD_TEXT(TICK,		SUB,		0, 		"'");
-P4_WORD_TEXT(TWO_DIV,		TICK,		0, 		"2/");
+P4_WORD_TEXT(TICK_SEE,		TICK,		0, 		"'SEE");
+P4_WORD_TEXT(TWO_DIV,		TICK_SEE,	0, 		"2/");
 P4_WORD_TEXT(TWO_MUL,		TWO_DIV,	0, 		"2*");
 P4_WORD_TEXT(TWO_RS_COPY,	TWO_MUL,	0,		"2R@");
 P4_WORD_TEXT(TWO_RS_GET,	TWO_RS_COPY,	0,		"2R>");
 P4_WORD_TEXT(TWO_RS_PUT,	TWO_RS_GET,	0,		"2>R");
-P4_WORD_TEXT(U_DOT,		TWO_RS_PUT,	0, 		"U.");
-P4_WORD_TEXT(U_GT,		U_DOT,		0, 		"U>");
+P4_WORD_TEXT(U_DOT_HASH,	TWO_RS_PUT,	0, 		"U.#");
+P4_WORD_TEXT(U_GT,		U_DOT_HASH,	0, 		"U>");
 P4_WORD_TEXT(U_LT,		U_GT,		0, 		"U<");
 P4_WORD_TEXT(ZERO_EQ,		U_LT,		0, 		"0=");
 P4_WORD_TEXT(ZERO_LT,		ZERO_EQ,	0, 		"0<");
@@ -2753,7 +2866,7 @@ static const char p4_defined_words[] =
  *
  * @standard ANS-Forth 1994
  */
-"20 CONSTANT BL\n"
+"32 CONSTANT BL\n"
 
 /**
  * ... \c ...
@@ -2780,8 +2893,8 @@ static const char p4_defined_words[] =
 "11 CONSTANT \\v\n"				/* vertical-tab */
 "12 CONSTANT \\f\n"				/* form-feed */
 "13 CONSTANT \\r\n"				/* carriage-return */
-"20 CONSTANT \\s\n"				/* space */
 "27 CONSTANT \\e\n"				/* escape */
+"32 CONSTANT \\s\n"				/* space */
 "127 CONSTANT \\?\n"				/* delete */
 
 /**
@@ -2816,30 +2929,49 @@ static const char p4_defined_words[] =
 ": VALUE CREATE , DOES> @ ;\n"
 
 /**
- * ... x TO name ...
+ *  ... ALIGNED ...
  *
- * (S x "<spaces>name" -- )
- *
- * @note
- *	This definitioon relies on how DOES> is compiled. Semantically
- *	similar to:
- *
- *		x name !
+ * (S: addr -- a-addr )
  *
  * @standard ANS-Forth 1994
- *
- * @see
- *	TO
  */
-": TO ' >BODY @ >BODY ! ;\n"
+": ALIGNED 1 - /CELL 1 - OR 1 + ;\n"
 
-": ALIGNED 1 - CELL 1 - OR 1 + ;\n"		/* (S: addr -- a-addr ) */
+/**
+ *  ... CHAR+ ...
+ *
+ * (S: c-addr1 -- c-addr2 )
+ *
+ * @standard ANS-Forth 1994
+ */
+": CHAR+ 1 + ;\n"
 
-": CHAR+ 1 + ;\n"				/* (S: c-addr1 -- c-addr2 ) */
+/**
+ *  ... CHARS ...
+ *
+ * (S: n1 -- n2 )
+ *
+ * @standard ANS-Forth 1994
+ */
+": CHARS ;\n"
 
-": CELL+ CELL + ;\n"				/* (S: a-addr1 -- a-addr2 ) */
+/**
+ *  ... CELL+ ...
+ *
+ * (S: a-addr1 -- a-addr2 )
+ *
+ * @standard ANS-Forth 1994
+ */
+": CELL+ /CELL + ;\n"
 
-": CELLS CELL * ;\n"				/* (S: n1 -- n2 ) */
+/**
+ *  ... CELLS ...
+ *
+ * (S: n1 -- n2 )
+ *
+ * @standard ANS-Forth 1994
+ */
+": CELLS /CELL * ;\n"
 
 /**
  *  ... OVER ...
@@ -3041,7 +3173,25 @@ static const char p4_defined_words[] =
 
 ": CR \\r EMIT \\n EMIT ;\n"			/* (S: -- ) */
 
-": SPACE \\s EMIT ;\n"				/* (S: -- ) */
+": SPACE BL EMIT ;\n"				/* (S: -- ) */
+
+/**
+ * ... . ...
+ *
+ * (S: n -- )
+ *
+ * @standard ANS-Forth 1994
+ */
+": . .# SPACE ;\n"
+
+/**
+ *  ...  U.  ...
+ *
+ * (S: u -- )
+ *
+ * @standard ANS-Forth 1994
+ */
+": U. U.# SPACE ;\n"
 
 ": POSTPONE PARSE-WORD FIND-WORD DROP COMPILE, ; IMMEDIATE\n"	/* (C: "<spaces>name" -- ) */
 
@@ -3083,69 +3233,64 @@ static const char p4_defined_words[] =
  *
  * ... BEGIN ... test WHILE ... REPEAT ...
  *
- * (R: ip -- dest ip )
+ * (C: -- dest )
  *
  * @standard ANS-Forth 1994
  *
  * @see
  *	A.3.2.3.2 Control-flow stack
  */
-": BEGIN R> >HERE >R >R ; IMMEDIATE\n"
+": BEGIN >HERE ; IMMEDIATE\n"
 
 /**
  * ... BEGIN ... AGAIN
  *
- * (R: dest ip -- ip )
+ * (C: dest -- )
  *
  * @standard ANS-Forth 1994
  *
  * @see
  *	A.3.2.3.2 Control-flow stack
  */
-": AGAIN ['] BRANCH COMPILE, R> R> >HERE - , >R ; IMMEDIATE\n"
+": AGAIN ['] BRANCH COMPILE, >HERE - , ; IMMEDIATE\n"
 
 /**
  * ... BEGIN ... test UNTIL ...
  *
- * (R: dest ip -- ip ) // (S: flag -- )
+ * (C: dest -- ) // (S: flag -- )
  *
  * @standard ANS-Forth 1994
  *
  * @see
  *	A.3.2.3.2 Control-flow stack
  */
-": UNTIL"				/* R: dest_off ip S: -- */
-	" 2R> >R"			/* R: ip S: dest_off */
-	" ['] BRANCHZ COMPILE,"
-	" >HERE -"			/* R: ip S: neg_off */
-	" ,"				/* R: ip S: -- */
-	" ; IMMEDIATE\n"
+": UNTIL ['] BRANCHZ COMPILE, >HERE - , ; IMMEDIATE\n"
 
 /**
  * ... AHEAD ... THEN ...
  *
- * (R: ip -- forw ip )
+ * (C: -- forw )
  *
  * @standard ANS-Forth 1994
  *
  * @see
  *	A.3.2.3.2 Control-flow stack
  */
-": AHEAD ['] BRANCH COMPILE, R> >HERE 0 , >R >R ; IMMEDIATE\n"
+": AHEAD ['] BRANCH COMPILE, >HERE 0 , ; IMMEDIATE\n"
 
 /**
  * ... test IF ... THEN ...
  *
  * ... test IF ... ELSE ... THEN ...
  *
- * (R: ip -- forw ip ) // (S: flag -- )
+ * (C: -- forw ) // (S: flag -- )
  *
  * @standard ANS-Forth 1994
  *
  * @see
  *	A.3.2.3.2 Control-flow stack
  */
-": IF ['] BRANCHZ COMPILE, R> >HERE 0 , >R >R ; IMMEDIATE\n"
+": IF ['] BRANCHZ COMPILE, >HERE 0 , ; IMMEDIATE\n"
 
 /**
  * ... AHEAD ... THEN ...
@@ -3154,51 +3299,45 @@ static const char p4_defined_words[] =
  *
  * ... test IF ... ELSE ... THEN ...
  *
- * (R: forw ip -- ip )
+ * (C: forw -- )
  *
  * @standard ANS-Forth 1994
  *
  * @see
  *	A.3.2.3.2 Control-flow stack
  */
-": THEN"				/* R: forw_off ip S: -- */
-	" R>"				/* R: forw_off S: ip */
-	" >HERE R>"			/* R: -- S: ip here_off forw_off */
-	" -"				/* R: -- S: ip pos_off */
-	" HERE OVER"			/* R: -- S: ip pos_off addr pos_off */
-	" -"				/* R: -- S: ip pos_off forw_addr */
-	" !"				/* R: -- S: ip */
-	" >R"				/* R: ip S: -- */
+": THEN"				/* C: forw_off */
+	" >HERE SWAP"			/* C: here_off forw_off */
+	" -"				/* C: pos_off */
+	" HERE OVER"			/* C: pos_off addr pos_off */
+	" -"				/* C: pos_off forw_addr */
+	" !"				/* C: -- */
 	" ; IMMEDIATE\n"
 
 /**
  * ... test IF ... ELSE ... THEN ...
  *
- * (R: forw1 ip -- forw2 ip )
+ * (C: forw1 -- forw2 )
  *
  * @standard ANS-Forth 1994
  *
  * @see
  *	A.3.2.3.2 Control-flow stack
  */
-": ELSE"				/* R: forw1 ip S: -- */
-	" R>"				/* R: forw1 S: ip */
-	" POSTPONE AHEAD"		/* R: forw1 forw2 S: ip */
-	" 1 CS-ROLL"			/* R: forw2 forw1 S: ip */
-	" POSTPONE THEN"		/* R: forw2 S: ip */
-	" >R"				/* R: forw2 ip S: -- */
+": ELSE"				/* C: forw1 */
+	" POSTPONE AHEAD"		/* C: forw1 forw2 */
+	" 1 CS-ROLL"			/* C: forw2 forw1 */
+	" POSTPONE THEN"		/* C: forw2 */
 	" ; IMMEDIATE\n"
 
 /**
  * ... BEGIN ... test WHILE ... REPEAT ...
  *
- * (R: dest ip -- forw dest ip ) // (S: flag -- )
+ * (C: dest -- forw dest ) // (S: flag -- )
  *
  * ... BEGIN ... test WHILE ... test WHILE ... REPEAT THEN ...
  *
  * ... BEGIN ... test WHILE ... test WHILE ... AGAIN THEN THEN ...
- *
- * (R: forw1 dest ip -- forw1 forw2 dest ip )
  *
  * Multiple WHILE possible to provide short-circuit testing, but each
  * additional WHILE needs a THEN in order to resolve each forward
@@ -3209,28 +3348,52 @@ static const char p4_defined_words[] =
  * @see
  *	A.3.2.3.2 Control-flow stack
  */
-": WHILE"				/* R: dest ip S: -- */
-	" R>"				/* R: dest S: ip */
-	" POSTPONE IF"			/* R: dest forw S: ip */
-	" 1 CS-ROLL"			/* R: forw dest S: ip */
-	" >R"				/* R: forw dest ip S: -- */
+": WHILE"				/* C: dest */
+	" POSTPONE IF"			/* C: dest forw */
+	" 1 CS-ROLL"			/* C: forw dest */
 	" ; IMMEDIATE\n"
 
 /**
  * ... BEGIN ... test WHILE ... REPEAT ...
  *
- * (R: forw dest ip -- ip )
+ * (C: forw dest -- )
  *
  * @standard ANS-Forth 1994
  *
  * @see
  *	A.3.2.3.2 Control-flow stack
  */
-": REPEAT"				/* R: forw dest ip S: -- */
-	" R>"				/* R: forw dest S: ip */
-	" POSTPONE AGAIN"		/* R: forw S: ip */
-	" POSTPONE THEN"		/* R: -- S: ip */
-	" >R"				/* R: ip S: -- */
+": REPEAT"				/* C: forw dest */
+	" POSTPONE AGAIN"		/* C: forw */
+	" POSTPONE THEN"		/* C: -- */
+	" ; IMMEDIATE\n"
+
+/**
+ * ... x TO name ...
+ *
+ * (S: x "<spaces>name" -- )
+ *
+ * @note
+ *	This definitioon relies on how DOES> is compiled. Semantically
+ *	similar to:
+ *
+ *		x name !
+ *
+ * @standard ANS-Forth 1994
+ *
+ * @see
+ *	TO
+ */
+": TO"
+	" '"				/* S: xt */
+	" >BODY @ >BODY"		/* S: a-addr */
+	" STATE @"			/* S: a-addr bool */
+	" IF"				/* S: a-addr */
+	 " POSTPONE LITERAL"		/* S: -- */
+	 " ['] ! COMPILE,"
+	" ELSE"
+	 " !"				/* S: -- */
+	" THEN"
 	" ; IMMEDIATE\n"
 
 /**
@@ -3245,15 +3408,29 @@ static const char p4_defined_words[] =
 /**
  * ... limit first DO ... LOOP ...
  *
- * (R: ip -- count dest ip ) // (S: limit first -- ) (R: -- limit first )
+ * (C: -- count dest ) // (S: limit first -- ) (R: -- limit first )
  *
  * @standard ANS-Forth 1994
  */
-": DO"					/* R: ip S: -- */
-	" R> 0 >R"			/* R: 0  S: ip */
-	" ['] 2>R COMPILE,"
-	" POSTPONE BEGIN"		/* R: 0 dest S: ip */
-	" >R"				/* R: 0 dest ip S: -- */
+": DO"					/* C: -- // S: limit first R: -- */
+	" ['] 2>R COMPILE,"		/* C: -- // S: -- R: limit first */
+	" 0"				/* C: 0 */
+	" POSTPONE BEGIN"		/* C: 0 dest */
+	" ; IMMEDIATE\n"
+
+/**
+ * ... limit first ?DO ... LOOP ...
+ *
+ * (C: -- count dest ) // (S: limit first -- ) (R: -- limit first )
+ *
+ * @standard ANS-Forth 1994
+ */
+": ?DO"					/* C: -- // S: limit first R: -- */
+	" ['] 2>R COMPILE,"		/* C: -- // S: -- R: limit first */
+	" ['] 2R@ COMPILE,"		/* C: -- // S: limit first R: limit first */
+	" ['] <> COMPILE,"		/* C: -- // S: flag R: limit first */
+	" POSTPONE IF 1"		/* C: forw 1 // S: -- R: limit first */
+	" POSTPONE BEGIN"		/* C: forw 1 dest */
 	" ; IMMEDIATE\n"
 
 /**
@@ -3268,16 +3445,17 @@ static const char p4_defined_words[] =
 /**
  * ... limit first DO ... LEAVE ... LOOP ...
  *
- * (R: forw1 ... count dest ip -- forw1 ... forwN count' dest ip )
+ * (C: forw1 ... count dest -- forw1 ... forwN count' dest )
  * // (S: -- ) (R: loop-sys -- )
  *
  * @standard ANS-Forth 1994
  */
-": LEAVE"				/* R: forw1 ... count dest ip S: -- */
-	" 2R> R>"			/* R: forw1 ... S: dest ip count */
-	" POSTPONE AHEAD"		/* R: forw1 ... forwN S: dest ip count */
-	" 1+"				/* R: forw1 ... forwN S: dest ip count' */
-	" >R 2>R"			/* R: forw1 ... forwN count' dest ip S: -- */
+": LEAVE"				/* C: forw1 ... count dest R: --  */
+	" >R >R"			/* C: forw1 ... R: dest count */
+	" POSTPONE AHEAD"		/* C: forw1 ... forwN R: dest count */
+	" R>"				/* C: forw1 ... forwN count R: dest */
+	" 1+"				/* C: forw1 ... forwN count' R: dest */
+	" R>"				/* C: forw1 ... forwN count' dest R: -- */
 	" ; IMMEDIATE\n"
 
 /**
@@ -3287,52 +3465,49 @@ static const char p4_defined_words[] =
  *
  * @standard internal
  */
-": _loop"				/* (R: limit index ip )(S: n ) */
-	" R> 2R>"			/* (R: -- )(S: n ip limit index ) */
-	" 3 ROLL"			/* (R: -- )(S: ip limit index n ) */
-	" +"				/* (R: -- )(S: ip limit index' ) */
-	" 2DUP 2>R"			/* (R: limit index' )(S: ip limit index' ) */
-	" <="				/* (R: limit index' )(S: ip flag ) */
-	" SWAP >R"			/* (R: limit index' ip )(S: flag ) */
+": _loop"				/* R: limit index ip S: n */
+	" R> 2R>"			/* R: -- S: n ip limit index */
+	" 3 ROLL"			/* R: -- S: ip limit index n */
+	" +"				/* R: -- S: ip limit index' */
+	" 2DUP 2>R"			/* R: limit index' S: ip limit index' */
+	" ="				/* R: limit index' S: ip flag */
+	" SWAP >R"			/* R: limit index' ip S: flag */
 	" ;\n"
 
 /**
  * ... limit first DO ... LOOP ...
  *
- * (R: forw1 ... forwN count dest ip -- ip ) // (S: n -- ) (R: loop-sys1 -- | loop-sys2 )
+ * (C: forw1 ... forwN count dest -- ) // (S: n -- ) (R: loop-sys1 -- | loop-sys2 )
  *
  * @standard ANS-Forth 1994
  */
-": +LOOP"				/* R: forw1 ... forwN count dest ip S: -- */
-	" R>"				/* R: forw1 ... forwN count dest S: ip */
-
+": +LOOP"				/* C: forw1 ... forwN count dest */
 	/* Loop increment and test. */
-	" ['] _loop COMPILE,"		/* R: forw1 ... forwN count dest S: ip */
-	" POSTPONE UNTIL"		/* R: forw1 ... forwN count S: ip */
+	" ['] _loop COMPILE,"
+	" POSTPONE UNTIL"		/* C: forw1 ... forwN count */
 
 	/* Resolve LEAVE forward references. */
-	" R>"				/* R: forw1 ... forwN S: ip count */
-	" BEGIN"			/* R: forw1 ... forwN S: ip count */
-	"  DUP 0<> WHILE"		/* R: forw1 ... forwN S: ip count flag */
-	"  1-"				/* R: forw1 ... forwN S: ip count' */
-	"  POSTPONE THEN"		/* R: forw1 ... S: ip count */
-	" REPEAT"			/* R: -- S: ip count' */
-	" DROP"				/* R: -- S: ip */
+	" BEGIN"			/* C: forw1 ... forwN count */
+	 " DUP 0<> WHILE"		/* C: forw1 ... forwN count flag */
+	 " 1-"				/* C: forw1 ... forwN count' */
+	 " SWAP"			/* C: forw1 ... count' forwN */
+	 " POSTPONE THEN"		/* C: forw1 ... count' */
+	" REPEAT"			/* C: count' */
+	" DROP"				/* C: -- */
 
 	/* LEAVE branches to just after UNTIL and before UNLOOP. */
 	" ['] UNLOOP COMPILE,"
 
-	" >R"				/* R: ip S: -- */
 	" ; IMMEDIATE\n"
 
 /**
  * ... limit first DO ... LOOP ...
  *
- * (R: dest ip -- ip ) // (S: --  ) (R: loop-sys1 -- | loop-sys2 )
+ * (C: dest -- ) // (S: --  ) (R: loop-sys1 -- | loop-sys2 )
  *
  * @standard ANS-Forth 1994
  */
-": LOOP R> 1 POSTPONE LITERAL POSTPONE +LOOP >R ; IMMEDIATE\n"
+": LOOP 1 POSTPONE LITERAL POSTPONE +LOOP ; IMMEDIATE\n"
 
 /**
  * ... limit first DO ... LOOP ...
@@ -3341,7 +3516,7 @@ static const char p4_defined_words[] =
  *
  * @standard ANS-Forth 1994
  */
-": I 1 CS-PICK ;\n"
+": I 1 RS-PICK R> ;\n"
 
 /**
  * ... limit first DO ... LOOP ...
@@ -3350,7 +3525,7 @@ static const char p4_defined_words[] =
  *
  * @standard ANS-Forth 1994
  */
-": J 3 CS-PICK ;\n"
+": J 3 RS-PICK R> ;\n"
 
 /**
  * ... SLITERAL ...
@@ -3438,6 +3613,18 @@ static const char p4_defined_words[] =
 	" 10 OBASE ! CR ;\n"
 
 /**
+ * ... SEE ...
+ *
+ * (S: "<spaces>name" -- )
+ *
+ * @standard ANS-Forth 1994
+ */
+": SEE"
+	" PARSE-WORD FIND-WORD"
+	" IF 'SEE ELSE 2DROP THEN"
+	" ; IMMEDIATE\n"
+
+/**
  * ... BLANK ...
  *
  * (S: c-addr u -- )
@@ -3489,91 +3676,6 @@ p4Init(void)
 		base36[toupper(*p)] = i;
 	for (i = 0, p = base36_digits; *p != '\0'; p++, i++)
 		base36[tolower(*p)] = i;
-}
-
-/**
- * Create a new interpreter context.
- *
- * @return
- *	A pointer to an allocated P4_Context structure.
- */
-P4_Context *
-p4Create(void)
-{
-	P4_Context *ctx;
-
-	if ((ctx = malloc(sizeof (*ctx))) == NULL)
-		goto error0;
-
-	if (p4ArrayAssign(&ctx->rs, P4_STACK_SIZE))
-		goto error1;
-
-	if (p4ArrayAssign(&ctx->ds, P4_STACK_SIZE))
-		goto error1;
-
-	if (p4ArrayAssign(&ctx->noname, P4_STACK_SIZE))
-		goto error1;
-
-	ctx->ip = NULL;
-	ctx->ibase = 10;
-	ctx->obase = 10;
-	ctx->xt = NULL;
-	ctx->word = NULL;
-	ctx->jmp_set = 0;
-	ctx->input.fp = stdin;
-	ctx->input.offset = 0;
-	ctx->input.length = 0;
-	ctx->input.buffer = ctx->console;
-
-	if (p4_core_words == NULL) {
-		/* Use first context to compile the globally defined core words.  */
-		ctx->words = &p4_word_ABORT;
-		P4_PUSH(ctx->ds).s = (P4_Byte *) p4_defined_words;
-		P4_PUSH(ctx->ds).u = sizeof (p4_defined_words)-1;
-		P4_WORD_DO(EVALUATE);
-		p4_core_words = ctx->words;
-	}
-
-	ctx->words = p4_core_words;
-
-	return ctx;
-error1:
-	p4Free(ctx);
-error0:
-	return NULL;
-}
-
-/**
- * @param _ctx
- *	A pointer to an allocated P4_Context structure to free.
- */
-void
-p4Free(void *_ctx)
-{
-	P4_Exec_Token xt;
-	P4_Word *prev, *word;
-	P4_Context *ctx = _ctx;
-
-	if (ctx != NULL) {
-		if (ctx->input.fp != NULL && ctx->input.fp != stdin)
-			fclose(ctx->input.fp);
-
-		while (!P4_IS_EMPTY(ctx->noname)) {
-			xt = P4_POP(ctx->noname).xt;
-			free(xt->data);
-			free(xt);
-		}
-
-		for (word = ctx->words; word != p4_core_words; word = prev) {
-			prev = word->prev;
-			free(word);
-		}
-
-		p4ArrayRelease(&ctx->noname);
-		p4ArrayRelease(&ctx->ds);
-		p4ArrayRelease(&ctx->rs);
-		free(ctx);
-	}
 }
 
 /**
@@ -3639,10 +3741,101 @@ p4EvalString(P4_Context *ctx, const char *string)
 	return rc;
 }
 
+/**
+ * Create a new interpreter context.
+ *
+ * @return
+ *	A pointer to an allocated P4_Context structure.
+ */
+P4_Context *
+p4Create(void)
+{
+	P4_Context *ctx;
+
+	if ((ctx = malloc(sizeof (*ctx))) == NULL)
+		goto error0;
+
+	if (p4ArrayAssign(&ctx->rs, P4_STACK_SIZE))
+		goto error1;
+
+	if (p4ArrayAssign(&ctx->ds, P4_STACK_SIZE))
+		goto error1;
+
+	if (p4ArrayAssign(&ctx->noname, P4_STACK_SIZE))
+		goto error1;
+
+#ifdef HAVE_TCGETATTR
+	if (tcgetattr(fileno(stdin), &ctx->saved_tty))
+		goto error1;
+#endif
+	ctx->ip = NULL;
+	ctx->ibase = 10;
+	ctx->obase = 10;
+	ctx->xt = NULL;
+	ctx->word = NULL;
+	ctx->jmp_set = 0;
+	ctx->sig_int = 0;
+	ctx->input.fp = stdin;
+	ctx->input.offset = 0;
+	ctx->input.length = 0;
+	ctx->input.buffer = ctx->console;
+	ctx->source_id = fileno(stdin);
+
+	if (p4_core_words == NULL) {
+		/* Use first context to compile the globally defined core words.  */
+		ctx->words = &p4_word_ABORT;
+		(void) p4EvalString(ctx, p4_defined_words);
+		p4_core_words = ctx->words;
+	}
+
+	ctx->words = p4_core_words;
+
+	return ctx;
+error1:
+	p4Free(ctx);
+error0:
+	return NULL;
+}
+
+/**
+ * @param _ctx
+ *	A pointer to an allocated P4_Context structure to free.
+ */
+void
+p4Free(void *_ctx)
+{
+	P4_Exec_Token xt;
+	P4_Word *prev, *word;
+	P4_Context *ctx = _ctx;
+
+	if (ctx != NULL) {
+		if (ctx->input.fp != NULL && ctx->input.fp != stdin)
+			fclose(ctx->input.fp);
+
+		while (!P4_IS_EMPTY(ctx->noname)) {
+			xt = P4_POP(ctx->noname).xt;
+			free(xt->data);
+			free(xt);
+		}
+
+		for (word = ctx->words; word != p4_core_words; word = prev) {
+			prev = word->prev;
+			free(word);
+		}
+
+		p4ArrayRelease(&ctx->noname);
+		p4ArrayRelease(&ctx->ds);
+		p4ArrayRelease(&ctx->rs);
+		free(ctx);
+	}
+}
+
 #ifdef TEST
 /***********************************************************************
  *** Main
  ***********************************************************************/
+
+#include <signal.h>
 
 static char usage[] =
 "usage: " P4_NAME " [-e expr][file ...] >output\n"
@@ -3654,15 +3847,25 @@ P4_NAME "/" P4_VERSION " " P4_COPYRIGHT "\n"
 "Built " P4_BUILT "\n"
 ;
 
+static P4_Context *ctx;
+
+static void
+sig_int(int signum)
+{
+	if (signum == SIGINT)
+		ctx->sig_int = -28;
+}
+
 int
 main(int argc, char **argv)
 {
 	char *arg;
 	int argi, rc;
-	P4_Context *ctx;
 
 	p4Init();
 	rc = EXIT_FAILURE;
+
+	(void) signal(SIGINT, sig_int);
 
 	if ((ctx = p4Create()) == NULL) {
 		fprintf(stderr, "initialisation error\n");

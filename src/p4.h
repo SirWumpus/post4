@@ -85,6 +85,10 @@ extern "C" {
 # endif
 #endif
 
+#ifdef HAVE_TERMIOS_H
+# include <termios.h>
+#endif
+
 #ifdef HAVE_UNISTD_H
 # include <unistd.h>
 #endif
@@ -268,6 +272,8 @@ struct p4_context{
 	jmp_buf		on_throw;
 	jmp_buf		on_abort;
 	jmp_buf		on_quit;
+	P4_Signed	sig_int;
+	struct termios	saved_tty;
 };
 
 extern P4_Cell p4_null_cell;
@@ -505,8 +511,8 @@ extern int p4EvalString(P4_Context *ctx, const char *string);
  ***********************************************************************/
 
 extern P4_Signed p4GetC(P4_Context *ctx);
-extern P4_Signed p4GetLine(P4_Context *ctx, P4_Byte *buffer, P4_Size size);
-extern P4_Signed p4InputLine(FILE *fp, P4_Byte *buffer, P4_Size size);
+extern P4_Unsigned p4GetLine(P4_Context *ctx, P4_Byte *buffer, P4_Size size);
+extern P4_Unsigned p4InputLine(FILE *fp, P4_Byte *buffer, P4_Size size);
 
 /**
  * Handles parsing of "ccc<char>".
