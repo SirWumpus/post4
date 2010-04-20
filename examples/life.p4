@@ -244,7 +244,7 @@ screen1 VALUE screen_next
 .................................................
 .................................................
 
-5 .generations
+10 generations
 
 \ Gosper Glider Gun
 >screen
