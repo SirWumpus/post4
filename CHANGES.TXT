@@ -5,6 +5,25 @@ syntax, and/or dramatic changes in functionality. The minor number
 changes for corrections, enhancements, etc. made to the code. There
 is no set schedule for releases.
 
+--0.4.2--
+
+   !	Changed ( and .( to allow for comments/strings that span
+   	multiple input lines as mentioned in ANS-Forth 1994 section
+   	11.6.1.0080.
+
+   !	Changed semantics of S" to support ANS-Forth 1994 section
+   	11.6.1.2165.
+
+   !	Fixed p4GetLine() to correctly handle zero length buffer.
+
+   !	Move P4_Context.source_id to P4_Input.fd. This makes it all
+   	part of the input source context and simplifies save/restore
+   	of this context.
+
+   !	Cleaned up the handling of setjmp buffers in p4EvalFile(),
+   	p4EvalString(), etc. to allow for nesting.
+
+   +	Added BLK, INCLUDED, ?DUP, SPACES.
 
 --0.4.1--
 
