@@ -2516,20 +2516,38 @@ P4_WORD_DEFINE(MAIN)
  */
 P4_WORD_DEFINE(QUIT)
 {
-	P4_Unsigned jmp_set = ctx->jmp_set;
+	/* SPECIAL case for Unix command line pipe filters
+	 * allows us to say:
+	 *
+	 *	... | post4 -f script | ...
+	 *
+	 * If the last line of the source file ends with:
+	 *
+	 *	QUIT last_word\n<eof>
+	 *
+	 * Then we throw to a special version of QUIT that
+	 * will restore standard input and parses the last
+	 * word in the parse area _before_ resetting >IN to
+	 * zero.
+	 *
+	 * It is up to the word executed to wait for SIGPIPE,
+	 * terminate the process with <exit-code> BYE, or fall
+	 * through to the interactive interpreter.
+	 *
+	 * QUIT normally resets the input source to standard
+	 * input, so we can always read the next byte from a
+	 * file to raise EOF, which is only flagged with an
+	 * attempt to read beyond the end.
+	 */
+	if (ctx->input.fd != 0 && fgetc(ctx->input.fp) == EOF) {
+		P4_String last_word = p4ParseWord(&ctx->input);
+		if (last_word.string[last_word.length] == '\n') {
+			ctx->input.offset -= last_word.length + 1;
+			LONGJMP(ctx->on_abort, P4_THROW_START);
+		}
+	}
 
-	if (ctx->jmp_set & P4_JMP_QUIT)
-		LONGJMP(ctx->on_quit, -56);
-	else if (SETJMP(ctx->on_quit) == 0)
-		ctx->jmp_set |= P4_JMP_QUIT;
-
-	if (ctx->input.fp != NULL && ctx->input.fp != stdin)
-		fclose(ctx->input.fp);
-	ctx->input.fp = stdin;
-
-	P4_WORD_DO(MAIN);
-
-	ctx->jmp_set = jmp_set;
+	LONGJMP(ctx->on_abort, P4_THROW_QUIT);
 }
 
 /**
@@ -2541,23 +2559,7 @@ P4_WORD_DEFINE(QUIT)
  */
 P4_WORD_DEFINE(ABORT)
 {
-	int rc;
-	P4_Unsigned jmp_set = ctx->jmp_set;
-
-	if (ctx->jmp_set & P4_JMP_ABORT)
-		LONGJMP(ctx->on_abort, -1);
-	else if ((rc = SETJMP(ctx->on_abort)) == 0)
-		ctx->jmp_set |= P4_JMP_ABORT;
-
-	/* Avoid double LONGJMP. */
-	ctx->jmp_set &= ~P4_JMP_QUIT;
-
-	if (rc != 1) {
-		P4_RESET(ctx->ds);
-		P4_WORD_DO(QUIT);
-	}
-
-	ctx->jmp_set = jmp_set;
+	LONGJMP(ctx->on_abort, P4_THROW_ABORT);
 }
 
 /**
@@ -2670,11 +2672,11 @@ P4_WORD_DEFINE(THROW)
 	P4_Signed rc = P4_POP_SAFE(ctx->ds).n;
 
 	if (rc != 0) {
-		if (ctx->jmp_set & P4_JMP_THROW)
+		if ((ctx->jmp_set & P4_JMP_THROW) && rc != P4_THROW_START)
 			LONGJMP(ctx->on_throw, rc);
 
-		if (rc != -1) {
-			printf("%ld thrown: %s\n", rc, p4_exceptions[-rc]);
+		if (rc < 0 && rc != P4_THROW_ABORT && rc != P4_THROW_QUIT && rc != P4_THROW_START) {
+			printf("%ld thrown: %s\n", rc, rc < 0 ? p4_exceptions[-rc] : "");
 			if (ctx->state) {
 				printf("compiling %s\n", (ctx->word == NULL) ? ":NONAME" : (char *)ctx->word->name.string);
 			} else if (ctx->ip != NULL) {
@@ -2683,8 +2685,7 @@ P4_WORD_DEFINE(THROW)
 			}
 		}
 
-		if (ctx->jmp_set & P4_JMP_ABORT)
-			LONGJMP(ctx->on_abort, rc);
+		LONGJMP(ctx->on_abort, rc);
 	}
 }
 
@@ -3777,6 +3778,19 @@ static const char p4_defined_words[] =
 	" CMOVE ;\n"				/* (S: -- ) */
 
 /**
+ * ... START word ...
+ *
+ * Special case of QUIT that emptys the return stack, set
+ * the input source to standard input, but _not_ set >IN
+ * to zero, then execute the next word. Once completed,
+ * >IN is set to zero and the remainder of QUIT semantics
+ * are done.
+ *
+ * @standard extension
+ */
+": START -5656 THROW ;\n"
+
+/**
  * : X ... test ABORT" message" ...
  *
  * (C: "ccc<quote>" -- ) // (S: i*x x1 --  | i*x ) ( R: j*x --  | j*x )
@@ -3844,25 +3858,44 @@ p4Init(void)
 #endif
 }
 
-static int
+int
 p4Evaluate(P4_Context *ctx)
 {
 	int rc = -1;
+	P4_Byte buffer[P4_INPUT_SIZE];
 
 	P4_SETJMP_PUSH(ctx, &ctx->on_abort);
-	if ((rc = SETJMP(ctx->on_abort)) == 0) {
+
+	switch (rc = SETJMP(ctx->on_abort)) {
+	case P4_THROW_ABORT:
+	case P4_THROW_ABORT_MSG:
+		P4_RESET(ctx->ds);
+		/*@fallthrough*/
+
+	case P4_THROW_QUIT:
+	case P4_THROW_START:
+		P4_RESET(ctx->rs);
+
+		if (ctx->input.fp != NULL && 0 < ctx->input.fd)
+			fclose(ctx->input.fp);
+
+		ctx->input.blk = 0;
+		ctx->input.fp = stdin;
+		ctx->input.fd = fileno(stdin);
+
+		if (rc == P4_THROW_START)
+			p4Interpret(ctx);
+		/*@fallthrough*/
+
+	case 0:
 		ctx->jmp_set |= P4_JMP_ABORT;
+		ctx->input.buffer = buffer;
+		ctx->input.offset = 0;
 
-		P4_SETJMP_PUSH(ctx, &ctx->on_quit);
-		if ((rc = SETJMP(ctx->on_quit)) == 0) {
-			ctx->jmp_set |= P4_JMP_QUIT;
-
-			P4_RESET(ctx->ds);
-			P4_WORD_DO(MAIN);
-		}
-
-		P4_SETJMP_POP(ctx, &ctx->on_quit);
+		P4_WORD_DO(MAIN);
+		rc = 0;
 	}
+
 	P4_SETJMP_POP(ctx, &ctx->on_abort);
 
 	return rc;
@@ -3882,7 +3915,6 @@ int
 p4EvalFd(P4_Context *ctx, P4_Signed fd)
 {
 	int rc;
-	P4_Byte buffer[P4_INPUT_SIZE];
 
 	if (ctx == NULL || fd < 0) {
 		errno = EFAULT;
@@ -3890,11 +3922,7 @@ p4EvalFd(P4_Context *ctx, P4_Signed fd)
 	}
 
 	P4_INPUT_PUSH(&ctx->input);
-	ctx->input.buffer = buffer;
-	ctx->input.offset = 0;
-
 	rc = p4Evaluate(ctx);
-
 	P4_INPUT_POP(&ctx->input);
 
 	return rc;
@@ -3915,7 +3943,6 @@ int
 p4EvalFile(P4_Context *ctx, const char *file)
 {
 	int rc;
-	P4_Byte buffer[P4_INPUT_SIZE];
 
 	if (ctx == NULL || file == NULL) {
 		errno = EFAULT;
@@ -3923,14 +3950,13 @@ p4EvalFile(P4_Context *ctx, const char *file)
 	}
 
 	P4_INPUT_PUSH(&ctx->input);
-	ctx->input.buffer = buffer;
-	ctx->input.offset = 0;
 
 	if ((ctx->input.fp = fopen(file, "r")) == NULL) {
-		rc = errno == ENOENT ? -38 : -37;
+		rc = errno == ENOENT ? P4_THROW_ENOENT : P4_THROW_EIO;
 	} else {
 		rc = p4Evaluate(ctx);
-		(void) fclose(ctx->input.fp);
+		if (ctx->input.fp != NULL && 0 < ctx->input.fd)
+			(void) fclose(ctx->input.fp);
 	}
 
 	P4_INPUT_POP(&ctx->input);
@@ -3944,19 +3970,15 @@ p4EvalString(P4_Context *ctx, const char *string)
 	int rc;
 
 	P4_SETJMP_PUSH(ctx, &ctx->on_abort);
+
 	if ((rc = SETJMP(ctx->on_abort)) == 0) {
 		ctx->jmp_set |= P4_JMP_ABORT;
 
-		P4_SETJMP_PUSH(ctx, &ctx->on_quit);
-		if ((rc = SETJMP(ctx->on_quit)) == 0) {
-			ctx->jmp_set |= P4_JMP_QUIT;
-
-			P4_PUSH(ctx->ds).p = (P4_Pointer) string;
-			P4_PUSH(ctx->ds).u = strlen(string);
-			P4_WORD_DO(EVALUATE);
-		}
-		P4_SETJMP_POP(ctx, &ctx->on_quit);
+		P4_PUSH(ctx->ds).p = (P4_Pointer) string;
+		P4_PUSH(ctx->ds).u = strlen(string);
+		P4_WORD_DO(EVALUATE);
 	}
+
 	P4_SETJMP_POP(ctx, &ctx->on_abort);
 
 	return rc;
@@ -4048,7 +4070,7 @@ p4Free(void *_ctx)
 #include <signal.h>
 
 static char usage[] =
-"usage: " P4_NAME " [-e string]... [-f file]... [args ...] >output\n"
+"usage: " P4_NAME " [-e string]... [-f file]... [args ...]\n"
 "\n"
 "-e string\tevaluate string\n"
 "-f file\t\tevaluate input file\n"
@@ -4063,7 +4085,7 @@ static void
 sig_int(int signum)
 {
 	if (signum == SIGINT)
-		ctx->sig_int = -28;
+		ctx->sig_int = P4_THROW_USER;
 }
 
 int
@@ -4107,7 +4129,7 @@ main(int argc, char **argv)
 		goto error1;
 	}
 
-	P4_WORD_DO(ABORT);
+	(void) p4Evaluate(ctx);
 error2:
 	rc = P4_POP_SAFE(ctx->ds).n;
 error1:

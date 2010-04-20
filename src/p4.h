@@ -270,18 +270,16 @@ struct p4_context{
 	P4_Signed	ibase;		/* Input radix */
 	P4_Signed	obase;		/* Output radix */
 	P4_Signed	state;		/* 0=interpret, 1=compile */
-	P4_Byte		console[P4_INPUT_SIZE];
+	P4_Signed	sig_int;
 	P4_Input	input;
+	P4_Byte		console[P4_INPUT_SIZE];
 	P4_Unsigned	jmp_set;
 
 #define P4_JMP_ABORT			0x00000001
-#define P4_JMP_QUIT			0x00000002
-#define P4_JMP_THROW			0x00000004
+#define P4_JMP_THROW			0x00000002
 
-	JMP_BUF		on_throw;
 	JMP_BUF		on_abort;
-	JMP_BUF		on_quit;
-	P4_Signed	sig_int;
+	JMP_BUF		on_throw;
 };
 
 extern P4_Cell p4_null_cell;
@@ -327,6 +325,73 @@ extern P4_Cell p4_null_cell;
 
 #define P4_INPUT_PUSH(this_input)	{ P4_Input old_input = *this_input;
 #define P4_INPUT_POP(this_input)	*this_input = old_input; }
+
+/***********************************************************************
+ *** Exceptions
+ ***********************************************************************/
+
+#define P4_THROW_BYE		 1
+
+#define P4_THROW_ABORT		-1	/* ABORT */
+#define P4_THROW_ABORT_MSG	-2	/* ABORT" */
+#define P4_THROW__3		-3	/* stack overflow */
+#define P4_THROW_DS_UNDER	-4	/* stack underflow */
+#define P4_THROW__5		-5	/* return stack overflow */
+#define P4_THROW_RS_UNDER	-6	/* return stack underflow */
+#define P4_THROW__7		-7	/* do-loops nested too deeply during execution */
+#define P4_THROW__8		-8	/* dictionary overflow */
+#define P4_THROW_EFAULT		-9	/* invalid memory address */
+#define P4_THROW__10		-10	/* division by zero */
+#define P4_THROW__11		-11	/* result out of range */
+#define P4_THROW__12		-12	/* argument type mismatch */
+#define P4_THROW__13		-13	/* undefined word */
+#define P4_THROW__14		-14	/* interpreting a compile-only word */
+#define P4_THROW__15		-15	/* invalid FORGET */
+#define P4_THROW__16		-16	/* attempt to use zero-length string as a name */
+#define P4_THROW__17		-17	/* pictured numeric output string overflow */
+#define P4_THROW__18		-18	/* parsed string overflow */
+#define P4_THROW__19		-19	/* definition name too long */
+#define P4_THROW__20		-20	/* write to a read-only location */
+#define P4_THROW__21		-21	/* unsupported operation (e.g., AT-XY on a too-dumb terminal) */
+#define P4_THROW__22		-22	/* control structure mismatch */
+#define P4_THROW__23		-23	/* address alignment exception */
+#define P4_THROW__24		-24	/* invalid numeric argument */
+#define P4_THROW__25		-25	/* return stack imbalance */
+#define P4_THROW__26		-26	/* loop parameters unavailable */
+#define P4_THROW__27		-27	/* invalid recursion */
+#define P4_THROW_USER		-28	/* user interrupt */
+#define P4_THROW__29		-29	/* compiler nesting */
+#define P4_THROW__30		-30	/* obsolescent feature */
+#define P4_THROW__31		-31	/* >BODY used on non-CREATEd definition */
+#define P4_THROW__32		-32	/* invalid name argument (e.g., TO xxx) */
+#define P4_THROW__33		-33	/* block read exception */
+#define P4_THROW__34		-34	/* block write exception */
+#define P4_THROW__35		-35	/* invalid block number */
+#define P4_THROW__36		-36	/* invalid file position */
+#define P4_THROW_EIO		-37	/* file I/O exception */
+#define P4_THROW_ENOENT		-38	/* non-existent file */
+#define P4_THROW__39		-39	/* unexpected end of file */
+#define P4_THROW__40		-40	/* invalid BASE for floating point conversion */
+#define P4_THROW__41		-41	/* loss of precision */
+#define P4_THROW__42		-42	/* floating-point divide by zero */
+#define P4_THROW__43		-43	/* floating-point result out of range */
+#define P4_THROW__44		-44	/* floating-point stack overflow */
+#define P4_THROW__45		-45	/* floating-point stack underflow */
+#define P4_THROW__46		-46	/* floating-point invalid argument */
+#define P4_THROW__47		-47	/* compilation word list deleted */
+#define P4_THROW__48		-48	/* invalid POSTPONE */
+#define P4_THROW__49		-49	/* search-order overflow */
+#define P4_THROW__50		-50	/* search-order underflow */
+#define P4_THROW__51		-51	/* compilation word list changed */
+#define P4_THROW__52		-52	/* control-flow stack overflow */
+#define P4_THROW__53		-53	/* exception stack overflow */
+#define P4_THROW__54		-54	/* floating-point underflow */
+#define P4_THROW__55		-55	/* floating-point unidentified fault */
+#define P4_THROW_QUIT		-56	/* QUIT */
+#define P4_THROW__57		-57	/* exception in sending or receiving a character */
+#define P4_THROW__58		-58	/* [IF], [ELSE], or [THEN] exception */
+
+#define P4_THROW_START		-5656	/* SPECIAL version of QUIT for pipe filters */
 
 /***********************************************************************
  *** Array API
