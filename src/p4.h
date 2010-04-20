@@ -168,6 +168,8 @@ typedef struct {
 
 typedef struct {
 	FILE *		fp;		/* stdin or an open file, never NULL. */
+	P4_Signed	fd;		/* -1=string 0=stdin otherwise file descriptor */
+	P4_Unsigned	blk;
 	P4_Unsigned	offset;		/* Offset of unconsumed input. */
 	P4_Unsigned	length;		/* Length of input in buffer. */
 	P4_Byte	*	buffer;
@@ -260,7 +262,6 @@ struct p4_context{
 	P4_Signed	ibase;		/* Input radix */
 	P4_Signed	obase;		/* Output radix */
 	P4_Signed	state;		/* 0=interpret, 1=compile */
-	P4_Signed	source_id;	/* -1=string 0=stdin otherwise file descriptor */
 	P4_Byte		console[P4_INPUT_SIZE];
 	P4_Input	input;
 	P4_Unsigned	jmp_set;
@@ -269,9 +270,9 @@ struct p4_context{
 #define P4_JMP_QUIT			0x00000002
 #define P4_JMP_THROW			0x00000004
 
-	jmp_buf		on_throw;
-	jmp_buf		on_abort;
-	jmp_buf		on_quit;
+	JMP_BUF		on_throw;
+	JMP_BUF		on_abort;
+	JMP_BUF		on_quit;
 	P4_Signed	sig_int;
 	struct termios	saved_tty;
 };
@@ -310,6 +311,15 @@ extern P4_Cell p4_null_cell;
 #define P4_IS_INTERPRETING(ctx)		((ctx)->state == 0)
 
 #define P4_CELL_ALIGN(nbytes)		((((nbytes) - 1)  | (sizeof (P4_Cell)-1)) + 1)
+
+#define P4_SETJMP_PUSH(ctx, this_jb) \
+	{ JMP_BUF jb; P4_Unsigned jmp_set = (ctx)->jmp_set; memcpy(&jb, this_jb, sizeof (jb))
+
+#define P4_SETJMP_POP(ctx, this_jb) \
+	memcpy(this_jb, &jb, sizeof (jb)); (ctx)->jmp_set = jmp_set; }
+
+#define P4_INPUT_PUSH(this_input)	{ P4_Input old_input = *this_input;
+#define P4_INPUT_POP(this_input)	*this_input = old_input; }
 
 /***********************************************************************
  *** Array API
@@ -480,6 +490,18 @@ extern P4_Context *p4Create(void);
  *	A pointer to an allocated P4_Context structure to free.
  */
 extern void p4Free(void *_ctx);
+
+/**
+ * @param ctx
+ *	A pointer to an allocated P4_Context structure.
+ *
+ * @param fd
+ *	A open file descriptor
+ *
+ * @return
+ *	Zero on success, 1 on BYE, otherwise -1 on file error or abort.
+ */
+extern int p4EvalFd(P4_Context *ctx, P4_Signed fd);
 
 /**
  * @param ctx

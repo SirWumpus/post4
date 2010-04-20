@@ -552,16 +552,25 @@ p4ParseWord(P4_Input *input)
 P4_Signed
 p4GetC(P4_Context *ctx)
 {
-	if (ctx->source_id == -1)
+	unsigned char ch;
+
+	if (ctx->input.fd == -1)
 		return ctx->input.offset < ctx->input.length ? ctx->input.buffer[ctx->input.offset++] : EOF;
 
-	return fgetc(ctx->input.fp);
+	if (ctx->input.fp != NULL)
+		return fgetc(ctx->input.fp);
+
+	return read(ctx->input.fd, &ch, sizeof (ch)) == sizeof (ch) ? ch : EOF;
 }
 
 P4_Unsigned
 p4GetLine(P4_Context *ctx, P4_Byte *line, P4_Size size)
 {
-	P4_Signed ch, i;
+	P4_Signed ch;
+	P4_Unsigned i;
+
+	if (line == NULL || size == 0)
+		return 0;
 
 	for (i = 0, --size; i < size; ) {
 		if ((ch = p4GetC(ctx)) == EOF)
@@ -582,6 +591,9 @@ P4_Unsigned
 p4InputLine(FILE *fp, P4_Byte *line, P4_Size size)
 {
 	P4_Signed i;
+
+	if (line == NULL || size == 0)
+		return 0;
 
 	for (i = 0, --size; i < size; ) {
 		line[i] = (P4_Byte) fgetc(fp);
@@ -2206,6 +2218,18 @@ P4_WORD_DEFINE(GT_IN)
 }
 
 /**
+ * ... BLK ...
+ *
+ * (S: -- a-addr)
+ *
+ * @standard ANS-Forth 1994
+ */
+P4_WORD_DEFINE(BLK)
+{
+	P4_PUSH_SAFE(ctx->ds).p = &ctx->input.blk;
+}
+
+/**
  * ... CONSOLE ...
  *
  * (S: -- c-addr u)
@@ -2247,7 +2271,7 @@ P4_WORD_DEFINE(SOURCE)
  */
 P4_WORD_DEFINE(SOURCE_ID)
 {
-	P4_PUSH_SAFE(ctx->ds).p = &ctx->source_id;
+	P4_PUSH_SAFE(ctx->ds).p = &ctx->input.fd;
 }
 
 /**
@@ -2308,7 +2332,7 @@ P4_WORD_DEFINE(ACCEPT)
  */
 P4_WORD_DEFINE(REFILL)
 {
-	if (0 <= ctx->source_id) {
+	if (0 <= ctx->input.fd) {
 		ctx->input.offset = 0;
 		ctx->input.length = p4GetLine(ctx, ctx->input.buffer, P4_INPUT_SIZE);
 		P4_PUSH_SAFE(ctx->ds).n = 0 < ctx->input.length && !feof(ctx->input.fp) && !ferror(ctx->input.fp);
@@ -2343,7 +2367,7 @@ P4_WORD_DEFINE(WORDS)
 	fputc('\n', stdout);
 }
 
-void
+static void
 p4Interpret(P4_Context *ctx)
 {
 	P4_Signed n;
@@ -2397,18 +2421,41 @@ p4Interpret(P4_Context *ctx)
  */
 P4_WORD_DEFINE(EVALUATE)
 {
-	P4_Input previous_source;
+	P4_INPUT_PUSH(&ctx->input);
 
-	previous_source = ctx->input;
+	ctx->input.blk = 0;
+	ctx->input.fd = -1;
+	ctx->input.fp = NULL;
+	ctx->input.offset = 0;
 	ctx->input.length = P4_POP_SAFE(ctx->ds).u;
 	ctx->input.buffer = P4_POP_SAFE(ctx->ds).s;
-	ctx->input.offset = 0;
-	ctx->source_id = -1;
 
 	p4Interpret(ctx);
 
-	ctx->input = previous_source;
-	ctx->source_id = fileno(ctx->input.fp);
+	P4_INPUT_POP(&ctx->input);
+}
+
+/**
+ * ... S" pathname" INCLUDED ...
+ *
+ * (S: i*x c-addr u -- j*x )
+ *
+ * @standard ANS-Forth 1994
+ */
+P4_WORD_DEFINE(INCLUDED)
+{
+	P4_Byte *path;
+	P4_Size length;
+
+	if (P4_LENGTH(ctx->ds) < 2) {
+		P4_PUSH(ctx->ds).n = -4;
+		P4_WORD_DO(THROW);
+	} else {
+		length = P4_POP(ctx->ds).u;
+		path = P4_POP(ctx->ds).s;
+		path[length] = '\0';
+		(void) p4EvalFile(ctx, path);
+	}
 }
 
 /**
@@ -2421,14 +2468,14 @@ P4_WORD_DEFINE(EVALUATE)
 static
 P4_WORD_DEFINE(MAIN)
 {
+	ctx->ip = NULL;
 	P4_WORD_DO(LSQUARE);
-	ctx->source_id = fileno(ctx->input.fp);
+	ctx->input.fd = fileno(ctx->input.fp);
 
 	for (;;) {
-		ctx->ip = NULL;
 		P4_RESET(ctx->rs);
 
-		if (ctx->source_id == 0 && P4_IS_INTERPRETING(ctx))
+		if (ctx->input.fd == 0 && P4_IS_INTERPRETING(ctx))
 			fputs("ok\n", stdout);
 
 		P4_WORD_DO(REFILL);
@@ -2455,9 +2502,11 @@ P4_WORD_DEFINE(MAIN)
  */
 P4_WORD_DEFINE(QUIT)
 {
+	P4_Unsigned jmp_set = ctx->jmp_set;
+
 	if (ctx->jmp_set & P4_JMP_QUIT)
-		longjmp(ctx->on_quit, -56);
-	else if (setjmp(ctx->on_quit) == 0)
+		LONGJMP(ctx->on_quit, -56);
+	else if (SETJMP(ctx->on_quit) == 0)
 		ctx->jmp_set |= P4_JMP_QUIT;
 
 	if (ctx->input.fp != NULL && ctx->input.fp != stdin)
@@ -2466,7 +2515,7 @@ P4_WORD_DEFINE(QUIT)
 
 	P4_WORD_DO(MAIN);
 
-	ctx->jmp_set &= ~P4_JMP_QUIT;
+	ctx->jmp_set = jmp_set;
 }
 
 /**
@@ -2479,13 +2528,14 @@ P4_WORD_DEFINE(QUIT)
 P4_WORD_DEFINE(ABORT)
 {
 	int rc;
+	P4_Unsigned jmp_set = ctx->jmp_set;
 
 	if (ctx->jmp_set & P4_JMP_ABORT)
-		longjmp(ctx->on_abort, -1);
-	else if ((rc = setjmp(ctx->on_abort)) == 0)
+		LONGJMP(ctx->on_abort, -1);
+	else if ((rc = SETJMP(ctx->on_abort)) == 0)
 		ctx->jmp_set |= P4_JMP_ABORT;
 
-	/* Avoid double longjmp. */
+	/* Avoid double LONGJMP. */
 	ctx->jmp_set &= ~P4_JMP_QUIT;
 
 	if (rc != 1) {
@@ -2493,7 +2543,7 @@ P4_WORD_DEFINE(ABORT)
 		P4_WORD_DO(QUIT);
 	}
 
-	ctx->jmp_set &= ~P4_JMP_ABORT;
+	ctx->jmp_set = jmp_set;
 }
 
 /**
@@ -2506,30 +2556,29 @@ P4_WORD_DEFINE(ABORT)
 P4_WORD_DEFINE(CATCH)
 {
 	P4_Signed rc;
-	jmp_buf prev_frame;
-	P4_Unsigned jmp_set;
 	P4_Input previous_source;
 	P4_Unsigned ds_depth, rs_depth;
 
-	jmp_set = ctx->jmp_set;
-	memcpy(&prev_frame, &ctx->on_throw, sizeof (prev_frame));
+	/* P4_INPUT_PUSH not used here, since the restoration
+	 * of the input source context is conditional on a
+	 * THROW.
+	 */
 	previous_source = ctx->input;
 	ds_depth = P4_LENGTH(ctx->ds);
 	rs_depth = P4_LENGTH(ctx->rs);
 
-	if ((rc = setjmp(ctx->on_throw)) == 0) {
+	P4_SETJMP_PUSH(ctx, &ctx->on_throw);
+	if ((rc = SETJMP(ctx->on_throw)) == 0) {
 		ctx->jmp_set |= P4_JMP_THROW;
 		P4_WORD_DO(EXECUTE);
 	} else {
 		P4_SET_DEPTH(ctx->ds, ds_depth);
 		P4_SET_DEPTH(ctx->rs, rs_depth);
-		ctx->source_id = fileno(previous_source.fp);
 		ctx->input = previous_source;
 	}
+	P4_SETJMP_POP(ctx, &ctx->on_throw);
 
 	P4_PUSH(ctx->ds).n = rc;
-	memcpy(&ctx->on_throw, &prev_frame, sizeof (prev_frame));
-	ctx->jmp_set = jmp_set;
 }
 
 const char *p4_exceptions[] = {
@@ -2608,7 +2657,7 @@ P4_WORD_DEFINE(THROW)
 
 	if (rc != 0) {
 		if (ctx->jmp_set & P4_JMP_THROW)
-			longjmp(ctx->on_throw, rc);
+			LONGJMP(ctx->on_throw, rc);
 
 		if (rc != -1) {
 			printf("%ld thrown: %s\n", rc, p4_exceptions[-rc]);
@@ -2621,7 +2670,7 @@ P4_WORD_DEFINE(THROW)
 		}
 
 		if (ctx->jmp_set & P4_JMP_ABORT)
-			longjmp(ctx->on_abort, rc);
+			LONGJMP(ctx->on_abort, rc);
 	}
 }
 
@@ -2661,7 +2710,7 @@ P4_WORD_DEFINE(HELP)
  */
 P4_WORD_DEFINE(BYE)
 {
-	longjmp(ctx->on_abort, 1);
+	LONGJMP(ctx->on_abort, 1);
 }
 
 /**
@@ -2731,7 +2780,8 @@ P4_WORD_NAME(ACCEPT,		_exit,		0		);
 P4_WORD_NAME(ALIGN,		ACCEPT,		0		);
 P4_WORD_NAME(ALLOCATE,		ALIGN,		0		);
 P4_WORD_NAME(AND,		ALLOCATE,	0 		);
-P4_WORD_NAME(CATCH,		AND,		0		);
+P4_WORD_NAME(BLK,		AND,		0		);
+P4_WORD_NAME(CATCH,		BLK,		0		);
 P4_WORD_NAME(CMOVE,		CATCH,		0		);
 P4_WORD_NAME(CONSOLE,		CMOVE,		0		);
 P4_WORD_NAME(CONTEXT,		CONSOLE,	0		);
@@ -2751,7 +2801,8 @@ P4_WORD_NAME(HERE,		HELP,		0		);
 P4_WORD_NAME(IBASE,		HERE,		0		);
 P4_WORD_NAME(IMMEDIATE,		IBASE,		P4_BIT_IMM 	);
 P4_WORD_NAME(INVERT,		IMMEDIATE,	0 		);
-P4_WORD_NAME(BRANCH,		INVERT,		0 		);
+P4_WORD_NAME(INCLUDED,		INVERT,		0		);
+P4_WORD_NAME(BRANCH,		INCLUDED,	0 		);
 P4_WORD_NAME(BRANCHZ,		BRANCH,		0 		);
 P4_WORD_NAME(JUMP,		BRANCHZ,	0 		);
 P4_WORD_NAME(JUMPZ,		JUMP,		0 		);
@@ -3171,9 +3222,23 @@ static const char p4_defined_words[] =
  */
 ": \\ \\n PARSE 2DROP ; IMMEDIATE\n"
 
-": CR \\r EMIT \\n EMIT ;\n"			/* (S: -- ) */
+/**
+ * ... CR ...
+ *
+ * (S: -- )
+ *
+ * @standard ANS-Forth 1994
+ */
+": CR \\r EMIT \\n EMIT ;\n"
 
-": SPACE BL EMIT ;\n"				/* (S: -- ) */
+/**
+ * ... SPACE ...
+ *
+ * (S: -- )
+ *
+ * @standard ANS-Forth 1994
+ */
+": SPACE BL EMIT ;\n"
 
 /**
  * ... . ...
@@ -3193,29 +3258,32 @@ static const char p4_defined_words[] =
  */
 ": U. U.# SPACE ;\n"
 
-": POSTPONE PARSE-WORD FIND-WORD DROP COMPILE, ; IMMEDIATE\n"	/* (C: "<spaces>name" -- ) */
-
-": CHAR PARSE-WORD DROP C@ ;\n"			/* (S: "<spaces>name" -- char ) */
-
-": [CHAR] CHAR POSTPONE LITERAL ; IMMEDIATE\n"	/* (C: "<spaces>name" -- ) // (S: -- char ) */
-
 /**
- *  ... ( comment) ...
+ *  ...  POSTPONE  ...
  *
- * (S: "ccc<paren>" -- )
+ * (C: "<spaces>name" -- )
  *
  * @standard ANS-Forth 1994
  */
-": ( [CHAR] ) PARSE 2DROP ; IMMEDIATE\n"
+": POSTPONE PARSE-WORD FIND-WORD DROP COMPILE, ; IMMEDIATE\n"
 
 /**
- * ... .( ccc) ...
+ *  ...  CHAR  ...
  *
- * (S: "ccc<paren>" -- )
+ * (S: "<spaces>name" -- char )
  *
- * @standard ANS-Forth 1994, extended
+ * @standard ANS-Forth 1994
  */
-": .( [CHAR] ) PARSE-ESCAPE TYPE ; IMMEDIATE\n"
+": CHAR PARSE-WORD DROP C@ ;\n"
+
+/**
+ *  ...  U.  ...
+ *
+ * (C: "<spaces>name" -- ) // (S: -- char )
+ *
+ * @standard ANS-Forth 1994
+ */
+": [CHAR] CHAR POSTPONE LITERAL ; IMMEDIATE\n"
 
 /**
  * ... POSTPONE name ...
@@ -3406,6 +3474,41 @@ static const char p4_defined_words[] =
 ": EXIT R> DROP R> CONTEXT ! ;\n"
 
 /**
+ *  ... ( comment) ...
+ *
+ * (S: "ccc<paren>" -- )
+ *
+ * @standard ANS-Forth 1994, file
+ */
+": ("
+	" BEGIN"
+	 " [CHAR] ) DUP PARSE"			/* S: paren caddr u */
+	 " + C@" 				/* S: paren char */
+	 " ="					/* S: flag */
+	 " IF EXIT THEN"
+	 " REFILL 0="				/* S: flag */
+	" UNTIL"
+	" ; IMMEDIATE\n"
+
+/**
+ * ... .( ccc) ...
+ *
+ * (S: "ccc<paren>" -- )
+ *
+ * @standard ANS-Forth 1994, extended
+ */
+": .("
+	" BEGIN"
+	 " [CHAR] ) DUP PARSE-ESCAPE"		/* S: paren caddr u */
+	 " 2DUP TYPE"				/* S: paren caddr u */
+	 " + C@" 				/* S: paren char */
+	 " ="					/* S: flag */
+	 " IF EXIT THEN"
+	 " REFILL 0="				/* S: flag */
+	" UNTIL"
+	" ; IMMEDIATE\n"
+
+/**
  * ... limit first DO ... LOOP ...
  *
  * (C: -- count dest ) // (S: limit first -- ) (R: -- limit first )
@@ -3550,7 +3653,11 @@ static const char p4_defined_words[] =
  *
  * @standard ANS-Forth 1994, extended
  */
-": S\" [CHAR] \" PARSE-ESCAPE POSTPONE SLITERAL ; IMMEDIATE\n"
+": S\""
+	" [CHAR] \" PARSE-ESCAPE"		/* S: caddr u */
+	" STATE @"				/* S: caddr u flag */
+	" IF POSTPONE SLITERAL THEN"		/* S: caddr u | -- */
+	" ; IMMEDIATE\n"
 
 /**
  * ... ." ccc" ...
@@ -3598,6 +3705,24 @@ static const char p4_defined_words[] =
 ": ROT 2 ROLL ;\n"
 
 /**
+ * ... ?DUP ...
+ *
+ * (S: x -- 0 | x x )
+ *
+ * @standard ANS-Forth 1994, extended
+ */
+": ?DUP DUP 0<> IF DUP THEN ;\n"
+
+/**
+ * ... SPACES ...
+ *
+ * (S: n -- )
+ *
+ * @standard ANS-Forth 1994, extended
+ */
+": SPACES 0 ?DO SPACE LOOP ;\n"
+
+/**
  * ... ? ...
  *
  * (S: a-addr -- )
@@ -3629,7 +3754,7 @@ static const char p4_defined_words[] =
  *
  * (S: c-addr u -- )
  *
- * @standard ANS-Forth 1994, extended
+ * @standard ANS-Forth 1994
  */
 ": BLANK"
 	" 1- SWAP BL OVER"			/* (S: u c-addr ' ' c-addr ) */
@@ -3678,6 +3803,62 @@ p4Init(void)
 		base36[tolower(*p)] = i;
 }
 
+static int
+p4Evaluate(P4_Context *ctx)
+{
+	int rc = -1;
+
+	P4_SETJMP_PUSH(ctx, &ctx->on_abort);
+	if ((rc = SETJMP(ctx->on_abort)) == 0) {
+		ctx->jmp_set |= P4_JMP_ABORT;
+
+		P4_SETJMP_PUSH(ctx, &ctx->on_quit);
+		if ((rc = SETJMP(ctx->on_quit)) == 0) {
+			ctx->jmp_set |= P4_JMP_QUIT;
+
+			ctx->input.offset = 0;
+			P4_RESET(ctx->ds);
+			P4_WORD_DO(MAIN);
+		}
+
+		P4_SETJMP_POP(ctx, &ctx->on_quit);
+	}
+	P4_SETJMP_POP(ctx, &ctx->on_abort);
+
+	return rc;
+}
+
+/**
+ * @param ctx
+ *	A pointer to an allocated P4_Context structure.
+ *
+ * @param fd
+ *	A open file descriptor
+ *
+ * @return
+ *	Zero on success, 1 on BYE, otherwise -1 on file error or abort.
+ */
+int
+p4EvalFd(P4_Context *ctx, P4_Signed fd)
+{
+	int rc;
+	P4_Byte buffer[P4_INPUT_SIZE];
+
+	if (ctx == NULL || fd < 0) {
+		errno = EFAULT;
+		return -9;
+	}
+
+	P4_INPUT_PUSH(&ctx->input);
+	ctx->input.buffer = buffer;
+
+	rc = p4Evaluate(ctx);
+
+	P4_INPUT_POP(&ctx->input);
+
+	return rc;
+}
+
 /**
  * @param ctx
  *	A pointer to an allocated P4_Context structure.
@@ -3693,28 +3874,24 @@ int
 p4EvalFile(P4_Context *ctx, const char *file)
 {
 	int rc;
+	P4_Byte buffer[P4_INPUT_SIZE];
 
 	if (ctx == NULL || file == NULL) {
 		errno = EFAULT;
-		return -1;
+		return -9;
 	}
 
-	if ((ctx->input.fp = fopen(file, "r")) == NULL)
-		return -1;
+	P4_INPUT_PUSH(&ctx->input);
+	ctx->input.buffer = buffer;
 
-	if ((rc = setjmp(ctx->on_abort)) == 0) {
-		ctx->jmp_set |= P4_JMP_ABORT;
-		if ((rc = setjmp(ctx->on_quit)) == 0) {
-			ctx->jmp_set |= P4_JMP_QUIT;
-
-			P4_RESET(ctx->ds);
-			P4_WORD_DO(MAIN);
-		}
+	if ((ctx->input.fp = fopen(file, "r")) == NULL) {
+		rc = errno == ENOENT ? -38 : -37;
+	} else {
+		rc = p4Evaluate(ctx);
+		(void) fclose(ctx->input.fp);
 	}
-	ctx->jmp_set &= ~(P4_JMP_ABORT|P4_JMP_QUIT);
 
-	fclose(ctx->input.fp);
-	ctx->input.fp = stdin;
+	P4_INPUT_POP(&ctx->input);
 
 	return rc;
 }
@@ -3724,19 +3901,21 @@ p4EvalString(P4_Context *ctx, const char *string)
 {
 	int rc;
 
-	if ((rc = setjmp(ctx->on_abort)) == 0) {
+	P4_SETJMP_PUSH(ctx, &ctx->on_abort);
+	if ((rc = SETJMP(ctx->on_abort)) == 0) {
 		ctx->jmp_set |= P4_JMP_ABORT;
-		if ((rc = setjmp(ctx->on_quit)) == 0) {
+
+		P4_SETJMP_PUSH(ctx, &ctx->on_quit);
+		if ((rc = SETJMP(ctx->on_quit)) == 0) {
 			ctx->jmp_set |= P4_JMP_QUIT;
 
-			P4_RESET(ctx->ds);
 			P4_PUSH(ctx->ds).p = (P4_Pointer) string;
 			P4_PUSH(ctx->ds).u = strlen(string);
 			P4_WORD_DO(EVALUATE);
 		}
+		P4_SETJMP_POP(ctx, &ctx->on_quit);
 	}
-
-	ctx->jmp_set &= ~(P4_JMP_ABORT|P4_JMP_QUIT);
+	P4_SETJMP_POP(ctx, &ctx->on_abort);
 
 	return rc;
 }
@@ -3752,7 +3931,7 @@ p4Create(void)
 {
 	P4_Context *ctx;
 
-	if ((ctx = malloc(sizeof (*ctx))) == NULL)
+	if ((ctx = calloc(1, sizeof (*ctx))) == NULL)
 		goto error0;
 
 	if (p4ArrayAssign(&ctx->rs, P4_STACK_SIZE))
@@ -3768,18 +3947,11 @@ p4Create(void)
 	if (tcgetattr(fileno(stdin), &ctx->saved_tty))
 		goto error1;
 #endif
-	ctx->ip = NULL;
 	ctx->ibase = 10;
 	ctx->obase = 10;
-	ctx->xt = NULL;
-	ctx->word = NULL;
-	ctx->jmp_set = 0;
-	ctx->sig_int = 0;
 	ctx->input.fp = stdin;
-	ctx->input.offset = 0;
-	ctx->input.length = 0;
+	ctx->input.fd = fileno(stdin);
 	ctx->input.buffer = ctx->console;
-	ctx->source_id = fileno(stdin);
 
 	if (p4_core_words == NULL) {
 		/* Use first context to compile the globally defined core words.  */
