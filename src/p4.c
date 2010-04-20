@@ -16,6 +16,12 @@ static void *p4_program_end;
 static unsigned char base36[256];
 static char base36_digits[] = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ";
 
+#ifdef HAVE_TCGETATTR
+static int tty_fd = -1;
+static struct termios tty_raw;
+static struct termios tty_saved;
+#endif
+
 /***********************************************************************
  *** Conversion API
  ***********************************************************************/
@@ -2173,7 +2179,15 @@ P4_WORD_DEFINE(TYPE)
  */
 P4_WORD_DEFINE(KEY)
 {
-	P4_PUSH_SAFE(ctx->ds).n = (P4_Signed) fgetc(stdin);
+#ifdef HAVE_TCSETATTR
+	if (tty_fd != -1)
+		(void) tcsetattr(tty_fd, TCSANOW, &tty_raw);
+#endif
+	P4_PUSH_SAFE(ctx->ds).n = p4GetC(ctx);
+#ifdef HAVE_TCSETATTR
+	if (tty_fd != -1)
+		(void) tcsetattr(tty_fd, TCSANOW, &tty_saved);
+#endif
 }
 
 /**
@@ -2486,7 +2500,7 @@ P4_WORD_DEFINE(MAIN)
 			P4_WORD_DO(THROW);
 		}
 
-		if (!P4_POP_SAFE(ctx->ds).n)
+		if (!P4_POP(ctx->ds).n)
 			break;
 
 		p4Interpret(ctx);
@@ -3778,6 +3792,15 @@ static P4_Word *p4_core_words;
  *** Core
  ***********************************************************************/
 
+void
+p4Fini(void)
+{
+#ifdef HAVE_TCSETATTR
+	if (0 <= tty_fd)
+		(void) tcsetattr(tty_fd, TCSANOW, &tty_saved);
+#endif
+}
+
 /**
  */
 void
@@ -3801,6 +3824,24 @@ p4Init(void)
 		base36[toupper(*p)] = i;
 	for (i = 0, p = base36_digits; *p != '\0'; p++, i++)
 		base36[tolower(*p)] = i;
+
+#ifdef HAVE_TCGETATTR
+# ifdef HAVE_CTERMID
+	tty_fd = open(ctermid(NULL), O_RDWR, S_IRWXU|S_IRWXG|S_IRWXO);
+# else
+	tty_fd = fileno(stdin);
+# endif
+	if (tty_fd != -1) {
+		(void) tcgetattr(tty_fd, &tty_saved);
+
+		tty_raw = tty_saved;
+
+		/* Non-canonical blocking input. */
+		tty_raw.c_cc[VMIN] = 1;
+		tty_raw.c_cc[VTIME] = 0;
+		tty_raw.c_lflag &= ~(ICANON|ECHO|ECHONL|ECHOCTL);
+	}
+#endif
 }
 
 static int
@@ -3816,7 +3857,6 @@ p4Evaluate(P4_Context *ctx)
 		if ((rc = SETJMP(ctx->on_quit)) == 0) {
 			ctx->jmp_set |= P4_JMP_QUIT;
 
-			ctx->input.offset = 0;
 			P4_RESET(ctx->ds);
 			P4_WORD_DO(MAIN);
 		}
@@ -3851,6 +3891,7 @@ p4EvalFd(P4_Context *ctx, P4_Signed fd)
 
 	P4_INPUT_PUSH(&ctx->input);
 	ctx->input.buffer = buffer;
+	ctx->input.offset = 0;
 
 	rc = p4Evaluate(ctx);
 
@@ -3883,6 +3924,7 @@ p4EvalFile(P4_Context *ctx, const char *file)
 
 	P4_INPUT_PUSH(&ctx->input);
 	ctx->input.buffer = buffer;
+	ctx->input.offset = 0;
 
 	if ((ctx->input.fp = fopen(file, "r")) == NULL) {
 		rc = errno == ENOENT ? -38 : -37;
@@ -3943,10 +3985,6 @@ p4Create(void)
 	if (p4ArrayAssign(&ctx->noname, P4_STACK_SIZE))
 		goto error1;
 
-#ifdef HAVE_TCGETATTR
-	if (tcgetattr(fileno(stdin), &ctx->saved_tty))
-		goto error1;
-#endif
 	ctx->ibase = 10;
 	ctx->obase = 10;
 	ctx->input.fp = stdin;
@@ -4010,10 +4048,10 @@ p4Free(void *_ctx)
 #include <signal.h>
 
 static char usage[] =
-"usage: " P4_NAME " [-e expr][file ...] >output\n"
+"usage: " P4_NAME " [-e string]... [-f file]... [args ...] >output\n"
 "\n"
-"-e expr\t\tevaluate string\n"
-"file ...\tevaluate input file\n"
+"-e string\tevaluate string\n"
+"-f file\t\tevaluate input file\n"
 "\n"
 P4_NAME "/" P4_VERSION " " P4_COPYRIGHT "\n"
 "Built " P4_BUILT "\n"
@@ -4036,7 +4074,7 @@ main(int argc, char **argv)
 
 	p4Init();
 	rc = EXIT_FAILURE;
-
+	(void) atexit(p4Fini);
 	(void) signal(SIGINT, sig_int);
 
 	if ((ctx = p4Create()) == NULL) {
@@ -4054,6 +4092,12 @@ main(int argc, char **argv)
 			if (arg != NULL && p4EvalString(ctx, arg) == 1)
 				goto error2;
 			continue;
+
+		case 'f':
+			arg = argv[argi][2] == '\0' ? argv[++argi] : &argv[argi][2];
+			if (arg != NULL && p4EvalFile(ctx, arg) == 1)
+				goto error2;
+			continue;
 		}
 
 		if (argv[argi] == NULL)
@@ -4061,16 +4105,6 @@ main(int argc, char **argv)
 		else
 			fprintf(stderr, "invalid option -%c\n%s", argv[argi][1], usage);
 		goto error1;
-	}
-
-	for ( ; argi < argc; argi++) {
-		switch (p4EvalFile(ctx, argv[argi])) {
-		case -1:
-			fprintf(stderr, "compile error: %s\n", argv[argi]);
-			goto error1;
-		case 1:
-			goto error2;
-		}
 	}
 
 	P4_WORD_DO(ABORT);

@@ -189,6 +189,47 @@ extern "C" {
 #undef HAVE_CTERMID
 
 /*
+ * POSIX I/O
+ */
+#undef HAVE_FCNTL_H
+#undef HAVE_SYS_STAT_H
+#undef HAVE_UNISTD_H
+#undef HAVE_UTIME_H
+#undef HAVE_CHDIR
+#undef HAVE_CHMOD
+#undef HAVE_CHOWN
+#undef HAVE_CHROOT
+#undef HAVE_CHSIZE
+#undef HAVE_CLOSE
+#undef HAVE_CREAT
+#undef HAVE_DUP
+#undef HAVE_DUP2
+#undef HAVE_FCHMOD
+#undef HAVE_FSTAT
+#undef HAVE_FTRUNCATE
+#undef HAVE_GETCWD
+#undef HAVE_LINK
+#undef HAVE_LSEEK
+#undef HAVE_MKDIR
+#undef HAVE_OPEN
+#undef HAVE_PIPE
+#undef HAVE_READ
+#undef HAVE_RENAME
+#undef HAVE_RMDIR
+#undef HAVE_STAT
+#undef HAVE_TRUNCATE
+#undef HAVE_UMASK
+#undef HAVE_UNLINK
+#undef HAVE_UTIME
+#undef HAVE_WRITE
+#undef HAVE_DIRENT_H
+#undef HAVE_CLOSEDIR
+#undef HAVE_OPENDIR
+#undef HAVE_READDIR
+#undef HAVE_ISATTY
+#undef HAVE_GETDTABLESIZE
+
+/*
  *
  */
 #undef HAVE_UNISTD_H

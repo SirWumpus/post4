@@ -67,6 +67,7 @@ SNERT_ANSI_STRING
 SNERT_EXTRA_STRING
 SNERT_REGEX
 SNERT_SETJMP
+SNERT_POSIX_IO
 SNERT_TERMIOS
 
 #######################################################################

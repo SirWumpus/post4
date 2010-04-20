@@ -62,8 +62,11 @@ extern "C" {
 #include <limits.h>
 #include <setjmp.h>
 
-#ifdef HAVE_SYS_IOCTL_H
-# include <sys/ioctl.h>
+#ifdef HAVE_SYS_TYPES_H
+# include <sys/types.h>
+#endif
+#ifdef HAVE_SYS_STAT_H
+# include <sys/stat.h>
 #endif
 
 #ifdef TIME_WITH_SYS_TIME
@@ -88,7 +91,12 @@ extern "C" {
 #ifdef HAVE_TERMIOS_H
 # include <termios.h>
 #endif
-
+#ifdef HAVE_SYS_IOCTL_H
+# include <sys/ioctl.h>
+#endif
+#ifdef HAVE_FCNTL_H
+# include <fcntl.h>
+#endif
 #ifdef HAVE_UNISTD_H
 # include <unistd.h>
 #endif
@@ -274,7 +282,6 @@ struct p4_context{
 	JMP_BUF		on_abort;
 	JMP_BUF		on_quit;
 	P4_Signed	sig_int;
-	struct termios	saved_tty;
 };
 
 extern P4_Cell p4_null_cell;
@@ -476,6 +483,11 @@ extern void p4StringReverse(P4_Byte *s, P4_Size length);
  * Initialise the global environment.
  */
 extern void p4Init(void);
+
+/**
+ * Finalise the global environment.
+ */
+extern void p4Fini(void);
 
 /**
  * Create a new interpreter context.
