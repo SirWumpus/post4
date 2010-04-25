@@ -73,11 +73,11 @@ $O$E :
 
 all: build
 
-build: title p4$O post4$E
+build: title p4$O p4$E
 
 clean : title
 	-rm -f *.o *.obj *.i *.map *.tds *.TR2 *.stackdump core *.core core.* *.log
-	-rm -f post4$E
+	-rm -f p4$E
 
 distclean: clean
 	-rm -f config.h config.h.in makefile
@@ -94,6 +94,6 @@ title :
 install: build
 	-cp -p post4$E ${bindir}
 
-post4$E : config.h p4.h p4.c
-	${CC} ${CFLAGS} ${LDFLAGS} -DTEST -DP4_BUILT="\"`date +'%a, %d %b %Y %H:%M:%S %z'`\"" -o post4$E p4.c
+p4$E : config.h p4.h p4.c
+	${CC} ${CFLAGS} ${LDFLAGS} -DTEST -DP4_BUILT="\"`date +'%a, %d %b %Y %H:%M:%S %z'`\"" -o p4$E p4.c
 
