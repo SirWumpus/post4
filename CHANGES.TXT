@@ -5,6 +5,80 @@ syntax, and/or dramatic changes in functionality. The minor number
 changes for corrections, enhancements, etc. made to the code. There
 is no set schedule for releases.
 
+--TODO--
+
+   +	Add means to pass command line arguments into a context.
+
+   +	Add File word sets.
+
+   +	SLITERAL null terminate the stored word. Allows for
+   	intermixing with C string functions.
+
+--0.4.3--
+
+   !	Fixed KEY to modify and restore termios settings so as to get
+	single unbuffered and non-echoed input character.
+
+   !	Changed command line option to require -f to evaluate a source
+   	file, instead of passing as an argument. This allows for a
+   	script to get command line arguments; similar to behaviour of
+   	awk and sed.
+
+   !	Overhauled once more the setjmp/longjmp to simplify the code.
+	Suspect this can be refactored once more later merging on_abort
+	and on_throw jump buffers.
+
+   + 	Added special (hack) case for Unix command line pipe filters
+	allows us to say:
+
+		... | post4 -f script | ...
+
+	If the last line of the source file ends with:
+
+		QUIT last_word\n<eof>
+
+	Then we throw to a special version of QUIT that will restore
+	standard input and parses the last word in the parse area
+	_before_ resetting >IN to zero.
+
+	It is up to the word executed to wait for SIGPIPE, terminate the
+	process with <exit-code> BYE, or fall through to the interactive
+	interpreter.
+
+   +	Also added START word as a more clear extension to the special
+   	QUIT last_word hack above.
+
+   +	Added words AT-XY PAGE TIME&DATE INCLUDE BLOCK BUFFER LOAD LIST
+	LIST+ SCR THRU UPDATE USE USING EMPTY-BUFFERS SAVE-BUFFERS FLUSH
+	?BLOCKS UPDATED?
+
+   !	Fixed bug with LEAVE not taking into account an IF...THEN context,
+   	ie.   DO ... IF ... LEAVE THEN ... LOOP
+
+   !	Replaced SLEEP with MS.
+
+   !	Replaced .# and U.# with .R and U.R. .# and U.# are just right
+   	justified numbers in a zero width field.
+
+   +	Added numeric prefix parsing support:
+
+   		$7F		hex
+   		0x7F		hex
+   		0X7F		hex
+   		0377		octal
+   		#999		decimal
+   		%101010		binary
+   		\n		backslash escape
+   		'c'		character
+
+   !	Replaced IBASE and OBASE with the standard BASE word.
+
+   !	Fixed implementation of >=
+
+   +	Added examples/ed.p4; collection of words for block editing with
+   	simple line mode style similar to ed(1), interactive single line
+   	editing, and interactive full "screen" editing.
+
 --0.4.2--
 
    !	Changed ( and .( to allow for comments/strings that span

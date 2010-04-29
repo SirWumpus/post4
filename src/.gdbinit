@@ -1,4 +1,5 @@
-set listsize 20
+set listsize 24
+handle SIGINT nostop pass noprint
 
 define showinput
 p ctx->input.buffer+ctx->input.offset
