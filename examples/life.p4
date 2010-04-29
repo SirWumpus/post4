@@ -122,7 +122,7 @@ screen1 VALUE screen_next
 
 ( count -- char )
 : death
-	2 5 WITH-IN					\ flag
+	3 5 WITH-IN					\ flag
 	IF on ELSE off THEN 				\ char
 ;
 
@@ -132,11 +132,6 @@ screen1 VALUE screen_next
 		columns 0 ?DO
 			I J #neighbours			\ count
 			.
-\			DUP .				\ count
-\			J I screen@			\ count char
-\			on = 				\ count flag
-\			IF death ELSE birth THEN	\ char'
-\			J I screen!			\ --
 		LOOP
 		CR
 	LOOP
