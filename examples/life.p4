@@ -22,6 +22,8 @@
 \ is a pure function of the one before). The rules continue to be applied
 \ repeatedly to create further generations.
 
+MARKER rm_life
+
 24 VALUE rows
 80 VALUE columns
 
@@ -32,25 +34,14 @@ CHAR . VALUE off
 ( n -- )
 : ALLOT RESERVE DROP ;
 
-: ansi-clear S" \e[2J" TYPE ;
-
-( row column -- )
-: ansi-goto
-	SWAP S" \e[" TYPE
-	1+ U.#
-	[CHAR] ; EMIT
-	1+ U.#
-	[CHAR] H EMIT
-;
+( u -- a-addr )
+: alloc ALLOCATE DROP ;
 
 ( -- u )
 : /screen rows columns * CHARS ;
 
-( u -- a-addr )
-: alloc ALLOCATE DROP ;
-
 ( -- c-addr )
-: screen_alloc rows columns * CHARS alloc ;
+: screen_alloc /screen alloc ;
 
 screen_alloc VALUE screen0
 screen_alloc VALUE screen1
@@ -58,12 +49,7 @@ screen0 VALUE screen_curr
 screen1 VALUE screen_next
 
 ( c-addr char -- )
-: screen_set
-	OVER !				\ caddr
-	DUP 1+ 				\ caddr caddr'
-	rows columns * 1- CHARS		\ caddr caddr' length
-	CMOVE
-;
+: screen_set /screen SWAP FILL ;
 
 ( caddr -- )
 : screen_reset off screen_set ;
@@ -97,30 +83,30 @@ screen1 VALUE screen_next
 ( column -- flag )
 : ?column 0 columns WITH-IN ;
 
-( row column -- flag )
-: ?screen ?column SWAP ?row AND ;
+( column row -- flag )
+: ?screen ?row SWAP ?column AND ;
 
-( row column -- offset )
-: row_col+ SWAP columns * + CHARS ;
+( column row -- offset )
+: row_col+ columns * + CHARS ;
 
-( row column -- char )
+( column row -- char )
 : screen@ row_col+ screen_curr + C@ ;
 
-( char row column -- )
+( char column row -- )
 : screen! row_col+ screen_next + C! ;
 
-( row column -- count )
+( column row -- count )
 : #neighbours
-	2>R 0 R> R>				\ count col row
+	2>R 0 2R>				\ count col row
 	DUP 2 +					\ count col row row+2
 	SWAP 1-					\ count col row+2 row-1
 	?DO
 		DUP 2 +				\ count col col+2
 		OVER 1-				\ count col col+2 col-1
 		?DO				\ count col
-			J I ?screen		\ count col flag
+			I J ?screen		\ count col flag
 			IF
-				J I screen@ on = 	\ count col flag
+				I J screen@ on = 	\ count col flag
 				IF SWAP 1+ SWAP THEN	\ count' col
 			THEN
 		LOOP
@@ -144,7 +130,7 @@ screen1 VALUE screen_next
 : .neighbours
 	rows 0 ?DO
 		columns 0 ?DO
-			J I #neighbours			\ count
+			I J #neighbours			\ count
 			.
 \			DUP .				\ count
 \			J I screen@			\ count char
@@ -160,11 +146,11 @@ screen1 VALUE screen_next
 : generation
 	rows 0 ?DO
 		columns 0 ?DO
-			J I #neighbours			\ count
-			J I screen@			\ count char
+			I J #neighbours			\ count
+			I J screen@			\ count char
 			on = 				\ count flag
 			IF death ELSE birth THEN	\ char'
-			J I screen!			\ --
+			I J screen!			\ --
 		LOOP
 	LOOP
 ;
@@ -183,14 +169,15 @@ screen1 VALUE screen_next
 
 ( n -- )
 : generations
-	ansi-clear
+	PAGE
 	1+ 1 DO
-		0 0 ansi-goto
+		0 0 AT-XY
 		." generation #" I . CR
 		generation
 		screen_swap
 		screen_curr .screen
-		1 SLEEP DROP
+		KEY? IF KEY DROP \a EMIT LEAVE THEN
+		250 MS
 	LOOP
 ;
 
@@ -281,13 +268,13 @@ screen1 VALUE screen_next
 .................................................
 .................................................
 .................................................
+.................................................
+.................................................
+.................................................
+.................................................
 ..........................#......................
 ....................##...........................
 .....................#...###.....................
-.................................................
-.................................................
-.................................................
-.................................................
 .................................................
 .................................................
 .................................................
