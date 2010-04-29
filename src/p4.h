@@ -41,12 +41,20 @@ extern "C" {
 #define P4_STRING_SIZE			256
 #endif
 
+#ifndef P4_STRING_LENGTH
+#define P4_STRING_LENGTH		(P4_STRING_SIZE-2)
+#endif
+
 #ifndef P4_INPUT_SIZE
 #define P4_INPUT_SIZE			256
 #endif
 
 #ifndef P4_SAFE_PATH
 #define P4_SAFE_PATH			"/bin:/usr/bin"
+#endif
+
+#ifndef P4_BLOCK_FILE
+#define P4_BLOCK_FILE			"p4.blk"
 #endif
 
 /***********************************************************************
@@ -61,6 +69,7 @@ extern "C" {
 #include <string.h>
 #include <limits.h>
 #include <setjmp.h>
+#include <signal.h>
 
 #ifdef HAVE_SYS_TYPES_H
 # include <sys/types.h>
@@ -164,7 +173,12 @@ typedef struct p4_context P4_Context;
 typedef void (*P4_Func)(P4_Context *);
 
 typedef struct {
-	P4_Unsigned	length;		/* Length on string less NUL byte. */
+	P4_Byte length;
+	P4_Byte string[1];
+} P4_Counted_String;
+
+typedef struct {
+	P4_Unsigned	length;		/* Length of string less NUL byte. */
 	P4_Byte * 	string;		/* Pointer to content plus terminating NUL byte. */
 } P4_String;
 
@@ -177,11 +191,28 @@ typedef struct {
 typedef struct {
 	FILE *		fp;		/* stdin or an open file, never NULL. */
 	P4_Signed	fd;		/* -1=string 0=stdin otherwise file descriptor */
-	P4_Unsigned	blk;
+	P4_Unsigned	blk;		/* If 0< then buffer is a block and this is the block number. */
 	P4_Unsigned	offset;		/* Offset of unconsumed input. */
 	P4_Unsigned	length;		/* Length of input in buffer. */
 	P4_Byte	*	buffer;
 } P4_Input;
+
+#define P4_INPUT_STR		(-1)
+#define P4_INPUT_IS_STR(ctx)	((ctx)->input.fd == P4_INPUT_STR)
+#define P4_INPUT_IS_TERM(ctx)	((ctx)->input.fd == 0)
+#define P4_INPUT_IS_FILE(ctx)	((ctx)->input.fp != NULL && 0 < (ctx)->input.fd)
+
+typedef enum {
+	P4_BLOCK_FREE,
+	P4_BLOCK_CLEAN,
+	P4_BLOCK_DIRTY,
+} P4_Block_State;
+
+typedef struct {
+	P4_Block_State	state;
+	P4_Unsigned	number;
+	P4_Byte		buffer[P4_BLOCK_SIZE];
+} P4_Block;
 
 typedef struct p4_xt {
 	P4_Func		code;		/* The "code field" is a C function. */
@@ -207,7 +238,7 @@ struct p4_word {
 #define P4_WORD_SET_IMM(w)		((w)->bits |= P4_BIT_IMM)
 #define P4_WORD_CLEAR_IMM(w)		((w)->bits &= ~P4_BIT_IMM)
 
-	P4_String	name;		/* Allocated string, never moves. */
+	P4_String 	name;		/* Allocated string, never moves. */
 	P4_Word *	prev;		/* Next word definition. */
 	P4_Exec_Token	xt;
 };
@@ -229,25 +260,42 @@ struct p4_word {
 	scope struct p4_xt p4_xt_ ## name ; \
 	scope void p4_do_ ## name (P4_Context *)
 
+#define P4_DEFINE_XT(name) \
+	struct p4_xt p4_xt_ ## name = { p4_do_ ## name, NULL };
+
 #define P4_WORD_NAME(name, prev, bits) \
-	struct p4_xt p4_xt_ ## name = { p4_do_ ## name, NULL }; \
-	P4_Word p4_word_ ## name = { bits, { sizeof (#name)-1, #name }, &p4_word_ ## prev, &p4_xt_ ## name }
+	P4_WORD_TEXT(name, prev, bits, #name)
+
+#ifdef USE_COUNTED_STRINGS
+
+#define P4_DEFINE_CS(name, str) \
+	struct { P4_Byte length; P4_Byte string[sizeof (str)+1]; } \
+	p4_cs_ ## name = { (P4_Byte) sizeof (str)-1, str }
 
 #define P4_WORD_TEXT(name, prev, bits, text) \
-	struct p4_xt p4_xt_ ## name = { p4_do_ ## name, NULL }; \
-	P4_Word p4_word_ ## name = { bits, { sizeof (text)-1, text   }, &p4_word_ ## prev, &p4_xt_ ## name }
+	P4_DEFINE_XT(name); P4_DEFINE_CS(name, str); \
+	P4_Word p4_word_ ## name = { bits, (P4_CountedString *) &p4_cs_ ## name, &p4_word_ ## prev, &p4_xt_ ## name }
 
-#define P4_WORD_ALIAS(alias, prev) \
-	P4_Word p4_word_ ## alias = { P4_BIT_ALIAS, { sizeof (#alias)-1, #alias }, &p4_word_ ## prev, &p4_xt_ ## prev }
+#else
+
+#define P4_WORD_TEXT(name, prev, bits, text) \
+	P4_DEFINE_XT(name); \
+	P4_Word p4_word_ ## name = { bits, { sizeof (text)-1, text }, &p4_word_ ## prev, &p4_xt_ ## name }
+
+#define P4_WORD_ALIAS(alias, prev, text) \
+	P4_Word p4_word_ ## alias = { P4_BIT_ALIAS, { sizeof (text)-1, text }, &p4_word_ ## prev, &p4_xt_ ## prev }
+
+#endif /* USE_COUNTED_STRINGS */
 
 union p4_cell {
-	P4_Cell *	a;
-	P4_Word *	w;
-	P4_Byte *	s;
-	P4_Signed	n;
-	P4_Unsigned	u;
-	P4_Pointer	p;
-	P4_Exec_Token	xt;
+	P4_Cell *		a;
+	P4_Word *		w;
+	P4_Byte *		s;
+	P4_Signed		n;
+	P4_Unsigned		u;
+	P4_Pointer		p;
+	P4_Exec_Token		xt;
+	P4_Counted_String *	cs;
 };
 
 #define P4_ADDRESS_UNIT	(sizeof (P4_Byte))
@@ -267,12 +315,14 @@ struct p4_context{
 	P4_Exec_Token	xt;		/* Current xt being compiled */
 	P4_Word *	word;		/* Current word being compiled. */
 	P4_Word *	words;		/* Head of the dictionary word list. */
-	P4_Signed	ibase;		/* Input radix */
-	P4_Signed	obase;		/* Output radix */
+	P4_Signed	base;		/* Input/Output radix */
 	P4_Signed	state;		/* 0=interpret, 1=compile */
-	P4_Signed	sig_int;
+	P4_Signed	unget;
+	P4_Signed	signal;
 	P4_Input	input;
 	P4_Byte		console[P4_INPUT_SIZE];
+	P4_Block	block;
+	P4_Byte *	block_file;
 	P4_Unsigned	jmp_set;
 
 #define P4_JMP_ABORT			0x00000001
@@ -330,7 +380,7 @@ extern P4_Cell p4_null_cell;
  *** Exceptions
  ***********************************************************************/
 
-#define P4_THROW_BYE		 1
+#define P4_ABORT_BYE		 1
 
 #define P4_THROW_ABORT		-1	/* ABORT */
 #define P4_THROW_ABORT_MSG	-2	/* ABORT" */
@@ -347,10 +397,10 @@ extern P4_Cell p4_null_cell;
 #define P4_THROW__13		-13	/* undefined word */
 #define P4_THROW__14		-14	/* interpreting a compile-only word */
 #define P4_THROW__15		-15	/* invalid FORGET */
-#define P4_THROW__16		-16	/* attempt to use zero-length string as a name */
+#define P4_THROW_EMPTY_NAME	-16	/* attempt to use zero-length string as a name */
 #define P4_THROW__17		-17	/* pictured numeric output string overflow */
 #define P4_THROW__18		-18	/* parsed string overflow */
-#define P4_THROW__19		-19	/* definition name too long */
+#define P4_THROW_NAME_TOO_LONG	-19	/* definition name too long */
 #define P4_THROW__20		-20	/* write to a read-only location */
 #define P4_THROW__21		-21	/* unsupported operation (e.g., AT-XY on a too-dumb terminal) */
 #define P4_THROW__22		-22	/* control structure mismatch */
@@ -364,8 +414,8 @@ extern P4_Cell p4_null_cell;
 #define P4_THROW__30		-30	/* obsolescent feature */
 #define P4_THROW__31		-31	/* >BODY used on non-CREATEd definition */
 #define P4_THROW__32		-32	/* invalid name argument (e.g., TO xxx) */
-#define P4_THROW__33		-33	/* block read exception */
-#define P4_THROW__34		-34	/* block write exception */
+#define P4_THROW_BLOCK_RD	-33	/* block read exception */
+#define P4_THROW_BLOCK_WR	-34	/* block write exception */
 #define P4_THROW__35		-35	/* invalid block number */
 #define P4_THROW__36		-36	/* invalid file position */
 #define P4_THROW_EIO		-37	/* file I/O exception */
@@ -517,6 +567,10 @@ extern P4_Size p4UnsignedToString(P4_Unsigned number, P4_Unsigned base, P4_Byte 
  * @param base
  *	The conversion radix between 2 and 36 inclusive.
  *
+ *	Special case radix 0 returns the first byte of s.
+ *	Special case radix 1 returns the value of a backslash
+ *	escape character; see p4CharLiteral().
+ *
  * @return
  *	A number.
  */
@@ -576,7 +630,9 @@ extern void p4Free(void *_ctx);
  *	A open file descriptor
  *
  * @return
- *	Zero on success, 1 on BYE, otherwise -1 on file error or abort.
+ *	Zero on success, otherwise an exception code. On
+ *	BYE (1) the top of stack is exit code to return;
+ *	otherwise the ABORT (-1) or others may be returned.
  */
 extern int p4EvalFd(P4_Context *ctx, P4_Signed fd);
 
@@ -589,7 +645,9 @@ extern int p4EvalFd(P4_Context *ctx, P4_Signed fd);
  *	If NULL, then standard input will be read.
  *
  * @return
- *	Zero on success, 1 on BYE, otherwise -1 on file error or abort.
+ *	Zero on success, otherwise an exception code. On
+ *	BYE (1) the top of stack is exit code to return;
+ *	otherwise the ABORT (-1) or others may be returned.
  */
 extern int p4EvalFile(P4_Context *ctx, const char *filepath);
 
@@ -601,9 +659,22 @@ extern int p4EvalFile(P4_Context *ctx, const char *filepath);
  *	A C string to interpret.
  *
  * @return
- *	Zero on success, 1 on BYE, otherwise -1 on abort.
+ *	Zero on success, otherwise an exception code. On
+ *	BYE (1) the top of stack is exit code to return;
+ *	otherwise the ABORT (-1) or others may be returned.
  */
 extern int p4EvalString(P4_Context *ctx, const char *string);
+
+/**
+ * @param ctx
+ *	A pointer to an allocated P4_Context structure.
+ *
+ * @return
+ *	Zero on success, otherwise an exception code. On
+ *	BYE (1) the top of stack is exit code to return;
+ *	otherwise the ABORT (-1) or others may be returned.
+ */
+extern int p4Evaluate(P4_Context *ctx);
 
 /***********************************************************************
  *** Convenience Functions
@@ -673,6 +744,8 @@ extern P4_Word *p4FindWord(P4_Context *ctx, P4_Byte *caddr, P4_Size length);
 extern P4_Word *p4FindXt(P4_Context *ctx, P4_Exec_Token xt);
 extern P4_Signed p4IsNoname(P4_Context *ctx, P4_Exec_Token xt);
 extern void p4Dump(FILE *fp, P4_Byte *addr, P4_Size length);
+extern void p4Nap(P4_Unsigned s, P4_Unsigned ns);
+extern void p4Throw(P4_Context *ctx, P4_Signed exception);
 
 /***********************************************************************
  *** Core Words & Actions

@@ -155,6 +155,12 @@ extern "C" {
 #undef TIME_WITH_SYS_TIME
 #undef HAVE_TZNAME
 
+#ifdef HAVE_LOCALTIME_R
+# define LOCALTIME_R(clock, localp)		localtime_r(clock, localp);
+#else
+# define LOCALTIME_R(clock, localp)		{ struct tm *tmp = localtime(clock); *localp = *tmp }
+#endif
+
 /*
  * setjmp
  */
