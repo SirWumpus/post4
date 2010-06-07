@@ -2581,6 +2581,36 @@ P4_WORD_DEFINE(CONSOLE)
 }
 
 /**
+ * ... PAD ...
+ *
+ * (S: -- c-addr u)
+ *
+ * @note
+ *	Expected use:
+ *
+ *		... PAD ACCEPT ...
+ *
+ * @standard ANS-Forth 1994, Core
+ */
+P4_WORD_DEFINE(PAD)
+{
+	P4_PUSH_SAFE(ctx->ds).s = ctx->pad;
+}
+
+/**
+ * ... /PAD ...
+ *
+ * (S: -- u)
+ *
+ * @standard extension
+ */
+P4_WORD_DEFINE(SLASH_PAD)
+{
+	P4_PUSH_SAFE(ctx->ds).u = sizeof (ctx->pad);
+}
+
+
+/**
  * ... SOURCE ...
  *
  * (S: -- c-addr u)
@@ -3017,6 +3047,31 @@ P4_WORD_DEFINE(UPDATED_QM)
 }
 
 /**
+ * ... RENAME-FILE ...
+ *
+ * (S: old u new u -- errno )
+ *
+ * @standard extension
+ */
+P4_WORD_DEFINE(RENAME_FILE)
+{
+	P4_String old_name, new_name;
+
+	if (P4_LENGTH(ctx->ds) < 4)
+		p4Throw(ctx, P4_THROW_DS_UNDER);
+
+	new_name.length = P4_POP(ctx->ds).u;
+	new_name.string = P4_POP(ctx->ds).s;
+	old_name.length = P4_POP(ctx->ds).u;
+	old_name.string = P4_POP(ctx->ds).s;
+
+	errno = 0;
+	(void) rename(old_name.string, new_name.string);
+
+	P4_PUSH(ctx->ds).n = errno;
+}
+
+/**
  * ... USE filename ...
  *
  * (S: <spaces>filename -- )
@@ -3333,7 +3388,10 @@ P4_WORD_NAME(UNUSED,		TYPE,		0		);
 P4_WORD_NAME(WORDS,		UNUSED,		0		);
 P4_WORD_NAME(XOR,		WORDS,		0		);
 
-P4_WORD_NAME(BLOCK,		XOR,		0		);
+P4_WORD_NAME(PAD,		XOR,		0		);
+P4_WORD_TEXT(SLASH_PAD,		PAD,		0,		"/PAD");
+
+P4_WORD_NAME(BLOCK,		SLASH_PAD,	0		);
 P4_WORD_TEXT(QM_BLOCKS,		BLOCK,		0,		"?BLOCKS");
 P4_WORD_NAME(BUFFER,		QM_BLOCKS,	0		);
 P4_WORD_TEXT(EMPTY_BUFFERS,	BUFFER,		0,		"EMPTY-BUFFERS");
@@ -4188,7 +4246,7 @@ static const char p4_defined_words[] =
 	" R@"					/* S: ip R: ip */
 	" @"					/* S: u R: ip */
 	" R> CELL+"				/* S: u caddr R: -- */
-	" SWAP 2DUP ALIGNED +"			/* S: caddr u ip' R: -- */
+	" SWAP 2DUP 1+ ALIGNED +"		/* S: caddr u ip' R: -- */
 	" >R"					/* S: caddr u R: ip' */
 	" ;\n"
 
@@ -4203,11 +4261,13 @@ static const char p4_defined_words[] =
  *	The string saved into the word is NUL terminated
  *	so it can be used by C string functions.
  */
-": SLITERAL" 					/* C: caddr u -- */
-	" ['] _slit COMPILE, DUP ,"		/* C: caddr u */
-	" DUP ALIGNED"				/* C: caddr u u' */
-	" RESERVE SWAP"				/* C: caddr a-addr u */
-	" MOVE"					/* C: -- */
+": SLITERAL" 					/* C: caddr u */
+	" DUP >R"				/* C: caddr u R: u */
+	" ['] _slit COMPILE, DUP ,"		/* C: caddr u R: u */
+	" DUP 1+ ALIGNED"			/* C: caddr u u' R: u */
+	" RESERVE DUP >R SWAP"			/* C: caddr a-addr u R: u a-addr */
+	" MOVE"					/* C: -- R: u a-addr */
+	" 0 2R> + C!"				/* C: -- R: -- */
 	" ; IMMEDIATE\n"
 
 /**

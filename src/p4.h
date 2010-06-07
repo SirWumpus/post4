@@ -323,6 +323,7 @@ struct p4_context{
 	P4_Byte		console[P4_INPUT_SIZE];
 	P4_Block	block;
 	P4_Byte *	block_file;
+	P4_Byte		pad[P4_STRING_SIZE];
 	P4_Unsigned	jmp_set;
 
 #define P4_JMP_ABORT			0x00000001

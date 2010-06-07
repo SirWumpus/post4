@@ -9,10 +9,12 @@ is no set schedule for releases.
 
    +	Add means to pass command line arguments into a context.
 
-   +	Add File word sets.
+--0.4.4--
 
-   +	SLITERAL null terminate the stored word. Allows for
-   	intermixing with C string functions.
+   +	Added words PAD /PAD RENAME-FILE
+
+   +	SLITERAL null terminate the stored word. Allows for intermixing
+	with C string functions.
 
 --0.4.3--
 
