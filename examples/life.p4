@@ -206,7 +206,7 @@ screen1 VALUE screen_next
 	screen_next /screen ALLOT TO screen_next
 ;
 
-\ Still life and oscilators
+.( Still life and oscilators)
 >screen
 .................................................
 .................................................
@@ -228,7 +228,7 @@ screen1 VALUE screen_next
 
 10 generations
 
-\ Gosper Glider Gun
+.( Gosper Glider Gun)
 >screen
 .................................................
 .........................#.......................
@@ -258,7 +258,7 @@ screen1 VALUE screen_next
 
 100 generations
 
-\ Die Hard
+.( Die Hard)
 >screen
 .................................................
 .................................................
@@ -282,7 +282,7 @@ screen1 VALUE screen_next
 
 140 generations
 
-\ Acorn, takes 5206 generations to generate 633 cells including 13 escaped gliders.
+.( Acorn, takes 5206 generations to generate 633 cells including 13 escaped gliders.)
 >screen
 .................................................
 .................................................
