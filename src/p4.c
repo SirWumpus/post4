@@ -3047,11 +3047,34 @@ P4_WORD_DEFINE(UPDATED_QM)
 }
 
 /**
+ * ... DELETE-FILE ...
+ *
+ * (S: name u -- errno )
+ *
+ * @standard ANS-Forth 1994, File
+ */
+P4_WORD_DEFINE(DELETE_FILE)
+{
+	P4_String name;
+
+	if (P4_LENGTH(ctx->ds) < 4)
+		p4Throw(ctx, P4_THROW_DS_UNDER);
+
+	name.length = P4_POP(ctx->ds).u;
+	name.string = P4_POP(ctx->ds).s;
+
+	errno = 0;
+	(void) unlink(name.string);
+
+	P4_PUSH(ctx->ds).n = errno;
+}
+
+/**
  * ... RENAME-FILE ...
  *
  * (S: old u new u -- errno )
  *
- * @standard extension
+ * @standard ANS-Forth 1994, File
  */
 P4_WORD_DEFINE(RENAME_FILE)
 {
@@ -3403,7 +3426,10 @@ P4_WORD_TEXT(UPDATED_QM,	UPDATE,		0,		"UPDATED?");
 P4_WORD_NAME(USE,		UPDATED_QM,	0		);
 P4_WORD_NAME(USING,		USE,		0		);
 
-P4_WORD_TEXT(ADD,		USING,		0, 		"+");
+P4_WORD_TEXT(DELETE_FILE,	USING,		0,		"DELETE-FILE");
+P4_WORD_TEXT(RENAME_FILE,	DELETE_FILE,	0,		"RENAME-FILE");
+
+P4_WORD_TEXT(ADD,		RENAME_FILE,	0, 		"+");
 P4_WORD_TEXT(C_COMMA,		ADD,		0, 		"C,");
 P4_WORD_TEXT(C_FETCH,		C_COMMA,	0, 		"C@");
 P4_WORD_TEXT(C_STORE,		C_FETCH,	0,	 	"C!");

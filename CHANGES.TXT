@@ -11,7 +11,7 @@ is no set schedule for releases.
 
 --0.4.4--
 
-   +	Added words PAD /PAD RENAME-FILE
+   +	Added words PAD /PAD RENAME-FILE DELETE-FILE
 
    +	SLITERAL null terminate the stored word. Allows for intermixing
 	with C string functions.
