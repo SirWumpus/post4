@@ -30,13 +30,13 @@ block_width block_height * CONSTANT block_size
 
 ( row -- )
 : print_row DUP 2 .R '|' EMIT block_row block_width TYPE '|' EMIT ;
-: print print_row CR ;
+: PRINT print_row CR ;
 
 ( block -- )
-: LIST SCR ! block_height 0 DO I print LOOP ;
+: LIST SCR ! block_height 0 DO I PRINT LOOP ;
 
 ( row ccc<eol> -- )
-: change block_row block_width ACCEPT CR . CR UPDATE ;
+: CHANGE block_row block_width ACCEPT CR . CR UPDATE ;
 
 MARKER rm_edit
 \ (todo) VOCABULARY EDITOR
@@ -198,7 +198,7 @@ block_height 1- CONSTANT edit_max_y
 ;
 
 ( row -- )
-: edit
+: EDIT
 	'I' edit_mode !			\ row
 	ansi_report			\ row x y
 	edit_y ! edit_x !		\ row
@@ -339,4 +339,4 @@ MARKER rm_ed
 ;
 
 ( -- )
-: ed PAGE 'I' edit_mode ! BEGIN ed_screen ed_command AGAIN ;
+: ED PAGE 'I' edit_mode ! BEGIN ed_screen ed_command AGAIN ;
