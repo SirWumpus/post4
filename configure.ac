@@ -2,12 +2,12 @@
 #	Thus it begins...
 #######################################################################
 
-AC_INIT(post4, 0.4, [Anthony Howe <achowe@snert.com>])
+AC_INIT(post4, 0.5, [Anthony Howe <achowe@snert.com>])
 
 dnl The autoconf version I learned to deal with.
 AC_PREREQ(2.59)
 
-SNERT_INIT([P4], [Copyright 2007, 2010 by Anthony Howe. All rights reserved.], [src/BUILD_ID.TXT])
+SNERT_INIT([P4], [Copyright 2007, 2013 by Anthony Howe. All rights reserved.], [src/BUILD_ID.TXT])
 AC_DEFINE_UNQUOTED(P4_PLATFORM, [["${platform}"]])
 
 #######################################################################
@@ -49,6 +49,7 @@ SNERT_OPTION_ENABLE_MINGW
 #######################################################################
 
 SNERT_DEFAULT_CC_SETTINGS
+dnl AS_IF([test $GCC_MAJOR -ge 4],[CFLAGS="-Wno-pointer-sign $CFLAGS"])
 SNERT_TAR_SETTINGS
 
 AC_PROG_MAKE_SET
@@ -65,6 +66,7 @@ AC_CHECK_HEADERS([unistd.h sys/ioctl.h])
 SNERT_ANSI_TIME
 SNERT_ANSI_STRING
 SNERT_EXTRA_STRING
+SNERT_OPTIONS
 SNERT_REGEX
 SNERT_SETJMP
 SNERT_POSIX_IO

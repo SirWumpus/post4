@@ -303,7 +303,7 @@ AS_IF([test ${with_db:-default} != 'no'],[
 	for d in $BDB_BASE_DIRS ; do
 		if test -d "$d/include" ; then
 			bdb_dir_list="$bdb_dir_list $d"
-			bdb_i_dirs=`ls -d $d/include/db[[0-9]]* $d/include/db $d/include 2>/dev/null | sort -r`
+			bdb_i_dirs=`ls -d $d/include/db[[0-9]]* $d/include/db $d/include/. 2>/dev/null | sort -r`
 
 			for BDB_I_DIR in $bdb_i_dirs ; do
 				AC_MSG_CHECKING([for db.h in $BDB_I_DIR])
@@ -312,12 +312,12 @@ AS_IF([test ${with_db:-default} != 'no'],[
 					AC_MSG_RESULT(yes)
 					v=`basename $BDB_I_DIR`
 					if test $v = 'include' ; then
-						 v=''
+						 v='.'
 					fi
 
-					if test -d $d/lib64/$v -a $v != '.' ; then
+					if test -d $d/lib64/$v -a "$v" != '.' ; then
 						BDB_L_DIR="$d/lib64/$v"
-					elif test -d $d/lib/$v -a $v != '.'; then
+					elif test -d $d/lib/$v -a "$v" != '.'; then
 						BDB_L_DIR="$d/lib/$v"
 					elif test -d $d/lib64 ; then
 						BDB_L_DIR="$d/lib64"
@@ -578,13 +578,17 @@ AC_DEFUN(SNERT_LIBMILTER,[
 	saved_ldflags="$LDFLAGS"
 
 if test ${with_milter:-default} != 'no' ; then
-	for d in "$with_milter" /usr/local /usr/pkg ; do
+	for d in "$with_milter" /usr /usr/local /usr/pkg ; do
 		unset ac_cv_search_smfi_main
 		unset ac_cv_header_libmilter_mfapi_h
 
 		if test X$d != X ; then
 			CFLAGS_MILTER="-I$d/include"
-			LDFLAGS_MILTER="-L$d/lib"
+			if test -d $d/lib/libmilter ; then
+				LDFLAGS_MILTER="-L$d/lib/libmilter"
+			else
+				LDFLAGS_MILTER="-L$d/lib"
+			fi
 		fi
 		echo "trying with $LDFLAGS_MILTER ..."
 
@@ -1077,6 +1081,19 @@ AC_DEFUN(SNERT_SETJMP,[
 ])
 
 dnl
+dnl SNERT_OPTIONS
+dnl
+AC_DEFUN(SNERT_OPTIONS,[
+	echo
+	echo "Check for option support..."
+	echo
+	AC_CHECK_HEADER([unistd.h], [
+		AC_DEFINE_UNQUOTED(HAVE_UNISTD_H)
+		AC_CHECK_FUNCS([getopt])
+	])
+])
+
+dnl
 dnl SNERT_RANDOM
 dnl
 AC_DEFUN(SNERT_RANDOM,[
@@ -1162,6 +1179,7 @@ else
 		AC_CHECK_FUNCS([pthread_mutex_init pthread_mutex_destroy pthread_mutex_lock pthread_mutex_trylock pthread_mutex_unlock])
 		AC_CHECK_FUNCS([pthread_mutexattr_init pthread_mutexattr_destroy pthread_mutexattr_setprioceiling pthread_mutexattr_getprioceiling pthread_mutexattr_setprotocol pthread_mutexattr_getprotocol pthread_mutexattr_settype pthread_mutexattr_gettype])
 		AC_CHECK_FUNCS([pthread_cond_broadcast pthread_cond_destroy pthread_cond_init pthread_cond_signal pthread_cond_timedwait pthread_cond_wait])
+		AC_CHECK_FUNCS([pthread_spin_init pthread_spin_destroy pthread_spin_lock pthread_spin_trylock pthread_spin_unlock])
 		AC_CHECK_FUNCS([pthread_rwlock_init pthread_rwlock_destroy pthread_rwlock_unlock pthread_rwlock_rdlock pthread_rwlock_wrlock pthread_rwlock_tryrdlock pthread_rwlock_trywrlock])
 		AC_CHECK_FUNCS([pthread_lock_global_np pthread_unlock_global_np])
 		AC_CHECK_FUNCS([pthread_key_create pthread_key_delete pthread_getspecific pthread_setspecific])
@@ -1412,6 +1430,16 @@ AC_DEFUN(SNERT_REGEX,[
 		AC_SEARCH_LIBS([regcomp], [regex])
 		AC_CHECK_FUNCS(regcomp regexec regerror regfree)
 	])
+])
+
+dnl
+dnl SNERT_HASHES
+dnl
+AC_DEFUN(SNERT_HASHES,[
+	echo
+	echo "Check for common hashes..."
+	echo
+	AC_CHECK_HEADERS([md4.h md5.h rmd160.h sha1.h sha2.h],[],[],[/* */])
 ])
 
 dnl
@@ -1724,8 +1752,8 @@ AC_DEFUN(SNERT_BUILD_THREADED_SQLITE3,[
 				)
 				AS_IF([test ${platform} != 'Darwin'],[sqlite3_configure_options="${sqlite3_configure_options} --enable-static --disable-shared"])
 
-				echo CFLAGS="'${sqlite3_cflags} ${CFLAGS} ${CFLAGS_PTHREAD}'" LDFLAGS="'${LDFLAGS} ${LDFLAGS_PTHREAD}'" ./configure  ${sqlite3_configure_options}
-				CFLAGS="${sqlite3_cflags} ${CFLAGS} ${CFLAGS_PTHREAD}" LDFLAGS="${LDFLAGS} ${LDFLAGS_PTHREAD}" ./configure  ${sqlite3_configure_options}
+				echo ./configure CFLAGS="'${sqlite3_cflags}'" ${sqlite3_configure_options}
+				./configure CFLAGS="${sqlite3_cflags}" ${sqlite3_configure_options}
 				echo
 			fi
 			echo

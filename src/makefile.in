@@ -94,6 +94,9 @@ title :
 install: build
 	-cp -p post4$E ${bindir}
 
+p4$O : config.h p4.h p4.c
+	${CC} ${CFLAGS} ${LDFLAGS} -DP4_BUILT="\"`date +'%a, %d %b %Y %H:%M:%S %z'`\"" -c p4.c
+
 p4$E : config.h p4.h p4.c
 	${CC} ${CFLAGS} ${LDFLAGS} -DTEST -DP4_BUILT="\"`date +'%a, %d %b %Y %H:%M:%S %z'`\"" -o p4$E p4.c
 

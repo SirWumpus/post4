@@ -1,7 +1,7 @@
 /*
  * p4.c
  *
- * Copyright 2007, 2010 by Anthony Howe. All rights reserved.
+ * Copyright 2007, 2013 by Anthony Howe. All rights reserved.
  */
 
 #include "config.h"
@@ -15,6 +15,13 @@ P4_Cell p4_null_cell;
 static void *p4_program_end;
 static unsigned char base36[256];
 static char base36_digits[] = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ";
+
+char *_build[] = {
+	"BUILT=\"" P4_BUILT "\"",
+	"CFLAGS=\""P4_CFLAGS "\"",
+	"LDFLAGS=\"" P4_LDFLAGS "\"",
+	"LIBS=\"" P4_LIBS "\""
+};
 
 #ifdef HAVE_TCGETATTR
 static int tty_fd = -1;
@@ -534,7 +541,7 @@ p4See(FILE *fp, P4_Context *ctx, P4_Exec_Token xt)
 	else
 		fprintf(fp, ": %s ", word->name.string);
 
-	for (ip = (P4_Exec_Token *) xt->data->base; *ip != P4_WORD_XT(_exit); ip++) {
+	for (ip = (P4_Exec_Token *) xt->data->base; *ip != P4_XT_ADDR(_exit); ip++) {
 		found = p4FindXt(ctx, *ip);
 
 		if (found == NULL) {
@@ -546,15 +553,15 @@ p4See(FILE *fp, P4_Context *ctx, P4_Exec_Token xt)
 			}
 		} else if (P4_WORD_IS_IMM(found)) {
 			fprintf(fp, "POSTPONE %s ", found->name.string);
-		} else if (*ip == P4_WORD_XT(JUMP)) {
+		} else if (*ip == P4_XT_ADDR(JUMP)) {
 			fprintf(fp, "%s 0x%.8lx ", found->name.string, (P4_Unsigned) *++ip);
 			ip = (P4_Exec_Token *) *ip - 1;
-		} else if (*ip == P4_WORD_XT(BRANCH) || *ip == P4_WORD_XT(BRANCHZ) || strcasecmp(found->name.string, "SLIT") == 0) {
+		} else if (*ip == P4_XT_ADDR(BRANCH) || *ip == P4_XT_ADDR(BRANCHZ) || strcasecmp(found->name.string, "SLIT") == 0) {
 			fprintf(fp, "%s %ld ", found->name.string, (P4_Signed) *++ip);
-		} else if (*ip == P4_WORD_XT(_does)) {
+		} else if (*ip == P4_XT_ADDR(_does)) {
 			fprintf(fp, "DOES> ");
 			ip++;
-		} else if (*ip == P4_WORD_XT(_lit)) {
+		} else if (*ip == P4_XT_ADDR(_lit)) {
 			if ((found = p4FindXt(ctx, *++ip)) == NULL)
 				fprintf(fp, "lit 0x%lx ", (P4_Unsigned) *ip);
 			else
@@ -903,14 +910,8 @@ P4_WORD_DEFINE(NOOP)
 	/* Do nothing. */
 }
 
-#ifdef P4_DEFINE_CS
-P4_DEFINE_CS(NOOP, "NOOP");
 struct p4_xt p4_xt_NOOP = { p4_do_NOOP, NULL };
-P4_Word p4_word_NOOP = { 0, (P4_CountedString *) &p4_cs_NOOP, NULL, P4_WORD_XT(NOOP) };
-#else
-struct p4_xt p4_xt_NOOP = { p4_do_NOOP, NULL };
-P4_Word p4_word_NOOP = { 0, { sizeof ("NOOP")-1, "NOOP" }, NULL, P4_WORD_XT(NOOP) };
-#endif
+P4_Word p4_word_NOOP = { 0, { STRLEN("NOOP"), "NOOP" }, NULL, P4_XT_ADDR(NOOP) };
 
 /**
  * ... TRUE ...
@@ -1171,7 +1172,7 @@ P4_WORD_DEFINE(ALIGN)
 	if (ctx->xt != NULL && ctx->xt->data != NULL) {
 		P4_PUSH_SAFE(ctx->ds).n = P4_CELL_ALIGN(ctx->xt->data->length);
 		P4_WORD_DO(RESERVE);
-		P4_POP(ctx->ds);
+		(void) P4_POP(ctx->ds);
 	}
 }
 
@@ -2377,8 +2378,8 @@ P4_WORD_DEFINE(TICK)
 
 	if (P4_POP(ctx->ds).n == 0) {
 		/* If word was not found then assume ' NOOP. */
-		P4_POP(ctx->ds);	/* ( c-addr u -- c-addr ) */
-		P4_TOP(ctx->ds).xt = P4_WORD_XT(NOOP); /* ( c-addr -- xt ) */
+		(void) P4_POP(ctx->ds);	/* ( c-addr u -- c-addr ) */
+		P4_TOP(ctx->ds).xt = P4_XT_ADDR(NOOP); /* ( c-addr -- xt ) */
 	}
 }
 
@@ -2722,7 +2723,7 @@ p4Interpret(P4_Context *ctx)
 {
 	P4_Signed n;
 	P4_Size length;
-	P4_Unsigned ibase;
+	P4_Unsigned ibase = 0;
 	P4_Byte *stop, *start;
 
 	while (ctx->input.offset < ctx->input.length) {
@@ -2860,7 +2861,7 @@ P4_WORD_DEFINE(QM_BLOCKS)
 	struct stat sb;
 
 	sb.st_size = 0;
-	P4_POP(ctx->ds);
+	(void) P4_POP(ctx->ds);
 	(void) stat(P4_TOP(ctx->ds).s, &sb);
 	P4_TOP(ctx->ds).u = sb.st_size / P4_BLOCK_SIZE;
 }
@@ -2924,17 +2925,15 @@ P4_WORD_DEFINE(BUFFER)
 	if (ctx->block.state == P4_BLOCK_DIRTY) {
 		if ((fd = open(ctx->block_file, O_CREAT|O_WRONLY, S_IRWXU|S_IRWXG|S_IRWXO)) < 0 || flock(fd, LOCK_EX))
 			p4Throw(ctx, P4_THROW_ENOENT);
-
 		if (p4BlockWrite(fd, &ctx->block)) {
 			(void) close(fd);
 			p4Throw(ctx, P4_THROW_BLOCK_WR);
 		}
+		(void) close(fd);
 	}
 
 	ctx->block.state = P4_BLOCK_CLEAN;
 	ctx->block.number = blk_num;
-
-	(void) close(fd);
 }
 
 /**
@@ -3121,7 +3120,7 @@ P4_WORD_DEFINE(USING)
 {
 	p4GrowDS(ctx, 2);
 	P4_PUSH(ctx->ds).s = ctx->block_file;
-	P4_PUSH(ctx->ds).u = strlen(ctx->block_file);
+	P4_PUSH(ctx->ds).u = (P4_Unsigned) strlen(ctx->block_file);
 }
 
 /**
@@ -3261,8 +3260,8 @@ static const char help_summary[] =
 "64 BYE                 \\ exit taking exit code from top of stack\n"
 "1 2 + .                \\ reverse polish notation, ie. same as (1 + 2)\n"
 "KEY EMIT               \\ get character stdin, write character stdout\n"
-"16 OBASE ! 16 IBASE !  \\ set output and input base to hex (base 16)\n"
-"IBASE @ .              \\ get input base and view using current output base\n"
+"16 BASE !              \\ set input/output base to hex (base 16)\n"
+"BASE @ .               \\ get I/O base and view using current output base\n"
 ".S .RS                 \\ view data and return stacks\n"
 "\n"
 ;
@@ -4612,7 +4611,7 @@ p4Init(void)
 		/* Disable ECHO now. This allows KEY and KEY? to
 		 * function correctly with interactive scripts;
 		 * see life.p4, pressing a key skips to the next
-		 * set of patterns. ECHO is turned back one for
+		 * set of patterns. ECHO is turned back on for
 		 * line input like REFILL or ACCEPT.
 		 */
 //		(void) tcsetattr(tty_fd, TCSADRAIN, &tty_raw);
@@ -4842,8 +4841,8 @@ static char usage[] =
 "-e string\tevaluate string\n"
 "-f file\t\tevaluate input file\n"
 "\n"
+"Built " P4_BUILT " for " P4_PLATFORM "\n"
 P4_NAME "/" P4_VERSION " " P4_COPYRIGHT "\n"
-"Built " P4_BUILT "\n"
 ;
 
 static P4_Context *ctx;
@@ -4851,7 +4850,8 @@ static P4_Context *ctx;
 static void
 sig_int(int signum)
 {
-	ctx->signal = signum;
+	if (ctx != NULL)
+		ctx->signal = signum;
 }
 
 int
@@ -4865,7 +4865,6 @@ main(int argc, char **argv)
 	(void) atexit(p4Fini);
 	(void) signal(SIGINT, sig_int);
 	(void) signal(SIGQUIT, sig_int);
-//	(void) signal(SIGSEGV, sig_int);
 
 	if ((ctx = p4Create()) == NULL) {
 		fprintf(stderr, "initialisation error\n");
@@ -4896,8 +4895,6 @@ main(int argc, char **argv)
 			fprintf(stderr, "invalid option -%c\n%s", argv[argi][1], usage);
 		goto error1;
 	}
-
-//	p4Arguments(ctx, argc - argi, argv + argi);
 
 	(void) p4Evaluate(ctx);
 error2:

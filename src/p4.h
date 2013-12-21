@@ -1,7 +1,7 @@
 /*
  * p4.h
  *
- * Copyright 2007, 2010 by Anthony Howe. All rights reserved.
+ * Copyright 2007, 2013 by Anthony Howe. All rights reserved.
  */
 
 #ifndef __post4_h__
@@ -116,6 +116,7 @@ extern "C" {
 
 #define QUOTE(x)	QUOTE_THIS(x)
 #define QUOTE_THIS(x)	#x
+#define STRLEN(s)	(sizeof (s)-1)
 
 /***********************************************************************
  *** Types
@@ -154,8 +155,8 @@ typedef unsigned long time_t;
 typedef void *P4_Pointer;
 #define P4_POINTER_FMT "0x%.8lx"
 
-typedef unsigned char P4_Byte;
-#define P4_BYTE_FMT "%u"
+typedef char P4_Byte;
+#define P4_BYTE_FMT "%d"
 
 typedef unsigned long P4_Unsigned;
 #define P4_UNSIGNED_FMT "%lu"
@@ -171,11 +172,6 @@ typedef struct p4_data P4_Data;
 typedef struct p4_word P4_Word;
 typedef struct p4_context P4_Context;
 typedef void (*P4_Func)(P4_Context *);
-
-typedef struct {
-	P4_Byte length;
-	P4_Byte string[1];
-} P4_Counted_String;
 
 typedef struct {
 	P4_Unsigned	length;		/* Length of string less NUL byte. */
@@ -243,14 +239,20 @@ struct p4_word {
 	P4_Exec_Token	xt;
 };
 
+#define P4_XT_ADDR(name) \
+	&p4_xt_ ## name
+
+#define P4_XT_DEFINE(name) \
+	struct p4_xt p4_xt_ ## name = { p4_do_ ## name, NULL };
+
+#define P4_WORD_ADDR(name) \
+	&p4_word_ ## name
+
 #define P4_WORD_DO(name) \
 	p4_do_ ## name (ctx)
 
-#define P4_WORD_XT(name) \
-	&p4_xt_ ## name
-
 #define P4_WORD_COMPILE(ctx, name) \
-	P4_PUSH((ctx)->ds).xt = P4_WORD_XT(name); \
+	P4_PUSH((ctx)->ds).xt = P4_XT_ADDR(name); \
 	P4_WORD_DO(COMMA);
 
 #define P4_WORD_DEFINE(name) \
@@ -260,32 +262,15 @@ struct p4_word {
 	scope struct p4_xt p4_xt_ ## name ; \
 	scope void p4_do_ ## name (P4_Context *)
 
-#define P4_DEFINE_XT(name) \
-	struct p4_xt p4_xt_ ## name = { p4_do_ ## name, NULL };
-
 #define P4_WORD_NAME(name, prev, bits) \
 	P4_WORD_TEXT(name, prev, bits, #name)
 
-#ifdef USE_COUNTED_STRINGS
-
-#define P4_DEFINE_CS(name, str) \
-	struct { P4_Byte length; P4_Byte string[sizeof (str)+1]; } \
-	p4_cs_ ## name = { (P4_Byte) sizeof (str)-1, str }
-
 #define P4_WORD_TEXT(name, prev, bits, text) \
-	P4_DEFINE_XT(name); P4_DEFINE_CS(name, str); \
-	P4_Word p4_word_ ## name = { bits, (P4_CountedString *) &p4_cs_ ## name, &p4_word_ ## prev, &p4_xt_ ## name }
-
-#else
-
-#define P4_WORD_TEXT(name, prev, bits, text) \
-	P4_DEFINE_XT(name); \
-	P4_Word p4_word_ ## name = { bits, { sizeof (text)-1, text }, &p4_word_ ## prev, &p4_xt_ ## name }
-
-#define P4_WORD_ALIAS(alias, prev, text) \
-	P4_Word p4_word_ ## alias = { P4_BIT_ALIAS, { sizeof (text)-1, text }, &p4_word_ ## prev, &p4_xt_ ## prev }
-
-#endif /* USE_COUNTED_STRINGS */
+	P4_XT_DEFINE(name); \
+	P4_Word p4_word_ ## name = { \
+		bits, { STRLEN(text), text }, \
+		P4_WORD_ADDR(prev), P4_XT_ADDR(name) \
+	}
 
 union p4_cell {
 	P4_Cell *		a;
@@ -295,7 +280,6 @@ union p4_cell {
 	P4_Unsigned		u;
 	P4_Pointer		p;
 	P4_Exec_Token		xt;
-	P4_Counted_String *	cs;
 };
 
 #define P4_ADDRESS_UNIT	(sizeof (P4_Byte))
@@ -747,12 +731,6 @@ extern P4_Signed p4IsNoname(P4_Context *ctx, P4_Exec_Token xt);
 extern void p4Dump(FILE *fp, P4_Byte *addr, P4_Size length);
 extern void p4Nap(P4_Unsigned s, P4_Unsigned ns);
 extern void p4Throw(P4_Context *ctx, P4_Signed exception);
-
-/***********************************************************************
- *** Core Words & Actions
- ***********************************************************************/
-
-extern void *p4_program_end;
 
 /***********************************************************************
  *** END
