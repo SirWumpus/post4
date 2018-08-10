@@ -6,6 +6,5 @@
 	 SOURCE TYPE
 	AGAIN
 ;
-\ QUIT cat
-START cat
+cat
 

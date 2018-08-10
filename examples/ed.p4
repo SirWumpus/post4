@@ -303,7 +303,7 @@ MARKER rm_ed
 	\e edit_on_key
 	0 block_height 1+ AT-XY
 	." Cmd q-quit, d-del line, i-ins line, w-wipe line, W-wipe block?"
-	key_in nip			\ row k'
+	key_in NIP			\ row k'
 	ansi_erase_line
 	ed_line_delete			\ row k'
 	ed_line_insert			\ row k'
@@ -315,7 +315,7 @@ MARKER rm_ed
 
 : ed_home 0 0 AT-XY ;
 : ed_mode edit_mode @ EMIT SPACE ;
-: ed_block_number ." Block " SCR @ . ." of " using ?BLOCKS . ;
+: ed_block_number ." Block " SCR @ . ." of " USING ?BLOCKS . ;
 : ed_status ed_home ed_mode ed_block_number CR ;
 : ed_cursor edit_x @ 3 + edit_y @ 1 + AT-XY ;
 : ed_screen ed_status SCR @ LIST ed_cursor ;

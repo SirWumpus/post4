@@ -30,7 +30,7 @@ MARKER rm_life
 CHAR # VALUE on
 CHAR . VALUE off
 
-( post4 does not define ALLOT as its use if problematic )
+( post4 does not define ALLOT as its use is problematic )
 ( n -- )
 : ALLOT RESERVE DROP ;
 
