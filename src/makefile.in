@@ -15,37 +15,39 @@ E = @EXEEXT@
 #
 # Paths for supporting headers and libraries.
 #
-top_srcdir = @top_srcdir@
-abs_srcdir = @abs_srcdir@
+top_srcdir 	= @top_srcdir@
+abs_srcdir 	= @abs_srcdir@
 SNERT_TARDIR	= @snert_tardir@
 SNERT_INCDIR	= @snert_incdir@
 SNERT_LIBDIR	= @snert_libdir@
 
-prefix = @prefix@
-exec_prefix = @exec_prefix@
-bindir = @bindir@
+prefix 		= @prefix@
+exec_prefix 	= @exec_prefix@
+bindir 		= @bindir@
 
-LIB	= $(SNERT_LIBDIR)/@PACKAGE_TARNAME@$A
-BAK	= $(SNERT_LIBDIR)/@PACKAGE_TARNAME@.bak
-TGZ	= $(SNERT_TARDIR)/@PACKAGE_TARNAME@-@PACKAGE_VERSION@.tgz
+LIB		= $(SNERT_LIBDIR)/@PACKAGE_TARNAME@$A
+BAK		= $(SNERT_LIBDIR)/@PACKAGE_TARNAME@.bak
+TGZ		= $(SNERT_TARDIR)/@PACKAGE_TARNAME@-@PACKAGE_VERSION@.tgz
 
 CC		= @CC@
-CC_E	= @CC_E@
-CC_O	= @CC_O@
-CFLAGS	= ${CFLAGS_PREFIX} @CFLAGS@
-LDFLAGS	= ${LDFLAGS_PREFIX} @LDFLAGS@
-LIBS	= ${LIBS_PREFIX} @LIBS@
+CC_E		= @CC_E@
+CC_O		= @CC_O@
+CPPFLAGS	= @CPPFLAGS@
+CFLAGS		= @CFLAGS@ -Wno-unused-label -funsigned-char
+LDFLAGS		= @LDFLAGS@
+LIBS		= @LIBS@
 
+XARGSI		= @XARGSI@
+RANLIB		= @RANLIB@
+ARCHIVE		= @ARCHIVE@
+COMPILE		= @COMPILE@
 
-XARGSI	= @XARGSI@
-RANLIB	= @RANLIB@
-ARCHIVE	= @ARCHIVE@
-COMPILE	= @COMPILE@
+LIBSNERT	= @LIBSNERT@
+LIB_RT		= @HAVE_LIB_RT@
+LIB_WS2_32	= @HAVE_LIB_WS2_32@
+LIB_IPHLPAPI	= @HAVE_LIB_IPHLPAPI@
 
-LIBSNERT = @LIBSNERT@
-LIB_RT = @HAVE_LIB_RT@
-LIB_WS2_32 = @HAVE_LIB_WS2_32@
-LIB_IPHLPAPI = @HAVE_LIB_IPHLPAPI@
+BUILT		:= `date +'%a, %d %b %Y %H:%M:%S %z'`
 
 #######################################################################
 
@@ -95,8 +97,8 @@ install: build
 	-cp -p post4$E ${bindir}
 
 p4$O : config.h p4.h p4.c
-	${CC} ${CFLAGS} ${LDFLAGS} -DP4_BUILT="\"`date +'%a, %d %b %Y %H:%M:%S %z'`\"" -c p4.c
+	${CC} ${CFLAGS} -Wno-unused-const-variable -DP4_BUILT="\"${BUILT}\"" -c p4.c
 
 p4$E : config.h p4.h p4.c
-	${CC} ${CFLAGS} ${LDFLAGS} -DTEST -DP4_BUILT="\"`date +'%a, %d %b %Y %H:%M:%S %z'`\"" -o p4$E p4.c
+	${CC} ${CFLAGS} ${LDFLAGS} -DTEST -DP4_BUILT="\"${BUILT}\"" -o p4$E p4.c
 

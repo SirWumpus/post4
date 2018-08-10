@@ -186,6 +186,9 @@ extern "C" {
 # define SIGLONGJMP(e,v)	longjmp(e, v)
 #endif
 
+#define SETJMP_PUSH(jb)		{ JMP_BUF jb_save; (void) memcpy(&jb_save, jb, sizeof (jb))
+#define SETJMP_POP(jb)		(void) memcpy(jb, &jb_save, sizeof (jb)); }
+
 /*
  * Termios
  */
