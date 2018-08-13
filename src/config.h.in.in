@@ -174,7 +174,7 @@ extern "C" {
 
 #ifdef HAVE_SIGJMP_BUF
 # define JMP_BUF		sigjmp_buf
-# define SETJMP(e)		sigsetjmp(e, 0)
+# define SETJMP(e)		sigsetjmp(e, 1)
 # define LONGJMP(e,v)		siglongjmp(e, v)
 # define SIGSETJMP(e,f)		sigsetjmp(e, f)
 # define SIGLONGJMP(e,v)	siglongjmp(e, v)
