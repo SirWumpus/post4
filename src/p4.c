@@ -951,6 +951,7 @@ p4Repl(P4_Ctx *ctx, int is_executing)
 		P4_WORD("CS-ROLL",	&&_roll,	0),		// C: on data stack
 		P4_WORD("DROP",		&&_drop,	0),
 		P4_WORD("DUP",		&&_dup,		0),
+		P4_WORD("LLOR",		&&_llor,	0),		// p4
 		P4_WORD("MOVE",		&&_move,	0),
 		P4_WORD("PICK",		&&_pick,	0),
 		P4_WORD("R>",		&&_from_rs,	0),
@@ -1543,6 +1544,13 @@ p4Repl(P4_Ctx *ctx, int is_executing)
 		x = P4_PICK(ctx->ds, w.u);
 		(void) memmove(ctx->ds.top - w.u, ctx->ds.top - w.u + 1, w.u * sizeof (P4_Cell));
 		P4_TOP(ctx->ds) = x;
+		NEXT;
+	}
+	_llor: {	// ( xu xu-1 ... x0 u –– x0 xu xu-1 ... x1 )
+		w = P4_POP(ctx->ds);
+		x = P4_TOP(ctx->ds);
+		(void) memmove(ctx->ds.top - w.u + 1, ctx->ds.top - w.u, w.u * sizeof (P4_Cell));
+		ctx->ds.top[-w.u] = x;
 		NEXT;
 	}
 
