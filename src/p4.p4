@@ -345,7 +345,11 @@ FALSE INVERT CONSTANT TRUE
 \
 \ @standard ANS-Forth 1994, Core Ext
 \
-: 2>R SWAP >R >R ;
+: 2>R
+	R> ROT 			\ S: x2 ip x1  R: --
+	>R SWAP			\ S: ip x2  R: x1
+	>R >R			\ S: --  R: x1 x2 ip
+;
 
 \
 \ ... 2>R ...
@@ -354,16 +358,24 @@ FALSE INVERT CONSTANT TRUE
 \
 \ @standard ANS-Forth 1994, Core Ext
 \
-: 2R> >R >R SWAP ;
+: 2R>
+	R> R> R>		\ S: ip x2 x1  R: --
+	ROT			\ S: x2 x1 ip  R: --
+	>R SWAP			\ S: x1 x2  R: ip
+;
 
 \
 \ ... 2R@ ...
 \
-\ (S: -- x1 x2 )(R: x1 x2 -- x1 x2)
+\ (S: -- x1 x2 )(R: x1 x2 -- x1 x2 )
 \
 \ @standard ANS-Forth 1994, Core Ext
 \
-: 2R@ R> R@ SWAP DUP >R ;
+: 2R@
+	R> 2R>			\ S: ip x1 x2  R: --
+	2DUP 2>R		\ S: ip x1 x2  R: x1 x2
+	ROT >R			\ S: x1 x2  R: x1 x2 ip
+;
 
 \
 \ ... 0<> ...
