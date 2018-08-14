@@ -245,6 +245,7 @@ error2:
 	free(core_path);
 error1:
 	(void) fchdir(cwd);
+	(void) close(cwd);
 error0:
 	return rc;
 }
@@ -453,7 +454,7 @@ p4StackDump(FILE *fp, P4_Cell *base, P4_Uint length)
 
 	for (count = 0, cell = base + length; base <= --cell; ) {
 		if ((count & 3) == 0) {
-			(void) fprintf(fp, "-%.2u  ", count);
+			(void) fprintf(fp, "top-%.2u  ", count);
 		}
 		(void) fprintf(fp, P4_HEX_FMT" ", cell->u);
 		if ((++count & 3) == 0) {
@@ -463,7 +464,6 @@ p4StackDump(FILE *fp, P4_Cell *base, P4_Uint length)
 	if ((count & 3) != 0) {
 		(void) fputc('\n', fp);
 	}
-	(void) fprintf(fp, "-%.2u\n", count);
 }
 
 void
