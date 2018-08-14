@@ -744,19 +744,23 @@ p4FindWord(P4_Ctx *ctx, P4_Char *caddr, P4_Size length)
 	return NULL;
 }
 
-//P4_Word *
-//p4FindXt(P4_Ctx *ctx, P4_Xt xt)
-//{
-//	P4_Word *word;
-//
-//	for (word = ctx->words; word != NULL; word = word->prev) {
-//		if (xt == &word->code) {
-//			return word;
-//		}
-//	}
-//
-//	return NULL;
-//}
+P4_Word *
+p4FindXt(P4_Ctx *ctx, P4_Xt xt)
+{
+	P4_Word *word;
+
+	for (word = ctx->words; word != NULL; word = word->prev) {
+#ifdef CODE_FIELD
+		if (xt == &word->code) {
+#else
+		if (xt == word) {
+#endif
+			return word;
+		}
+	}
+
+	return NULL;
+}
 
 void
 p4Free(P4_Ctx *ctx)
@@ -1771,7 +1775,13 @@ p4Repl(P4_Ctx *ctx, int is_executing)
 				x = *w.p;
 #endif
 				if (x.w->code == &&_lit) {
-					(void) printf(P4_INT_FMT" ", (*++w.p).n);
+					P4_Word *xt_word = p4FindXt(ctx, w.p[1].xt);
+					if (xt_word == NULL) {
+						(void) printf(P4_INT_FMT" ", (*++w.p).n);
+					} else {
+						(void) printf("['] %.*s ", (int)xt_word->name.length, xt_word->name.string);
+						w.p++;
+					}
 					continue;
 				}
 //				if (x.w <= (P4_Xt) p4Repl || sbrk(0) <= (void *) x.w) {
