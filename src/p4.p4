@@ -904,38 +904,64 @@ FALSE INVERT CONSTANT TRUE
 	DROP DUP 1+ ROLL >R	\  S: ip j*x n R: ip
 ;				\  S: ip j*x n R:
 
-MARKER rm_untested
-
 \
 \ ... limit first DO ... LOOP ...
 \
-\  (C: -- count dest ) \ (S: limit first -- ) (R: -- limit first )
+\ (C: -- dest )(R: -- count) || (S: limit first -- ) (R: -- limit first )
 \
 \ @standard ANS-Forth 1994, Core
 \
-: DO				\  C: -- \  S: limit first R: --
-	['] 2>R COMPILE,	\  C: -- \  S: -- R: limit first
-	0			\  C: 0
-	POSTPONE BEGIN		\  C: 0 dest
+: DO				\ C: --  R: ip
+	['] 2>R COMPILE,	\ S: --  R: limit first
+	R> 0 >R	>R		\ C: --  R: 0 ip
+	POSTPONE BEGIN		\ C: dest R: 0 ip
 ; IMMEDIATE
 
 \
 \ ... limit first ?DO ... LOOP ...
 \
-\  (C: -- count dest ) \ (S: limit first -- ) (R: -- limit first )
+\ (C: -- dest ) (R: -- forw 1 ) || (S: limit first -- ) (R: -- limit first )
 \
 \ @standard ANS-Forth 1994, Core
 \
-: ?DO				\  C: -- \  S: limit first R: --
-	['] 2>R COMPILE,	\  C: -- \  S: -- R: limit first
-	['] 2R@ COMPILE,	\  C: -- \  S: limit first R: limit first
-	['] <> COMPILE,		\  C: -- \  S: flag R: limit first
-	POSTPONE IF 1		\  C: forw 1 \  S: -- R: limit first
-	POSTPONE BEGIN		\  C: forw 1 dest
+: ?DO				\ C: --  R: ip
+	['] 2>R COMPILE,	\ S: --  R: limit first
+	['] 2R@ COMPILE,	\ S: limit first  R: limit first
+	['] <> COMPILE,		\ S: flag  R: limit first
+	R>			\ C: ip  R: --
+	POSTPONE IF >R 1 >R	\ C: ip  R: forw 1
+	>R			\ C: --  R: forw 1 ip
+	POSTPONE BEGIN		\ C: dest  R: forw 1 ip
 ; IMMEDIATE
 
 \
-\  : X ... limit first DO ... test IF ... UNLOOP EXIT THEN ... LOOP ... ;
+\ ... limit first DO ... IF ... LEAVE THEN ... LOOP ...
+\
+\ (C: dest -- dest ) (R: n*forw n -- n'*forw n' )
+\
+\ @standard ANS-Forth 1994, Core
+\
+: LEAVE				\ C: dest  R: n*forw n ip
+	R> R> 1+		\ C: dest ip n'  R: n*forw
+	POSTPONE AHEAD		\ C: dest ip n' forw  R: n*forw
+	>R >R >R		\ C: dest  R: n'*forw n' ip
+; IMMEDIATE
+
+\
+\ ... limit first DO ... test ?LEAVE ... LOOP ...
+\
+\ (C: dest -- dest ) (R: n*forw n -- n'*forw n' )
+\
+\ @standard ANS-Forth 1994, Core
+\
+: ?LEAVE			\ C: dest flag  R: n*forw n ip
+	POSTPONE IF		\ C: dest  R: n*forw n ip
+	POSTPONE LEAVE		\ C: dest  R: n'*forw n' ip
+	POSTPONE THEN		\ C: --  R: n'*forw n' ip
+;
+
+\
+\ : X ... limit first DO ... test IF ... UNLOOP EXIT THEN ... LOOP ... ;
 \
 \ (S: --  ) (R: limit index ip -- ip )
 \
@@ -944,62 +970,44 @@ MARKER rm_untested
 : UNLOOP R> 2R> 2DROP >R ;
 
 \
-\ ... limit first DO ... IF ... LEAVE THEN ... LOOP ...
-\
-\  (C: forw1 ... count dest -- forw1 ... forwN count' dest )
-\  \ (S: -- ) (R: loop-sys -- )
-\
-\ @standard ANS-Forth 1994, Core
-\
-\ @note
-\ 	This code assumes that LEAVE appears only within an
-\ 	IF-ELSE-THEN block, which while compiling has a forw
-\ 	reference on the compilation stack.
-\
-: LEAVE				\  C: forw1 ... count dest forw R: --
-	2>R >R			\  C: forw1 ... R: dest forw count
-	POSTPONE AHEAD		\  C: forw1 ... forwN R: dest forw count
-	R>			\  C: forw1 ... forwN count R: dest forw
-	1+			\  C: forw1 ... forwN count' R: dest forw
-	2R>			\  C: forw1 ... forwN count' dest forw R: --
-; IMMEDIATE
-
-\
 \ ... limit first DO ... LOOP ...
 \
-\ (S: n --  ) (R: limit index ip -- limit index' ip )
+\ (S: -- flag ) (R: limit index ip -- limit index' ip )
 \
 \ @standard internal
 \
-: _loop				\  R: limit index ip S: n
-	R> 2R>			\  R: -- S: n ip limit index
-	3 ROLL			\  R: -- S: ip limit index n
-	+			\  R: -- S: ip limit index'
-	2DUP 2>R		\  R: limit index' S: ip limit index'
-	=			\  R: limit index' S: ip flag
-	SWAP >R			\  R: limit index' ip S: flag
+\ @note
+\	Can count from zero up to the unsigned maximum possible in one cell,
+\	therefore 0 0 DO ... LOOP iterates UINT_MAX+1 times.
+\
+: _loop_inc_test
+	R> 2R> 1+		\ S: ip limit index' R: --
+	2DUP 2>R		\ S: ip limit index' R: limit index'
+	=			\ S: ip flag R: limit index'
+	SWAP >R			\ S: flag R: limit index' ip
 ;
 
 \
 \ ... limit first DO ... LOOP ...
 \
-\  (C: forw1 ... forwN count dest -- ) \ (S: n -- ) (R: loop-sys1 -- | loop-sys2 )
+\ (C: dest -- ) (R: n*forw n ip -- ip )
 \
 \ @standard ANS-Forth 1994, Core
 \
-: +LOOP				\  C: forw1 ... forwN count dest
-	\  Loop increment and test.
-	['] _loop COMPILE,
-	POSTPONE UNTIL		\  C: forw1 ... forwN count
+: LOOP				\ C: dest  R: n*forw n ip
+	['] _loop_inc_test COMPILE,
+	POSTPONE UNTIL		\ C: --  R: n*forw n ip
 
-	\  Resolve LEAVE forward references.
-	BEGIN			\  C: forw1 ... forwN count
-	 DUP 0<> WHILE		\  C: forw1 ... forwN count flag
-	 1-			\  C: forw1 ... forwN count'
-	 SWAP			\  C: forw1 ... count' forwN
-	 POSTPONE THEN		\  C: forw1 ... count'
-	REPEAT			\  C: count'
-	DROP			\  C: --
+	\ Resolve LEAVE forward references.
+	R> R>			\ C: ip n  R: n*forw
+	BEGIN
+	 DUP 0>			\ C: ip n flag  R: n*forw
+	WHILE			\ C: ip n  R: n*forw
+	 1-			\ C: ip n' R: n*forw
+	 R>			\ C: ip n' forw  R: n'*forw
+	 POSTPONE THEN		\ C: ip n'  R: n'*forw
+	REPEAT
+	DROP >R			\ C: -- R: ip
 
 	\  LEAVE branches to just after UNTIL and before UNLOOP.
 	['] UNLOOP COMPILE,
@@ -1008,20 +1016,11 @@ MARKER rm_untested
 \
 \ ... limit first DO ... LOOP ...
 \
-\  (C: dest -- ) \ (S: --  ) (R: loop-sys1 -- | loop-sys2 )
-\
-\ @standard ANS-Forth 1994, Core
-\
-: LOOP 1 POSTPONE LITERAL POSTPONE +LOOP ; IMMEDIATE
-
-\
-\ ... limit first DO ... LOOP ...
-\
 \ (S: -- index ) (R: limit index ip -- limit index ip )
 \
 \ @standard ANS-Forth 1994, Core
 \
-: I R> R@ SWAP R> ;
+: I R> R@ SWAP >R ;
 
 \
 \ ... limit first DO ... LOOP ...
@@ -1030,11 +1029,65 @@ MARKER rm_untested
 \
 \ @standard ANS-Forth 1994, Core
 \
-: J				\  S: -- R: limit1 index1 limit2 index2 ip
-	R> 2R> R@		\  S: ip limit2 index2 index1 R: limit1 index1
-	3 ROLL 3 ROLL 3 ROLL	\  S: index1 ip limit2 index2 R: limit1 index1
- 	2>R >R			\  S: index1 R: limit1 index1 limit2 index2 ip
+: J				\ S: --  R: l1 i1 l2 i2 ip
+	R> R> R> R@		\ S: ip i2 l2 i1  R: l1 i1
+	3 LLOR			\ S: i1 ip l2 i2  R: l1 i1
+\	3 ROLL 3 ROLL 3 ROLL
+	>R >R >R		\ S: i1  R: l1 i1 l2 i2 ip
 ;
+
+-1 1 RSHIFT CONSTANT int_max	\ 0x7F...FF
+int_max INVERT CONSTANT int_min	\ 0x80...00
+
+\
+\ ... limit first DO ... LOOP ...
+\
+\ (S: n -- flag ) (R: limit index ip -- limit index' ip )
+\
+\ @standard internal
+\
+: _loop_step_test		\ S: n  R: l x ip
+	\ Add step to index.
+	R> 2R>			\ S: n ip l x
+	3 ROLL +		\ S: ip l x'
+	2DUP 2>R		\ S: ip l x'  R: l x'
+
+	\ Has index crossed (limit-1) and limit boundary?
+	\ ie. (INT_MIN - limit) & INT_MIN != (INT_MIN - limit + index) & INT_MIN
+	SWAP int_min SWAP -	\ S: ip x' l'  R: l x'
+	DUP int_min AND		\ S: ip x' l' sign  R: l x'
+	>R + int_min AND R>	\ S: ip cross sign  R: l x'
+	<> SWAP >R		\ S: flag  R: l x' ip
+;
+
+\
+\ ... limit first DO ... LOOP ...
+\
+\ (C: dest -- ) (R: n*forw n ip -- ip )
+\
+\ @standard ANS-Forth 1994, Core
+\
+: +LOOP				\ C: dest  R: n*forw n ip
+	\  Loop increment and test.
+	['] _loop_step_test COMPILE,
+	POSTPONE UNTIL		\ C: --  R: n*forw n ip
+
+	\ Resolve LEAVE forward references.
+	R> R>			\ C: ip n  R: n*forw
+	BEGIN
+	 DUP 0>			\ C: ip n flag  R: n*forw
+	WHILE			\ C: ip n  R: n*forw
+	 1-			\ C: ip n' R: n*forw
+	 R>			\ C: ip n' forw  R: n'*forw
+	 POSTPONE THEN		\ C: ip n'  R: n'*forw
+	REPEAT
+	DROP >R			\ C: -- R: ip
+
+	\  LEAVE branches to just after UNTIL and before UNLOOP.
+	['] UNLOOP COMPILE,
+; IMMEDIATE
+
+MARKER rm_untested
 
 \
 \ ... reserve ...
