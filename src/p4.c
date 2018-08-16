@@ -1465,7 +1465,7 @@ p4Repl(P4_Ctx *ctx, int is_executing)
 	_move: {	// ( addr1 addr2 u -- )
 		w = P4_POP(ctx->ds);
 		x = P4_POP(ctx->ds);
-		(void) memmove(P4_POP(ctx->ds).s, x.s, w.u);
+		(void) memmove(x.s, P4_POP(ctx->ds).s, w.u);
 		NEXT;
 	}
 
