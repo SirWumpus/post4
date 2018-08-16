@@ -1087,8 +1087,6 @@ int_max INVERT CONSTANT int_min	\ 0x80...00
 	['] UNLOOP COMPILE,
 ; IMMEDIATE
 
-MARKER rm_untested
-
 \
 \ ... reserve ...
 \
@@ -1125,33 +1123,32 @@ MARKER rm_untested
 \ 	address and length of the string stored within the word.
 \ 	It is then modified to point to just after the string.
 \
-: _slit					\  S: -- R: ip
-	R@				\  S: ip R: ip
-	@				\  S: u  R: ip
-	R> SWAP	2DUP			\  S: caddr u caddr u R: --
-	+ ALIGNED			\  S: caddr u ip' R: --
-	>R				\  S: caddr u R: ip'
+: _slit					\ S: -- R: ip
+	R@				\ S: ip R: ip
+	@				\ S: u  R: ip
+	R> CELL+ SWAP 2DUP		\ S: caddr u caddr u R: --
+	+ ALIGNED			\ S: caddr u ip' R: --
+	>R				\ S: caddr u R: ip'
 ;
 
 \
 \ ... S" ccc" ...
 \
-\  (C: ccc<quote>" -- ) \ (S: -- c-addr u )
+\  (C: ccc<quote>" -- ) \ (S: -- caddr u )
 \
 \ @standard ANS-Forth 1994, Core, File, extended
 \
 : S"
 	[CHAR] " PARSE			\  S: caddr u
-	STATE @ 0= IF			\  When interpreting, parse and ignore.
-	 2DROP EXIT			\  S: --
-	THEN				\  Otherwise compile into word the string.
-	['] _slit COMPILE, DUP ,	\  S: caddr u
-	DUP >R ALIGNED			\  S: caddr u' R: u
-	reserve R>			\  S: caddr addr u
-	MOVE				\  S: --
+	STATE @ 0= IF			\  When interpreting, parse and print.
+	 TYPE 				\  S: --
+	ELSE				\  Otherwise compile into word the string.
+	 ['] _slit COMPILE, DUP ,	\  S: caddr u
+	 DUP >R ALIGNED			\  S: caddr u' R: u
+	 reserve R>			\  S: caddr addr u
+	 MOVE				\  S: --
+	THEN
 ; IMMEDIATE
-
-QUIT
 
 \
 \ ... S\" ccc" ...
@@ -1162,15 +1159,14 @@ QUIT
 \
 : S\"
 	[CHAR] " PARSE-ESCAPE		\  S: caddr u
-	STATE @ 0= IF
-	 2DROP EXIT			\  S: --
+	STATE @ 0= IF			\  When interpreting, parse and print.
+	 TYPE 				\  S: --
+	ELSE				\  Otherwise compile into word the string.
+	 ['] _slit COMPILE, DUP ,	\  S: caddr u
+	 DUP >R ALIGNED			\  S: caddr u' R: u
+	 reserve R>			\  S: caddr addr u
+	 MOVE				\  S: --
 	THEN
-	['] _slit COMPILE, DUP ,	\  S: caddr u
-	DUP >R				\  S: caddr u R: u
-	1+ ALIGNED			\  S: caddr u' R: u
-	reserve				\  S: caddr addr R: u
-	R>				\  S: caddr addr u
-	MOVE				\  S: --
 ; IMMEDIATE
 
 \
@@ -1181,6 +1177,8 @@ QUIT
 \ @standard ANS-Forth 1994, Core, extended
 \
 : ." POSTPONE S" ['] TYPE COMPILE, ; IMMEDIATE
+
+MARKER rm_untested
 
 \
 \ ... AT-XY ...
@@ -1211,6 +1209,8 @@ QUIT
 \ 	ANSI / VT100 terminal assumed.
 \
 : PAGE 0 0 AT-XY S\" \e[0J" TYPE ;
+
+QUIT
 
 \
 \ ... INCLUDE filename ...
