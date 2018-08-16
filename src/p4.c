@@ -1789,7 +1789,7 @@ p4Repl(P4_Ctx *ctx, int is_executing)
 				if (x.w->code == &&_lit) {
 					P4_Word *xt_word = p4FindXt(ctx, w.p[1].xt);
 					if (xt_word == NULL) {
-						(void) printf(P4_INT_FMT" ", (*++w.p).n);
+						(void) printf("_lit "P4_INT_FMT" ", (*++w.p).n);
 					} else {
 						(void) printf("['] %.*s ", (int)xt_word->name.length, xt_word->name.string);
 						w.p++;
