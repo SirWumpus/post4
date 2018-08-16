@@ -539,7 +539,7 @@ FALSE INVERT CONSTANT TRUE
 : [CHAR] CHAR POSTPONE LITERAL ; IMMEDIATE
 
 \
-\ ... POSTPONE name ...
+\ ... ['] name ...
 \
 \  (C: <spaces>name -- ) \ (S: -- xt )
 \
