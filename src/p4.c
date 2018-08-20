@@ -289,6 +289,7 @@ p4CharLiteral(int ch)
 	case 't': return '\t';		/* tab */
 	case 'v': return '\v';		/* vertical tab */
 	case 'z': return '\0';		/* nul */
+	case '0': return '\0';		/* nul */
 	case '?': return '\177';	/* delete */
 	}
 	return ch;			/* identity */
@@ -392,6 +393,7 @@ p4Parse(P4_Input *input, P4_Uint delim, P4_Uint escape)
 
 		/* Treat a space as indicating any white space. */
 		if (ch == delim || (delim == ' ' && isspace(ch))) {
+			input->buffer[offset] = '\0';
 			break;
 		}
 	}
