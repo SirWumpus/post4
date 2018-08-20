@@ -58,7 +58,6 @@ extern "C" {
  ***********************************************************************/
 
 #include <ctype.h>
-#include <err.h>
 #include <errno.h>
 #include <assert.h>
 #include <getopt.h>

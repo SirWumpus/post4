@@ -75,7 +75,7 @@ $O$E :
 
 all: build
 
-build: title p4$O p4$E
+build: title p4$E
 
 clean : title
 	-rm -f *.o *.obj *.i *.map *.tds *.TR2 *.stackdump core *.core core.* *.log

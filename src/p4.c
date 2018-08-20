@@ -237,7 +237,7 @@ p4LoadCore(P4_Ctx *ctx, const char *file)
 		}
 	}
 	if (path == NULL) {
-		warnx("cannot find core words definition file: %s", options.core_file);
+		(void) fprintf(stderr, "cannot find core words definition file: %s", options.core_file);
 	} else {
 		rc = p4EvalFile(ctx, file);
 	}
@@ -1977,7 +1977,8 @@ main(int argc, char **argv)
 			(void) printf("%s", p4_build_info);
 			return EXIT_SUCCESS;
 		default:
-			errx(2, usage);
+			(void)fprintf(stderr, usage);
+			return 2;
 		}
 	}
 
@@ -1985,18 +1986,14 @@ main(int argc, char **argv)
 	(void) atexit(p4Fini);
 
 	if ((ctx = p4Create()) == NULL) {
-		err(EXIT_FAILURE, NULL);
+		(void) fprintf(stderr, "p4: %s\n", strerror(errno));
+		return EXIT_FAILURE;
 	}
 
 	if (argc <= optind) {
 		rc = p4Eval(ctx);
-	} else {
-		rc = EXIT_SUCCESS;
-		for ( ; optind < argc; optind++) {
-			if (p4EvalFile(ctx, argv[optind])) {
-				errx(1, "%s", argv[optind]);
-			}
-		}
+	} else if (optind < argc && (rc = p4EvalFile(ctx, argv[optind]))) {
+		(void) fprintf(stderr, "p4: %s: %s\n", argv[optind], strerror(errno));
 	}
 
 	p4Free(ctx);
