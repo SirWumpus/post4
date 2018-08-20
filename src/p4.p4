@@ -1132,41 +1132,42 @@ int_max INVERT CONSTANT int_min	\ 0x80...00
 ;
 
 \
+\ (S: caddr u -- )
+\
+: _store_string
+	STATE @ 0= IF			\ When interpreting, parse and print.
+	 TYPE EXIT			\ S: --
+	THEN				\ Otherwise compile into word the string.
+	['] _slit COMPILE, DUP ,	\ S: caddr u
+	\ NUL terminate the input string at the double-quote for C.
+	2DUP + '\0' SWAP C! CHAR+	\ S: caddr u'
+	DUP >R ALIGNED			\ S: caddr u" R: u'
+	reserve R>			\ S: caddr addr u'
+	MOVE				\ S: --
+;
+
+\
 \ ... S" ccc" ...
 \
-\  (C: ccc<quote>" -- ) \ (S: -- caddr u )
+\ (C: ccc<quote>" -- ) || (S: -- caddr u )
 \
 \ @standard ANS-Forth 1994, Core, File, extended
 \
 : S"
-	[CHAR] " PARSE			\  S: caddr u
-	STATE @ 0= IF			\  When interpreting, parse and print.
-	 TYPE 				\  S: --
-	ELSE				\  Otherwise compile into word the string.
-	 ['] _slit COMPILE, DUP ,	\  S: caddr u
-	 DUP >R ALIGNED			\  S: caddr u' R: u
-	 reserve R>			\  S: caddr addr u
-	 MOVE				\  S: --
-	THEN
+	[CHAR] " PARSE			\ S: caddr u
+	_store_string			\ S: --
 ; IMMEDIATE
 
 \
 \ ... S\" ccc" ...
 \
-\  (C: ccc<quote>" -- ) \ (S: -- c-addr u )
+\ (C: ccc<quote>" -- ) || (S: -- c-addr u )
 \
 \ @standard ANS-Forth 1994, Core, File, extended
 \
 : S\"
-	[CHAR] " PARSE-ESCAPE		\  S: caddr u
-	STATE @ 0= IF			\  When interpreting, parse and print.
-	 TYPE 				\  S: --
-	ELSE				\  Otherwise compile into word the string.
-	 ['] _slit COMPILE, DUP ,	\  S: caddr u
-	 DUP >R ALIGNED			\  S: caddr u' R: u
-	 reserve R>			\  S: caddr addr u
-	 MOVE				\  S: --
-	THEN
+	[CHAR] " parse-escape		\ S: caddr u
+	_store_string			\ S: --
 ; IMMEDIATE
 
 \
