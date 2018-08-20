@@ -256,6 +256,7 @@ struct p4_ctx {
 	P4_Int		unget;
 	P4_Input	input;
 	P4_Block	block;
+	P4_Int		block_fd;
 	P4_Char		tty[P4_INPUT_SIZE];
 	P4_Char *	picptr;
 	P4_Char		pic[2 * sizeof (P4_Cell) * CHAR_BIT + 2];

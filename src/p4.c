@@ -126,6 +126,8 @@ static const char *p4_exceptions[] = {
 	NULL
 };
 
+static int p4Repl(P4_Ctx *ctx, int is_executing);
+
 /***********************************************************************
  *** Context
  ***********************************************************************/
@@ -587,6 +589,31 @@ p4Refill(P4_Ctx *ctx, P4_Input *input)
  *** Block I/O
  ***********************************************************************/
 
+P4_Int
+p4BlockOpen(const char *file)
+{
+	int cwd;
+	P4_Int fd = -1;
+
+	if ((cwd = open(".", O_RDONLY)) < 0) {
+		goto error0;
+	}
+	if ((fd = open(file, O_CREAT|O_RDWR, S_IRWXU|S_IRWXG|S_IRWXO)) < 0 || flock(fd, LOCK_EX)) {
+		const char *home = getenv("HOME");
+		if (home == NULL || chdir(home)) {
+			goto error1;
+		}
+		if ((fd = open(file, O_CREAT|O_RDWR, S_IRWXU|S_IRWXG|S_IRWXO)) < 0 || flock(fd, LOCK_EX)) {
+			goto error1;
+		}
+	}
+error1:
+	(void) fchdir(cwd);
+	(void) close(cwd);
+error0:
+	return fd;
+}
+
 int
 p4BlockGrow(P4_Int fd, P4_Uint block)
 {
@@ -660,6 +687,55 @@ p4BlockWrite(P4_Int fd, P4_Block *block)
 	block->state = P4_BLOCK_CLEAN;
 
 	return 0;
+}
+
+void
+p4BlockBuffer(P4_Ctx *ctx, P4_Uint blk_num)
+{
+	if (ctx->block_fd <= 0) {
+		LONGJMP(ctx->on_throw, P4_THROW_EIO);
+	}
+	if (blk_num == 0) {
+		blk_num = 1;
+	}
+	if (blk_num == ctx->block.number) {
+		return;
+	}
+	if (ctx->block.state == P4_BLOCK_DIRTY && p4BlockWrite(ctx->block_fd, &ctx->block)) {
+		LONGJMP(ctx->on_throw, P4_THROW_BLOCK_WR);
+	}
+	P4_PUSH(ctx->ds, ctx->block.buffer);
+	ctx->block.state = P4_BLOCK_CLEAN;
+	ctx->block.number = blk_num;
+	ctx->input.blk = blk_num;
+}
+
+void
+p4BlockGet(P4_Ctx *ctx, P4_Uint blk_num)
+{
+	p4BlockBuffer(ctx, blk_num);
+	if (p4BlockRead(ctx->block_fd, blk_num, &ctx->block)) {
+		LONGJMP(ctx->on_throw, P4_THROW_BLOCK_RD);
+	}
+}
+
+void
+p4BlockLoad(P4_Ctx *ctx, P4_Uint blk_num)
+{
+	P4_INPUT_PUSH(&ctx->input);
+
+	p4BlockGet(ctx, blk_num);
+
+	ctx->input.buffer = ctx->block.buffer;
+	ctx->input.length = P4_BLOCK_SIZE;
+	ctx->input.blk = blk_num;
+	ctx->input.offset = 0;
+	ctx->input.fp = NULL;
+	ctx->input.fd = P4_INPUT_STR;
+
+	p4Repl(ctx, 1);
+
+	P4_INPUT_POP(&ctx->input);
 }
 
 /***********************************************************************
@@ -774,6 +850,7 @@ p4Free(P4_Ctx *ctx)
 			prev = word->prev;
 			p4WordFree(word);
 		}
+		(void) close(ctx->block_fd);
 		free(ctx->ds.base);
 		free(ctx->rs.base);
 		free(ctx);
@@ -806,13 +883,13 @@ p4Create()
 	ctx->ds.size = options.data_stack_size;
 	P4_RESET(ctx->ds);
 
+	ctx->block_fd = p4BlockOpen(P4_BLOCK_FILE);
+
 	return ctx;
 error0:
 	p4Free(ctx);
 	return NULL;
 }
-
-static int p4Repl(P4_Ctx *ctx, int is_executing);
 
 static void
 p4Bp(P4_Ctx *ctx)
@@ -984,18 +1061,24 @@ p4Repl(P4_Ctx *ctx, int is_executing)
 		/* I/O */
 		P4_WORD(">IN",		&&_input_offset,0),
 		P4_WORD("BLK",		&&_blk,		0),
+		P4_WORD("BLOCK",	&&_block,	0),
+		P4_WORD("BUFFER",	&&_buffer,	0),
 		P4_WORD("DUMP",		&&_dump,	0),
 		P4_WORD("EMIT",		&&_emit,	0),
+		P4_WORD("INCLUDED",	&&_included,	0),
 		P4_WORD("KEY",		&&_key,		0),
 		P4_WORD("KEY?",		&&_key_ready,	0),
+		P4_WORD("LOAD",		&&_load,	0),
 		P4_WORD("MS",		&&_ms,		0),
 		P4_WORD("PARSE",	&&_parse,	0),
 		P4_WORD("PARSE-ESCAPE",	&&_parse_escape,0),
 		P4_WORD("PARSE-NAME",	&&_parse_name,	0),
 		P4_WORD("REFILL",	&&_refill,	0),
-		P4_WORD("SEE",		&&_see,		P4_BIT_IMM),
 		P4_WORD("SOURCE",	&&_source,	0),
 		P4_WORD("UPDATE",	&&_update,	0),
+
+		/* Tools*/
+		P4_WORD("SEE",		&&_see,		P4_BIT_IMM),
 		P4_WORD("WORDS",	&&_words,	0),
 
 		P4_WORD(NULL,		NULL,		0),
@@ -1013,7 +1096,7 @@ p4Repl(P4_Ctx *ctx, int is_executing)
 	}
 	if (ctx->words == NULL) {
 		ctx->words = p4_bultin_words;
-		if (*options.core_file != '\0' && p4LoadCore(ctx, options.core_file) != P4_THROW_QUIT) {
+		if (*options.core_file != '\0' && p4LoadCore(ctx, options.core_file)) {
 			return P4_THROW_EIO;
 		}
 	}
@@ -1359,35 +1442,27 @@ p4Repl(P4_Ctx *ctx, int is_executing)
 	/*
 	 * Context variables
 	 */
-	_input_offset: {// ( -- u )
-		P4_PUSH(ctx->ds, (P4_Cell *) &ctx->input.offset);
+	_args: {// ( -- aaddr u )
+		P4_PUSH(ctx->ds, (P4_Cell *) options.argv);
+		P4_PUSH(ctx->ds, (P4_Int) options.argc);
 		NEXT;
 	}
-	_base: {	// ( -- addr )
-		P4_PUSH(ctx->ds, (P4_Cell *) &ctx->radix);
-		NEXT;
-	}
-	_blk: {		// ( -- addr )
-		P4_PUSH(ctx->ds, (P4_Cell *) &ctx->block.number);
-		NEXT;
-	}
-	_update: {	// ( -- )
-		ctx->block.state = P4_BLOCK_DIRTY;
+	_ip: {		// ( -- addr )
+		P4_PUSH(ctx->ds, (P4_Cell *) &ip);
 		NEXT;
 	}
 	_state: {	// ( -- addr )
 		P4_PUSH(ctx->ds, (P4_Cell *) &ctx->state);
 		NEXT;
 	}
-	_source: {	// ( -- caddr u )
-		P4_PUSH(ctx->ds, ctx->input.buffer + ctx->input.offset);
-		P4_PUSH(ctx->ds, ctx->input.length - ctx->input.offset);
-		NEXT;
-	}
 
 	/*
 	 * Numeric formatting
 	 */
+	_base: {	// ( -- addr )
+		P4_PUSH(ctx->ds, (P4_Cell *) &ctx->radix);
+		NEXT;
+	}
 	_pic_start: {	// ( -- )
 		(void) memset(ctx->pic, ' ', sizeof (ctx->pic));
 		ctx->picptr = ctx->pic;
@@ -1650,8 +1725,17 @@ p4Repl(P4_Ctx *ctx, int is_executing)
 	}
 
 	/*
-	 * IO
+	 * I/O
 	 */
+	_input_offset: {// ( -- u )
+		P4_PUSH(ctx->ds, (P4_Cell *) &ctx->input.offset);
+		NEXT;
+	}
+	_source: {	// ( -- caddr u )
+		P4_PUSH(ctx->ds, ctx->input.buffer + ctx->input.offset);
+		P4_PUSH(ctx->ds, ctx->input.length - ctx->input.offset);
+		NEXT;
+	}
 	_refill: {	// ( -- flag)
 		w.u = p4Refill(ctx, &ctx->input);
 		P4_PUSH(ctx->ds, w);
@@ -1692,6 +1776,39 @@ p4Repl(P4_Ctx *ctx, int is_executing)
 	_emit: {	// ( c -- )
 		w = P4_POP(ctx->ds);
 		(void) fputc(w.n, stdout);
+		NEXT;
+	}
+	_included: {	// ( caddr u -- )
+		w = P4_POP(ctx->ds);
+		x = P4_TOP(ctx->ds);
+		P4_TOP(ctx->ds).n = p4EvalFile(ctx, x.s);
+		NEXT;
+	}
+
+	/*
+	 * Block I/O
+	 */
+	_blk: {		// ( -- addr )
+		P4_PUSH(ctx->ds, (P4_Cell *) &ctx->block.number);
+		NEXT;
+	}
+	_block: {	// ( u -- aaddr )
+		w = P4_POP(ctx->ds);
+		p4BlockGet(ctx, w.u);
+		NEXT;
+	}
+	_buffer: {	// ( u -- aaddr )
+		w = P4_POP(ctx->ds);
+		p4BlockBuffer(ctx, w.u);
+		NEXT;
+	}
+	_load: {	// ( u -- )
+		w = P4_POP(ctx->ds);
+		p4BlockLoad(ctx, w.u);
+		NEXT;
+	}
+	_update: {	// ( -- )
+		ctx->block.state = P4_BLOCK_DIRTY;
 		NEXT;
 	}
 

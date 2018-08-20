@@ -1179,6 +1179,52 @@ int_max INVERT CONSTANT int_min	\ 0x80...00
 \
 : ." POSTPONE S" ['] TYPE COMPILE, ; IMMEDIATE
 
+\
+\  : X ... test ABORT" message" ...
+\
+\  (C: ccc<quote>" -- ) \ (S: i*x x1 --  | i*x ) ( R: j*x --  | j*x )
+\
+\ @standard ANS-Forth 1994
+\
+: ABORT" IF POSTPONE ." BL EMIT -2 THROW THEN ;
+
+\
+\ ... SCR ...
+\
+\ (S: -- aaddr )
+\
+\ @standard ANS-Forth 1994, Block
+\
+VARIABLE SCR 0 SCR !
+
+\
+\ ... LIST ...
+\
+\ (S: u -- )
+\
+\ @standard ANS-Forth 1994, Block
+\
+: LIST				\ S: u
+	DUP SCR !		\ S: u
+	BLOCK			\ S: aaddr
+	#16 0 DO
+	 I 1+ 2 .R
+	 [CHAR] | EMIT
+	 DUP 64 TYPE		\ S: aaddr
+	 [CHAR] | EMIT CR
+	 #64 CHARS +		\ S: aaddr'
+	LOOP DROP		\ S: --
+;
+
+\
+\ ... LIST+ ...
+\
+\ (S: -- )
+\
+\ @standard p4
+\
+: LIST+ SCR @ 1+ LIST ;
+
 MARKER rm_untested
 
 \
@@ -1211,8 +1257,6 @@ MARKER rm_untested
 \
 : PAGE 0 0 AT-XY S\" \e[0J" TYPE ;
 
-QUIT
-
 \
 \ ... INCLUDE filename ...
 \
@@ -1221,43 +1265,6 @@ QUIT
 \ @standard p4
 \
 : INCLUDE PARSE-NAME INCLUDED ;
-
-\
-\ ... SCR ...
-\
-\ (S: -- aaddr )
-\
-\ @standard ANS-Forth 1994, Block
-\
-VARIABLE SCR 0 SCR !
-
-\
-\ ... LIST ...
-\
-\ (S: u -- )
-\
-\ @standard ANS-Forth 1994, Block
-\
-: LIST				\  S: u
-	DUP SCR !		\  S: u
-	BLOCK			\  S: aaddr
-	#16 0 DO
-	 I 2 .R
-	 [CHAR] | EMIT
-	 DUP 64 TYPE		\  S: aaddr
-	 [CHAR] | EMIT CR
-	 #64 CHARS +		\  S: aaddr'
-	LOOP DROP		\  S: --
-;
-
-\
-\ ... LIST+ ...
-\
-\ (S: -- )
-\
-\ @standard p4
-\
-: LIST+ SCR @ 1+ LIST ;
 
 \
 \ ... THRU ...
@@ -1273,15 +1280,6 @@ VARIABLE SCR 0 SCR !
 	LOOP
 ;
 
-\
-\  : X ... test ABORT" message" ...
-\
-\  (C: ccc<quote>" -- ) \ (S: i*x x1 --  | i*x ) ( R: j*x --  | j*x )
-\
-\ @standard ANS-Forth 1994
-\
-: ABORT" IF ." -2 THROW THEN ;
-
 MARKER rm_user_words
 
-.( Post4 Copyright 2007, 2018 by Anthony Howe.  All rights reserved. ) CR
+.( Post4 Copyright 2007, 2018 by Anthony Howe.  All rights reserved. )
