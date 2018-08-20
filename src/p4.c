@@ -1717,21 +1717,6 @@ p4Repl(P4_Ctx *ctx, int is_executing)
 		P4_PUSH(ctx->ds, str.length);
 		NEXT;
 	}
-//	_find_name: {	// FIND-NAME name ( c-addr u  -- c-addr u 0 | xt 1 | xt -1
-//		w = P4_POP(ctx->ds);
-//		x = P4_POP(ctx->ds);
-//		word = p4FindWord(ctx, w.s, x.u);
-//		if (word == NULL) {
-//			P4_PUSH(ctx->ds, w);
-//			P4_PUSH(ctx->ds, x);
-//			P4_PUSH(ctx->ds, (P4_Int) 0);
-//		} else {
-//			P4_PUSH(ctx->ds, &word->code);
-//			x.n = P4_WORD_IS_IMM(word) ? 1 : -1;
-//			P4_PUSH(ctx->ds, x);
-//		}
-//		NEXT;
-//	}
 	_ms: {		// ( ms -- )
 		w = P4_POP(ctx->ds);
 		p4Nap(w.u / 1000L, (w.u % 1000L) * 1000000L);
@@ -1798,10 +1783,6 @@ p4Repl(P4_Ctx *ctx, int is_executing)
 					}
 					continue;
 				}
-//				if (x.w <= (P4_Xt) p4Repl || sbrk(0) <= (void *) x.w) {
-//					(void) printf("( %p unknown Xt, stopped )", x.w);
-//					break;
-//				}
 				(void) printf(
 					"%s%.*s ",
 					P4_WORD_IS_IMM(x.w) ? "POSTPONE " : "",
