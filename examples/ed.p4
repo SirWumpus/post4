@@ -19,8 +19,8 @@
 
 MARKER rm_change
 
-64 CONSTANT block_width
-16 CONSTANT block_height
+#64 CONSTANT block_width
+#16 CONSTANT block_height
 block_width block_height * CONSTANT block_size
 
 1 SCR !
@@ -57,7 +57,7 @@ $1b5b357e CONSTANT key_end	\ vt220 vt_prev
 $1b5b367e CONSTANT key_pgdn	\ vt220 vt_next
 
 ( -- key | ANSI key code )
-: key_in 0 BEGIN 8 LSHIFT KEY OR KEY? 0= UNTIL ;
+: key_in 0 BEGIN #8 LSHIFT KEY OR KEY? 0= UNTIL ;
 
 ( -- number delim )
 : key_number
@@ -72,7 +72,7 @@ $1b5b367e CONSTANT key_pgdn	\ vt220 vt_next
 ;
 
 ( -- x y )
-: ansi_report ." \e[6n" key key 2DROP key_number DROP 1- key_number DROP 1- SWAP ;
+: ansi_report ." \e[6n" KEY KEY 2DROP key_number DROP 1- key_number DROP 1- SWAP ;
 
 VARIABLE edit_x
 VARIABLE edit_y
@@ -98,7 +98,7 @@ block_height 1- CONSTANT edit_max_y
 
 ( row k -- row k | -- )
 : edit_quit
-	\e edit_on_key
+	'\e' edit_on_key
 	2DROP CR
 	R> R> 2DROP		\ R: edit edit_row edit_quit -- edit
 ;
@@ -145,7 +145,7 @@ block_height 1- CONSTANT edit_max_y
 : edit_insert edit_is_not_col_edge IF OVER edit_shift_right THEN ;
 
 ( k -- f )
-: is_print 32 127 WITH-IN ;
+: is_print #32 #127 WITH-IN ;
 : is_not_print is_print 0= ;
 
 ( k -- k | -- )
@@ -162,13 +162,13 @@ block_height 1- CONSTANT edit_max_y
 
 ( row k -- row k )
 : edit_delete
-	\? edit_on_key			\ row k
+	'\?' edit_on_key		\ row k
 	OVER edit_shift_left		\ row k
 ;
 
 ( row k -- row k )
 : edit_backspace
-	\b edit_on_key			\ row k
+	'\b' edit_on_key		\ row k
 	edit_is_not_col_edge		\ row k f
 	IF 				\ row k
 		edit_dec_x		\ row k
@@ -182,7 +182,7 @@ block_height 1- CONSTANT edit_max_y
 ( row -- )
 : edit_row				\ row
 	BEGIN
-		\r EMIT			\ row
+		'\r' EMIT		\ row
 		DUP print_row		\ row
 		edit_cursor		\ row
 		key_in			\ row k
@@ -257,7 +257,7 @@ MARKER rm_ed
 
 ( row k -- row k )
 : ed_newline
-	\n edit_on_key					\ row k
+	'\n' edit_on_key				\ row k
 	ed_is_not_last_row				\ row k f
 	IF
 		edit_inc_y				\ row k
@@ -283,14 +283,14 @@ MARKER rm_ed
 		DUP '0' '9' 1+ WITH-IN WHILE
 		DUP EMIT
 		'0' -
-		SWAP 10 *
+		SWAP #10 *
 		+
 	REPEAT
 ;
 
 ( k -- k )
 : ed_goto_block
-	\a edit_on_key
+	'\a' edit_on_key
 	0 0 AT-XY
 	ansi_erase_line
 	." Goto block? " key_number_echo DROP
@@ -300,7 +300,7 @@ MARKER rm_ed
 
 ( row k -- row k' )
 : ed_menu
-	\e edit_on_key
+	'\e' edit_on_key
 	0 block_height 1+ AT-XY
 	." Cmd q-quit, d-del line, i-ins line, w-wipe line, W-wipe block?"
 	key_in NIP			\ row k'
@@ -317,7 +317,7 @@ MARKER rm_ed
 : ed_mode edit_mode @ EMIT SPACE ;
 : ed_block_number ." Block " SCR @ . ." of " USING ?BLOCKS . ;
 : ed_status ed_home ed_mode ed_block_number CR ;
-: ed_cursor edit_x @ 3 + edit_y @ 1 + AT-XY ;
+: ed_cursor edit_x @ #3 + edit_y @ 1 + AT-XY ;
 : ed_screen ed_status SCR @ LIST ed_cursor ;
 : ed_command
 	key_in				\ k

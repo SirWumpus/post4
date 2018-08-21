@@ -24,15 +24,11 @@
 
 MARKER rm_life
 
-24 VALUE rows
-80 VALUE columns
+#24 VALUE rows
+#80 VALUE columns
 
 CHAR # VALUE on
 CHAR . VALUE off
-
-( post4 does not define ALLOT as its use is problematic )
-( n -- )
-: ALLOT RESERVE DROP ;
 
 ( u -- a-addr )
 : alloc ALLOCATE DROP ;
@@ -98,10 +94,10 @@ screen1 VALUE screen_next
 ( column row -- count )
 : #neighbours
 	2>R 0 2R>				\ count col row
-	DUP 2 +					\ count col row row+2
+	DUP #2 +				\ count col row row+2
 	SWAP 1-					\ count col row+2 row-1
 	?DO
-		DUP 2 +				\ count col col+2
+		DUP #2 +			\ count col col+2
 		OVER 1-				\ count col col+2 col-1
 		?DO				\ count col
 			I J ?screen		\ count col flag
@@ -116,13 +112,13 @@ screen1 VALUE screen_next
 
 ( count -- char )
 : birth
-	3 =						\ flag
+	#3 =						\ flag
 	IF on ELSE off THEN				\ char
 ;
 
 ( count -- char )
 : death
-	3 5 WITH-IN					\ flag
+	#3 #5 WITH-IN					\ flag
 	IF on ELSE off THEN 				\ char
 ;
 
@@ -171,8 +167,8 @@ screen1 VALUE screen_next
 		generation
 		screen_swap
 		screen_curr .screen
-		KEY? IF KEY DROP \a EMIT LEAVE THEN
-		250 MS
+		KEY? IF KEY DROP '\a' EMIT LEAVE THEN
+		#250 MS
 	LOOP
 ;
 
