@@ -832,7 +832,7 @@ FALSE INVERT CONSTANT TRUE
 \
 \ @standard ANS-Forth 1994, Core
 \
-: U.R >R <# #S #> R> OVER - SPACES TYPE SPACE ;
+: U.R >R <# #S #> R> OVER - SPACES TYPE ;
 
 \
 \ ... .R  ...
@@ -841,7 +841,7 @@ FALSE INVERT CONSTANT TRUE
 \
 \ @standard ANS-Forth 1994, Core
 \
-: .R >R DUP ABS <# #S SWAP SIGN #> R> OVER - SPACES TYPE SPACE ;
+: .R >R DUP ABS <# #S SWAP SIGN #> R> OVER - SPACES TYPE ;
 
 \
 \ ... .( ccc) ...
