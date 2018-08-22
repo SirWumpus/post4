@@ -945,11 +945,12 @@ p4Catch(P4_Ctx *ctx)
 	if ((n = SETJMP(ctx->on_throw)) == 0) {
 		(void) p4Repl(ctx, 1);
 	} else {
+		/* Return from THROW */
 		ctx->input = source;
 		ctx->rs.top = rs_top;
 		ctx->ds.top = ds_top;
-		P4_PUSH(ctx->ds, (P4_Cell) n);
 	}
+	P4_PUSH(ctx->ds, n);
 	SETJMP_POP(ctx->on_throw);
 }
 
