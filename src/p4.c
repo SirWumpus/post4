@@ -1043,6 +1043,11 @@ p4Repl(P4_Ctx *ctx, int is_executing)
 		P4_WORD("ROLL",		&&_roll,	0),
 		P4_WORD("SWAP",		&&_swap,	0),
 
+		/* Dynamic Memory */
+		P4_WORD("ALLOCATE",	&&_allocate,	0),
+		P4_WORD("FREE",		&&_free,	0),
+		P4_WORD("RESIZE",	&&_resize,	0),
+
 		/* Operators */
 		P4_WORD("*",		&&_mul,		0),
 		P4_WORD("+",		&&_add,		0),
@@ -1578,6 +1583,30 @@ p4Repl(P4_Ctx *ctx, int is_executing)
 	_unused: {	// ( -- u )
 		w.u = ctx->words->mdata - ctx->words->ndata;
 		P4_PUSH(ctx->ds, w);
+		NEXT;
+	}
+
+	/*
+	 * Dynamic Memory
+	 */
+	_allocate: {	// ( u -- aaddr ior )
+		w = P4_TOP(ctx->ds);
+		P4_TOP(ctx->ds).s = malloc(w.u);
+		P4_PUSH(ctx->ds, (P4_Int)(w.s == NULL));
+		NEXT;
+	}
+	_free: {	// ( aaddr -- ior )
+		w = P4_TOP(ctx->ds);
+		free(w.s);
+		P4_TOP(ctx->ds).n = 0;
+		NEXT;
+	}
+	_resize: {	// ( aaddr1 u -- aaddr2 ior )
+		w = P4_POP(ctx->ds);
+		x = P4_TOP(ctx->ds);
+		w.s = realloc(x.s, w.u);
+		P4_TOP(ctx->ds) = w.s == NULL ? x : w;
+		P4_PUSH(ctx->ds, (P4_Int)(w.s == NULL));
 		NEXT;
 	}
 
