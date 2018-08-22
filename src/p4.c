@@ -1814,9 +1814,9 @@ p4Repl(P4_Ctx *ctx, int is_executing)
 		NEXT;
 	}
 	_included: {	// ( caddr u -- )
-		w = P4_POP(ctx->ds);
-		x = P4_TOP(ctx->ds);
-		P4_TOP(ctx->ds).n = p4EvalFile(ctx, x.s);
+		P4_DROP(ctx->ds, 1);	// ignore u, caddr is NUL terminated.
+		x = P4_POP(ctx->ds);
+		(void) p4EvalFile(ctx, x.s);
 		NEXT;
 	}
 
