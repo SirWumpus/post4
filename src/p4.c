@@ -227,7 +227,10 @@ p4LoadCore(P4_Ctx *ctx, const char *file)
 	if ((cwd = open(".", O_RDONLY)) < 0) {
 		goto error0;
 	}
-	if ((core_path = strdup(P4_CORE_PATH)) == NULL) {
+	if ((core_path = getenv("POST4_PATH")) == NULL || *core_path == '\0') {
+		core_path = P4_CORE_PATH;
+	}
+	if ((core_path = strdup(core_path)) == NULL) {
 		goto error1;
 	}
 	for (next = core_path; (path = strtok(next, ":")) != NULL; next = NULL) {
@@ -1193,8 +1196,9 @@ p4Repl(P4_Ctx *ctx, int is_executing)
 			}
 		}
 	}
-	(void) fputc('\n', stdout);
-
+	if (ctx->state == P4_STATE_INTERPRET && is_tty && P4_INPUT_IS_TERM(ctx->input)) {
+		(void) fputc('\n', stdout);
+	}
 	return P4_THROW_OK;
 
 	/*

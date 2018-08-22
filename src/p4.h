@@ -42,11 +42,11 @@ extern "C" {
 #endif
 
 #ifndef P4_BLOCK_FILE
-#define P4_BLOCK_FILE			"p4.blk"
+#define P4_BLOCK_FILE			".p4.blk"
 #endif
 
 #ifndef P4_CORE_PATH
-#define P4_CORE_PATH			".:/usr/local/share/post4:/usr/share/post4"
+#define P4_CORE_PATH			".:/usr/pkg/lib/post4:/usr/local/lib/post4:/usr/lib/post4"
 #endif
 
 #ifndef P4_CORE_FILE
