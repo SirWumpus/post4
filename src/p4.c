@@ -979,6 +979,7 @@ p4Repl(P4_Ctx *ctx, int is_executing)
 
 	static P4_Word words[] = {
 		/* Internal support. */
+		P4_WORD("_args",	&&_args,	0),		// p4
 		P4_WORD("_bp",		&&_bp,		P4_BIT_IMM),	// p4
 		P4_WORD("_branch",	&&_branch,	0),		// p4
 		P4_WORD("_branchz",	&&_branchz,	0),		// p4
@@ -2084,6 +2085,9 @@ main(int argc, char **argv)
 			return 2;
 		}
 	}
+
+	options.argc = argc - optind;
+	options.argv = argv + optind;
 
 	p4Init();
 	(void) atexit(p4Fini);

@@ -122,6 +122,8 @@ extern "C" {
  ***********************************************************************/
 
 typedef struct {
+	int argc;
+	char **argv;
 	const char *core_file;
 	const char *block_file;
 	long data_stack_size;
