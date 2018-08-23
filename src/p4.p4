@@ -1127,6 +1127,7 @@ int_max INVERT CONSTANT int_min	\ 0x80...00
 	R@				\ S: ip R: ip
 	@				\ S: u  R: ip
 	R> CELL+ SWAP 2DUP		\ S: caddr u caddr u R: --
+	1+				\ account for NUL from _store_string
 	+ ALIGNED			\ S: caddr u ip' R: --
 	>R				\ S: caddr u R: ip'
 ;
