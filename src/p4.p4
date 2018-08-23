@@ -87,6 +87,23 @@ FALSE INVERT CONSTANT TRUE
 \
 '\s' CONSTANT BL
 
+\ ... /PAD ...
+\
+\ ( -- n )
+\
+\ @standard ANS-Forth 1994, Core
+\
+256 CONSTANT /PAD
+
+\
+\ ... PAD ...
+\
+\  ( -- )
+\
+\ @standard ANS-Forth 1994, Core
+\
+/PAD CREATE PAD CHARS ALLOT
+
 \
 \  VARIABLE name
 \
