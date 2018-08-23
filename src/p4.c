@@ -658,19 +658,19 @@ p4BlockGrow(P4_Int fd, P4_Uint block)
 }
 
 int
-p4BlockRead(P4_Int fd, P4_Uint number, P4_Block *block)
+p4BlockRead(P4_Int fd, P4_Uint blk_num, P4_Block *block)
 {
-	if (fd <= 0 || number == 0 || block == NULL)
-		return 0;
-
-	if (p4BlockGrow(fd, number))
+	if (fd <= 0 || blk_num == 0 || block == NULL) {
 		return -1;
-
-	if (read(fd, block->buffer, P4_BLOCK_SIZE) != P4_BLOCK_SIZE)
+	}
+	if (lseek(fd, (blk_num - 1) * P4_BLOCK_SIZE, SEEK_SET) == (off_t) -1) {
 		return -1;
-
+	}
+	if (read(fd, block->buffer, P4_BLOCK_SIZE) != P4_BLOCK_SIZE) {
+		return -1;
+	}
 	block->state = P4_BLOCK_CLEAN;
-	block->number = number;
+	block->number = blk_num;
 
 	return 0;
 }
@@ -679,7 +679,7 @@ int
 p4BlockWrite(P4_Int fd, P4_Block *block)
 {
 	if (fd <= 0 || block == NULL) {
-		return 0;
+		return -1;
 	}
 	if (p4BlockGrow(fd, block->number)) {
 		return -1;
@@ -699,18 +699,19 @@ p4BlockBuffer(P4_Ctx *ctx, P4_Uint blk_num)
 		LONGJMP(ctx->on_throw, P4_THROW_EIO);
 	}
 	if (blk_num == 0) {
-		blk_num = 1;
+		LONGJMP(ctx->on_throw, P4_THROW_BLOCK_BAD);
 	}
 	if (blk_num == ctx->block.number) {
 		return;
 	}
+	/* Current there is no block buffer assignment stragegy beyond
+	 * a single buffer per context.  Might add one day.
+	 */
 	if (ctx->block.state == P4_BLOCK_DIRTY && p4BlockWrite(ctx->block_fd, &ctx->block)) {
 		LONGJMP(ctx->on_throw, P4_THROW_BLOCK_WR);
 	}
-	P4_PUSH(ctx->ds, ctx->block.buffer);
 	ctx->block.state = P4_BLOCK_CLEAN;
 	ctx->block.number = blk_num;
-	ctx->input.blk = blk_num;
 }
 
 void
@@ -729,12 +730,13 @@ p4BlockLoad(P4_Ctx *ctx, P4_Uint blk_num)
 
 	p4BlockGet(ctx, blk_num);
 
+	/* Change input source to the block buffer. */
 	ctx->input.buffer = ctx->block.buffer;
 	ctx->input.length = P4_BLOCK_SIZE;
+	ctx->input.fd = P4_INPUT_BLK;
 	ctx->input.blk = blk_num;
 	ctx->input.offset = 0;
 	ctx->input.fp = NULL;
-	ctx->input.fd = P4_INPUT_STR;
 
 	p4Repl(ctx, 1);
 
@@ -1059,6 +1061,7 @@ p4Repl(P4_Ctx *ctx, int is_executing)
 		P4_WORD("BUFFER",	&&_buffer,	0),
 		P4_WORD("DUMP",		&&_dump,	0),
 		P4_WORD("EMIT",		&&_emit,	0),
+		P4_WORD("EMPTY-BUFFERS", &&_empty_buffers, 0),
 		P4_WORD("INCLUDED",	&&_included,	0),
 		P4_WORD("KEY",		&&_key,		0),
 		P4_WORD("KEY?",		&&_key_ready,	0),
@@ -1068,7 +1071,9 @@ p4Repl(P4_Ctx *ctx, int is_executing)
 		P4_WORD("PARSE-ESCAPE",	&&_parse_escape,0),
 		P4_WORD("PARSE-NAME",	&&_parse_name,	0),
 		P4_WORD("REFILL",	&&_refill,	0),
+		P4_WORD("SAVE-BUFFERS",	&&_save_buffers, 0),
 		P4_WORD("SOURCE",	&&_source,	0),
+		P4_WORD("SOURCE-ID",	&&_source_id,	0),
 		P4_WORD("UPDATE",	&&_update,	0),
 
 		/* Tools*/
@@ -1769,6 +1774,10 @@ p4Repl(P4_Ctx *ctx, int is_executing)
 		P4_PUSH(ctx->ds, ctx->input.length - ctx->input.offset);
 		NEXT;
 	}
+	_source_id: {	// ( -- -2 | -1 | 0 | fd )
+		P4_PUSH(ctx->ds, ctx->input.fd);
+		NEXT;
+	}
 	_refill: {	// ( -- flag)
 		w.u = p4Refill(ctx, &ctx->input);
 		P4_PUSH(ctx->ds, w);
@@ -1828,16 +1837,25 @@ p4Repl(P4_Ctx *ctx, int is_executing)
 	_block: {	// ( u -- aaddr )
 		w = P4_POP(ctx->ds);
 		p4BlockGet(ctx, w.u);
+		P4_PUSH(ctx->ds, ctx->block.buffer);
 		NEXT;
 	}
 	_buffer: {	// ( u -- aaddr )
 		w = P4_POP(ctx->ds);
 		p4BlockBuffer(ctx, w.u);
+		P4_PUSH(ctx->ds, ctx->block.buffer);
 		NEXT;
 	}
 	_load: {	// ( u -- )
 		w = P4_POP(ctx->ds);
 		p4BlockLoad(ctx, w.u);
+		NEXT;
+	}
+	_empty_buffers: { // ( -- )
+		ctx->block.state = P4_BLOCK_FREE;
+	}
+	_save_buffers: { // ( -- )
+		p4BlockBuffer(ctx, ctx->block.number);
 		NEXT;
 	}
 	_update: {	// ( -- )
@@ -2025,7 +2043,6 @@ p4Eval(P4_Ctx *ctx)
 			break;
 		}
 		ctx->input.fp = stdin;
-		ctx->input.blk = 0;
 		/*@fallthrough@*/
 
 	case P4_THROW_OK:
@@ -2035,6 +2052,7 @@ p4Eval(P4_Ctx *ctx)
 		ctx->input.buffer = ctx->tty;
 		ctx->input.length = 0;
 		ctx->input.offset = 0;
+		ctx->input.blk = 0;
 
 		rc = p4Repl(ctx, 0);
 	}

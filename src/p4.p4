@@ -1274,6 +1274,15 @@ VARIABLE SCR 0 SCR !
 ;
 
 \
+\ ... FLUSH ...
+\
+\ (S: -- )
+\
+\ @standard ANS-Forth 1994, Block
+\
+: FLUSH SAVE-BUFFERS EMPTY-BUFFERS ;
+
+\
 \ ... LIST+ ...
 \
 \ (S: -- )

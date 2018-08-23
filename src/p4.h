@@ -171,9 +171,12 @@ typedef struct {
 	P4_Char *	buffer;
 } P4_Input;
 
+#define P4_INPUT_BLK		(-2)
 #define P4_INPUT_STR		(-1)
+#define P4_INPUT_TERM		( 0)
+#define P4_INPUT_IS_BLK(input)	((input).fd == P4_INPUT_BLK && (input).blk == 0)
 #define P4_INPUT_IS_STR(input)	((input).fd == P4_INPUT_STR)
-#define P4_INPUT_IS_TERM(input)	((input).fd == 0)
+#define P4_INPUT_IS_TERM(input)	((input).fd == P4_INPUT_TERM)
 #define P4_INPUT_IS_FILE(input)	((input).fd > 0)
 #define P4_INPUT_PUSH(input)	{ P4_Input input_save = *input;
 #define P4_INPUT_POP(input)	*input = input_save; }
