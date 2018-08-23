@@ -41,33 +41,6 @@ MARKER rm_core_words
 : .RS 'r' EMIT 's' EMIT '\n' EMIT _rs 1 -  _stack_dump ;
 
 \
-\ ... BYE ...
-\
-\  ( i*x -- i*x )
-\
-\ @standard ANS-Forth 1994, Core
-\
-: BYE -256 THROW ;
-
-\
-\ ... ABORT ...
-\
-\  ( i*x –– ) ( R: j*x –– )
-\
-\ @standard ANS-Forth 1994, Core
-\
-: ABORT -1 THROW ;
-
-\
-\ ... ABORT ...
-\
-\  ( –– ) ( R: i*x –– )
-\
-\ @standard ANS-Forth 1994, Core
-\
-: QUIT -56 THROW ;
-
-\
 \  value CONSTANT name
 \
 \  (C: x <spaces>name -- ) \ (S: -- x )
@@ -780,6 +753,70 @@ FALSE INVERT CONSTANT TRUE
 	 '\n' PARSE 2DROP	(  Skip up to and including newline. )
 	THEN
 ; IMMEDIATE
+
+VARIABLE catch_frame 0 catch_frame !
+
+\ ... CATCH ...
+\
+\ ( i*x xt -- j*x 0 | i*x n )
+\
+: CATCH				\ S: xt   R: ip
+	_dsp@ >R		\ S: xt   R: ip ds
+	catch_frame @ >R	\ S: xt   R: ip ds cf
+	_rsp@ catch_frame !	\ S: xt   R: ip ds cf
+	EXECUTE			\ S: --   R: ip ds cf
+	R> catch_frame !	\ S: --   R: ip ds
+	R> DROP			\ S: --   R: ip
+	0			\ S: 0    R: ip
+;				\ S: 0    R: --
+
+\ ... THROW ...
+\
+\ ( k*x n -- k*x | i*x n )
+\
+: THROW				\ S: n    R:
+	\ 0 THROW is a no-op.
+	?DUP IF			\ S: n    R:
+	 \ When no catch frame, throw to C.
+	 catch_frame @ 0= IF	\ S: n    R:
+	  _longjmp		\ S: --   R: --
+	 THEN
+	 \ Restore return stack of CATCH at EXECUTE.
+	 catch_frame @ _rsp!	\ S: n    R: ip ds cf
+	 R> catch_frame !	\ S: n    R: ip ds
+	 R> SWAP >R		\ S: ds   R: ip n
+	 \ Restore data stack at start of CATCH
+	 _dsp!			\ S: xt   R: ip n
+	 DROP R>		\ S: n    R: ip
+	THEN
+;				\ S: 0 | n  R: --
+
+\
+\ ... BYE ...
+\
+\  ( i*x -- i*x )
+\
+\ @standard ANS-Forth 1994, Core
+\
+: BYE -256 THROW ;
+
+\
+\ ... ABORT ...
+\
+\  ( i*x -- ) ( R: j*x -- )
+\
+\ @standard ANS-Forth 1994, Core
+\
+: ABORT -1 THROW ;
+
+\
+\ ... ABORT ...
+\
+\  ( -- ) ( R: i*x -- )
+\
+\ @standard ANS-Forth 1994, Core
+\
+: QUIT -56 THROW ;
 
 \
 \ ... TYPE ...

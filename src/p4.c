@@ -933,27 +933,6 @@ p4Align(P4_Ctx *ctx)
 	LONGJMP(ctx->on_throw, P4_THROW_RESIZE);
 }
 
-static void
-p4Catch(P4_Ctx *ctx)
-{
-	P4_Int n;
-	P4_Input source = ctx->input;
-	P4_Cell *ds_top = ctx->ds.top;
-	P4_Cell *rs_top = ctx->rs.top;
-
-	SETJMP_PUSH(ctx->on_throw);
-	if ((n = SETJMP(ctx->on_throw)) == 0) {
-		(void) p4Repl(ctx, 1);
-	} else {
-		/* Return from THROW */
-		ctx->input = source;
-		ctx->rs.top = rs_top;
-		ctx->ds.top = ds_top;
-	}
-	P4_PUSH(ctx->ds, n);
-	SETJMP_POP(ctx->on_throw);
-}
-
 static int
 p4Repl(P4_Ctx *ctx, int is_executing)
 {
@@ -984,7 +963,13 @@ p4Repl(P4_Ctx *ctx, int is_executing)
 		P4_WORD("_branch",	&&_branch,	0),		// p4
 		P4_WORD("_branchz",	&&_branchz,	0),		// p4
 		P4_WORD("_ds",		&&_ds,		0),		// p4
+		P4_WORD("_dsp@",	&&_dsp_get,	0),		// p4
+		P4_WORD("_dsp!",	&&_dsp_put,	0),		// p4
+		P4_WORD("_ip",		&&_ip,		0),		// p4
+		P4_WORD("_longjmp",	&&_longjmp,	0),		// p4
 		P4_WORD("_rs",		&&_rs,		0),		// p4
+		P4_WORD("_rsp@",	&&_rsp_get,	0),		// p4
+		P4_WORD("_rsp!",	&&_rsp_put,	0),		// p4
 		P4_WORD("_stack_dump",	&&_stack_dump,	0),		// p4
 
 		/* Compiling Words */
@@ -993,7 +978,6 @@ p4Repl(P4_Ctx *ctx, int is_executing)
 		P4_WORD(":",		&&_colon,	0),
 		P4_WORD(";",		&&_semicolon,	P4_BIT_IMM),
 		P4_WORD(">BODY",	&&_body,	0),
-		P4_WORD("CATCH",	&&_catch,	0),
 		P4_WORD("COMPILE,",	&&_comma,	0),
 		P4_WORD("CREATE",	&&_create,	0),
 		P4_WORD("DOES>",	&&_does,	0),
@@ -1003,7 +987,6 @@ p4Repl(P4_Ctx *ctx, int is_executing)
 		P4_WORD("LITERAL",	&&_literal,	P4_BIT_IMM),
 		P4_WORD("MARKER",	&&_marker,	0),
 		P4_WORD("STATE",	&&_state,	0),
-		P4_WORD("THROW",	&&_throw,	0),
 
 		/* Numeric formatting. */
 		P4_WORD("<#",		&&_pic_start,	0),
@@ -1251,14 +1234,28 @@ p4Repl(P4_Ctx *ctx, int is_executing)
 		ip = (P4_Cell *)((P4_Char *) ip + (x.u == 0 ? w.n : sizeof (P4_Cell)));
 		NEXT;
 	}
-	_catch: {	// ( i*x xt -- j*y 0 | i*x n )
-		p4Catch(ctx);
+	_ip:		// ( -- addr )
+		P4_PUSH(ctx->ds, (P4_Cell *) &ip);
 		NEXT;
-	}
-	_throw: {	// ( k*x n -- k*x | i*x n )
+	_dsp_get:	// ( -- aaddr )
+		w.p = ctx->ds.top;
+		P4_PUSH(ctx->ds, w);
+		NEXT;
+	_dsp_put:	// ( aaddr -- )
+		w = P4_POP(ctx->ds);
+		ctx->ds.top = w.p;
+		NEXT;
+	_rsp_get:	// ( -- aaddr )
+		w.p = ctx->rs.top;
+		P4_PUSH(ctx->ds, w);
+		NEXT;
+	_rsp_put:	// ( aaddr -- )
+		w = P4_POP(ctx->ds);
+		ctx->rs.top = w.p;
+		NEXT;
+	_longjmp:	// ( n -- )
 		w = P4_POP(ctx->ds);
 		LONGJMP(ctx->on_throw, (int) w.n);
-	}
 
 	/* LITERAL (S: x -- )
 	 *
@@ -1456,10 +1453,6 @@ p4Repl(P4_Ctx *ctx, int is_executing)
 	_args: {// ( -- aaddr u )
 		P4_PUSH(ctx->ds, (P4_Cell *) options.argv);
 		P4_PUSH(ctx->ds, (P4_Int) options.argc);
-		NEXT;
-	}
-	_ip: {		// ( -- addr )
-		P4_PUSH(ctx->ds, (P4_Cell *) &ip);
 		NEXT;
 	}
 	_state: {	// ( -- addr )
