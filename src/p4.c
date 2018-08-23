@@ -996,6 +996,7 @@ p4Repl(P4_Ctx *ctx, int is_executing)
 		P4_WORD("BASE",		&&_base,	0),
 		P4_WORD("HOLD",		&&_pic_hold,	0),
 		P4_WORD("SIGN",		&&_pic_sign,	0),
+		P4_WORD("/HOLD",	&&_pic_size,	0),
 
 		/* Data Space - Alignment */
 		P4_WORD("CELLS",	&&_cells,	0),
@@ -1516,6 +1517,10 @@ p4Repl(P4_Ctx *ctx, int is_executing)
 		}
 		w = P4_POP(ctx->ds);
 		*ctx->picptr++ = (P4_Char) w.u;
+		NEXT;
+	}
+	_pic_size: {	// ( -- n )
+		P4_PUSH(ctx->ds, sizeof(ctx->pic));
 		NEXT;
 	}
 
