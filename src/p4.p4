@@ -2,6 +2,8 @@ MARKER rm_core_words
 
 : \  '\n' PARSE DROP DROP ; IMMEDIATE
 
+\ Post4 Copyright 2007, 2018 by Anthony Howe.  All rights reserved.
+
 \
 \ ... _ds ...
 \
@@ -27,7 +29,7 @@ MARKER rm_core_words
 \
 \ @standard ANS-Forth 1994, Tools
 \
-: .S _ds _stack_dump ;
+: .S 'd' EMIT 's' EMIT '\n' EMIT _ds _stack_dump ;
 
 \
 \ ... .RS ...
@@ -36,7 +38,7 @@ MARKER rm_core_words
 \
 \ @standard p4
 \
-: .RS _rs _stack_dump ;
+: .RS 'r' EMIT 's' EMIT '\n' EMIT _rs 1 -  _stack_dump ;
 
 \
 \ ... BYE ...
@@ -1283,4 +1285,4 @@ MARKER rm_untested
 
 MARKER rm_user_words
 
-.( Post4 Copyright 2007, 2018 by Anthony Howe.  All rights reserved. )
+\ .( Post4 Copyright 2007, 2018 by Anthony Howe.  All rights reserved. )
