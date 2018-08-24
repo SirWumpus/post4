@@ -126,7 +126,7 @@ static const char *p4_exceptions[] = {
 	NULL
 };
 
-static int p4Repl(P4_Ctx *ctx, int is_executing);
+static int p4Repl(P4_Ctx *ctx);
 
 /***********************************************************************
  *** Context
@@ -751,7 +751,7 @@ p4BlockLoad(P4_Ctx *ctx, P4_Uint blk_num)
 	ctx->input.offset = 0;
 	ctx->input.fp = NULL;
 
-	p4Repl(ctx, 1);
+	p4Repl(ctx);
 
 	P4_INPUT_POP(&ctx->input);
 }
@@ -949,7 +949,7 @@ p4Align(P4_Ctx *ctx)
 }
 
 static int
-p4Repl(P4_Ctx *ctx, int is_executing)
+p4Repl(P4_Ctx *ctx)
 {
 	P4_Word *word;
 	P4_String str;
@@ -1100,9 +1100,6 @@ p4Repl(P4_Ctx *ctx, int is_executing)
 		P4_WORD(NULL,		NULL,		0),
 	};
 
-	if (is_executing) {
-		goto _execute;
-	}
 	if (p4_bultin_words == NULL) {
 		/* Link up the base dictionary. */
 		for (word = words; word->code != NULL; word++) {
@@ -2100,7 +2097,7 @@ p4Eval(P4_Ctx *ctx)
 		ctx->input.offset = 0;
 		ctx->input.blk = 0;
 
-		rc = p4Repl(ctx, 0);
+		rc = p4Repl(ctx);
 	}
 
 	SETJMP_POP(ctx->on_throw);
