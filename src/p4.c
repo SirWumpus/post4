@@ -1014,6 +1014,7 @@ p4Repl(P4_Ctx *ctx, int is_executing)
 		P4_WORD(">R",		&&_to_rs,	0),
 		P4_WORD("@",		&&_fetch,	0),
 		P4_WORD("C!",		&&_cstore,	0),
+		P4_WORD("C,",		&&_ccomma,	0),
 		P4_WORD("C@",		&&_cfetch,	0),
 		P4_WORD("CMOVE",	&&_move,	0),
 		P4_WORD("CMOVE>",	&&_move,	0),
@@ -1443,7 +1444,10 @@ p4Repl(P4_Ctx *ctx, int is_executing)
 		NEXT;
 	}
 	_ccomma: {	// ( char -- )
-
+		w = P4_POP(ctx->ds);
+		ctx->words = p4WordAllot(ctx, ctx->words, 1);
+		((P4_Char *) ctx->words->data)[ctx->words->ndata - 1] = (P4_Char) w.u;
+		NEXT;
 	}
 	_allot: {	// ( n -- )
 		w = P4_POP(ctx->ds);
