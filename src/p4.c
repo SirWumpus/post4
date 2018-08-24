@@ -413,8 +413,9 @@ P4_String
 p4ParseName(P4_Input *input)
 {
 	for ( ; input->offset < input->length; input->offset++) {
-		if (!isspace(input->buffer[input->offset]))
+		if (isprint(input->buffer[input->offset]) && input->buffer[input->offset] != ' ') {
 			break;
+		}
 	}
 
 	return p4Parse(input, ' ', 0);
