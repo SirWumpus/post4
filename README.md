@@ -1,23 +1,86 @@
 Post4 (Post-Forth)
 ==================
 
-Copyright 2018 Anthony Howe.  All rights reserved.
+Copyright 2007, 2018 Anthony Howe.  All rights reserved.
 
 
 Overview
 --------
 
-Post4 (`p4`) is an indirect threaded Forth dialect written in C, based on the ["Forth 200x Draft 16.1, 2016-08-30"](http://www.forth200x.org/documents/forth16-1.pdf).
+Post4 (`p4`) is an indirect threaded Forth dialect written in C, based on the ["Forth 200x Draft 16.1, 2016-08-30"](http://www.forth200x.org/documents/forth16-1.pdf).  Post4 aims to implement the fewest possible built-in words in C, those that are needed to interact with memory and I/O, leaving the remaining standard words to be implemented in Forth.
 
 ```
 usage: p4 [-V][-b file][-c file][-d size][-r size] [script [args ...]]
 
--b file         block file; default p4.blk
+-b file         block file; default ./.p4.blk or $HOME/.p4.blk
 -c file         word definition file; default p4.p4
 -d size         data stack size in cells; default 32
 -r size         return stack size in cells; default 32
 -V              build and version information
 ```
+
+The environment variable `POST4_PATH` provides a colon separated search path for the `p4.p4` core word definitions file.  If `POST4_PATH` is undefined, then an OS specific default path is used.  A specific word defintion file can be specified with `-c`.
+
+By default a user block file, `.p4.blk`, is opened from the current directory or user's `HOME` directory.  This can be overriden with the `-b` option.
+
+`p4` reads input from standard input and writes to standard output, which can be redirected:
+
+```
+echo "123 69 + ." | p4
+```
+
+
+Examples
+--------
+
+### cat.p4 - A simple clone of `cat(1)`
+
+```lang=shell
+$ p4 cat.p4 file ...
+```
+
+### ed.p4 - Block Editor
+
+There are actually three block editor word sets:
+
+1. An `ed(1)` like block line editor using `LIST`, `PRINT`, and `CHANGE`.
+2. An interactive single line editor using `EDIT`; left & right cursor keys, tab toggles insert or replace mode, delete backspace, ESC quits.
+3. A full "screen" block editor using `ED`; all the commands of the interactive single line editor, plus up & down cursor keys, `CTRL+G` goto block, `CTRL+P` & `CTRL+N` block, and `ESC` menu.
+
+NOTE: that `EDIT` and `ED` are hard coded with ANSI termainal escape sequences.
+
+```lang=shell
+$ p4
+ok INCLUDE ed.p4
+ok ED
+```
+
+### life.p4 - [Conway's Game of Life](http://en.wikipedia.org/wiki/Conway%27s_Game_of_Life)
+
+**Rules**
+
+The universe of the Game of Life is an infinite two-dimensional orthogonal
+grid of square cells, each of which is in one of two possible states, live
+or dead. Every cell interacts with its eight neighbors, which are the cells
+that are directly horizontally, vertically, or diagonally adjacent. At each
+step in time, the following transitions occur:
+
+   1. Any live cell with fewer than two live neighbours dies, as if caused by underpopulation.
+   2. Any live cell with more than three live neighbours dies, as if by overcrowding.
+   3. Any live cell with two or three live neighbours lives on to the next generation.
+   4. Any dead cell with exactly three live neighbours becomes a live cell.
+
+The initial pattern constitutes the seed of the system. The first generation
+is created by applying the above rules simultaneously to every cell in the
+seed - births and deaths happen simultaneously, and the discrete moment at
+which this happens is sometimes called a tick (in other words, each generation
+is a pure function of the one before). The rules continue to be applied
+repeatedly to create further generations.
+
+```lang=shell
+$ p4 life.p4
+```
+
 
 Standard Words
 --------------
@@ -67,7 +130,7 @@ Add the top two stack values.
 
 ### +!
 ( `n|u` `aaddr` -- )  
-Add `n|u` to the cell at `aadr`.
+Add `n|u` to the cell at `aaddr`.
 
 - - -
 
@@ -196,13 +259,13 @@ Initialize the pictured numeric output conversion process.
 
 - - -
 ### >BODY
-( `xt` -- `aaddr` )
+( `xt` -- `aaddr` )  
 
 `aaddr` is the data-field address corresponding to `xt`.  Will throw `-31` if `xt` is not a word defined by `CREATE`.
 
 - - -
 ### >IN
-( -- `aaddr` )
+( -- `aaddr` )  
 `aaddr` is the address of a cell containing the offset in characters from the start of the
 input buffer to the start of the parse area.
 
@@ -211,8 +274,13 @@ input buffer to the start of the parse area.
 Move cell `x` from the data stack to the return stack.
 
 - - -
+### ?DO
+( `n1|u1` `n2|u2` -- ) (R: -- `loop-sys` )  
+Mark the start of `?DO ... +LOOP` or `?DO ... LOOP`.
+
+- - -
 ### ?DUP
-( `x` -- `x` `x` )
+( `x` -- `x` `x` )  
 Duplicate `x` if it is non-zero.
 
 - - -
@@ -253,13 +321,18 @@ If the data-space pointer is not aligned, reserve enough space to align it.
 - - -
 ### ALLOT
 ( `n` -- )  
-If `n` is greater than zero, reserve `n` address units of data space. If `n` is less than zero, release `|n|` address units of
-data space. If `n` is zero, leave the data-space pointer unchanged.
+If `n` is greater than zero, reserve `n` address units of data space.  If `n` is less than zero, release `|n|` address units of
+data space.  If `n` is zero, leave the data-space pointer unchanged.
 
 - - -
 ### AND
-( `x1` `x2` -- `x3` )
+( `x1` `x2` -- `x3` )  
 Bit-wise and of the top two stack values.
+
+- - -
+### AT-XY
+( `col` `row` -- )  
+Position cursor on the terminal, `row` and `col` are 0 based.
 
 - - -
 ### BASE
@@ -277,6 +350,18 @@ Mark the start of `BEGIN...AGAIN` or `BEGIN...WHILE...REPEAT` loop.
 `char` is the character value for a space, since Forth words are delimited by space.  A space can also be specified with `'\s'`.
 
 - - -
+### BLK
+( -- `aaddr` )  
+
+- - -
+### BLOCK
+( `blk_num` -- `aaddr` )  
+
+- - -
+### BUFFER
+( `blk_num` -- `aaddr` )  
+
+- - -
 ### C!
 ( `char` `caddr` -- )  
 Store `char` at `caddr`.
@@ -284,7 +369,7 @@ Store `char` at `caddr`.
 - - -
 ### C,
 ( `char` -- )  
-
+Reserve one character of data space and store `char` there.
 
 - - -
 ### C@
@@ -303,12 +388,12 @@ Add the size in address units of a cell to `aaddr1` giving `aaddr2`.
 
 - - -
 ### CHAR text
-( "<spaces>text" -- `char` )  
+( `"<spaces>text"` -- `char` )  
 Parse `text` placing the first character of text on the stack.
 
 - - -
 ### CONSTANT name
-( `x` "<spaces>name" -- )  
+( `x` `"<spaces>name"` -- )  
 Define the word `name` to represent the constant value `x`.  When `name` is executed, the value `x` is pushed on to the stack.
 
 - - -
@@ -318,7 +403,7 @@ Write a newline to standard output.
 
 - - -
 ### CREATE
-( "<spaces>name" -- )  
+( `"<spaces>name"` -- )  
 Create a new word definition.  When `name` is executed, the `aaddr` of its data space is pushed onto the stack.  `CREATE` can be used to define new data structure, eg.
 
 ```
@@ -360,6 +445,7 @@ Number of cells on the data stack before `u` was placed there.
 
 - - -
 ### DO
+( `n1|u1` `n2|u2` -- ) (R: -- `loop-sys` )  
 Mark the start of `DO ... +LOOP` or `DO ... LOOP`.
 
 - - -
@@ -367,17 +453,17 @@ Mark the start of `DO ... +LOOP` or `DO ... LOOP`.
 Define the execution semantics for the most recently defined word by `CREATE`.  Throws -31 if `DOES>` is applied to a word not defined by `CREATE`.
 
 ```
-\ General structure:
-: word1 CREATE ( build data space of word2 ) DOES> ( actions applied to data of word2 ) ;
+        \ General structure:
+        : word1 CREATE ( build data space of word2 ) DOES> ( actions applied to data of word2 ) ;
 
-\ Make a new defining word CONSTANT.
-: CONSTANT CREATE , DOES> @ ;
+        \ Make a new defining word CONSTANT.
+        : CONSTANT CREATE , DOES> @ ;
 
-\ Use CONSTANT to define a word representing a value.
-377 CONSTANT monaco
+        \ Use CONSTANT to define a word representing a value.
+        377 CONSTANT monaco
 
-\ Use the new word.
-monaco ( -- 377 )
+        \ Use the new word.
+        monaco ( -- 377 )
 ```
 
 - - -
@@ -400,6 +486,11 @@ Duplicate `x`.
 Write the character octet to standard output.
 
 - - -
+### EMPTY-BUFFERS
+( -- )  
+Mark all block buffers as free without saving any dirty buffers.
+
+- - -
 ### EVALUATE
 ( `i*x` `caddr` `u` -- `j*x` )  
 
@@ -410,7 +501,7 @@ Remove the execution token `xt` from the stack and perform the semantics identif
 
 - - -
 ### EXIT
-( -- )(R: ip -- )  
+( -- )(R: `ip` -- )  
 Return control from the currently executing word to its caller.  Before executing `EXIT` within a do-loop, a program shall discard the loop-control parameters by executing `UNLOOP`.
 
 - - -
@@ -419,23 +510,167 @@ Return control from the currently executing word to its caller.  Before executin
 Fill memory at address `caddr` with `u` consecutive characters `char`.
 
 - - -
+### FLUSH
+( -- )  
+Save and free all dirty buffers.
+
+- - -
+### FM/MOD
+( `dend` `dsor` -- `mod` `quot` )  
+Floored division of `dend` and `dsor`.
+
+- - -
 ### HERE
-( -- `addr` )
+( -- `addr` )  
 `addr` is the data-space pointer that will next be assigned by `,`, `ALIGN`, `ALLOT`, `C,`, `COMPILE,`.
 
 - - -
 ### HOLD
-( `char` -- )
+( `char` -- )  
 Append `char` to the picture numeric output string.
+
+- - -
+### I
+( -- `n|u` )  
+`n|u` is a copy of the current (innermost) loop index.
+
+- - -
+### IF
+( `bool` -- )  
+If `bool` is zero (`FALSE`), continue execution following the matching `ELSE` or `THEN`.
+
+```
+        test IF 
+            \ execute for true
+        THEN
+        \ continue
+
+        test IF
+            \ execute for true
+        ELSE
+            \ execute for false
+        THEN
+        \ continue
+```
+
+- - -
+### IMMEDIATE
+( -- )  
+Make the most recent definition an immediate word.
+
+- - -
+### INCLUDE filepath
+( `"<spaces>filepath"` --  )  
+
+- - -
+### INCLUDED
+( `caddr` `u` -- )
+
+- - -
+### INVERT
+( `x1` -- `x2` )  
+Take the one's complement of `x1`.
+
+- - -
+### J
+( -- `n|u` )  
+`n|u` is a copy of the next-outer loop index.
+
+- - -
+### KEY
+( -- `char` )  
+Receive one character `char`.  Characters received by `KEY` are not displayed.
+
+- - -
+### LEAVE
+( -- ) (R: `loop-sys` -- )  
+Leave the current loop, resume execution following the `+LOOP` or `LOOP`.
+
+- - -
+### LIST
+( `blk_num` -- )  
+List the block given by `blk_num`, 1 based, and save `blk_num` in `SCR` on success.
+
+- - -
+### LITERAL
+
+- - -
+### LOAD
+( `blk_num` -- )  
+
+- - -
+### ROLL
+( `xu` `xu-1` ... `x0` `u` -- `xu-1` ... `x0` `xu` )  
+Left rotate the stack `u` cells.
+
+- - -
+### PAD
+( -- `aaddr` )  
+A character buffer space available to developers and //not// used by standard words.
+
+- - -
+### PAGE
+( -- )  
+Clear the terminal (advance next page).
+
+- - -
+### SAVE-BUFFERS
+( -- )  
+Save all the dirty buffer to the block file.
+
+- - -
+### SCR
+( -- `aaddr` )  
+`aaddr` is the address of a cell containing the block number from the most recent `LIST`.
+
+- - -
+### SM/REM
+( `dend` `dsor` -- `rem` `quot` )  
+Symmetric division of `dend` and `dsor`.
+
+- - -
+### UPDATE
+( -- )  
+Mark the current as dirty.
+
+- - -
+### THRU
+( `u1` `u2` -- )  
+`LOAD` in sequence blocks `u1` through to `u2` inclusive.
 
 - - -
 
 Post4 Specific Words
 --------------------
 
+### .rs
+( -- )  
+Dump the return stack.
+
+- - -
+### /char
+( -- `u` )  
+Size of an address unit.
+
+- - -
+### /cell
+( -- `u` )  
+Size of a cell.
+
+- - -
+### /hold
+( -- `u` )  
+Size of a numeric picture buffer in characters.
+
+- - -
+### /pad
+( -- `u` )  
+Size of a pad buffer in characters.
+
+- - -
 ### >here
 ( -- `u` )  
-Offset into the current data-space for the word being compiled.  Similar to the word `HERE`, except expressed as an offset from the start of the data-space.  During the compiliation of a word in C based implementations, the data-space region may be relocated when they are enlarged by `,`, `ALIGN`, `ALLOT`, `C,`, `COMPILE,` thus invalidating previous values of `HERE`.  Providing an offset into the current data-region allows for computing relative locations.
+Offset into the current data-space for the word being compiled.  Similar to the word `HERE`, except expressed as an offset from the start of the data-space when the current word was created.  During the compiliation of a word in C based implementations, the data-space region may be relocated when its enlarged by `,`, `ALIGN`, `ALLOT`, `C,`, `COMPILE,` thus invalidating previous values of `HERE` on the stack.  Providing an offset into the current data-region allows for computing relative locations.
 
 - - -
 ### _bp
@@ -454,31 +689,76 @@ Branch relative if zero.  The integer that immediately follows is the relative d
 - - -
 ### _ds
 ( -- `aaddr` `u` )  
-Push the base data stack address and size (depth).
+Push the data stack base address and size (depth).  This stack is a fixed size (default 32 cells) and grows upward.
+
+- - -
+### _dsp!
+( `aaddr` -- )  
+Store `addr`into the data stack pointer.
+
+- - -
+### _dsp@
+( -- `aaddr` )  
+Fetch data stack pointer.
+
+- - -
+### _ip
+( -- `aaddr` )  
+Address of the cell holding the inner interpreter's instruction pointer.
+
+- - -
+### _longjmp
+( `n` -- )  
+Return to the context saved at the start of the REPL (`QUIT`) passing `n`.  Values of `n` from -1 to -255 are the Forth 2012 standard `THROW` codes.  Passing -256 is equivalent to `BYE`.
+
+- - -
+### _rs
+( -- `aaddr` `u` )  
+Push the return stack base address and size (depth).  This stack is a fixed size (default 32 cells) and grows upward.
+
+- - -
+### _rsp!
+( `aaddr` -- )  
+Store `addr`into the return stack pointer.
+
+- - -
+### _rsp@
+( -- `aaddr` )  
+Fetch return stack pointer.
+
+- - -
+### _stack_dump
+( `aaddr` `u` -- )  
+Utility word used to define `.S` and `.rs`.
+
+- - -
+### list+
+( -- )  
+Increment variable `SCR` and list next block.
+
+- - -
+### llor
+
+( `xu` `xu-1` ... `x0` `u` -- `x0` `xu` `xu-1` ... `x1` )  
+Right rotate the stack `u` cells; `ROLL` in the opposite direction.
 
 - - -
 ### reserve
 
-( `u1` -- `addr` )  
-Similar to `ALLOT`, reserve `u1` address-units of data-space and return its start address.
+( `n` -- `addr` )  
+Similar to `ALLOT`, reserve `n` address-units of data-space and return its start address.  While defining a word in C based implementations, like `p4`, data-space regions may be relocated when they are enlarged, thus invalidating previous values of `HERE`.  Therefore:
 
-### .rs
-( -- )  
-Dump the return stack.
+```
+... HERE 100 CELLS ALLOT ...
+```
 
-- - -
-### _rs
-( -- aaddr u )  
-Push the base return stack address and size (depth).
-
-- - -
-### _stack_dump
-( aaddr u -- )  
-Utility word used to define `.S` and `.rs`.
+Should `ALLOT` enlarge and relocate the data-space, the address saved by `HERE` on the stack will now point into invalid memory.  With `reserve` the address of the region just reserved is on top of the stack insuring that the address is valid until the next enlargement of the data-space by `reserve`,`,`, `C,`, `COMPILE,`, or `ALIGN`.
 
 - - -
 
-## Supported THROW Codes 
+## THROW Codes Used
+
+This is a list of `THROW` codes used internally by `p4`.
 
 * -1 `ABORT`  
 * -2 `ABORT"`  
@@ -490,15 +770,17 @@ Utility word used to define `.S` and `.rs`.
 * -13 undefined word  
 * -17 pictured numeric output string overflow  
 * -23 address alignment exception (SIGBUS)  
-* -28 user interrupt  
+* -28 user interrupt (SIGINT)  
 * -29 compiler nesting  
-* -31 word not defined by CREATE
+* -31 word not defined by `CREATE`
+* -33 block read exception
+* -34 block write exception
+* -35 invalid block number, such as zero (0)
 * -55 floating-point unidentified fault (SIGFPE)  
 * -56 `QUIT`  
 * -61 `ALLOT` or `RESIZE`
 * -256 `BYE`  
 
-- - -
 - - -
 
 
