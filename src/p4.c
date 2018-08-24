@@ -26,8 +26,7 @@ static P4_Options options = {
 
 static void *p4_program_end;
 static P4_Word *p4_bultin_words;
-static volatile int last_signal;
-static P4_Ctx *signal_ctx;
+static P4_Ctx * volatile signal_ctx;
 static unsigned char base36[256];
 static char base36_digits[] = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ";
 
@@ -135,7 +134,6 @@ static int p4Repl(P4_Ctx *ctx);
 static void
 sig_int(int signum)
 {
-	last_signal = signum;
 	if (signal_ctx != NULL) {
 		switch (signum) {
 		case SIGINT:
@@ -2076,7 +2074,6 @@ p4Eval(P4_Ctx *ctx)
 		(void) fputc('\n', stdout);
 		(void) fflush(stdout);
 		P4_RESET(ctx->ds);
-		last_signal = 0;
 		/*@fallthrough@*/
 
 	case P4_THROW_QUIT:
