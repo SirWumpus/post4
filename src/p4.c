@@ -548,23 +548,44 @@ p4ReadByte(int fd)
 }
 
 P4_Int
-p4GetC(P4_Ctx *ctx)
+p4GetC(P4_Input *input)
 {
-	if (ctx->input.fd < STDIN_FILENO) {
-		return ctx->input.offset < ctx->input.length ? ctx->input.buffer[ctx->input.offset++] : EOF;
+	if (input->fd < STDIN_FILENO) {
+		return input->offset < input->length ? input->buffer[input->offset++] : EOF;
 	}
-	if (ctx->input.fp != NULL) {
-		return fgetc(ctx->input.fp);
+	if (input->fp != NULL) {
+		return fgetc(input->fp);
 	}
-	return p4ReadByte(ctx->input.fd);
+	return p4ReadByte(input->fd);
+}
+
+P4_Uint
+p4Accept(P4_Input *input, P4_Char *buf, P4_Uint size)
+{
+	int ch;
+	P4_Char *ptr;
+
+	if (input->fp == NULL || size-- <= 1) {
+		return 0;
+	}
+	for (ptr = buf; ptr - buf < size; ) {
+		if ((ch = p4GetC(input)) == EOF) {
+			break;
+		}
+		*ptr++ = (P4_Char) ch;
+		if (ch == '\n' || ch == '\r') {
+			ptr[-1] = '\n';
+			break;
+		}
+	}
+	*ptr = '\0';
+
+	return ptr - buf;
 }
 
 P4_Uint
 p4Refill(P4_Ctx *ctx, P4_Input *input)
 {
-	P4_Int ch;
-	P4_Uint i;
-
 	if (P4_INPUT_IS_STR(ctx->input)) {
 		return 0;
 	}
@@ -574,19 +595,10 @@ p4Refill(P4_Ctx *ctx, P4_Input *input)
 		(void) tcsetattr(tty_fd, TCSADRAIN, &tty_saved);
 	}
 #endif
+	input->length = p4Accept(&ctx->input, ctx->input.buffer, ctx->input.size);
 	input->offset = 0;
-	for (i = 0; i < input->size; ) {
-		if ((ch = p4GetC(ctx)) == EOF) {
-			break;
-		}
-		input->buffer[i++] = (P4_Char) ch;
-		if (ch == '\n') {
-			break;
-		}
-	}
-	input->length = i;
 
-	return i;
+	return input->length;
 }
 
 /***********************************************************************
@@ -1060,6 +1072,7 @@ p4Repl(P4_Ctx *ctx, int is_executing)
 
 		/* I/O */
 		P4_WORD(">IN",		&&_input_offset,0),
+		P4_WORD("ACCEPT",	&&_accept,	0),
 		P4_WORD("BLK",		&&_blk,		0),
 		P4_WORD("BLOCK",	&&_block,	0),
 		P4_WORD("BUFFER",	&&_buffer,	0),
@@ -1798,6 +1811,17 @@ p4Repl(P4_Ctx *ctx, int is_executing)
 	}
 	_source_id: {	// ( -- -2 | -1 | 0 | fd )
 		P4_PUSH(ctx->ds, ctx->input.fd);
+		NEXT;
+	}
+	_accept: {	// ( caddr +n1 -- +n2 )
+		w = P4_POP(ctx->ds);
+		x = P4_TOP(ctx->ds);
+		w.u = p4Accept(&ctx->input, x.s, w.u);
+		/* ACCEPT doesn't return the line terminator. */
+		if (0 < w.u && x.s[w.u-1] == '\n') {
+			x.s[--w.u] = '\0';
+		}
+		P4_TOP(ctx->ds) = w;
 		NEXT;
 	}
 	_refill: {	// ( -- flag)

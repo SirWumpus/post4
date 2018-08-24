@@ -488,9 +488,9 @@ extern void p4StrRev(P4_Char *s, P4_Size length);
  */
 extern P4_Int p4StrToInt(const P4_Char *s, P4_Char **stop, P4_Uint base);
 
-extern P4_Int p4GetC(P4_Ctx *ctx);
+extern P4_Int p4GetC(P4_Input *source);
 
-extern P4_Uint p4GetLine(P4_Ctx *ctx, P4_Char *buffer, P4_Size size);
+extern P4_Uint p4Accept(P4_Input *source, P4_Char *buffer, P4_Size size);
 
 /**
  * Handles parsing of "ccc<char>".
