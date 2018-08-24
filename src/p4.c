@@ -1039,14 +1039,16 @@ p4Repl(P4_Ctx *ctx, int is_executing)
 		P4_WORD("+",		&&_add,		0),
 		P4_WORD("-",		&&_sub,		0),
 		P4_WORD("/",		&&_div,		0),
-		P4_WORD("/MOD",		&&_div_mod,	0),
+		P4_WORD("/MOD",		&&_sm_div_rem,	0),
 		P4_WORD("AND",		&&_and,		0),
+		P4_WORD("FM/MOD",	&&_fm_div_mod,	0),
 		P4_WORD("INVERT",	&&_not,		0),
 		P4_WORD("LSHIFT",	&&_lshift,	0),
 		P4_WORD("MOD",		&&_mod,		0),
 		P4_WORD("NEGATE",	&&_neg,		0),
 		P4_WORD("OR",		&&_or,		0),
 		P4_WORD("RSHIFT",	&&_rshift,	0),
+		P4_WORD("SM/REM",	&&_sm_div_rem,	0),
 		P4_WORD("XOR",		&&_xor,		0),
 
 		/* Comparisons */
@@ -1692,13 +1694,28 @@ p4Repl(P4_Ctx *ctx, int is_executing)
 		P4_TOP(ctx->ds).n /= w.n;
 		NEXT;
 	}
-	_div_mod: {	// ( n1 n2 -- n3 n4)
+	_sm_div_rem: {	// ( dend dsor -- rem quot )
+		// C99+ specifies symmetric division.
 		ldiv_t qr;
 		w = P4_POP(ctx->ds);
 		x = P4_TOP(ctx->ds);
 		qr = ldiv(x.n, w.n);
 		P4_TOP(ctx->ds).n = qr.rem;
 		P4_PUSH(ctx->ds, qr.quot);
+		NEXT;
+	}
+	_fm_div_mod: {	// ( dend dsor -- mod quot )
+		P4_Int q, m;
+		w = P4_POP(ctx->ds);
+		x = P4_TOP(ctx->ds);
+		q = x.n / w.n;
+		m = x.n % w.n;
+		if (m != 0 && (w.n ^ x.n) < 0) {
+			q -= 1;
+			m += x.n;
+		}
+		P4_TOP(ctx->ds).n = m;
+		P4_PUSH(ctx->ds, q);
 		NEXT;
 	}
 	_mod: {		// ( n1 n2 -- n3 )
