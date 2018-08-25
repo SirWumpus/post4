@@ -27,16 +27,12 @@ MARKER rm_core_words
 \
 \ ( -- )
 \
-\ @standard ANS-Forth 1994, Tools
-\
 : .S 'd' EMIT 's' EMIT '\n' EMIT _ds _stack_dump ;
 
 \
 \ ... .RS ...
 \
 \ ( -- )
-\
-\ @standard p4
 \
 : .RS 'r' EMIT 's' EMIT '\n' EMIT _rs 1 -  _stack_dump ;
 
@@ -45,8 +41,6 @@ MARKER rm_core_words
 \
 \  (C: x <spaces>name -- ) \ (S: -- x )
 \
-\ @standard ANS-Forth 1994, Core
-\
 : CONSTANT CREATE , DOES> @ ;
 
 \
@@ -54,16 +48,12 @@ MARKER rm_core_words
 \
 \ (S: -- 0 )
 \
-\ @standard ANS-Forth 1994, Core
-\
 0 CONSTANT FALSE
 
 \
 \ ... TRUE ...
 \
 \ (S: -- 1 )
-\
-\ @standard ANS-Forth 1994, Core
 \
 FALSE INVERT CONSTANT TRUE
 
@@ -73,8 +63,6 @@ FALSE INVERT CONSTANT TRUE
 \
 \ (S: -- n )
 \
-\ @standard p4
-\
 1 CHARS CONSTANT /CHAR
 1 CELLS CONSTANT /CELL
 
@@ -83,15 +71,11 @@ FALSE INVERT CONSTANT TRUE
 \
 \ (S: -- ' ' )
 \
-\ @standard ANS-Forth 1994, Core
-\
 '\s' CONSTANT BL
 
 \ ... /PAD ...
 \
 \ ( -- n )
-\
-\ @standard ANS-Forth 1994, Core
 \
 256 CONSTANT /PAD
 
@@ -100,16 +84,12 @@ FALSE INVERT CONSTANT TRUE
 \
 \  ( -- )
 \
-\ @standard ANS-Forth 1994, Core
-\
 /PAD CREATE PAD CHARS ALLOT
 
 \
 \  VARIABLE name
 \
 \  (C: <spaces>name -- ) \ (S: -- aaddr )
-\
-\ @standard ANS-Forth 1994, Core
 \
 : VARIABLE CREATE 0 , ;
 
@@ -130,8 +110,6 @@ FALSE INVERT CONSTANT TRUE
 \
 \ 		name @
 \
-\ @standard ANS-Forth 1994, Core
-\
 \ @see
 \ 	TO
 \
@@ -142,16 +120,12 @@ FALSE INVERT CONSTANT TRUE
 \
 \ (S: aaddr1 -- aaddr2 )
 \
-\ @standard ANS-Forth 1994, Core
-\
 : CELL+ /CELL + ;
 
 \
 \ ... ALIGNED ...
 \
 \ (S: addr -- aaddr )
-\
-\ @standard ANS-Forth 1994, Core
 \
 \  (addr + (pow2-1)) & -pow2
 \
@@ -162,16 +136,12 @@ FALSE INVERT CONSTANT TRUE
 \
 \ (S: c-addr1 -- c-addr2 )
 \
-\ @standard ANS-Forth 1994, Core
-\
 : CHAR+ /CHAR + ;
 
 \
 \ ... DECIMAL ...
 \
 \ (S: -- )
-\
-\ @standard ANS-Forth 1994, Core
 \
 : DECIMAL #10 BASE ! ;
 
@@ -180,16 +150,12 @@ FALSE INVERT CONSTANT TRUE
 \
 \ (S: -- )
 \
-\ @standard ANS-Forth 1994, Core
-\
 : HEX #16 BASE ! ;
 
 \
 \ ... OCTAL ...
 \
 \ (S: -- )
-\
-\ @standard p4
 \
 : OCTAL #8 BASE ! ;
 
@@ -198,16 +164,12 @@ FALSE INVERT CONSTANT TRUE
 \
 \ (S: x1 x2 -- x2 )
 \
-\ @standard ANS-Forth 1994, Core
-\
 : NIP SWAP DROP ;
 
 \
 \ ... OVER ...
 \
 \ (S: x1 x2 -- x1 x2 x1 )
-\
-\ @standard ANS-Forth 1994, Core
 \
 : OVER 1 PICK ;
 
@@ -216,16 +178,12 @@ FALSE INVERT CONSTANT TRUE
 \
 \ (S: a b c -- b c a )
 \
-\ @standard ANS-Forth 1994, Core
-\
 : ROT 2 ROLL ;
 
 \
 \ ... TUCK ...
 \
 \ (S: x1 x2 -- x2 x1 x2 )
-\
-\ @standard ANS-Forth 1994, Core
 \
 : TUCK SWAP OVER ;
 
@@ -234,16 +192,12 @@ FALSE INVERT CONSTANT TRUE
 \
 \ (S: n addr --  )
 \
-\ @standard ANS-Forth 1994, Core
-\
 : +! DUP @ ROT + SWAP ! ;
 
 \
 \ ... 1+ ...
 \
 \ (S: nu1 -- nu2 )
-\
-\ @standard ANS-Forth 1994, Core
 \
 : 1+ 1 + ;
 
@@ -252,16 +206,12 @@ FALSE INVERT CONSTANT TRUE
 \
 \ (S: nu1 -- nu2 )
 \
-\ @standard ANS-Forth 1994, Core
-\
 : 1- 1 - ;
 
 \
 \ ... 2! ...
 \
 \ (S: lo hi aaddr -- )
-\
-\ @standard ANS-Forth 1994, Core
 \
 : 2! SWAP OVER ! CELL+ ! ;
 
@@ -272,16 +222,12 @@ FALSE INVERT CONSTANT TRUE
 \
 \ Fetch from aaddr the two cells, hi lo, and place on stack lo hi.
 \
-\ @standard ANS-Forth 1994, Core
-\
 : 2@ DUP CELL+ @ SWAP @ ;
 
 \
 \ ... 2* ...
 \
 \ (S: x1 -- x2 )
-\
-\ @standard ANS-Forth 1994, Core
 \
 : 2* 1 LSHIFT ;
 
@@ -290,16 +236,12 @@ FALSE INVERT CONSTANT TRUE
 \
 \ (S: x1 -- x2 )
 \
-\ @standard ANS-Forth 1994, Core
-\
 : 2/ 1 RSHIFT ;
 
 \
 \ ... 2DROP ...
 \
 \ (S: x1 x2 -- )
-\
-\ @standard ANS-Forth 1994, Core
 \
 : 2DROP DROP DROP ;
 
@@ -308,16 +250,12 @@ FALSE INVERT CONSTANT TRUE
 \
 \ (S: x1 x2 -- x1 x2 x1 x2 )
 \
-\ @standard ANS-Forth 1994, Core
-\
 : 2DUP OVER OVER ;
 
 \
 \ ... 2OVER ...
 \
 \ (S: x1 x2 x3 x4 -- x1 x2 x3 x4 x1 x2 )
-\
-\ @standard ANS-Forth 1994, Core
 \
 : 2OVER 3 PICK 3 PICK ;
 
@@ -326,16 +264,12 @@ FALSE INVERT CONSTANT TRUE
 \
 \ (S: x1 x2 x3 x4 -- x3 x4 x1 x2 )
 \
-\ @standard ANS-Forth 1994, Core
-\
 : 2SWAP 3 ROLL 3 ROLL ;
 
 \
 \ ... 2>R ...
 \
 \ (S: x1 x2 -- )(R: -- x1 x2 )
-\
-\ @standard ANS-Forth 1994, Core Ext
 \
 : 2>R
 	R> ROT 			\ S: x2 ip x1  R: --
@@ -348,8 +282,6 @@ FALSE INVERT CONSTANT TRUE
 \
 \ (S: -- x1 x2 )(R: x1 x2 -- )
 \
-\ @standard ANS-Forth 1994, Core Ext
-\
 : 2R>
 	R> R> R>		\ S: ip x2 x1  R: --
 	ROT			\ S: x2 x1 ip  R: --
@@ -360,8 +292,6 @@ FALSE INVERT CONSTANT TRUE
 \ ... 2R@ ...
 \
 \ (S: -- x1 x2 )(R: x1 x2 -- x1 x2 )
-\
-\ @standard ANS-Forth 1994, Core Ext
 \
 : 2R@
 	R> 2R>			\ S: ip x1 x2  R: --
@@ -374,16 +304,12 @@ FALSE INVERT CONSTANT TRUE
 \
 \ (S: nu -- flag )
 \
-\ @standard ANS-Forth 1994, Core
-\
 : 0<> 0= 0= ;
 
 \
 \ ... 0> ...
 \
 \ (S: n -- flag )
-\
-\ @standard ANS-Forth 1994, Core Ext
 \
 : 0> 0 SWAP - 0< ;
 
@@ -392,16 +318,12 @@ FALSE INVERT CONSTANT TRUE
 \
 \ (S: nu1 nu2 -- flag )
 \
-\ @standard ANS-Forth 1994, Core
-\
 : = - 0= ;
 
 \
 \ ... <> ...
 \
 \ (S: nu1 nu2 -- flag )
-\
-\ @standard ANS-Forth 1994, Core
 \
 : <> = 0= ;
 
@@ -410,16 +332,12 @@ FALSE INVERT CONSTANT TRUE
 \
 \ (S: n1 n2 -- flag )
 \
-\ @standard ANS-Forth 1994, Core
-\
 : < - 0< ;
 
 \
 \ ... > ...
 \
 \ (S: n1 n2 -- flag )
-\
-\ @standard ANS-Forth 1994, Core
 \
 : > - 0> ;
 
@@ -428,16 +346,12 @@ FALSE INVERT CONSTANT TRUE
 \
 \ (S: n1 n2 -- flag )
 \
-\ @standard p4
-\
 : <= - DUP 0= SWAP 0< OR ;
 
 \
 \ ... >= ...
 \
 \ (S: n1 n2 -- flag )
-\
-\ @standard p4
 \
 : >= < 0= ;
 
@@ -449,16 +363,12 @@ FALSE INVERT CONSTANT TRUE
 \ @note
 \ 	True if nu2 <= nu1 < nu3, otherwise false.
 \
-\ @standard Forth 200x Draft 16.1, Core Ext
-\
 : WITHIN OVER - >R - R> U< ;
 
 \
 \ ... CR ...
 \
 \ (S: -- )
-\
-\ @standard ANS-Forth 1994, Core
 \
 : CR '\r' EMIT '\n' EMIT ;
 
@@ -467,16 +377,12 @@ FALSE INVERT CONSTANT TRUE
 \
 \  ( -- u )
 \
-\ @standard ANS-Forth 1994, Core
-\
 : DEPTH _ds NIP ;
 
 \
 \ ... FILL ...
 \
 \ (S: c-addr u char -- )
-\
-\ @standard ANS-Forth 1994, String
 \
 : FILL
 	2 PICK			\  S: c- u c c-
@@ -490,16 +396,12 @@ FALSE INVERT CONSTANT TRUE
 \
 \ (S: c-addr u -- )
 \
-\ @standard ANS-Forth 1994, String
-\
 : BLANK BL FILL ;
 
 \
 \ ... SPACE ...
 \
 \ (S: -- )
-\
-\ @standard ANS-Forth 1994, Core
 \
 : SPACE BL EMIT ;
 
@@ -508,16 +410,12 @@ FALSE INVERT CONSTANT TRUE
 \
 \  (C: <spaces>name -- )
 \
-\ @standard ANS-Forth 1994, Core
-\
 : POSTPONE ' COMPILE, ; IMMEDIATE
 
 \
 \ ...  CHAR  ...
 \
 \ (S: <spaces>name -- char )
-\
-\ @standard ANS-Forth 1994, Core
 \
 : CHAR PARSE-NAME DROP C@ ;
 
@@ -526,16 +424,12 @@ FALSE INVERT CONSTANT TRUE
 \
 \  (C: <spaces>name -- ) \ (S: -- char )
 \
-\ @standard ANS-Forth 1994, Core
-\
 : [CHAR] CHAR POSTPONE LITERAL ; IMMEDIATE
 
 \
 \ ... ['] name ...
 \
 \  (C: <spaces>name -- ) \ (S: -- xt )
-\
-\ @standard ANS-Forth 1994, Core
 \
 : ['] ' POSTPONE LITERAL ; IMMEDIATE
 
@@ -547,8 +441,6 @@ FALSE INVERT CONSTANT TRUE
 \ @note
 \
 \ 	x name !
-\
-\ @standard ANS-Forth 1994, Core, Local
 \
 \ @see
 \ 	VALUE
@@ -564,8 +456,6 @@ FALSE INVERT CONSTANT TRUE
 \
 \  (C: -- dest )
 \
-\ @standard ANS-Forth 1994, Core
-\
 \ @see
 \ 	A.3.2.3.2 Control-flow stack
 \
@@ -575,8 +465,6 @@ FALSE INVERT CONSTANT TRUE
 \ ... BEGIN ... AGAIN
 \
 \  (C: dest -- )
-\
-\ @standard ANS-Forth 1994, Core
 \
 \ @see
 \ 	A.3.2.3.2 Control-flow stack
@@ -588,8 +476,6 @@ FALSE INVERT CONSTANT TRUE
 \
 \  (C: dest -- ) \ (S: flag -- )
 \
-\ @standard ANS-Forth 1994, Core
-\
 \ @see
 \ 	A.3.2.3.2 Control-flow stack
 \
@@ -599,8 +485,6 @@ FALSE INVERT CONSTANT TRUE
 \ ... AHEAD ... THEN ...
 \
 \  (C: -- forw )
-\
-\ @standard ANS-Forth 1994, Core
 \
 \ @see
 \ 	A.3.2.3.2 Control-flow stack
@@ -613,8 +497,6 @@ FALSE INVERT CONSTANT TRUE
 \ ... test IF ... ELSE ... THEN ...
 \
 \  (C: -- forw ) \ (S: flag -- )
-\
-\ @standard ANS-Forth 1994, Core
 \
 \ @see
 \ 	A.3.2.3.2 Control-flow stack
@@ -644,8 +526,6 @@ FALSE INVERT CONSTANT TRUE
 \
 \  (C: forw -- )
 \
-\ @standard ANS-Forth 1994, Core
-\
 \ @see
 \ 	A.3.2.3.2 Control-flow stack
 \
@@ -660,8 +540,6 @@ FALSE INVERT CONSTANT TRUE
 \ ... test IF ... ELSE ... THEN ...
 \
 \  (C: forw1 -- forw2 )
-\
-\ @standard ANS-Forth 1994, Core
 \
 \ @see
 \ 	A.3.2.3.2 Control-flow stack
@@ -685,8 +563,6 @@ FALSE INVERT CONSTANT TRUE
 \  additional WHILE needs a THEN in order to resolve each forward
 \  reference remaining on the stack.
 \
-\ @standard ANS-Forth 1994, Core
-\
 \ @see
 \ 	A.3.2.3.2 Control-flow stack
 \
@@ -699,8 +575,6 @@ FALSE INVERT CONSTANT TRUE
 \ ... BEGIN ... test WHILE ... REPEAT ...
 \
 \  (C: forw dest -- )
-\
-\ @standard ANS-Forth 1994, Core
 \
 \ @see
 \ 	A.3.2.3.2 Control-flow stack
@@ -715,16 +589,12 @@ FALSE INVERT CONSTANT TRUE
 \
 \ (S: n -- u )
 \
-\ @standard ANS-Forth 1994, Core
-\
 : ABS DUP 0< IF NEGATE THEN ;
 
 \
 \ ... MAX ...
 \
 \ (S: n1 n2 -- n3 )
-\
-\ @standard ANS-Forth 1994, Core
 \
 : MAX 2DUP < IF SWAP THEN DROP ;
 
@@ -733,16 +603,12 @@ FALSE INVERT CONSTANT TRUE
 \
 \ (S: n1 n2 -- n3 )
 \
-\ @standard ANS-Forth 1994, Core
-\
 : MIN 2DUP > IF SWAP THEN DROP ;
 
 \
 \ ... ?DUP ...
 \
 \ (S: x -- 0 | x x )
-\
-\ @standard ANS-Forth 1994, Core
 \
 : ?DUP DUP 0<> IF DUP THEN ;
 
@@ -751,16 +617,12 @@ FALSE INVERT CONSTANT TRUE
 \
 \ (S: ccc<paren>" -- )
 \
-\ @standard ANS-Forth 1994, Core, File
-\
 : ( [CHAR] ) PARSE 2DROP ; IMMEDIATE
 
 \
 \ ... \ comment to end of line
 \
 \ (S: ccc<eol>" -- )
-\
-\ @standard ANS-Forth 1994, Core, Block
 \
 : \
 	BLK @
@@ -813,16 +675,12 @@ VARIABLE catch_frame 0 catch_frame !
 \
 \  ( i*x -- i*x )
 \
-\ @standard ANS-Forth 1994, Core
-\
 : BYE -256 THROW ;
 
 \
 \ ... ABORT ...
 \
 \  ( i*x -- ) ( R: j*x -- )
-\
-\ @standard ANS-Forth 1994, Core
 \
 : ABORT -1 THROW ;
 
@@ -831,16 +689,12 @@ VARIABLE catch_frame 0 catch_frame !
 \
 \  ( -- ) ( R: i*x -- )
 \
-\ @standard ANS-Forth 1994, Core
-\
 : QUIT -56 THROW ;
 
 \
 \ ... TYPE ...
 \
 \ (S: caddr u -- )
-\
-\ @standard ANS-Forth 1994, Core
 \
 : TYPE
 	BEGIN DUP 0> WHILE	\  S: caddr u
@@ -855,8 +709,6 @@ VARIABLE catch_frame 0 catch_frame !
 \
 \ (S: n -- )
 \
-\ @standard ANS-Forth 1994, Core
-\
 : SPACES
 	BEGIN DUP 0> WHILE	\  S: n
 	 SPACE 1-		\  S: n'
@@ -868,16 +720,12 @@ VARIABLE catch_frame 0 catch_frame !
 \
 \ (S: u -- )
 \
-\ @standard ANS-Forth 1994, Core
-\
 : U. <# #S #> TYPE SPACE ;
 
 \
 \ ... . ...
 \
 \ (S: n -- )
-\
-\ @standard ANS-Forth 1994, Core
 \
 : . DUP ABS <# #S SWAP SIGN #> TYPE SPACE ;
 
@@ -886,16 +734,12 @@ VARIABLE catch_frame 0 catch_frame !
 \
 \ (S: u n -- )
 \
-\ @standard ANS-Forth 1994, Core
-\
 : U.R >R <# #S #> R> OVER - SPACES TYPE ;
 
 \
 \ ... .R  ...
 \
 \ (S: n n -- )
-\
-\ @standard ANS-Forth 1994, Core
 \
 : .R >R DUP ABS <# #S SWAP SIGN #> R> OVER - SPACES TYPE ;
 
@@ -904,16 +748,12 @@ VARIABLE catch_frame 0 catch_frame !
 \
 \ (S: ccc<paren>) -- )
 \
-\ @standard ANS-Forth 1994, Core, extended
-\
 : .( [CHAR] ) PARSE TYPE ; IMMEDIATE
 
 \
 \ ... ? ...
 \
 \ (S: aaddr -- )
-\
-\ @standard ANS-Forth 1994, Tools
 \
 : ?
 	BASE @ >R HEX
@@ -928,8 +768,6 @@ VARIABLE catch_frame 0 catch_frame !
 \ ... N>R ...
 \
 \ (S: i*x n –– ) (R: –– i*x n )
-\
-\ @standard ANS-Forth 1994, Tools
 \
 : N>R				\  S: i*x n R: ip
 	R> SWAP DUP		\  S: i*x ip n n R:
@@ -947,8 +785,6 @@ VARIABLE catch_frame 0 catch_frame !
 \
 \  The original stack order of i*x prior to the matching N>R is restored.
 \
-\ @standard ANS-Forth 1994, Tools
-\
 : NR>				\  S: -- R: i*x n ip (i*x reverse of original)
 	R> R> DUP		\  S: ip n i R: i*x
 	BEGIN DUP 0> WHILE	\  S: ip j*x n i R: i*x
@@ -965,8 +801,6 @@ VARIABLE catch_frame 0 catch_frame !
 \
 \ (C: -- dest )(R: -- count) || (S: limit first -- ) (R: -- limit first )
 \
-\ @standard ANS-Forth 1994, Core
-\
 : DO				\ C: --  R: ip
 	['] 2>R COMPILE,	\ S: --  R: limit first
 	R> 0 >R	>R		\ C: --  R: 0 ip
@@ -977,8 +811,6 @@ VARIABLE catch_frame 0 catch_frame !
 \ ... limit first ?DO ... LOOP ...
 \
 \ (C: -- dest ) (R: -- forw 1 ) || (S: limit first -- ) (R: -- limit first )
-\
-\ @standard ANS-Forth 1994, Core
 \
 : ?DO				\ C: --  R: ip
 	['] 2>R COMPILE,	\ S: --  R: limit first
@@ -995,8 +827,6 @@ VARIABLE catch_frame 0 catch_frame !
 \
 \ (C: dest -- dest ) (R: n*forw n -- n'*forw n' )
 \
-\ @standard ANS-Forth 1994, Core
-\
 : LEAVE				\ C: dest  R: n*forw n ip
 	R> R> 1+		\ C: dest ip n'  R: n*forw
 	POSTPONE AHEAD		\ C: dest ip n' forw  R: n*forw
@@ -1007,8 +837,6 @@ VARIABLE catch_frame 0 catch_frame !
 \ ... limit first DO ... test ?LEAVE ... LOOP ...
 \
 \ (C: dest -- dest ) (R: n*forw n -- n'*forw n' )
-\
-\ @standard ANS-Forth 1994, Core
 \
 : ?LEAVE			\ C: dest flag  R: n*forw n ip
 	POSTPONE IF		\ C: dest  R: n*forw n ip
@@ -1021,16 +849,12 @@ VARIABLE catch_frame 0 catch_frame !
 \
 \ (S: --  ) (R: limit index ip -- ip )
 \
-\ @standard ANS-Forth 1994, Core
-\
 : UNLOOP R> 2R> 2DROP >R ;
 
 \
 \ ... limit first DO ... LOOP ...
 \
 \ (S: -- flag ) (R: limit index ip -- limit index' ip )
-\
-\ @standard internal
 \
 \ @note
 \	Can count from zero up to the unsigned maximum possible in one cell,
@@ -1047,8 +871,6 @@ VARIABLE catch_frame 0 catch_frame !
 \ ... limit first DO ... LOOP ...
 \
 \ (C: dest -- ) (R: n*forw n ip -- ip )
-\
-\ @standard ANS-Forth 1994, Core
 \
 : LOOP				\ C: dest  R: n*forw n ip
 	['] _loop_inc_test COMPILE,
@@ -1074,16 +896,12 @@ VARIABLE catch_frame 0 catch_frame !
 \
 \ (S: -- index ) (R: limit index ip -- limit index ip )
 \
-\ @standard ANS-Forth 1994, Core
-\
 : I R> R@ SWAP >R ;
 
 \
 \ ... limit first DO ... LOOP ...
 \
 \ (S: -- index1 ) (R: limit1 index1 limit2 index2 ip -- limit1 index1 limit2 index2 ip )
-\
-\ @standard ANS-Forth 1994, Core
 \
 : J				\ S: --  R: l1 i1 l2 i2 ip
 	R> R> R> R@		\ S: ip i2 l2 i1  R: l1 i1
@@ -1099,8 +917,6 @@ int_max INVERT CONSTANT int_min	\ 0x80...00
 \ ... limit first DO ... LOOP ...
 \
 \ (S: n -- flag ) (R: limit index ip -- limit index' ip )
-\
-\ @standard internal
 \
 : _loop_step_test		\ S: n  R: l x ip
 	\ Add step to index.
@@ -1120,8 +936,6 @@ int_max INVERT CONSTANT int_min	\ 0x80...00
 \ ... limit first DO ... LOOP ...
 \
 \ (C: dest -- ) (R: n*forw n ip -- ip )
-\
-\ @standard ANS-Forth 1994, Core
 \
 : +LOOP				\ C: dest  R: n*forw n ip
 	\  Loop increment and test.
@@ -1147,8 +961,6 @@ int_max INVERT CONSTANT int_min	\ 0x80...00
 \ ... reserve ...
 \
 \ (S: u -- aaddr )
-\
-\ @standard p4
 \
 \ @note
 \ 	During the compiliation of a word in C based implementations
@@ -1205,8 +1017,6 @@ int_max INVERT CONSTANT int_min	\ 0x80...00
 \
 \ (S: -- caddr u )
 \
-\ @standard internal
-\
 \ @note
 \ 	The caller's return address is used to find and compute the
 \ 	address and length of the string stored within the word.
@@ -1237,16 +1047,12 @@ int_max INVERT CONSTANT int_min	\ 0x80...00
 \
 \ (C: ccc<quote>" -- ) || (S: -- caddr u )
 \
-\ @standard ANS-Forth 1994, Core, File, extended
-\
 : S" [CHAR] " PARSE POSTPONE SLITERAL ; IMMEDIATE
 
 \
 \ ... S\" ccc" ...
 \
 \ (C: ccc<quote>" -- ) || (S: -- c-addr u )
-\
-\ @standard ANS-Forth 1994, Core, File, extended
 \
 : S\" [CHAR] " parse-escape POSTPONE SLITERAL ; IMMEDIATE
 
@@ -1255,8 +1061,6 @@ int_max INVERT CONSTANT int_min	\ 0x80...00
 \
 \ (S: ccc<quote>" -- )
 \
-\ @standard ANS-Forth 1994, Core, extended
-\
 : ." POSTPONE S" ['] TYPE COMPILE, ; IMMEDIATE
 
 \
@@ -1264,16 +1068,12 @@ int_max INVERT CONSTANT int_min	\ 0x80...00
 \
 \  (C: ccc<quote>" -- ) \ (S: i*x x1 --  | i*x ) ( R: j*x --  | j*x )
 \
-\ @standard ANS-Forth 1994
-\
-: ABORT" IF POSTPONE ." BL EMIT -2 THROW THEN ;
+: ABORT" IF POSTPONE ." SPACE -2 THROW THEN ;
 
 \
 \ ... SCR ...
 \
 \ (S: -- aaddr )
-\
-\ @standard ANS-Forth 1994, Block
 \
 VARIABLE SCR 0 SCR !
 
@@ -1281,8 +1081,6 @@ VARIABLE SCR 0 SCR !
 \ ... LIST ...
 \
 \ (S: u -- )
-\
-\ @standard ANS-Forth 1994, Block
 \
 : LIST				\ S: u
 	DUP SCR !		\ S: u
@@ -1301,8 +1099,6 @@ VARIABLE SCR 0 SCR !
 \
 \ (S: -- )
 \
-\ @standard ANS-Forth 1994, Block
-\
 : FLUSH SAVE-BUFFERS EMPTY-BUFFERS ;
 
 \
@@ -1310,18 +1106,12 @@ VARIABLE SCR 0 SCR !
 \
 \ (S: -- )
 \
-\ @standard p4
-\
 : LIST+ SCR @ 1+ LIST ;
-
-MARKER rm_untested
 
 \
 \ ... AT-XY ...
 \
 \ (S: column row -- )
-\
-\ @standard ANS-Forth 1994, Facility
 \
 \ @note
 \ 	ANSI / VT100 terminal assumed.
@@ -1339,8 +1129,6 @@ MARKER rm_untested
 \
 \ (S: -- )
 \
-\ @standard ANS-Forth 1994, Facility
-\
 \ @note
 \ 	ANSI / VT100 terminal assumed.
 \
@@ -1351,16 +1139,12 @@ MARKER rm_untested
 \
 \ (S: <spaces>filename" -- )
 \
-\ @standard p4
-\
 : INCLUDE PARSE-NAME INCLUDED ;
 
 \
 \ ... THRU ...
 \
 \ (S: start end -- )
-\
-\ @standard ANS-Forth 1994, Block
 \
 : THRU				\  S: start end
 	1+ SWAP			\  S: end' start
