@@ -396,7 +396,10 @@ p4Parse(P4_Input *input, P4_Uint delim, P4_Uint escape)
 
 		/* Treat a space as indicating any white space. */
 		if (ch == delim || (delim == ' ' && isspace(ch))) {
-			input->buffer[offset] = '\0';
+			/* Do NOT terminate the parsed string, since the
+			 * source might be a block buffer or some read-only
+			 * string, which cannot be modified.
+			 */
 			break;
 		}
 	}
@@ -576,7 +579,6 @@ p4Accept(P4_Input *input, P4_Char *buf, P4_Size size)
 			break;
 		}
 	}
-	*ptr = '\0';
 
 	return ptr - buf;
 }
@@ -949,6 +951,7 @@ p4Align(P4_Ctx *ctx)
 static int
 p4Repl(P4_Ctx *ctx)
 {
+	P4_Char *cstr;
 	P4_Word *word;
 	P4_String str;
 	P4_Cell w, x, *ip;
@@ -1814,7 +1817,7 @@ p4Repl(P4_Ctx *ctx)
 		w.u = p4Accept(&ctx->input, x.s, w.u);
 		/* ACCEPT doesn't return the line terminator. */
 		if (0 < w.u && x.s[w.u-1] == '\n') {
-			x.s[--w.u] = '\0';
+			w.u--;
 		}
 		P4_TOP(ctx->ds) = w;
 		NEXT;
@@ -1862,10 +1865,15 @@ p4Repl(P4_Ctx *ctx)
 		NEXT;
 	}
 	_included: {	// ( caddr u -- )
-		P4_DROP(ctx->ds, 1);	// ignore u, caddr is NUL terminated.
+		w = P4_POP(ctx->ds);
 		x = P4_POP(ctx->ds);
-		(void) p4EvalFile(ctx, x.s);
-		NEXT;
+		if ((cstr = malloc(w.u + 1)) != NULL) {
+			strncpy(cstr, x.s, w.u)[w.u] = '\0';
+			(void) p4EvalFile(ctx, cstr);
+			free(cstr);
+			NEXT;
+		}
+		LONGJMP(ctx->on_throw, P4_THROW_ALLOCATE);
 	}
 
 	/*
