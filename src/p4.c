@@ -316,6 +316,18 @@ p4StrRev(P4_Char *s, P4_Size length)
 	}
 }
 
+char *
+p4StrDup(const P4_Char *str, P4_Size length)
+{
+	char *dup;
+
+	if ((dup = malloc(length + 1)) != NULL) {
+		strncpy(dup, str, length)[length] = '\0';
+	}
+
+	return dup;
+}
+
 /**
  * @param s
  *	A pointer to a C string representing a number.
@@ -779,11 +791,9 @@ p4WordCreate(P4_Ctx *ctx, const char *name, size_t length, P4_Code code)
 	}
 	word->mdata = sizeof (*word->data);
 
-	if ((word->name.string = malloc(length + 1)) == NULL) {
+	if ((word->name.string = p4StrDup(name, length)) == NULL) {
 		goto error1;
 	}
-	(void) strncpy(word->name.string, name, length);
-	word->name.string[length] = '\0';
 	word->name.length = length;
 	word->code = code;
 
@@ -791,7 +801,7 @@ p4WordCreate(P4_Ctx *ctx, const char *name, size_t length, P4_Code code)
 error1:
 	free(word);
 error0:
-	LONGJMP(ctx->on_throw, P4_THROW_DICT_OVER);
+	LONGJMP(ctx->on_throw, P4_THROW_ALLOCATE);
 }
 
 P4_Word *
@@ -1867,8 +1877,7 @@ p4Repl(P4_Ctx *ctx)
 	_included: {	// ( caddr u -- )
 		w = P4_POP(ctx->ds);
 		x = P4_POP(ctx->ds);
-		if ((cstr = malloc(w.u + 1)) != NULL) {
-			strncpy(cstr, x.s, w.u)[w.u] = '\0';
+		if ((cstr = p4StrDup(x.s, w.u)) != NULL) {
 			(void) p4EvalFile(ctx, cstr);
 			free(cstr);
 			NEXT;
