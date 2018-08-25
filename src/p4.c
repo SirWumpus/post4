@@ -481,7 +481,7 @@ p4MemDump(FILE *fp, P4_Char *addr, P4_Size length)
 	s = addr;
 	for (count = 0; count < length; addr++) {
 		if ((count & 0xF) == 0) {
-			(void) fprintf(fp, P4_HEX_FMT" ", (unsigned long) addr);
+			(void) fprintf(fp, P4_PTR_FMT" ", addr);
 			s = addr;
 		}
 		(void) fprintf(fp, " %.2x", (unsigned char) *addr);
@@ -558,7 +558,7 @@ p4GetC(P4_Input *input)
 }
 
 P4_Uint
-p4Accept(P4_Input *input, P4_Char *buf, P4_Uint size)
+p4Accept(P4_Input *input, P4_Char *buf, P4_Size size)
 {
 	int ch;
 	P4_Char *ptr;
@@ -1643,7 +1643,7 @@ p4Repl(P4_Ctx *ctx)
 	_pick: {	// ( xU ... x1 x0 -- xU ... x1 x0 xU )
 			// 0 PICK == DUP, 1 PICK == OVER
 		w = P4_POP(ctx->ds);
-		x = P4_PICK(ctx->ds, w.u);
+		x = P4_PICK(ctx->ds, w.n);
 		P4_PUSH(ctx->ds, x);
 		NEXT;
 	}
@@ -1671,16 +1671,16 @@ p4Repl(P4_Ctx *ctx)
 	}
 	_roll: {	// ( xu xu-1 ... x0 u –– xu-1 ... x0 xu )
 		w = P4_POP(ctx->ds);
-		x = P4_PICK(ctx->ds, w.u);
-		(void) memmove(ctx->ds.top - w.u, ctx->ds.top - w.u + 1, w.u * sizeof (P4_Cell));
+		x = P4_PICK(ctx->ds, w.n);
+		(void) memmove(ctx->ds.top - w.n, ctx->ds.top - w.n + 1, w.n * sizeof (P4_Cell));
 		P4_TOP(ctx->ds) = x;
 		NEXT;
 	}
 	_llor: {	// ( xu xu-1 ... x0 u –– x0 xu xu-1 ... x1 )
 		w = P4_POP(ctx->ds);
 		x = P4_TOP(ctx->ds);
-		(void) memmove(ctx->ds.top - w.u + 1, ctx->ds.top - w.u, w.u * sizeof (P4_Cell));
-		ctx->ds.top[-w.u] = x;
+		(void) memmove(ctx->ds.top - w.n + 1, ctx->ds.top - w.n, w.n * sizeof (P4_Cell));
+		ctx->ds.top[-w.n] = x;
 		NEXT;
 	}
 
@@ -1709,10 +1709,10 @@ p4Repl(P4_Ctx *ctx)
 	}
 	_sm_div_rem: {	// ( dend dsor -- rem quot )
 		// C99+ specifies symmetric division.
-		ldiv_t qr;
+		DIV_T qr;
 		w = P4_POP(ctx->ds);
 		x = P4_TOP(ctx->ds);
-		qr = ldiv(x.n, w.n);
+		qr = DIV(x.n, w.n);
 		P4_TOP(ctx->ds).n = qr.rem;
 		P4_PUSH(ctx->ds, qr.quot);
 		NEXT;

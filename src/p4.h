@@ -130,18 +130,21 @@ typedef struct {
 	long return_stack_size;
 } P4_Options;
 
-typedef void *P4_Code;			/* Address of lables, eg. ptr = &&label; */
+typedef void *P4_Code;			/* Address of labels, eg. ptr = &&label; */
 typedef void *P4_Ptr;
-#define P4_HEX_FMT "0x%.8lx"
+#define P4_PTR_FMT "0x%p"
 
 typedef char P4_Char;
 #define P4_CHAR_FMT "0x%.2x"
 
-typedef signed long P4_Int;
-#define P4_INT_FMT "%ld"
+typedef signed P4_Int;
+#define P4_INT_FMT "%d"
+#define DIV div
+#define DIV_T div_t
 
-typedef unsigned long P4_Uint;
-#define P4_UINT_FMT "%lu"
+typedef unsigned P4_Uint;
+#define P4_UINT_FMT "%u"
+#define P4_HEX_FMT "0x%.8x"
 
 typedef size_t P4_Size;
 #define P4_SIZE_FMT "%zu"
@@ -196,6 +199,7 @@ typedef struct {
 union p4_cell {
 	P4_Int		n;
 	P4_Uint		u;
+	P4_Size		z;
 	P4_Cell	*	p;
 	P4_Char *	s;
 	P4_Word *	w;
