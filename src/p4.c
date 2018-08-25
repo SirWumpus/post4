@@ -1127,15 +1127,11 @@ p4Repl(P4_Ctx *ctx)
 
 #define NEXT	goto _next
 
-	for (;;) {
-		if (ctx->state == P4_STATE_INTERPRET && is_tty && P4_INPUT_IS_TERM(ctx->input)) {
-			(void) fputs("ok ", stdout);
-			(void) fflush(stdout);
-		}
-		if (p4Refill(ctx, &ctx->input) == 0) {
-			break;
-		}
-	_repl:
+_repl:
+	/* The input buffer might have been primed (EVALUATE, LOAD),
+	 * so try to parse it first before reading more input.
+	 */
+	do {
 		while (ctx->input.offset < ctx->input.length) {
 			str = p4ParseName(&ctx->input);
 			if (str.length == 0) {
@@ -1216,7 +1212,12 @@ p4Repl(P4_Ctx *ctx)
 				goto _execute;
 			}
 		}
-	}
+		if (ctx->state == P4_STATE_INTERPRET && is_tty && P4_INPUT_IS_TERM(ctx->input)) {
+			(void) fputs("ok ", stdout);
+			(void) fflush(stdout);
+		}
+	} while (p4Refill(ctx, &ctx->input) != 0);
+
 	if (ctx->state == P4_STATE_INTERPRET && is_tty && P4_INPUT_IS_TERM(ctx->input)) {
 		(void) fputc('\n', stdout);
 	}
