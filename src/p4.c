@@ -25,7 +25,7 @@ static P4_Options options = {
 };
 
 static void *p4_program_end;
-static P4_Word *p4_bultin_words;
+static P4_Word *p4_builtin_words;
 static P4_Ctx * volatile signal_ctx;
 static unsigned char base36[256];
 static char base36_digits[] = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ";
@@ -1111,15 +1111,15 @@ p4Repl(P4_Ctx *ctx)
 		P4_WORD(NULL,		NULL,		0),
 	};
 
-	if (p4_bultin_words == NULL) {
+	if (p4_builtin_words == NULL) {
 		/* Link up the base dictionary. */
 		for (word = words; word->code != NULL; word++) {
 			word[1].prev = word;
 		}
-		p4_bultin_words = word->prev;
+		p4_builtin_words = word->prev;
 	}
 	if (ctx->words == NULL) {
-		ctx->words = p4_bultin_words;
+		ctx->words = p4_builtin_words;
 		if (*options.core_file != '\0' && p4LoadCore(ctx, options.core_file)) {
 			return P4_THROW_EIO;
 		}
