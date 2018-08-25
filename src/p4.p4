@@ -1168,6 +1168,39 @@ int_max INVERT CONSTANT int_min	\ 0x80...00
 : reserve DUP ALLOT HERE SWAP - ;
 
 \
+\ ( caddr u -- )
+\
+: _append_string DUP >R reserve R> MOVE 0 C, ;
+
+\
+\ ... ," ccc" ...
+\
+\ (S: -- )
+\
+\ Append NUL terminated string to the most recent word's data space.
+\
+\ 	CREATE greet ," Hello world.\n"
+\
+: ," [CHAR] " parse-escape _append_string ALIGN ;
+
+\
+\ ( caddr -- )
+\
+\ Print a NUL terminated string.
+\
+\ 	CREATE greet ," Hello world.\n"
+\	greet TYPE0
+\
+: type0 BEGIN DUP @ ?DUP WHILE EMIT 1+ REPEAT DROP ;
+
+\
+\ ( caddr -- u )
+\
+\ String length of NUL terminated string.
+\
+: strlen DUP BEGIN DUP @ WHILE 1+ REPEAT SWAP - ;
+
+\
 \ ... _slit ...
 \
 \ (S: -- caddr u )
@@ -1183,25 +1216,21 @@ int_max INVERT CONSTANT int_min	\ 0x80...00
 	R@				\ S: ip R: ip
 	@				\ S: u  R: ip
 	R> CELL+ SWAP 2DUP		\ S: caddr u caddr u R: --
-	1+				\ account for NUL from _store_string
-	+ ALIGNED			\ S: caddr u ip' R: --
+	CHAR+				\ account for NUL from _append_string
+	CHARS + ALIGNED			\ S: caddr u ip' R: --
 	>R				\ S: caddr u R: ip'
 ;
 
 \
 \ (S: caddr u -- )
 \
-: _store_string
+: SLITERAL
 	STATE @ 0= IF			\ When interpreting, parse and print.
 	 TYPE EXIT			\ S: --
 	THEN				\ Otherwise compile into word the string.
 	['] _slit COMPILE, DUP ,	\ S: caddr u
-	\ NUL terminate the input string at the double-quote for C.
-	2DUP + '\0' SWAP C! CHAR+	\ S: caddr u'
-	DUP >R ALIGNED			\ S: caddr u" R: u'
-	reserve R>			\ S: caddr addr u'
-	MOVE				\ S: --
-;
+	_append_string ALIGN		\ S: --
+; IMMEDIATE
 
 \
 \ ... S" ccc" ...
@@ -1210,10 +1239,7 @@ int_max INVERT CONSTANT int_min	\ 0x80...00
 \
 \ @standard ANS-Forth 1994, Core, File, extended
 \
-: S"
-	[CHAR] " PARSE			\ S: caddr u
-	_store_string			\ S: --
-; IMMEDIATE
+: S" [CHAR] " PARSE POSTPONE SLITERAL ; IMMEDIATE
 
 \
 \ ... S\" ccc" ...
@@ -1222,10 +1248,7 @@ int_max INVERT CONSTANT int_min	\ 0x80...00
 \
 \ @standard ANS-Forth 1994, Core, File, extended
 \
-: S\"
-	[CHAR] " parse-escape		\ S: caddr u
-	_store_string			\ S: --
-; IMMEDIATE
+: S\" [CHAR] " parse-escape POSTPONE SLITERAL ; IMMEDIATE
 
 \
 \ ... ." ccc" ...

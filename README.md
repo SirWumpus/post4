@@ -648,6 +648,15 @@ Post4 Specific Words
 Dump the return stack.
 
 - - -
+### ," ccc"
+( `<spaces>ccc"` -- )  
+Append NUL terminated string to the most recent word's data space.
+
+```
+CREATE greet ," Hello world.\n"
+```
+
+- - -
 ### /char
 ( -- `u` )  
 Size of an address unit.
@@ -753,6 +762,21 @@ Similar to `ALLOT`, reserve `n` address-units of data-space and return its start
 ```
 
 Should `ALLOT` enlarge and relocate the data-space, the address saved by `HERE` on the stack will now point into invalid memory.  With `reserve` the address of the region just reserved is on top of the stack insuring that the address is valid until the next enlargement of the data-space by `reserve`,`,`, `C,`, `COMPILE,`, or `ALIGN`.
+
+- - -
+### strlen
+( caddr -- u )  
+String length of NUL terminated string.
+
+- - -
+### type0
+( caddr -- )  
+Print a NUL terminated string.
+
+```
+CREATE greet ," Hello world.\n"
+greet TYPE0
+```
 
 - - -
 
