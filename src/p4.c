@@ -1086,6 +1086,7 @@ p4Repl(P4_Ctx *ctx)
 		P4_WORD("ACCEPT",	&&_accept,	0),
 		P4_WORD("BLK",		&&_blk,		0),
 		P4_WORD("BLOCK",	&&_block,	0),
+		P4_WORD("block_count",	&&_block_count, 0),
 		P4_WORD("BUFFER",	&&_buffer,	0),
 		P4_WORD("DUMP",		&&_dump,	0),
 		P4_WORD("EMIT",		&&_emit,	0),
@@ -1898,6 +1899,15 @@ _repl:
 		p4BlockGet(ctx, w.u);
 		P4_PUSH(ctx->ds, ctx->block.buffer);
 		NEXT;
+	}
+	_block_count: {	// ( -- u )
+		struct stat sb;
+		if (fstat(ctx->block_fd, &sb) == 0) {
+			w.u = sb.st_size / P4_BLOCK_SIZE;
+			P4_PUSH(ctx->ds, w);
+			NEXT;
+		}
+		LONGJMP(ctx->on_throw, P4_THROW_EIO);
 	}
 	_buffer: {	// ( u -- aaddr )
 		w = P4_POP(ctx->ds);
