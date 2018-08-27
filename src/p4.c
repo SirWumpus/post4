@@ -1895,9 +1895,9 @@ _repl:
 		NEXT;
 	}
 	_block: {	// ( u -- aaddr )
-		w = P4_POP(ctx->ds);
+		w = P4_TOP(ctx->ds);
 		p4BlockGet(ctx, w.u);
-		P4_PUSH(ctx->ds, ctx->block.buffer);
+		P4_TOP(ctx->ds).s = ctx->block.buffer;
 		NEXT;
 	}
 	_block_count: {	// ( -- u )
@@ -1910,9 +1910,9 @@ _repl:
 		LONGJMP(ctx->on_throw, P4_THROW_EIO);
 	}
 	_buffer: {	// ( u -- aaddr )
-		w = P4_POP(ctx->ds);
+		w = P4_TOP(ctx->ds);
 		p4BlockBuffer(ctx, w.u);
-		P4_PUSH(ctx->ds, ctx->block.buffer);
+		P4_TOP(ctx->ds).s = ctx->block.buffer;
 		NEXT;
 	}
 	_load: {	// ( u -- )
