@@ -2105,11 +2105,10 @@ p4Eval(P4_Ctx *ctx)
 		/*@fallthrough@*/
 
 	case P4_THROW_QUIT:
-		P4_RESET(ctx->rs);
-		if (STDIN_FILENO < ctx->input.fd) {
-			(void) fclose(ctx->input.fp);
+		if (P4_INPUT_IS_FILE(ctx->input)) {
 			break;
 		}
+		P4_RESET(ctx->rs);
 		ctx->input.fp = stdin;
 		/*@fallthrough@*/
 
