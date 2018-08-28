@@ -181,6 +181,17 @@ FALSE INVERT CONSTANT TRUE
 : ROT 2 ROLL ;
 
 \
+\ ... S>D ...
+\
+\ ( n -- d )
+\
+\ @note
+\	This assumes that 0< returns a proper flag (all bits 1) for true
+\	as oppose simply any non-zero value for true.
+\
+: S>D DUP 0< SWAP ;
+
+\
 \ ... TUCK ...
 \
 \ (S: x1 x2 -- x2 x1 x2 )
@@ -1149,6 +1160,17 @@ VARIABLE SCR 0 SCR !
 	 I LOAD
 	LOOP
 ;
+
+\
+\ ... BUFFER: name
+\
+\ ( u "<spaces>name" -- ; -- aaddr )
+\
+\ @note
+\	Choose not to use ALLOCATE since removing marked dictionary words
+\	would require extra handling.
+\
+: BUFFER: CREATE ALLOT ;
 
 MARKER rm_user_words
 
