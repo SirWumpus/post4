@@ -1032,12 +1032,9 @@ int_max INVERT CONSTANT int_min	\ 0x80...00
 ;
 
 \
-\ (S: caddr u -- )
+\ (S: caddr u -- ; -- caddr u )
 \
 : SLITERAL
-	STATE @ 0= IF			\ When interpreting, parse and print.
-	 TYPE EXIT			\ S: --
-	THEN				\ Otherwise compile into word the string.
 	['] _slit COMPILE, DUP ,	\ S: caddr u
 	_append_string ALIGN		\ S: --
 ; IMMEDIATE
@@ -1047,14 +1044,14 @@ int_max INVERT CONSTANT int_min	\ 0x80...00
 \
 \ (C: ccc<quote>" -- ) || (S: -- caddr u )
 \
-: S" [CHAR] " PARSE POSTPONE SLITERAL ; IMMEDIATE
+: S" [CHAR] " PARSE STATE @ IF POSTPONE SLITERAL THEN ; IMMEDIATE
 
 \
 \ ... S\" ccc" ...
 \
 \ (C: ccc<quote>" -- ) || (S: -- c-addr u )
 \
-: S\" [CHAR] " parse-escape POSTPONE SLITERAL ; IMMEDIATE
+: S\" [CHAR] " parse-escape STATE @ IF POSTPONE SLITERAL THEN ; IMMEDIATE
 
 \
 \ ... ." ccc" ...
