@@ -494,7 +494,7 @@ extern P4_Int p4StrToInt(const P4_Char *s, P4_Char **stop, P4_Uint base);
 
 extern P4_Int p4GetC(P4_Input *source);
 
-extern P4_Uint p4Accept(P4_Input *source, P4_Char *buffer, P4_Size size);
+extern P4_Int p4Accept(P4_Input *source, P4_Char *buffer, P4_Size size);
 
 /**
  * Handles parsing of "ccc<char>".

@@ -572,7 +572,7 @@ p4GetC(P4_Input *input)
 	return p4ReadByte(input->fd);
 }
 
-P4_Uint
+P4_Int
 p4Accept(P4_Input *input, P4_Char *buf, P4_Size size)
 {
 	int ch;
@@ -583,13 +583,15 @@ p4Accept(P4_Input *input, P4_Char *buf, P4_Size size)
 	}
 	for (ptr = buf; ptr - buf < size; ) {
 		if ((ch = p4GetC(input)) == EOF) {
+			if (ptr - buf == 0) {
+				return EOF;
+			}
+			break;
+		}
+		if (ch == '\n' || ch == '\r') {
 			break;
 		}
 		*ptr++ = (P4_Char) ch;
-		if (ch == '\n' || ch == '\r') {
-			ptr[-1] = '\n';
-			break;
-		}
 	}
 
 	return ptr - buf;
@@ -598,6 +600,8 @@ p4Accept(P4_Input *input, P4_Char *buf, P4_Size size)
 P4_Uint
 p4Refill(P4_Ctx *ctx, P4_Input *input)
 {
+	P4_Int n;
+
 	if (P4_INPUT_IS_STR(ctx->input)) {
 		return 0;
 	}
@@ -607,10 +611,13 @@ p4Refill(P4_Ctx *ctx, P4_Input *input)
 		(void) tcsetattr(tty_fd, TCSADRAIN, &tty_saved);
 	}
 #endif
-	input->length = p4Accept(&ctx->input, ctx->input.buffer, ctx->input.size);
+	if ((n = p4Accept(&ctx->input, ctx->input.buffer, ctx->input.size)) < 0) {
+		return 0;
+	}
+	input->length = n;
 	input->offset = 0;
 
-	return input->length;
+	return 1;
 }
 
 /***********************************************************************
@@ -1217,7 +1224,7 @@ _repl:
 			(void) fputs("ok ", stdout);
 			(void) fflush(stdout);
 		}
-	} while (p4Refill(ctx, &ctx->input) != 0);
+	} while (p4Refill(ctx, &ctx->input));
 
 	if (ctx->state == P4_STATE_INTERPRET && is_tty && P4_INPUT_IS_TERM(ctx->input)) {
 		(void) fputc('\n', stdout);
@@ -1827,10 +1834,6 @@ _repl:
 		w = P4_POP(ctx->ds);
 		x = P4_TOP(ctx->ds);
 		w.u = p4Accept(&ctx->input, x.s, w.u);
-		/* ACCEPT doesn't return the line terminator. */
-		if (0 < w.u && x.s[w.u-1] == '\n') {
-			w.u--;
-		}
 		P4_TOP(ctx->ds) = w;
 		NEXT;
 	}
