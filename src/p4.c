@@ -624,31 +624,6 @@ p4Refill(P4_Ctx *ctx, P4_Input *input)
  *** Block I/O
  ***********************************************************************/
 
-P4_Int
-p4BlockOpen(const char *file)
-{
-	int cwd;
-	P4_Int fd = -1;
-
-	if ((cwd = open(".", O_RDONLY)) < 0) {
-		goto error0;
-	}
-	if ((fd = open(file, O_CREAT|O_RDWR, S_IRWXU|S_IRWXG|S_IRWXO)) < 0 || flock(fd, LOCK_EX)) {
-		const char *home = getenv("HOME");
-		if (home == NULL || chdir(home)) {
-			goto error1;
-		}
-		if ((fd = open(file, O_CREAT|O_RDWR, S_IRWXU|S_IRWXG|S_IRWXO)) < 0 || flock(fd, LOCK_EX)) {
-			goto error1;
-		}
-	}
-error1:
-	(void) fchdir(cwd);
-	(void) close(cwd);
-error0:
-	return fd;
-}
-
 int
 p4BlockGrow(P4_Int fd, P4_Uint block)
 {
@@ -724,8 +699,44 @@ p4BlockWrite(P4_Int fd, P4_Block *block)
 	return 0;
 }
 
+P4_Int
+p4BlockOpen(const char *file)
+{
+	int cwd;
+	P4_Int fd = -1;
+
+	if ((cwd = open(".", O_RDONLY)) < 0) {
+		goto error0;
+	}
+	if ((fd = open(file, O_CREAT|O_RDWR, S_IRWXU|S_IRWXG|S_IRWXO)) < 0 || flock(fd, LOCK_EX)) {
+		const char *home = getenv("HOME");
+		if (home == NULL || chdir(home)) {
+			goto error1;
+		}
+		if ((fd = open(file, O_CREAT|O_RDWR, S_IRWXU|S_IRWXG|S_IRWXO)) < 0 || flock(fd, LOCK_EX)) {
+			goto error1;
+		}
+	}
+error1:
+	(void) fchdir(cwd);
+	(void) close(cwd);
+error0:
+	return fd;
+}
+
+int
+p4BlockClose(P4_Int fd, P4_Block *block)
+{
+	if (block->state == P4_BLOCK_DIRTY && p4BlockWrite(fd, block)) {
+		return -1;
+	}
+	block->state = P4_BLOCK_FREE;
+	block->number = 0;
+	return close(fd);
+}
+
 void
-p4BlockBuffer(P4_Ctx *ctx, P4_Uint blk_num)
+p4BlockBuffer(P4_Ctx *ctx, P4_Uint blk_num, int with_read)
 {
 	if (ctx->block_fd <= 0) {
 		LONGJMP(ctx->on_throw, P4_THROW_EIO);
@@ -742,17 +753,11 @@ p4BlockBuffer(P4_Ctx *ctx, P4_Uint blk_num)
 	if (ctx->block.state == P4_BLOCK_DIRTY && p4BlockWrite(ctx->block_fd, &ctx->block)) {
 		LONGJMP(ctx->on_throw, P4_THROW_BLOCK_WR);
 	}
-	ctx->block.state = P4_BLOCK_CLEAN;
-	ctx->block.number = blk_num;
-}
-
-void
-p4BlockGet(P4_Ctx *ctx, P4_Uint blk_num)
-{
-	p4BlockBuffer(ctx, blk_num);
-	if (p4BlockRead(ctx->block_fd, blk_num, &ctx->block)) {
+	if (with_read && p4BlockRead(ctx->block_fd, blk_num, &ctx->block)) {
 		LONGJMP(ctx->on_throw, P4_THROW_BLOCK_RD);
 	}
+	ctx->block.state = P4_BLOCK_CLEAN;
+	ctx->block.number = blk_num;
 }
 
 void
@@ -760,15 +765,20 @@ p4BlockLoad(P4_Ctx *ctx, P4_Uint blk_num)
 {
 	P4_INPUT_PUSH(&ctx->input);
 
-	p4BlockGet(ctx, blk_num);
+	p4BlockBuffer(ctx, blk_num, 1);
 
 	/* Change input source to the block buffer. */
 	ctx->input.buffer = ctx->block.buffer;
 	ctx->input.length = P4_BLOCK_SIZE;
-	ctx->input.fd = P4_INPUT_BLK;
 	ctx->input.blk = blk_num;
 	ctx->input.offset = 0;
 	ctx->input.fp = NULL;
+
+	/* While input is a block, treat it as an input string for
+	 * interpreting, otherwise REFILL would proceed to the next
+	 * block, contrary to the defintion of LOAD.
+	 */
+	ctx->input.fd = P4_INPUT_STR;
 
 	p4Repl(ctx);
 
@@ -885,7 +895,7 @@ p4Free(P4_Ctx *ctx)
 			prev = word->prev;
 			p4WordFree(word);
 		}
-		(void) close(ctx->block_fd);
+		(void) p4BlockClose(ctx->block_fd, &ctx->block);
 		free(ctx->ds.base);
 		free(ctx->rs.base);
 		free(ctx);
@@ -1899,7 +1909,7 @@ _repl:
 	}
 	_block: {	// ( u -- aaddr )
 		w = P4_TOP(ctx->ds);
-		p4BlockGet(ctx, w.u);
+		p4BlockBuffer(ctx, w.u, 1);
 		P4_TOP(ctx->ds).s = ctx->block.buffer;
 		NEXT;
 	}
@@ -1914,7 +1924,7 @@ _repl:
 	}
 	_buffer: {	// ( u -- aaddr )
 		w = P4_TOP(ctx->ds);
-		p4BlockBuffer(ctx, w.u);
+		p4BlockBuffer(ctx, w.u, 0);
 		P4_TOP(ctx->ds).s = ctx->block.buffer;
 		NEXT;
 	}
@@ -1927,7 +1937,9 @@ _repl:
 		ctx->block.state = P4_BLOCK_FREE;
 	}
 	_save_buffers: { // ( -- )
-		p4BlockBuffer(ctx, ctx->block.number);
+		if (ctx->block.state == P4_BLOCK_DIRTY && p4BlockWrite(ctx->block_fd, &ctx->block)) {
+			LONGJMP(ctx->on_throw, P4_THROW_BLOCK_WR);
+		}
 		NEXT;
 	}
 	_update: {	// ( -- )
