@@ -1093,12 +1093,12 @@ VARIABLE SCR 0 SCR !
 : LIST				\ S: u
 	DUP SCR !		\ S: u
 	BLOCK			\ S: aaddr
-	#16 0 DO
+	16 0 DO
 	 I 1+ 2 .R
 	 [CHAR] | EMIT
 	 DUP 64 TYPE		\ S: aaddr
 	 [CHAR] | EMIT CR
-	 #64 CHARS +		\ S: aaddr'
+	 64 CHARS +		\ S: aaddr'
 	LOOP DROP		\ S: --
 ;
 
