@@ -1930,7 +1930,8 @@ _repl:
 			}
 #endif
 		}
-		P4_PUSH(ctx->ds, (P4_Uint)(ctx->unget != EOF));
+		P4_PUSH(ctx->ds, (P4_Uint)(ctx->unget != EOF ? ~0 : 0));
+		NEXT;
 	}
 	_emit: {	// ( c -- )
 		w = P4_POP(ctx->ds);
