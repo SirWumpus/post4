@@ -361,7 +361,6 @@ struct p4_ctx {
 #define P4_THROW_future		(-79)	/* -79 .. -255 reserved for future assignment by standard */
 
 /* -4095..-256 reserved for system assignment. */
-#define P4_THROW_BYE		(-256)	/* BYE */
 
 /***********************************************************************
  *** API

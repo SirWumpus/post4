@@ -1123,6 +1123,8 @@ p4Repl(P4_Ctx *ctx)
 		P4_WORD("UPDATE",	&&_update,	0),
 
 		/* Tools*/
+		P4_WORD("BYE",		&&_bye,		0),
+		P4_WORD("bye_code",	&&_bye_code,	0),		// p4
 		P4_WORD("SEE",		&&_see,		P4_BIT_IMM),
 		P4_WORD("WORDS",	&&_words,	0),
 
@@ -1261,7 +1263,14 @@ _repl:
 		goto *w.xt->code;
 #endif
 	}
-	_bp: {	// ( -- )
+	_bye: {		// ( -- )
+		exit(0);
+	}
+	_bye_code: {	// ( ex_code -- )
+		w = P4_TOP(ctx->ds);
+		exit((int) w.n);
+	}
+	_bp: {		// ( -- )
 		p4Bp(ctx);
 		NEXT;
 	}
@@ -2094,10 +2103,6 @@ p4Eval(P4_Ctx *ctx)
 	signal_ctx = ctx;
 
 	switch (rc = SETJMP(ctx->on_throw)) {
-	case P4_THROW_BYE:
-		rc = 0;
-		break;
-
 	default:
 	case P4_THROW_ABORT:
 	case P4_THROW_ABORT_MSG:

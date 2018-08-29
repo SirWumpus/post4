@@ -682,13 +682,6 @@ VARIABLE catch_frame 0 catch_frame !
 ;				\ S: 0 | n  R: --
 
 \
-\ ... BYE ...
-\
-\  ( i*x -- i*x )
-\
-: BYE -256 THROW ;
-
-\
 \ ... ABORT ...
 \
 \  ( i*x -- ) ( R: j*x -- )

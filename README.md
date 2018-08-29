@@ -741,6 +741,11 @@ Fetch return stack pointer.
 Utility word used to define `.S` and `.rs`.
 
 - - -
+### bye_code
+( exit_code -- )
+Terminate and return to the host OS an exit code; zero (0) for normal/success, non-zero an error occurred.
+
+- - -
 ### list+
 ( -- )  
 Increment variable `SCR` and list next block.
@@ -803,7 +808,6 @@ This is a list of `THROW` codes used internally by `p4`.
 * -55 floating-point unidentified fault (SIGFPE)  
 * -56 `QUIT`  
 * -61 `ALLOT` or `RESIZE`
-* -256 `BYE`  
 
 - - -
 
