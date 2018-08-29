@@ -429,12 +429,15 @@ extern int p4EvalFile(P4_Ctx *ctx, const char *filepath);
  *	A pointer to an allocated P4_Ctx structure.
  *
  * @param string
- *	A C string to interpret.
+ *	A string to interpret, possible not NUL terminated.
+ *
+ * @param length
+ *	Length of string.
  *
  * @return
  *	Zero on success, otherwise an exception code other than BYE.
  */
-extern int p4EvalString(P4_Ctx *ctx, const char *string);
+extern int p4EvalString(P4_Ctx *ctx, P4_Char *string, size_t length);
 
 /***********************************************************************
  *** Utility Functions

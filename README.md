@@ -493,6 +493,7 @@ Mark all block buffers as free without saving any dirty buffers.
 - - -
 ### EVALUATE
 ( `i*x` `caddr` `u` -- `j*x` )  
+Save the current input source specification and make the string described by `caddr` and `u` both the input source and buffer, reset >IN to zero, and interpret.  When the parse area is empty, restore the prior input source specification.
 
 - - -
 ### EXECUTE

@@ -976,8 +976,33 @@ p4Align(P4_Ctx *ctx)
 }
 
 static int
+p4Exception(P4_Ctx *ctx, int code)
+{
+	if (code == P4_THROW_OK) {
+		return code;
+	}
+	(void) printf("%d thrown: %s", code, P4_THROW_future < code && code < 0 ? p4_exceptions[-code] : "?");
+	if (ctx->state == P4_STATE_COMPILE) {
+		/* A thrown error while compiling a word leaves the
+		 * definition in an incomplete state; discard it.
+		 */
+		P4_Word *word = ctx->words;
+		(void) printf(
+			" while compiling \"%s\"",
+			word->name.length == 0 ? ":NONAME" : (char *)word->name.string
+		);
+		ctx->words = word->prev;
+		p4WordFree(word);
+	}
+	(void) fputc('\n', stdout);
+	(void) fflush(stdout);
+	return code;
+}
+
+static int
 p4Repl(P4_Ctx *ctx)
 {
+	int rc;
 	P4_Char *cstr;
 	P4_Word *word;
 	P4_String str;
@@ -1024,6 +1049,7 @@ p4Repl(P4_Ctx *ctx)
 		P4_WORD("COMPILE,",	&&_comma,	0),
 		P4_WORD("CREATE",	&&_create,	0),
 		P4_WORD("DOES>",	&&_does,	0),
+		P4_WORD("EVALUATE",	&&_evaluate,	0),
 		P4_WORD("EXECUTE",	&&_execute,	0),
 		P4_WORD("EXIT",		&&_exit,	0),
 		P4_WORD("IMMEDIATE",	&&_immediate,	P4_BIT_IMM),
@@ -1147,6 +1173,11 @@ p4Repl(P4_Ctx *ctx)
 
 #define NEXT	goto _next
 
+	signal_ctx = ctx;
+	SETJMP_PUSH(ctx->on_throw);
+	if ((rc = SETJMP(ctx->on_throw)) != 0) {
+		return rc;
+	}
 _repl:
 	/* The input buffer might have been primed (EVALUATE, LOAD),
 	 * so try to parse it first before reading more input.
@@ -1241,7 +1272,9 @@ _repl:
 	if (ctx->state == P4_STATE_INTERPRET && is_tty && P4_INPUT_IS_TERM(ctx->input)) {
 		(void) fputc('\n', stdout);
 	}
-	return P4_THROW_OK;
+
+	SETJMP_POP(ctx->on_throw);
+	return rc;
 
 	/*
 	 * Flow control.
@@ -1395,6 +1428,12 @@ _repl:
 		}
 		ctx->words = word->prev;
 		p4WordFree(word);
+		NEXT;
+	}
+	_evaluate: {	// ( i*x caddr u -- j*x )
+		w = P4_POP(ctx->ds);
+		x = P4_POP(ctx->ds);
+		(void) p4EvalString(ctx, x.s, w.u);
 		NEXT;
 	}
 
@@ -2096,55 +2135,32 @@ _repl:
 int
 p4Eval(P4_Ctx *ctx)
 {
-	int rc;
-	P4_Word *word;
+	int rc = P4_THROW_OK;
 
-	SETJMP_PUSH(ctx->on_throw);
-	signal_ctx = ctx;
+	do {
+		switch (rc) {
+		default:
+		case P4_THROW_ABORT:
+		case P4_THROW_ABORT_MSG:
+			(void) p4Exception(ctx, rc);
+			P4_RESET(ctx->ds);
+			/*@fallthrough@*/
 
-	switch (rc = SETJMP(ctx->on_throw)) {
-	default:
-	case P4_THROW_ABORT:
-	case P4_THROW_ABORT_MSG:
-		(void) printf("%d thrown: %s", rc, P4_THROW_future < rc && rc < 0 ? p4_exceptions[-rc] : "?");
-		if (ctx->state == P4_STATE_COMPILE) {
-			/* A thrown error while compiling a word leaves the
-			 * definition in an incomplete state; discard it.
-			 */
-			word = ctx->words;
-			(void) printf(
-				" while compiling \"%s\"",
-				word->name.length == 0 ? ":NONAME" : (char *)word->name.string
-			);
-			ctx->words = word->prev;
-			p4WordFree(word);
+		case P4_THROW_QUIT:
+			P4_RESET(ctx->rs);
+			ctx->input.fp = stdin;
+			/*@fallthrough@*/
+
+		case P4_THROW_OK:
+			ctx->state = P4_STATE_INTERPRET;
+			ctx->input.fd = fileno(ctx->input.fp);
+			ctx->input.size = sizeof (ctx->tty);
+			ctx->input.buffer = ctx->tty;
+			ctx->input.length = 0;
+			ctx->input.offset = 0;
+			ctx->input.blk = 0;
 		}
-		(void) fputc('\n', stdout);
-		(void) fflush(stdout);
-		P4_RESET(ctx->ds);
-		/*@fallthrough@*/
-
-	case P4_THROW_QUIT:
-		if (P4_INPUT_IS_FILE(ctx->input)) {
-			break;
-		}
-		P4_RESET(ctx->rs);
-		ctx->input.fp = stdin;
-		/*@fallthrough@*/
-
-	case P4_THROW_OK:
-		ctx->state = P4_STATE_INTERPRET;
-		ctx->input.fd = fileno(ctx->input.fp);
-		ctx->input.size = sizeof (ctx->tty);
-		ctx->input.buffer = ctx->tty;
-		ctx->input.length = 0;
-		ctx->input.offset = 0;
-		ctx->input.blk = 0;
-
-		rc = p4Repl(ctx);
-	}
-
-	SETJMP_POP(ctx->on_throw);
+	} while ((rc = p4Repl(ctx)) != P4_THROW_OK);
 
 	return rc;
 }
@@ -2153,19 +2169,55 @@ int
 p4EvalFile(P4_Ctx *ctx, const char *file)
 {
 	int rc;
+	P4_Cell *ds, *rs;
 
-	if (ctx == NULL || file == NULL) {
-		errno = EFAULT;
-		return P4_THROW_EFAULT;
-	}
-
+	ds = ctx->ds.top;
+	rs = ctx->rs.top;
 	P4_INPUT_PUSH(&ctx->input);
 
 	if ((ctx->input.fp = fopen(file, "r")) == NULL) {
-		rc = errno == ENOENT ? P4_THROW_ENOENT : P4_THROW_EIO;
+		rc = P4_THROW_EIO;
 	} else {
-		rc = p4Eval(ctx);
+		ctx->state = P4_STATE_INTERPRET;
+		ctx->input.fd = fileno(ctx->input.fp);
+		ctx->input.size = sizeof (ctx->tty);
+		ctx->input.buffer = ctx->tty;
+		ctx->input.length = 0;
+		ctx->input.offset = 0;
+		ctx->input.blk = 0;
+		if ((rc = p4Exception(ctx, p4Repl(ctx))) != 0) {
+			ctx->rs.top = rs;
+			ctx->ds.top = ds;
+		}
 		(void) fclose(ctx->input.fp);
+	}
+
+	P4_INPUT_POP(&ctx->input);
+
+	return rc;
+}
+
+int
+p4EvalString(P4_Ctx *ctx, P4_Char *str, size_t len)
+{
+	int rc;
+	P4_Cell *ds, *rs;
+
+	ds = ctx->ds.top;
+	rs = ctx->rs.top;
+	P4_INPUT_PUSH(&ctx->input);
+
+	ctx->state = P4_STATE_INTERPRET;
+	ctx->input.fd = P4_INPUT_STR;
+	ctx->input.fp = NULL;
+	ctx->input.length = len;
+	ctx->input.buffer = str;
+	ctx->input.offset = 0;
+	ctx->input.blk = 0;
+
+	if ((rc = p4Exception(ctx, p4Repl(ctx))) != 0) {
+		ctx->rs.top = rs;
+		ctx->ds.top = ds;
 	}
 
 	P4_INPUT_POP(&ctx->input);
