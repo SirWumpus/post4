@@ -220,18 +220,18 @@ p4LoadFile(P4_Ctx *ctx, const char *file)
 {
 	struct stat sb;
 	int rc = -1, cwd;
-	char *core_path, *path, *next;
+	char *path_copy, *path, *next;
 
 	if ((cwd = open(".", O_RDONLY)) < 0) {
 		goto error0;
 	}
-	if ((core_path = getenv("POST4_PATH")) == NULL || *core_path == '\0') {
-		core_path = P4_CORE_PATH;
+	if ((path_copy = getenv("POST4_PATH")) == NULL || *path_copy == '\0') {
+		path_copy = P4_CORE_PATH;
 	}
-	if ((core_path = strdup(core_path)) == NULL) {
+	if ((path_copy = strdup(path_copy)) == NULL) {
 		goto error1;
 	}
-	for (next = core_path; (path = strtok(next, ":")) != NULL; next = NULL) {
+	for (next = path_copy; (path = strtok(next, ":")) != NULL; next = NULL) {
 		if (stat(path, &sb) || !S_ISDIR(sb.st_mode) || chdir(path)) {
 			continue;
 		}
@@ -245,7 +245,7 @@ p4LoadFile(P4_Ctx *ctx, const char *file)
 		rc = p4EvalFile(ctx, file);
 	}
 error2:
-	free(core_path);
+	free(path_copy);
 error1:
 	(void) fchdir(cwd);
 	(void) close(cwd);
