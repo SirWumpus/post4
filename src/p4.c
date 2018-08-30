@@ -216,7 +216,7 @@ p4Init(void)
 }
 
 int
-p4LoadCore(P4_Ctx *ctx, const char *file)
+p4LoadFile(P4_Ctx *ctx, const char *file)
 {
 	struct stat sb;
 	int rc = -1, cwd;
@@ -240,7 +240,7 @@ p4LoadCore(P4_Ctx *ctx, const char *file)
 		}
 	}
 	if (path == NULL) {
-		(void) fprintf(stderr, "cannot find core words definition file: %s", options.core_file);
+		(void) fprintf(stderr, "cannot find file: %s", file);
 	} else {
 		rc = p4EvalFile(ctx, file);
 	}
@@ -1166,7 +1166,7 @@ p4Repl(P4_Ctx *ctx)
 	}
 	if (ctx->words == NULL) {
 		ctx->words = p4_builtin_words;
-		if (*options.core_file != '\0' && p4LoadCore(ctx, options.core_file)) {
+		if (*options.core_file != '\0' && p4LoadFile(ctx, options.core_file)) {
 			return P4_THROW_EIO;
 		}
 	}
@@ -1942,7 +1942,7 @@ _repl:
 		w = P4_POP(ctx->ds);
 		x = P4_POP(ctx->ds);
 		if ((cstr = p4StrDup(x.s, w.u)) != NULL) {
-			(void) p4EvalFile(ctx, cstr);
+			(void) p4LoadFile(ctx, cstr);
 			free(cstr);
 			NEXT;
 		}
