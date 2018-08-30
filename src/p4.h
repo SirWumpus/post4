@@ -474,26 +474,6 @@ extern int p4CharLiteral(int ch);
  */
 extern void p4StrRev(P4_Char *s, P4_Size length);
 
-/**
- * @param s
- *	A pointer to a C string representing a number.
- *
- * @param stop
- *	If not NULL, then a pointer within the C string
- *	of the first invalid character is stored here.
- *
- * @param base
- *	The conversion radix between 2 and 36 inclusive.
- *
- *	Special case radix 0 returns the first byte of s.
- *	Special case radix 1 returns the value of a backslash
- *	escape character; see p4CharLiteral().
- *
- * @return
- *	A number.
- */
-extern P4_Int p4StrToInt(const P4_Char *s, P4_Char **stop, P4_Uint base);
-
 extern P4_Int p4GetC(P4_Input *source);
 
 extern P4_Int p4Accept(P4_Input *source, P4_Char *buffer, P4_Size size);

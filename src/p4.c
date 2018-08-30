@@ -328,57 +328,6 @@ p4StrDup(const P4_Char *str, P4_Size length)
 	return dup;
 }
 
-/**
- * @param s
- *	A pointer to a C string representing a number.
- *
- * @param stop
- *	If not NULL, then a pointer within the C string
- *	of the first invalid character is stored here.
- *
- * @param base
- *	The conversion radix between 2 and 36 inclusive.
- *
- *	Special case radix 0 returns the first byte of s.
- *	Special case radix 1 returns the value of a backslash
- *	escape character; see p4CharLiteral().
- *
- * @return
- *	A number.
- */
-P4_Int
-p4StrToInt(const P4_Char *s, P4_Char **stop, P4_Uint base)
-{
-	P4_Int num;
-	int digit, sign = 1;
-
-	if (s == NULL) {
-		return 0;
-	}
-	if (base == 0) {
-		num = *s++;
-	} else if (base == 1) {
-		num = p4CharLiteral(*s++);
-	} else {
-		if (*s == '-') {
-			sign = -1;
-			s++;
-		}
-
-		for (num = 0; *s != '\0'; s++) {
-			digit = base36[*(unsigned char *)s];
-			if (base <= digit)
-				break;
-			num = num * base + digit;
-		}
-	}
-	if (stop != NULL) {
-		*stop = (char *) s;
-	}
-
-	return sign * num;
-}
-
 /***********************************************************************
  *** Utility
  ***********************************************************************/
@@ -1227,7 +1176,7 @@ _repl:
 				}
 
 				char *stop;
-				x.n = p4StrToInt(str.string + offset, &stop, radix);
+				x.n = (P4_Int) strtol(str.string + offset, &stop, radix);
 				if (stop - str.string != str.length) {
 					/* Not a word, not a number. */
 					(void) printf("\"%.*s\" ", (int)str.length, str.string);
