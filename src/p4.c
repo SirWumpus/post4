@@ -1263,7 +1263,7 @@ _repl:
 		NEXT;
 	}
 	_cells: {	// ( n1 -- n2 )
-		P4_TOP(ctx->ds).n *= sizeof (P4_Cell);
+		P4_TOP(ctx->ds).n *= P4_CELL;
 		NEXT;
 	}
 	_branch: {	// ( -- ) relative offset in address units
@@ -1274,7 +1274,7 @@ _repl:
 	_branchz: {	// ( flag -- ) relative offset in address units
 		w = *ip;
 		x = P4_POP(ctx->ds);
-		ip = (P4_Cell *)((P4_Char *) ip + (x.u == 0 ? w.n : sizeof (P4_Cell)));
+		ip = (P4_Cell *)((P4_Char *) ip + (x.u == 0 ? w.n : P4_CELL));
 		NEXT;
 	}
 	_ip:		// ( -- addr )
@@ -1414,7 +1414,7 @@ _repl:
 		word->prev = ctx->words;
 		ctx->words = word;
 		// Reserve the first cell for a code pointer for DOES>.
-		word->ndata += sizeof (P4_Cell);
+		word->ndata += P4_CELL;
 		NEXT;
 	}
 	_data_field: {	// ( -- addr )
@@ -1746,14 +1746,14 @@ _repl:
 	_roll: {	// ( xu xu-1 ... x0 u –– xu-1 ... x0 xu )
 		w = P4_POP(ctx->ds);
 		x = P4_PICK(ctx->ds, w.n);
-		(void) memmove(ctx->ds.top - w.n, ctx->ds.top - w.n + 1, w.n * sizeof (P4_Cell));
+		(void) memmove(ctx->ds.top - w.n, ctx->ds.top - w.n + 1, w.n * P4_CELL);
 		P4_TOP(ctx->ds) = x;
 		NEXT;
 	}
 	_llor: {	// ( xu xu-1 ... x0 u –– x0 xu xu-1 ... x1 )
 		w = P4_POP(ctx->ds);
 		x = P4_TOP(ctx->ds);
-		(void) memmove(ctx->ds.top - w.n + 1, ctx->ds.top - w.n, w.n * sizeof (P4_Cell));
+		(void) memmove(ctx->ds.top - w.n + 1, ctx->ds.top - w.n, w.n * P4_CELL);
 		ctx->ds.top[-w.n] = x;
 		NEXT;
 	}
@@ -2083,7 +2083,7 @@ _repl:
 					(int) x.w->name.length, x.w->name.string
 				);
 				if (x.w->code == &&_branch || x.w->code == &&_branchz) {
-					(void) printf(P4_INT_FMT" ", (*++w.p).n);
+					(void) printf("[ "P4_INT_FMT" CELLS ] ", (*++w.p).n / P4_CELL);
 				}
 			}
 			(void) printf("; %s\r\n", P4_WORD_IS_IMM(word) ? "IMMEDIATE" : "");

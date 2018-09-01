@@ -206,6 +206,7 @@ union p4_cell {
 	P4_Xt		xt;
 };
 
+#define P4_CELL				((P4_Int) sizeof (P4_Cell))
 #define P4_ALIGN_SIZE(sz, pow2)    	(((sz) + (pow2-1)) & -(pow2))
 #define P4_CELL_ALIGN(nbytes)		P4_ALIGN_SIZE(nbytes, sizeof (P4_Cell))
 
