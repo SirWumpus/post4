@@ -2182,6 +2182,7 @@ p4EvalFile(P4_Ctx *ctx, const char *file)
 		if ((rc = p4Exception(ctx, p4Repl(ctx))) != 0) {
 			ctx->rs.top = rs;
 			ctx->ds.top = ds;
+			rc = 0;
 		}
 		(void) fclose(ctx->input.fp);
 	}
@@ -2212,6 +2213,7 @@ p4EvalString(P4_Ctx *ctx, P4_Char *str, size_t len)
 	if ((rc = p4Exception(ctx, p4Repl(ctx))) != 0) {
 		ctx->rs.top = rs;
 		ctx->ds.top = ds;
+		rc = 0;
 	}
 
 	P4_INPUT_POP(&ctx->input);
