@@ -473,7 +473,7 @@ FALSE INVERT CONSTANT TRUE
 \ @see
 \ 	A.3.2.3.2 Control-flow stack
 \
-: AGAIN ['] _branch COMPILE, >HERE - , ; IMMEDIATE
+: AGAIN POSTPONE _branch >HERE - , ; IMMEDIATE
 
 \
 \ ... BEGIN ... test UNTIL ...
@@ -483,7 +483,7 @@ FALSE INVERT CONSTANT TRUE
 \ @see
 \ 	A.3.2.3.2 Control-flow stack
 \
-: UNTIL ['] _branchz COMPILE, >HERE - , ; IMMEDIATE
+: UNTIL POSTPONE _branchz >HERE - , ; IMMEDIATE
 
 \
 \ ... AHEAD ... THEN ...
@@ -493,7 +493,7 @@ FALSE INVERT CONSTANT TRUE
 \ @see
 \ 	A.3.2.3.2 Control-flow stack
 \
-: AHEAD ['] _branch COMPILE, >HERE 0 , ; IMMEDIATE
+: AHEAD POSTPONE _branch >HERE 0 , ; IMMEDIATE
 
 \
 \ ... test IF ... THEN ...
@@ -519,7 +519,7 @@ FALSE INVERT CONSTANT TRUE
 \ 		THEN
 \ 	THEN DROP
 \
-: IF ['] _branchz COMPILE, >HERE 0 , ; IMMEDIATE
+: IF POSTPONE _branchz >HERE 0 , ; IMMEDIATE
 
 \
 \ ... AHEAD ... THEN ...
@@ -799,7 +799,7 @@ VARIABLE catch_frame 0 catch_frame !
 \ (C: -- dest )(R: -- count) || (S: limit first -- ) (R: -- limit first )
 \
 : DO				\ C: --  R: ip
-	['] 2>R COMPILE,	\ S: --  R: limit first
+	POSTPONE 2>R		\ S: --  R: limit first
 	R> 0 >R	>R		\ C: --  R: 0 ip
 	POSTPONE BEGIN		\ C: dest R: 0 ip
 ; IMMEDIATE
@@ -810,9 +810,9 @@ VARIABLE catch_frame 0 catch_frame !
 \ (C: -- dest ) (R: -- forw 1 ) || (S: limit first -- ) (R: -- limit first )
 \
 : ?DO				\ C: --  R: ip
-	['] 2>R COMPILE,	\ S: --  R: limit first
-	['] 2R@ COMPILE,	\ S: limit first  R: limit first
-	['] <> COMPILE,		\ S: flag  R: limit first
+	POSTPONE 2>R		\ S: --  R: limit first
+	POSTPONE 2R@		\ S: limit first  R: limit first
+	POSTPONE <>		\ S: flag  R: limit first
 	R>			\ C: ip  R: --
 	POSTPONE IF >R 1 >R	\ C: ip  R: forw 1
 	>R			\ C: --  R: forw 1 ip
@@ -870,7 +870,7 @@ VARIABLE catch_frame 0 catch_frame !
 \ (C: dest -- ) (R: n*forw n ip -- ip )
 \
 : LOOP				\ C: dest  R: n*forw n ip
-	['] _loop_inc_test COMPILE,
+	POSTPONE _loop_inc_test
 	POSTPONE UNTIL		\ C: --  R: n*forw n ip
 
 	\ Resolve LEAVE forward references.
@@ -885,7 +885,7 @@ VARIABLE catch_frame 0 catch_frame !
 	DROP >R			\ C: -- R: ip
 
 	\  LEAVE branches to just after UNTIL and before UNLOOP.
-	['] UNLOOP COMPILE,
+	POSTPONE UNLOOP
 ; IMMEDIATE
 
 \
@@ -936,7 +936,7 @@ int_max INVERT CONSTANT int_min	\ 0x80...00
 \
 : +LOOP				\ C: dest  R: n*forw n ip
 	\  Loop increment and test.
-	['] _loop_step_test COMPILE,
+	POSTPONE _loop_step_test
 	POSTPONE UNTIL		\ C: --  R: n*forw n ip
 
 	\ Resolve LEAVE forward references.
@@ -951,7 +951,7 @@ int_max INVERT CONSTANT int_min	\ 0x80...00
 	DROP >R			\ C: -- R: ip
 
 	\  LEAVE branches to just after UNTIL and before UNLOOP.
-	['] UNLOOP COMPILE,
+	POSTPONE UNLOOP
 ; IMMEDIATE
 
 \
@@ -1032,7 +1032,7 @@ int_max INVERT CONSTANT int_min	\ 0x80...00
 \ (S: caddr u -- ; -- caddr u )
 \
 : SLITERAL
-	['] _slit COMPILE, DUP ,	\ S: caddr u
+	POSTPONE _slit DUP ,	\ S: caddr u
 	_append_string ALIGN		\ S: --
 ; IMMEDIATE
 
@@ -1055,7 +1055,7 @@ int_max INVERT CONSTANT int_min	\ 0x80...00
 \
 \ (S: ccc<quote>" -- )
 \
-: ." POSTPONE S" ['] TYPE COMPILE, ; IMMEDIATE
+: ." POSTPONE S" POSTPONE TYPE ; IMMEDIATE
 
 \
 \  : X ... test ABORT" message" ...
