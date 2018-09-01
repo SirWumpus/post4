@@ -955,6 +955,83 @@ int_max INVERT CONSTANT int_min	\ 0x80...00
 ; IMMEDIATE
 
 \
+\ ... x CASE ... ENDCASE
+\
+\ (C: -- #of ) (S: x -- x )
+\
+\ 	CASE
+\	 test1 OF ... ENDOF
+\	 ...
+\	 testN OF ... ENDOF
+\	 default action
+\	ENDCASE
+\
+0 CONSTANT CASE IMMEDIATE
+
+\
+\ ... test OF ... ENDOF ...
+\
+\ (C: i*forw #of -- j*forw #of' )
+\
+: OF
+	1+ >R			\ C: -- R: #of'
+	POSTPONE OVER		\ S: x1 x2 x1
+	POSTPONE =		\ S: x1 f
+	POSTPONE IF		\ S: x1
+	 POSTPONE DROP		\ S: --
+	R>			\ C: #of'
+; IMMEDIATE
+
+\
+\ ... ENDOF ...
+\
+\ (C: forw1 #of -- forw2 #of )
+\
+: ENDOF
+	>R			\ C: forw1 R: #of
+	POSTPONE ELSE		\ C: forw2 R: #of
+	R>			\ C: forw2 #of
+; IMMEDIATE
+
+\
+\ ... CASE ... ENDCASE ...
+\
+\ (C: i*forw i -- )(S: x -- )
+\
+: ENDCASE
+	POSTPONE DROP		\ S: --
+	0 ?DO
+	 POSTPONE THEN
+	LOOP
+; IMMEDIATE
+
+\
+\ ( char -- ascii )
+\
+\ @note
+\	C backslash literal conventions; not Forth 200x.
+\
+: _backslash_literal
+	CASE			\ S: char
+	 \ While alphabetical is nice, more frequent is faster.
+	 [CHAR] n OF $0A ENDOF	\ S: ascii char
+	 [CHAR] r OF $0D ENDOF	\ S: ascii char
+	 [CHAR] t OF $09 ENDOF	\ S: ascii char
+	 [CHAR] e OF $1B ENDOF	\ S: ascii char
+	 \ Less frequent
+	 [CHAR] a OF $07 ENDOF	\ S: ascii char
+	 [CHAR] b OF $08 ENDOF	\ S: ascii char
+	 [CHAR] f OF $0C ENDOF	\ S: ascii char
+	 [CHAR] s OF  BL ENDOF	\ S: ascii char
+	 [CHAR] v OF $0B ENDOF	\ S: ascii char
+	 [CHAR] ? OF $7F ENDOF	\ S: ascii char
+	 [CHAR] 0 OF $00 ENDOF	\ S: ascii char
+	 \ identity, ie. \x == x
+	 DUP			\ S: ascii char
+	ENDCASE			\ S: ascii
+;
+
+\
 \ ... reserve ...
 \
 \ (S: u -- aaddr )
