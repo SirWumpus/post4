@@ -116,6 +116,20 @@ FALSE INVERT CONSTANT TRUE
 : VALUE CREATE , DOES> @ ;
 
 \
+\ ... x TO name ...
+\
+\ (S: x <spaces>name -- )
+\
+\ @note
+\
+\ 	x name !
+\
+\ @see
+\ 	VALUE
+\
+: TO ' >BODY ! ;
+
+\
 \ ... CELL+ ...
 \
 \ (S: aaddr1 -- aaddr2 )
@@ -405,9 +419,16 @@ FALSE INVERT CONSTANT TRUE
 \
 \ ... BLANK ...
 \
-\ (S: c-addr u -- )
+\ (S: caddr u -- )
 \
 : BLANK BL FILL ;
+
+\
+\ ... ERASE ...
+\
+\ (S: addr u -- )
+\
+: ERASE 0 FILL ;
 
 \
 \ ... SPACE ...
@@ -415,6 +436,26 @@ FALSE INVERT CONSTANT TRUE
 \ (S: -- )
 \
 : SPACE BL EMIT ;
+
+\
+\ ... COUNT ...
+\
+\ (S: caddr1 -- caddr2 u )
+\
+: COUNT DUP C@ SWAP CHAR+ SWAP ;
+
+\
+\ ... char WORD ...
+\
+\ (S: char "<chars>ccc<char>" -- caddr )
+\
+: WORD				\ S: char
+	PARSE 			\ S: caddr u
+	>R R@ OVER		\ S: caddr u caddr R: u
+	DUP DUP CHAR+ R>	\ S: caddr u caddr caddr caddr' u
+	CMOVE>			\ S: caddr u caddr
+	C!			\ S: caddr
+;
 
 \
 \ ...  CHAR  ...
@@ -436,20 +477,6 @@ FALSE INVERT CONSTANT TRUE
 \  (C: <spaces>name -- ) \ (S: -- xt )
 \
 : ['] ' POSTPONE LITERAL ; IMMEDIATE
-
-\
-\ ... x TO name ...
-\
-\ (S: x <spaces>name -- )
-\
-\ @note
-\
-\ 	x name !
-\
-\ @see
-\ 	VALUE
-\
-: TO ' >BODY ! ;
 
 \
 \ ... BEGIN ... AGAIN
