@@ -417,13 +417,6 @@ FALSE INVERT CONSTANT TRUE
 : SPACE BL EMIT ;
 
 \
-\ ...  POSTPONE  ...
-\
-\  (C: <spaces>name -- )
-\
-: POSTPONE ' COMPILE, ; IMMEDIATE
-
-\
 \ ...  CHAR  ...
 \
 \ (S: <spaces>name -- char )

@@ -961,6 +961,7 @@ p4Repl(P4_Ctx *ctx)
 	static P4_Word w_lit = P4_WORD("_lit", &&_lit, 0);
 	static P4_Word w_exit = P4_WORD("_exit", &&_exit, 0);
 	static P4_Word w_repl = P4_WORD("_repl", &&_repl, 0);
+	static P4_Word w_post = P4_WORD("POSTPONE", &&_post, 0);
 
 	/* When the REPL executes a word, it puts the XT of the word here
 	 * and starts the machine with the IP pointed to exec[].  When the
@@ -995,7 +996,7 @@ p4Repl(P4_Ctx *ctx)
 		P4_WORD(":",		&&_colon,	0),
 		P4_WORD(";",		&&_semicolon,	P4_BIT_IMM),
 		P4_WORD(">BODY",	&&_body,	0),
-		P4_WORD("COMPILE,",	&&_comma,	0),
+		P4_WORD("COMPILE,",	&&_compile,	0),
 		P4_WORD("CREATE",	&&_create,	0),
 		P4_WORD("DOES>",	&&_does,	0),
 		P4_WORD("EVALUATE",	&&_evaluate,	0),
@@ -1004,6 +1005,7 @@ p4Repl(P4_Ctx *ctx)
 		P4_WORD("IMMEDIATE",	&&_immediate,	P4_BIT_IMM),
 		P4_WORD("LITERAL",	&&_literal,	P4_BIT_IMM),
 		P4_WORD("MARKER",	&&_marker,	0),
+		P4_WORD("POSTPONE",	&&_postpone,	P4_BIT_IMM),
 		P4_WORD("STATE",	&&_state,	0),
 
 		/* Numeric formatting. */
@@ -1494,6 +1496,49 @@ _repl:
 	}
 	_align: {	// ( -- )
 		p4Align(ctx);
+		NEXT;
+	}
+
+	/* POSTPONE <spaces>name
+	 *
+	 * <Arnie>
+	 * "Compile now or compile later! Execute now or execute later!"
+	 * </Arnie>
+	 *
+	 * For immediate words, simply compile the word into the current
+	 * definition for execution when the current definition is later
+	 * executed (during definition of another word).  Otherwise compile
+	 * compile the word during the definition of another word.
+	 *
+	 * Ideally we don't need _post for an immediate word, but it makes
+	 * SEE easier to implement.
+	 */
+	_postpone: {
+		str = p4ParseName(&ctx->input);
+		word = p4FindWord(ctx, str.string, str.length);
+		if (word != NULL) {
+#ifdef CODE_FIELD
+			ctx->words = p4WordAppend(ctx, ctx->words, (P4_Cell) &w_post.code);
+			ctx->words = p4WordAppend(ctx, ctx->words, (P4_Cell) &word->code);
+#else
+			ctx->words = p4WordAppend(ctx, ctx->words, (P4_Cell) &w_post);
+			ctx->words = p4WordAppend(ctx, ctx->words, (P4_Cell) word);
+#endif
+			NEXT;
+		}
+		p4Bp(ctx);
+		LONGJMP(ctx->on_throw, P4_THROW_UNDEFINED);
+	}
+	_post: {
+		w = *ip++;
+		if (P4_WORD_IS_IMM(w.w)) {
+#ifdef CODE_FIELD
+			goto **w.xt;
+#else
+			goto *w.xt->code;
+#endif
+		}
+		ctx->words = p4WordAppend(ctx, ctx->words, w);
 		NEXT;
 	}
 
@@ -2026,7 +2071,7 @@ _repl:
 				if (x.w->code == &&_lit) {
 					P4_Word *xt_word = p4FindXt(ctx, w.p[1].xt);
 					if (xt_word == NULL) {
-						(void) printf("_lit "P4_INT_FMT" ", (*++w.p).n);
+						(void) printf(P4_INT_FMT" ", (*++w.p).n);
 					} else {
 						(void) printf("['] %.*s ", (int)xt_word->name.length, xt_word->name.string);
 						w.p++;
@@ -2034,8 +2079,7 @@ _repl:
 					continue;
 				}
 				(void) printf(
-					"%s%.*s ",
-					P4_WORD_IS_IMM(x.w) ? "POSTPONE " : "",
+					"%.*s ",
 					(int) x.w->name.length, x.w->name.string
 				);
 				if (x.w->code == &&_branch || x.w->code == &&_branchz) {
