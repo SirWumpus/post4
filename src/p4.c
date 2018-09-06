@@ -940,6 +940,7 @@ p4Exception(P4_Ctx *ctx, int code)
 			" while compiling \"%s\"",
 			word->name.length == 0 ? ":NONAME" : (char *)word->name.string
 		);
+		ctx->state = P4_STATE_INTERPRET;
 		ctx->words = word->prev;
 		p4WordFree(word);
 	}
