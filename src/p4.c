@@ -1813,22 +1813,22 @@ _repl:
 	}
 	_and: {		// ( x1 x2 -- x3 )
 		w = P4_POP(ctx->ds);
-		P4_TOP(ctx->ds).n &= w.n;
+		P4_TOP(ctx->ds).u &= w.u;
 		NEXT;
 	}
 	_or: {		// ( x1 x2 -- x3 )
 		w = P4_POP(ctx->ds);
-		P4_TOP(ctx->ds).n |= w.n;
+		P4_TOP(ctx->ds).u |= w.u;
 		NEXT;
 	}
 	_xor: {		// ( x1 x2 -- x3 )
 		w = P4_POP(ctx->ds);
-		P4_TOP(ctx->ds).n ^= w.n;
+		P4_TOP(ctx->ds).u ^= w.u;
 		NEXT;
 	}
 	_not: {		// ( n1 -- n2 )
 		w = P4_TOP(ctx->ds);
-		P4_TOP(ctx->ds).n = ~w.u;
+		P4_TOP(ctx->ds).u = ~w.u;
 		NEXT;
 	}
 	_neg: {		// ( n1 -- n2 )
