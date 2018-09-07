@@ -822,11 +822,7 @@ p4FindXt(P4_Ctx *ctx, P4_Xt xt)
 	P4_Word *word;
 
 	for (word = ctx->words; word != NULL; word = word->prev) {
-#ifdef CODE_FIELD
-		if (xt == &word->code) {
-#else
 		if (xt == word) {
-#endif
 			return word;
 		}
 	}
@@ -969,11 +965,7 @@ p4Repl(P4_Ctx *ctx)
 	 * word completes the next XT (w_repl) transitions from threaded
 	 * code back into the C driven REPL.
 	 */
-#ifdef CODE_FIELD
-	static P4_Cell exec[] = { (P4_Cell) &w_repl.code };
-#else
 	static P4_Cell exec[] = { (P4_Cell) &w_repl };
-#endif
 
 	static P4_Word words[] = {
 		/* Internal support. */
@@ -1192,22 +1184,14 @@ _repl:
 
 			compile_or_push:
 				if (ctx->state == P4_STATE_COMPILE) {
-#ifdef CODE_FIELD
-					ctx->words = p4WordAppend(ctx, ctx->words, (P4_Cell) &w_lit.code);
-#else
 					ctx->words = p4WordAppend(ctx, ctx->words, (P4_Cell) &w_lit);
-#endif
 					ctx->words = p4WordAppend(ctx, ctx->words, x);
 				} else {
 					P4_PUSH(ctx->ds, x);
 					p4StackCheck(ctx);
 				}
 			} else if (ctx->state == P4_STATE_COMPILE && !P4_WORD_IS_IMM(word)) {
-#ifdef CODE_FIELD
-				ctx->words = p4WordAppend(ctx, ctx->words, (P4_Cell) &word->code);
-#else
 				ctx->words = p4WordAppend(ctx, ctx->words, (P4_Cell) word);
-#endif
 			} else {
 				// Setup XT of word found to execute.
 				P4_PUSH(ctx->ds, word);
@@ -1234,19 +1218,11 @@ _repl:
 	_next: {	// Indirect threading.
 		p4StackCheck(ctx);
 		w = *ip++;
-#ifdef CODE_FIELD
-		goto **w.xt;
-#else
 		goto *w.xt->code;
-#endif
 	}
 	_execute: {	// ( xt -- )
 		w = P4_POP(ctx->ds);
-#ifdef CODE_FIELD
-		goto **w.xt;
-#else
 		goto *w.xt->code;
-#endif
 	}
 	_bye: {		// ( -- )
 		exit(0);
@@ -1307,11 +1283,7 @@ _repl:
 	 */
 	_literal: {
 		w = P4_POP(ctx->ds);
-#ifdef CODE_FIELD
-		ctx->words = p4WordAppend(ctx, ctx->words, (P4_Cell) &w_lit.code);
-#else
 		ctx->words = p4WordAppend(ctx, ctx->words, (P4_Cell) &w_lit);
-#endif
 		ctx->words = p4WordAppend(ctx, ctx->words, w);
 		NEXT;
 	}
@@ -1337,20 +1309,12 @@ _repl:
 	}
  	_enter: {	// ( i*x -- j*y )(R: -- ip)
 		P4_PUSH(ctx->rs, ip);
-#ifdef CODE_FIELD
-		ip = w.p + 1;
-#else
 		ip = w.xt->data;
-#endif
 		NEXT;
 	}
 	_semicolon: {	// (C: colon -- )
 		ctx->state = P4_STATE_INTERPRET;
-#ifdef CODE_FIELD
-		ctx->words = p4WordAppend(ctx, ctx->words, (P4_Cell) &w_exit.code);
-#else
 		ctx->words = p4WordAppend(ctx, ctx->words, (P4_Cell) &w_exit);
-#endif
 		NEXT;
 	}
 	_exit: {	// ( i*x -- i*x )(R:ip -- )
@@ -1369,11 +1333,7 @@ _repl:
 		NEXT;
 	}
 	_rm_marker: {
-#ifdef CODE_FIELD
-		x.w = (P4_Word *)(w.s - offsetof(P4_Word, code));
-#else
 		x.w = w.xt;
-#endif
 		for (word = ctx->words; word != x.w; word = w.w) {
 			w.w = word->prev;
 			p4WordFree(word);
@@ -1419,11 +1379,7 @@ _repl:
 		NEXT;
 	}
 	_data_field: {	// ( -- addr )
-#ifdef CODE_FIELD
-		P4_PUSH(ctx->ds, w.p + 2);
-#else
 		P4_PUSH(ctx->ds, w.xt->data + 1);
-#endif
 		NEXT;
 	}
 	_does: {	// DOES>
@@ -1437,22 +1393,13 @@ _repl:
 		LONGJMP(ctx->on_throw, P4_THROW_NOT_CREATED);
 	}
 	_do_does: {	// ( -- addr) and chain to defining word after DOES>.
-#ifdef CODE_FIELD
-		P4_PUSH(ctx->ds, w.p + 2);
-		P4_PUSH(ctx->rs, ip);
-		ip = w.p[1].p;
-#else
 		P4_PUSH(ctx->ds, w.xt->data + 1);
 		P4_PUSH(ctx->rs, ip);
 		ip = w.xt->data[0].p;
-#endif
 		NEXT;
 	}
 	_body: {	// ( xt -- addr )
 		w = P4_TOP(ctx->ds);
-#ifdef CODE_FIELD
-		w.w = (P4_Word *)(w.s - offsetof(P4_Word, code));
-#endif
 		if (P4_WORD_WAS_CREATED(w.w)) {
 			P4_TOP(ctx->ds) = (P4_Cell) &w.w->data[1];
 			NEXT;
@@ -1467,11 +1414,7 @@ _repl:
 		str = p4ParseName(&ctx->input);
 		word = p4FindWord(ctx, str.string, str.length);
 		if (word != NULL) {
-#ifdef CODE_FIELD
-			P4_PUSH(ctx->ds, &word->code);
-#else
 			P4_PUSH(ctx->ds, word);
-#endif
 			NEXT;
 		}
 		p4Bp(ctx);
@@ -1518,13 +1461,8 @@ _repl:
 		str = p4ParseName(&ctx->input);
 		word = p4FindWord(ctx, str.string, str.length);
 		if (word != NULL) {
-#ifdef CODE_FIELD
-			ctx->words = p4WordAppend(ctx, ctx->words, (P4_Cell) &w_post.code);
-			ctx->words = p4WordAppend(ctx, ctx->words, (P4_Cell) &word->code);
-#else
 			ctx->words = p4WordAppend(ctx, ctx->words, (P4_Cell) &w_post);
 			ctx->words = p4WordAppend(ctx, ctx->words, (P4_Cell) word);
-#endif
 			NEXT;
 		}
 		p4Bp(ctx);
@@ -1533,11 +1471,7 @@ _repl:
 	_post: {
 		w = *ip++;
 		if (P4_WORD_IS_IMM(w.w)) {
-#ifdef CODE_FIELD
-			goto **w.xt;
-#else
 			goto *w.xt->code;
-#endif
 		}
 		ctx->words = p4WordAppend(ctx, ctx->words, w);
 		NEXT;
@@ -2062,13 +1996,8 @@ _repl:
 				word->name.length == 0 ? ":NONAME" : ": %.*s ",
 				(int) word->name.length, word->name.string
 			);
-#ifdef CODE_FIELD
-			for (w.p = word->data; w.w->code != &&_exit; w.p++) {
-				x.w = (P4_Word *)(w.s - offsetof(P4_Word, code));
-#else
 			for (w.p = word->data; w.p->xt != &w_exit; w.p++) {
 				x = *w.p;
-#endif
 				if (x.w->code == &&_lit) {
 					P4_Word *xt_word = p4FindXt(ctx, w.p[1].xt);
 					if (xt_word == NULL) {

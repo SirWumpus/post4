@@ -153,11 +153,7 @@ typedef union p4_cell P4_Cell;
 typedef struct p4_word P4_Word;
 typedef struct p4_ctx P4_Ctx;
 
-#ifdef CODE_FIELD
-typedef P4_Code *P4_Xt;
-#else
 typedef P4_Word *P4_Xt;
-#endif
 
 typedef struct {
 	P4_Size		length;		/* Length of string less NUL byte. */
