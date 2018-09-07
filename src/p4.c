@@ -1643,10 +1643,10 @@ _repl:
 		*w.p = x;
 		NEXT;
 	}
-	_move: {	// ( addr1 addr2 u -- )
+	_move: {	// ( src dst u -- )
 		w = P4_POP(ctx->ds);
 		x = P4_POP(ctx->ds);
-		(void) memmove(x.s, P4_POP(ctx->ds).s, w.u);
+		(void) memmove(x.s, P4_POP(ctx->ds).s, w.z);
 		NEXT;
 	}
 
