@@ -807,7 +807,8 @@ p4FindWord(P4_Ctx *ctx, P4_Char *caddr, P4_Size length)
 	P4_Word *word;
 
 	for (word = ctx->words; word != NULL; word = word->prev) {
-		if (word->name.length > 0 && word->name.length == length
+		if (!P4_WORD_IS_HIDDEN(word)
+		&& word->name.length > 0 && word->name.length == length
 		&& strncasecmp((char *)word->name.string, caddr, length) == 0) {
 			return word;
 		}
@@ -1300,9 +1301,10 @@ _repl:
 		if (ctx->state == P4_STATE_COMPILE) {
 			LONGJMP(ctx->on_throw, P4_THROW_COMPILING);
 		}
+		ctx->state = P4_STATE_COMPILE;
 		str = p4ParseName(&ctx->input);
 		word = p4WordCreate(ctx, str.string, str.length, &&_enter);
-		ctx->state = P4_STATE_COMPILE;
+		P4_WORD_SET_HIDDEN(word);
 		word->prev = ctx->words;
 		ctx->words = word;
 		NEXT;
@@ -1315,6 +1317,7 @@ _repl:
 	_semicolon: {	// (C: colon -- )
 		ctx->state = P4_STATE_INTERPRET;
 		ctx->words = p4WordAppend(ctx, ctx->words, (P4_Cell) &w_exit);
+		P4_WORD_CLEAR_HIDDEN(ctx->words);
 		NEXT;
 	}
 	_exit: {	// ( i*x -- i*x )(R:ip -- )

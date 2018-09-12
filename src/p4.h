@@ -216,6 +216,7 @@ struct p4_word {
 
 #define P4_BIT_IMM			0x0001
 #define P4_BIT_CREATED			0x0002
+#define P4_BIT_HIDDEN			0x0004
 
 #define P4_WORD_IS_IMM(w)		((w)->bits & P4_BIT_IMM)
 #define P4_WORD_SET_IMM(w)		((w)->bits |= P4_BIT_IMM)
@@ -223,6 +224,10 @@ struct p4_word {
 
 #define P4_WORD_WAS_CREATED(w)		((w)->bits & P4_BIT_CREATED)
 #define P4_WORD_SET_CREATED(w)		((w)->bits |= P4_BIT_CREATED)
+
+#define P4_WORD_IS_HIDDEN(w)		((w)->bits & P4_BIT_HIDDEN)
+#define P4_WORD_SET_HIDDEN(w)		((w)->bits |= P4_BIT_HIDDEN)
+#define P4_WORD_CLEAR_HIDDEN(w)		((w)->bits &= ~P4_BIT_HIDDEN)
 
 	/* Body */
 	P4_Code		code;		/* Code field points primative. */
