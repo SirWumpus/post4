@@ -465,6 +465,13 @@ FALSE INVERT CONSTANT TRUE
 : CHAR PARSE-NAME DROP C@ ;
 
 \
+\ ... : name ... [ x ] LITERAL ... ;
+\
+\ (S: x -- )
+\
+: LITERAL POSTPONE _lit , ; IMMEDIATE
+
+\
 \ ...  [CHAR]  ...
 \
 \  (C: <spaces>name -- ) \ (S: -- char )

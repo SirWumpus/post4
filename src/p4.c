@@ -978,6 +978,7 @@ p4Repl(P4_Ctx *ctx)
 		P4_WORD("_dsp@",	&&_dsp_get,	0),		// p4
 		P4_WORD("_dsp!",	&&_dsp_put,	0),		// p4
 		P4_WORD("_ip",		&&_ip,		0),		// p4
+		P4_WORD("_lit",		&&_lit,		0),		// p4
 		P4_WORD("_longjmp",	&&_longjmp,	0),		// p4
 		P4_WORD("_rs",		&&_rs,		0),		// p4
 		P4_WORD("_rsp@",	&&_rsp_get,	0),		// p4
@@ -997,7 +998,6 @@ p4Repl(P4_Ctx *ctx)
 		P4_WORD("EXECUTE",	&&_execute,	0),
 		P4_WORD("EXIT",		&&_exit,	0),
 		P4_WORD("IMMEDIATE",	&&_immediate,	P4_BIT_IMM),
-		P4_WORD("LITERAL",	&&_literal,	P4_BIT_IMM),
 		P4_WORD("MARKER",	&&_marker,	0),
 		P4_WORD("POSTPONE",	&&_postpone,	P4_BIT_IMM),
 		P4_WORD("STATE",	&&_state,	0),
@@ -1213,92 +1213,83 @@ _repl:
 	SETJMP_POP(ctx->on_throw);
 	return rc;
 
-	/*
-	 * Flow control.
-	 */
-	_next: {	// Indirect threading.
-		p4StackCheck(ctx);
+		// Indirect threading.
+_next:		p4StackCheck(ctx);
 		w = *ip++;
 		goto *w.xt->code;
-	}
-	_execute: {	// ( xt -- )
-		w = P4_POP(ctx->ds);
+
+		// ( xt -- )
+_execute:	w = P4_POP(ctx->ds);
 		goto *w.xt->code;
-	}
-	_bye: {		// ( -- )
-		exit(0);
-	}
-	_bye_code: {	// ( ex_code -- )
-		w = P4_TOP(ctx->ds);
+
+		// ( -- )
+_bye:		exit(0);
+
+		// ( ex_code -- )
+_bye_code:	w = P4_TOP(ctx->ds);
 		exit((int) w.n);
-	}
-	_bp: {		// ( -- )
-		p4Bp(ctx);
+
+		// ( -- )
+_bp:		p4Bp(ctx);
 		NEXT;
-	}
-	_chars: {	// ( n1 -- n2 )
-		P4_TOP(ctx->ds).n *= sizeof (P4_Char);
+
+		// ( n1 -- n2 )
+_chars:		P4_TOP(ctx->ds).n *= sizeof (P4_Char);
 		NEXT;
-	}
-	_cells: {	// ( n1 -- n2 )
-		P4_TOP(ctx->ds).n *= P4_CELL;
+
+		// ( n1 -- n2 )
+_cells:		P4_TOP(ctx->ds).n *= P4_CELL;
 		NEXT;
-	}
-	_branch: {	// ( -- ) relative offset in address units
-		w = *ip;
+
+		// ( -- )
+_branch:	w = *ip;
 		ip = (P4_Cell *)((P4_Char *) ip + w.n);
 		NEXT;
-	}
-	_branchz: {	// ( flag -- ) relative offset in address units
-		w = *ip;
+
+		// ( flag -- )
+_branchz:	w = *ip;
 		x = P4_POP(ctx->ds);
 		ip = (P4_Cell *)((P4_Char *) ip + (x.u == 0 ? w.n : P4_CELL));
 		NEXT;
-	}
-	_ip:		// ( -- addr )
-		P4_PUSH(ctx->ds, (P4_Cell *) &ip);
+
+		// ( -- addr )
+_ip:		P4_PUSH(ctx->ds, (P4_Cell *) &ip);
 		NEXT;
-	_dsp_get:	// ( -- aaddr )
-		w.p = ctx->ds.top;
+
+		// ( -- aaddr )
+_dsp_get:	w.p = ctx->ds.top;
 		P4_PUSH(ctx->ds, w);
 		NEXT;
-	_dsp_put:	// ( aaddr -- )
-		w = P4_POP(ctx->ds);
+
+		// ( aaddr -- )
+_dsp_put:	w = P4_POP(ctx->ds);
 		ctx->ds.top = w.p;
 		NEXT;
-	_rsp_get:	// ( -- aaddr )
-		w.p = ctx->rs.top;
+
+		// ( -- aaddr )
+_rsp_get:	w.p = ctx->rs.top;
 		P4_PUSH(ctx->ds, w);
 		NEXT;
-	_rsp_put:	// ( aaddr -- )
-		w = P4_POP(ctx->ds);
+
+		// ( aaddr -- )
+_rsp_put:	w = P4_POP(ctx->ds);
 		ctx->rs.top = w.p;
 		NEXT;
-	_longjmp:	// ( n -- )
-		w = P4_POP(ctx->ds);
+
+		// ( n -- )
+_longjmp:	w = P4_POP(ctx->ds);
 		LONGJMP(ctx->on_throw, (int) w.n);
 
-	/* LITERAL (S: x -- )
-	 *
-	 *	: name ... [ x ] LITERAL ... ;
-	 */
-	_literal: {
-		w = P4_POP(ctx->ds);
-		ctx->words = p4WordAppend(ctx, ctx->words, (P4_Cell) &w_lit);
-		ctx->words = p4WordAppend(ctx, ctx->words, w);
-		NEXT;
-	}
-	_lit: {		// ( -- x )
-		w = *ip++;
+		// ( -- x )
+_lit:		w = *ip++;
 		P4_PUSH(ctx->ds, w);
 		NEXT;
-	}
 
-	/*
-	 * Defining words.
-	 */
-	_colon: {	// (R: -- ip)
-		if (ctx->state == P4_STATE_COMPILE) {
+		/*
+		 * Defining words.
+		 */
+		// (R: -- ip)
+_colon:		if (ctx->state == P4_STATE_COMPILE) {
 			LONGJMP(ctx->on_throw, P4_THROW_COMPILING);
 		}
 		ctx->state = P4_STATE_COMPILE;
@@ -1308,35 +1299,33 @@ _repl:
 		word->prev = ctx->words;
 		ctx->words = word;
 		NEXT;
-	}
- 	_enter: {	// ( i*x -- j*y )(R: -- ip)
-		P4_PUSH(ctx->rs, ip);
+
+ 		// ( i*x -- j*y )(R: -- ip)
+_enter:		P4_PUSH(ctx->rs, ip);
 		ip = w.xt->data;
 		NEXT;
-	}
-	_semicolon: {	// (C: colon -- )
-		ctx->state = P4_STATE_INTERPRET;
+
+		// (C: colon -- )
+_semicolon:	ctx->state = P4_STATE_INTERPRET;
 		ctx->words = p4WordAppend(ctx, ctx->words, (P4_Cell) &w_exit);
 		P4_WORD_CLEAR_HIDDEN(ctx->words);
 		NEXT;
-	}
-	_exit: {	// ( i*x -- i*x )(R:ip -- )
-		ip = P4_POP(ctx->rs).p;
+
+		// ( i*x -- i*x )(R:ip -- )
+_exit:		ip = P4_POP(ctx->rs).p;
 		NEXT;
-	}
-	_immediate: {	// ( -- )
-		P4_WORD_SET_IMM(ctx->words);
+
+		// ( -- )
+_immediate:	P4_WORD_SET_IMM(ctx->words);
 		NEXT;
-	}
-	_marker: {
-		str = p4ParseName(&ctx->input);
+
+_marker:	str = p4ParseName(&ctx->input);
 		word = p4WordCreate(ctx, str.string, str.length, &&_rm_marker);
 		word->prev = ctx->words;
 		ctx->words = word;
 		NEXT;
-	}
-	_rm_marker: {
-		x.w = w.xt;
+
+_rm_marker:	x.w = w.xt;
 		for (word = ctx->words; word != x.w; word = w.w) {
 			w.w = word->prev;
 			p4WordFree(word);
@@ -1344,35 +1333,35 @@ _repl:
 		ctx->words = word->prev;
 		p4WordFree(word);
 		NEXT;
-	}
-	_evaluate: {	// ( i*x caddr u -- j*x )
-		w = P4_POP(ctx->ds);
+
+		// ( i*x caddr u -- j*x )
+_evaluate:	w = P4_POP(ctx->ds);
 		x = P4_POP(ctx->ds);
 		(void) p4EvalString(ctx, x.s, w.u);
 		NEXT;
-	}
 
-	/* CREATE DOES> is bit of a mind fuck.  Their purpose is to define
-	 * words that in turn define new words.  Best to look at a simple
-	 * example like CONSTANT defined as:
-	 *
-	 *	: CONSTANT CREATE , DOES> @ ;
-	 *
-	 * Then using CONSTANT to create a new word MONACO:
-	 *
-	 *	377 CONSTANT MONACO
-	 *
-	 * The simplest way I've come to understand CREATE and DOES> is:
-	 *
-	 *	: word1 CREATE ... add data to word2 ...
-	 *              DOES>  ... word2 executes this code with data
-	 *      ;
-	 *
-	 *	a b c word1 word2 ...
-	 *	x y z word2 ...
-	 */
-	_create: {	// ( -- addr )
-		str = p4ParseName(&ctx->input);
+
+		/* CREATE DOES> is bit of a mind fuck.  Their purpose is to define
+		 * words that in turn define new words.  Best to look at a simple
+		 * example like CONSTANT defined as:
+		 *
+		 *	: CONSTANT CREATE , DOES> @ ;
+		 *
+		 * Then using CONSTANT to create a new word MONACO:
+		 *
+		 *	377 CONSTANT MONACO
+		 *
+		 * The simplest way I've come to understand CREATE and DOES> is:
+		 *
+		 *	: word1 CREATE ... add data to word2 ...
+		 *              DOES>  ... word2 executes this code with data
+		 *      ;
+		 *
+		 *	a b c word1 word2 ...
+		 *	x y z word2 ...
+		 */
+		// ( -- addr )
+_create:	str = p4ParseName(&ctx->input);
 		word = p4WordCreate(ctx, str.string, str.length, &&_data_field);
 		P4_WORD_SET_CREATED(word);
 		word->prev = ctx->words;
@@ -1380,13 +1369,13 @@ _repl:
 		// Reserve the first cell for a code pointer for DOES>.
 		word->ndata += P4_CELL;
 		NEXT;
-	}
-	_data_field: {	// ( -- addr )
-		P4_PUSH(ctx->ds, w.xt->data + 1);
+
+		// ( -- addr )
+_data_field:	P4_PUSH(ctx->ds, w.xt->data + 1);
 		NEXT;
-	}
-	_does: {	// DOES>
-		word = ctx->words;
+
+		// DOES>
+_does:		word = ctx->words;
 		if (P4_WORD_WAS_CREATED(word)) {
 			word->code = &&_do_does;
 			// New word's code follows DOES> of the defining word.
@@ -1394,27 +1383,27 @@ _repl:
 			goto _exit;
 		}
 		LONGJMP(ctx->on_throw, P4_THROW_NOT_CREATED);
-	}
-	_do_does: {	// ( -- addr) and chain to defining word after DOES>.
-		P4_PUSH(ctx->ds, w.xt->data + 1);
+
+		// ( -- addr) and chain to defining word after DOES>.
+_do_does:	P4_PUSH(ctx->ds, w.xt->data + 1);
 		P4_PUSH(ctx->rs, ip);
 		ip = w.xt->data[0].p;
 		NEXT;
-	}
-	_body: {	// ( xt -- addr )
-		w = P4_TOP(ctx->ds);
+
+		// ( xt -- addr )
+_body:		w = P4_TOP(ctx->ds);
 		if (P4_WORD_WAS_CREATED(w.w)) {
 			P4_TOP(ctx->ds) = (P4_Cell) &w.w->data[1];
 			NEXT;
 		}
 		LONGJMP(ctx->on_throw, P4_THROW_NOT_CREATED);
-	}
 
-	/*
-	 * Compiling
-	 */
-	_tick: {	// ( -- xt )
-		str = p4ParseName(&ctx->input);
+
+		/*
+		 * Compiling
+		 */
+		// ( -- xt )
+_tick:		str = p4ParseName(&ctx->input);
 		word = p4FindWord(ctx, str.string, str.length);
 		if (word != NULL) {
 			P4_PUSH(ctx->ds, word);
@@ -1422,46 +1411,45 @@ _repl:
 		}
 		p4Bp(ctx);
 		LONGJMP(ctx->on_throw, P4_THROW_UNDEFINED);
-	}
-	_comma: {	// ( x -- )
-	_compile:	// ( xt -- )
-		p4Align(ctx);
+
+_compile:	// ( xt -- )
+		// ( x -- )
+_comma:		p4Align(ctx);
 		w = P4_POP(ctx->ds);
 		ctx->words = p4WordAppend(ctx, ctx->words, w);
 		NEXT;
-	}
-	_ccomma: {	// ( char -- )
-		w = P4_POP(ctx->ds);
+
+		// ( char -- )
+_ccomma:	w = P4_POP(ctx->ds);
 		ctx->words = p4WordAllot(ctx, ctx->words, 1);
 		((P4_Char *) ctx->words->data)[ctx->words->ndata - 1] = (P4_Char) w.u;
 		NEXT;
-	}
-	_allot: {	// ( n -- )
-		w = P4_POP(ctx->ds);
+
+		// ( n -- )
+_allot:		w = P4_POP(ctx->ds);
 		ctx->words = p4WordAllot(ctx, ctx->words, w.n);
 		NEXT;
-	}
-	_align: {	// ( -- )
-		p4Align(ctx);
-		NEXT;
-	}
 
-	/* POSTPONE <spaces>name
-	 *
-	 * <Arnie>
-	 * "Compile now or compile later! Execute now or execute later!"
-	 * </Arnie>
-	 *
-	 * For immediate words, simply compile the word into the current
-	 * definition for execution when the current definition is later
-	 * executed (during definition of another word).  Otherwise compile
-	 * compile the word during the definition of another word.
-	 *
-	 * Ideally we don't need _post for an immediate word, but it makes
-	 * SEE easier to implement.
-	 */
-	_postpone: {
-		str = p4ParseName(&ctx->input);
+		// ( -- )
+_align:		p4Align(ctx);
+		NEXT;
+
+
+		/* POSTPONE <spaces>name
+		 *
+		 * <Arnie>
+		 * "Compile now or compile later! Execute now or execute later!"
+		 * </Arnie>
+		 *
+		 * For immediate words, simply compile the word into the current
+		 * definition for execution when the current definition is later
+		 * executed (during definition of another word).  Otherwise compile
+		 * the word during the definition of another word.
+		 *
+		 * Ideally we don't need _post for an immediate word, but it makes
+		 * SEE easier to implement.
+		 */
+_postpone:	str = p4ParseName(&ctx->input);
 		word = p4FindWord(ctx, str.string, str.length);
 		if (word != NULL) {
 			ctx->words = p4WordAppend(ctx, ctx->words, (P4_Cell) &w_post);
@@ -1470,59 +1458,56 @@ _repl:
 		}
 		p4Bp(ctx);
 		LONGJMP(ctx->on_throw, P4_THROW_UNDEFINED);
-	}
-	_post: {
-		w = *ip++;
+
+_post:		w = *ip++;
 		if (P4_WORD_IS_IMM(w.w)) {
 			goto *w.xt->code;
 		}
 		ctx->words = p4WordAppend(ctx, ctx->words, w);
 		NEXT;
-	}
 
-	/*
-	 * Context variables
-	 */
-	_args: {// ( -- aaddr u )
-		P4_PUSH(ctx->ds, (P4_Cell *) options.argv);
+		/*
+		 * Context variables
+		 */
+		// ( -- aaddr u )
+_args:		P4_PUSH(ctx->ds, (P4_Cell *) options.argv);
 		P4_PUSH(ctx->ds, (P4_Int) options.argc);
 		NEXT;
-	}
-	_state: {	// ( -- addr )
-		P4_PUSH(ctx->ds, (P4_Cell *) &ctx->state);
-		NEXT;
-	}
 
-	/*
-	 * Numeric formatting
-	 */
-	_base: {	// ( -- addr )
-		P4_PUSH(ctx->ds, (P4_Cell *) &ctx->radix);
+		// ( -- addr )
+_state:		P4_PUSH(ctx->ds, (P4_Cell *) &ctx->state);
 		NEXT;
-	}
-	_pic_start: {	// ( -- )
-		(void) memset(ctx->pic, ' ', sizeof (ctx->pic));
+
+		/*
+		 * Numeric formatting
+		 */
+		// ( -- addr )
+_base:		P4_PUSH(ctx->ds, (P4_Cell *) &ctx->radix);
+		NEXT;
+
+		// ( -- )
+_pic_start:	(void) memset(ctx->pic, ' ', sizeof (ctx->pic));
 		ctx->picptr = ctx->pic;
 		NEXT;
-	}
-	_pic_end: {	// ( x -- caddr u )
-		w.u = ctx->picptr - ctx->pic;
+
+		// ( x -- caddr u )
+_pic_end:	w.u = ctx->picptr - ctx->pic;
 		p4StrRev(ctx->pic, w.u);
 		P4_TOP(ctx->ds).s = ctx->pic;
 		P4_PUSH(ctx->ds, w);
 		NEXT;
-	}
-	_pic_digit: {	// ( u1 -- u2 )
-		if (ctx->pic + sizeof (ctx->pic) <= ctx->picptr) {
+
+		// ( u1 -- u2 )
+_pic_digit:	if (ctx->pic + sizeof (ctx->pic) <= ctx->picptr) {
 			LONGJMP(ctx->on_throw, P4_THROW_PIC_OVER);
 		}
 		w = P4_TOP(ctx->ds);
 		*ctx->picptr++ = base36_digits[w.u % ctx->radix];
 		P4_TOP(ctx->ds).u /= ctx->radix;
 		NEXT;
-	}
-	_pic_rest: {	// ( u -- 0 )
-		w = P4_TOP(ctx->ds);
+
+		// ( u -- 0 )
+_pic_rest:	w = P4_TOP(ctx->ds);
 		do {
 			if (ctx->pic + sizeof (ctx->pic) <= ctx->picptr) {
 				LONGJMP(ctx->on_throw, P4_THROW_PIC_OVER);
@@ -1532,9 +1517,9 @@ _repl:
 		} while (0 < w.u);
 		P4_TOP(ctx->ds).u = 0;
 		NEXT;
-	}
-	_pic_sign: {	// ( n -- )
-		if (ctx->pic + sizeof (ctx->pic) <= ctx->picptr) {
+
+		// ( n -- )
+_pic_sign:	if (ctx->pic + sizeof (ctx->pic) <= ctx->picptr) {
 			LONGJMP(ctx->on_throw, P4_THROW_PIC_OVER);
 		}
 		w = P4_POP(ctx->ds);
@@ -1542,196 +1527,194 @@ _repl:
 			*ctx->picptr++ = '-';
 		}
 		NEXT;
-	}
-	_pic_hold: {	// ( ch -- )
-		if (ctx->pic + sizeof (ctx->pic) <= ctx->picptr) {
+
+		// ( ch -- )
+_pic_hold:	if (ctx->pic + sizeof (ctx->pic) <= ctx->picptr) {
 			LONGJMP(ctx->on_throw, P4_THROW_PIC_OVER);
 		}
 		w = P4_POP(ctx->ds);
 		*ctx->picptr++ = (P4_Char) w.u;
 		NEXT;
-	}
-	_pic_size: {	// ( -- n )
-		P4_PUSH(ctx->ds, sizeof(ctx->pic));
-		NEXT;
-	}
 
-	/*
-	 * Memory access.
-	 */
-	_cfetch: {	// ( caddr -- char )
-		w = P4_TOP(ctx->ds);
+		// ( -- n )
+_pic_size:	P4_PUSH(ctx->ds, sizeof(ctx->pic));
+		NEXT;
+
+		/*
+		 * Memory access.
+		 */
+		// ( caddr -- char )
+_cfetch:	w = P4_TOP(ctx->ds);
 		P4_TOP(ctx->ds).u = *w.s;
 		NEXT;
-	}
-	_cstore: {	// ( char caddr -- )
-		w = P4_POP(ctx->ds);
+
+		// ( char caddr -- )
+_cstore:	w = P4_POP(ctx->ds);
 		*w.s = P4_POP(ctx->ds).u;
 		NEXT;
-	}
-	_fetch: {	// ( aaddr -- x )
-		w = P4_TOP(ctx->ds);
+
+		// ( aaddr -- x )
+_fetch:		w = P4_TOP(ctx->ds);
 		P4_TOP(ctx->ds) = *w.p;
 		NEXT;
-	}
-	_store: {	// ( x aaddr -- )
-		w = P4_POP(ctx->ds);
+
+		// ( x aaddr -- )
+_store:		w = P4_POP(ctx->ds);
 		x = P4_POP(ctx->ds);
 		*w.p = x;
 		NEXT;
-	}
-	_move: {	// ( src dst u -- )
-		w = P4_POP(ctx->ds);
+
+		// ( src dst u -- )
+_move:		w = P4_POP(ctx->ds);
 		x = P4_POP(ctx->ds);
 		(void) memmove(x.s, P4_POP(ctx->ds).s, w.z);
 		NEXT;
-	}
 
-	/*
-	 * ... >HERE ...
-	 *
-	 * (S: -- u )
-	 *
-	 * Offset from the data-space start address for the word being compiled.
-	 * Similar to the word HERE, except expressed as an offset.
-	 *
-	 * @note
-	 *	During the compiliation of a word with C based implementations
-	 *	data-space regions may be relocated when they are enlarged,
-	 *	thus invalidating previous values of HERE.
-	 *
-	 * @standard p4
-	 */
-	_here_offset: {	// ( -- u )
-		P4_PUSH(ctx->ds, ctx->words->ndata);
+
+		/*
+		 * ... >HERE ...
+		 *
+		 * (S: -- u )
+		 *
+		 * Offset from the data-space start address for the word being compiled.
+		 * Similar to the word HERE, except expressed as an offset.
+		 *
+		 * @note
+		 *	During the compiliation of a word with C based implementations
+		 *	data-space regions may be relocated when they are enlarged,
+		 *	thus invalidating previous values of HERE.
+		 *
+		 * @standard p4
+		 */
+		// ( -- u )
+_here_offset:	P4_PUSH(ctx->ds, ctx->words->ndata);
 		NEXT;
-	}
-	_here_addr: {	// ( -- addr )
-		P4_PUSH(ctx->ds, (P4_Char *)ctx->words->data + ctx->words->ndata);
+
+		// ( -- addr )
+_here_addr:	P4_PUSH(ctx->ds, (P4_Char *)ctx->words->data + ctx->words->ndata);
 		NEXT;
-	}
-	_unused: {	// ( -- u )
-		w.u = ctx->words->mdata - ctx->words->ndata;
+
+		// ( -- u )
+_unused:	w.u = ctx->words->mdata - ctx->words->ndata;
 		P4_PUSH(ctx->ds, w);
 		NEXT;
-	}
 
-	/*
-	 * Dynamic Memory
-	 */
-	_allocate: {	// ( u -- aaddr ior )
-		w = P4_TOP(ctx->ds);
+		/*
+		 * Dynamic Memory
+		 */
+		// ( u -- aaddr ior )
+_allocate:	w = P4_TOP(ctx->ds);
 		P4_TOP(ctx->ds).s = malloc(w.u);
 		P4_PUSH(ctx->ds, (P4_Int)(w.s == NULL));
 		NEXT;
-	}
-	_free: {	// ( aaddr -- ior )
-		w = P4_TOP(ctx->ds);
+
+		// ( aaddr -- ior )
+_free:		w = P4_TOP(ctx->ds);
 		free(w.s);
 		P4_TOP(ctx->ds).n = 0;
 		NEXT;
-	}
-	_resize: {	// ( aaddr1 u -- aaddr2 ior )
-		w = P4_POP(ctx->ds);
+
+		// ( aaddr1 u -- aaddr2 ior )
+_resize:	w = P4_POP(ctx->ds);
 		x = P4_TOP(ctx->ds);
 		w.s = realloc(x.s, w.u);
 		P4_TOP(ctx->ds) = w.s == NULL ? x : w;
 		P4_PUSH(ctx->ds, (P4_Int)(w.s == NULL));
 		NEXT;
-	}
 
-	/*
-	 * Stack manipulation.
-	 */
-	_drop: {	// ( x -- )
-		P4_DROP(ctx->ds, 1);
+
+		/*
+		 * Stack manipulation.
+		 */
+		// ( x -- )
+_drop:		P4_DROP(ctx->ds, 1);
 		NEXT;
-	}
-	_dup: {		// ( x -- x x )
-		w = P4_TOP(ctx->ds);
+
+			// ( x -- x x )
+_dup:		w = P4_TOP(ctx->ds);
 		P4_PUSH(ctx->ds, w);
 		NEXT;
-	}
-	_pick: {	// ( xU ... x1 x0 -- xU ... x1 x0 xU )
-			// 0 PICK == DUP, 1 PICK == OVER
-		w = P4_POP(ctx->ds);
+
+		// ( xU ... x1 x0 -- xU ... x1 x0 xU )
+		// 0 PICK == DUP, 1 PICK == OVER
+_pick:		w = P4_POP(ctx->ds);
 		x = P4_PICK(ctx->ds, w.n);
 		P4_PUSH(ctx->ds, x);
 		NEXT;
-	}
-	_swap: {	// ( x y -- y x )
-		w = P4_POP(ctx->ds);
+
+		// ( x y -- y x )
+_swap:		w = P4_POP(ctx->ds);
 		x = P4_TOP(ctx->ds);
 		P4_TOP(ctx->ds) = w;
 		P4_PUSH(ctx->ds, x);
 		NEXT;
-	}
-	_to_rs: {	// (x -- )(R: -- x )
-		w = P4_POP(ctx->ds);
+
+		// (x -- )(R: -- x )
+_to_rs:		w = P4_POP(ctx->ds);
 		P4_PUSH(ctx->rs, w);
 		NEXT;
-	}
-	_from_rs: {	// (R: x -- )
-		w = P4_POP(ctx->rs);
+
+		// (R: x -- )
+_from_rs:	w = P4_POP(ctx->rs);
 		P4_PUSH(ctx->ds, w);
 		NEXT;
-	}
-	_rs_copy: {	// (R: x -- x)
-		w = P4_TOP(ctx->rs);
+
+		// (R: x -- x)
+_rs_copy:	w = P4_TOP(ctx->rs);
 		P4_PUSH(ctx->ds, w);
 		NEXT;
-	}
-	_roll: {	// ( xu xu-1 ... x0 u –– xu-1 ... x0 xu )
-		w = P4_POP(ctx->ds);
+
+		// ( xu xu-1 ... x0 u –– xu-1 ... x0 xu )
+_roll:		w = P4_POP(ctx->ds);
 		x = P4_PICK(ctx->ds, w.n);
 		(void) memmove(ctx->ds.top - w.n, ctx->ds.top - w.n + 1, w.n * P4_CELL);
 		P4_TOP(ctx->ds) = x;
 		NEXT;
-	}
-	_llor: {	// ( xu xu-1 ... x0 u –– x0 xu xu-1 ... x1 )
-		w = P4_POP(ctx->ds);
+
+		// ( xu xu-1 ... x0 u –– x0 xu xu-1 ... x1 )
+_llor:		w = P4_POP(ctx->ds);
 		x = P4_TOP(ctx->ds);
 		(void) memmove(ctx->ds.top - w.n + 1, ctx->ds.top - w.n, w.n * P4_CELL);
 		ctx->ds.top[-w.n] = x;
 		NEXT;
-	}
 
-	/*
-	 * Operators
-	 */
-	_add: {		// ( n1 n2 -- n3 )
-		w = P4_POP(ctx->ds);
+
+		/*
+		 * Operators
+		 */
+		// ( n1 n2 -- n3 )
+_add:		w = P4_POP(ctx->ds);
 		P4_TOP(ctx->ds).n += w.n;
 		NEXT;
-	}
-	_sub: {		// ( n1 n2 -- n3 )
-		w = P4_POP(ctx->ds);
+
+		// ( n1 n2 -- n3 )
+_sub:		w = P4_POP(ctx->ds);
 		P4_TOP(ctx->ds).n -= w.n;
 		NEXT;
-	}
-	_mul: {		// ( n1 n2 -- n3 )
-		w = P4_POP(ctx->ds);
+
+		// ( n1 n2 -- n3 )
+_mul:		w = P4_POP(ctx->ds);
 		P4_TOP(ctx->ds).n *= w.n;
 		NEXT;
-	}
-	_div: {		// ( n1 n2 -- n3 )
-		w = P4_POP(ctx->ds);
+
+		// ( n1 n2 -- n3 )
+_div:		w = P4_POP(ctx->ds);
 		P4_TOP(ctx->ds).n /= w.n;
 		NEXT;
-	}
-	_sm_div_rem: {	// ( dend dsor -- rem quot )
+
+	{	// ( dend dsor -- rem quot )
 		// C99+ specifies symmetric division.
 		DIV_T qr;
-		w = P4_POP(ctx->ds);
+_sm_div_rem:	w = P4_POP(ctx->ds);
 		x = P4_TOP(ctx->ds);
 		qr = DIV(x.n, w.n);
 		P4_TOP(ctx->ds).n = qr.rem;
 		P4_PUSH(ctx->ds, qr.quot);
 		NEXT;
 	}
-	_fm_div_mod: {	// ( dend dsor -- mod quot )
+	{	// ( dend dsor -- mod quot )
 		P4_Int q, m;
-		w = P4_POP(ctx->ds);
+_fm_div_mod:	w = P4_POP(ctx->ds);
 		x = P4_TOP(ctx->ds);
 		q = x.n / w.n;
 		m = x.n % w.n;
@@ -1743,97 +1726,97 @@ _repl:
 		P4_PUSH(ctx->ds, q);
 		NEXT;
 	}
-	_mod: {		// ( n1 n2 -- n3 )
-		w = P4_POP(ctx->ds);
+		// ( n1 n2 -- n3 )
+_mod:		w = P4_POP(ctx->ds);
 		P4_TOP(ctx->ds).n %= w.n;
 		NEXT;
-	}
-	_and: {		// ( x1 x2 -- x3 )
-		w = P4_POP(ctx->ds);
+
+		// ( x1 x2 -- x3 )
+_and:		w = P4_POP(ctx->ds);
 		P4_TOP(ctx->ds).u &= w.u;
 		NEXT;
-	}
-	_or: {		// ( x1 x2 -- x3 )
-		w = P4_POP(ctx->ds);
+
+		// ( x1 x2 -- x3 )
+_or:		w = P4_POP(ctx->ds);
 		P4_TOP(ctx->ds).u |= w.u;
 		NEXT;
-	}
-	_xor: {		// ( x1 x2 -- x3 )
-		w = P4_POP(ctx->ds);
+
+		// ( x1 x2 -- x3 )
+_xor:		w = P4_POP(ctx->ds);
 		P4_TOP(ctx->ds).u ^= w.u;
 		NEXT;
-	}
-	_not: {		// ( n1 -- n2 )
-		w = P4_TOP(ctx->ds);
+
+		// ( n1 -- n2 )
+_not:		w = P4_TOP(ctx->ds);
 		P4_TOP(ctx->ds).u = ~w.u;
 		NEXT;
-	}
-	_neg: {		// ( n1 -- n2 )
-		w = P4_TOP(ctx->ds);
+
+		// ( n1 -- n2 )
+_neg:		w = P4_TOP(ctx->ds);
 		P4_TOP(ctx->ds).n = -w.n;
 		NEXT;
-	}
-	_lshift: {	// ( x1 u -- x2 )
-		w = P4_POP(ctx->ds);
+
+		// ( x1 u -- x2 )
+_lshift:	w = P4_POP(ctx->ds);
 		P4_TOP(ctx->ds).u <<= w.u;
 		NEXT;
-	}
-	_rshift: {	// ( x1 u -- x2 )
-		w = P4_POP(ctx->ds);
+
+		// ( x1 u -- x2 )
+_rshift:	w = P4_POP(ctx->ds);
 		P4_TOP(ctx->ds).u >>= w.u;
 		NEXT;
-	}
 
-	/*
-	 * Comparision
-	 */
-	_eq0: {		// ( x -- flag )
-		w = P4_TOP(ctx->ds);
+
+		/*
+		 * Comparision
+		 */
+		// ( x -- flag )
+_eq0:		w = P4_TOP(ctx->ds);
 		P4_TOP(ctx->ds).u = w.u == 0 ? ~0 : 0;
 		NEXT;
-	}
-	_lt0: {		// ( x -- flag )
-		w = P4_TOP(ctx->ds);
+
+		// ( x -- flag )
+_lt0:		w = P4_TOP(ctx->ds);
 		P4_TOP(ctx->ds).u = w.n < 0 ? ~0 : 0;
 		NEXT;
-	}
-	_u_lt: {	// ( u1 u2 -- )
-		w = P4_POP(ctx->ds);
+
+		// ( u1 u2 -- )
+_u_lt:		w = P4_POP(ctx->ds);
 		x = P4_TOP(ctx->ds);
 		P4_TOP(ctx->ds).u = x.u < w.u;
 		NEXT;
-	}
 
-	/*
-	 * I/O
-	 */
-	_input_offset: {// ( -- u )
-		P4_PUSH(ctx->ds, (P4_Cell *) &ctx->input.offset);
+
+		/*
+		 * I/O
+		 */
+		// ( -- u )
+_input_offset:	P4_PUSH(ctx->ds, (P4_Cell *) &ctx->input.offset);
 		NEXT;
-	}
-	_source: {	// ( -- caddr u )
-		P4_PUSH(ctx->ds, ctx->input.buffer + ctx->input.offset);
+
+		// ( -- caddr u )
+_source:	P4_PUSH(ctx->ds, ctx->input.buffer + ctx->input.offset);
 		P4_PUSH(ctx->ds, ctx->input.length - ctx->input.offset);
 		NEXT;
-	}
-	_source_id: {	// ( -- -2 | -1 | 0 | fd )
-		P4_PUSH(ctx->ds, ctx->input.fd);
+
+		// ( -- -2 | -1 | 0 | fd )
+_source_id:	P4_PUSH(ctx->ds, ctx->input.fd);
 		NEXT;
-	}
-	_accept: {	// ( caddr +n1 -- +n2 )
-		w = P4_POP(ctx->ds);
+
+		// ( caddr +n1 -- +n2 )
+_accept:	w = P4_POP(ctx->ds);
 		x = P4_TOP(ctx->ds);
 		w.u = p4Accept(&ctx->input, x.s, w.u);
 		P4_TOP(ctx->ds) = w;
 		NEXT;
-	}
-	_refill: {	// ( -- flag)
-		w.u = p4Refill(ctx, &ctx->input);
+
+		// ( -- flag)
+_refill:	w.u = p4Refill(ctx, &ctx->input);
 		P4_PUSH(ctx->ds, w);
 		NEXT;
-	}
-	_key: {		// ( -- n )
-		(void) fflush(stdout);
+
+		// ( -- n )
+_key:		(void) fflush(stdout);
 		if (ctx->unget != EOF) {
 			P4_PUSH(ctx->ds, ctx->unget);
 			ctx->unget = EOF;
@@ -1848,13 +1831,14 @@ _repl:
 		P4_PUSH(ctx->ds, p4ReadByte(tty_fd));
 #endif
 		NEXT;
-	}
-	_key_ready: {	// ( -- flag )
-		(void) fflush(stdout);
+
+		// ( -- flag )
+_key_ready:	(void) fflush(stdout);
 		if (ctx->unget == EOF) {
 #ifdef HAVE_TCSETATTR
-			if (tcsetattr(tty_fd, TCSANOW, &tty_raw_nb) == 0)
+			if (tcsetattr(tty_fd, TCSANOW, &tty_raw_nb) == 0) {
 				ctx->unget = p4ReadByte(tty_fd);
+			}
 #else
 			if (p4SetNonBlocking(tty_fd, 1) == 0) {
 				ctx->unget = p4ReadByte(tty_fd);
@@ -1864,14 +1848,14 @@ _repl:
 		}
 		P4_PUSH(ctx->ds, (P4_Uint)(ctx->unget != EOF ? ~0 : 0));
 		NEXT;
-	}
-	_emit: {	// ( c -- )
-		w = P4_POP(ctx->ds);
+
+		// ( c -- )
+_emit:		w = P4_POP(ctx->ds);
 		(void) fputc(w.n, stdout);
 		NEXT;
-	}
-	_included: {	// ( caddr u -- )
-		w = P4_POP(ctx->ds);
+
+		// ( caddr u -- )
+_included:	w = P4_POP(ctx->ds);
 		x = P4_POP(ctx->ds);
 		if ((cstr = p4StrDup(x.s, w.u)) != NULL) {
 			(void) p4LoadFile(ctx, cstr);
@@ -1879,112 +1863,111 @@ _repl:
 			NEXT;
 		}
 		LONGJMP(ctx->on_throw, P4_THROW_ALLOCATE);
-	}
 
-	/*
-	 * Block I/O
-	 */
-	_blk: {		// ( -- addr )
-		P4_PUSH(ctx->ds, (P4_Cell *) &ctx->block.number);
+
+		/*
+		 * Block I/O
+		 */
+		// ( -- addr )
+_blk:		P4_PUSH(ctx->ds, (P4_Cell *) &ctx->block.number);
 		NEXT;
-	}
-	_block: {	// ( u -- aaddr )
-		w = P4_TOP(ctx->ds);
+
+		// ( u -- aaddr )
+_block:		w = P4_TOP(ctx->ds);
 		p4BlockBuffer(ctx, w.u, 1);
 		P4_TOP(ctx->ds).s = ctx->block.buffer;
 		NEXT;
-	}
-	_block_count: {	// ( -- u )
+
+	{	// ( -- u )
 		struct stat sb;
-		if (fstat(ctx->block_fd, &sb) == 0) {
+_block_count:	if (fstat(ctx->block_fd, &sb) == 0) {
 			w.u = sb.st_size / P4_BLOCK_SIZE;
 			P4_PUSH(ctx->ds, w);
 			NEXT;
 		}
 		LONGJMP(ctx->on_throw, P4_THROW_EIO);
 	}
-	_buffer: {	// ( u -- aaddr )
-		w = P4_TOP(ctx->ds);
+		// ( u -- aaddr )
+_buffer:	w = P4_TOP(ctx->ds);
 		p4BlockBuffer(ctx, w.u, 0);
 		P4_TOP(ctx->ds).s = ctx->block.buffer;
 		NEXT;
-	}
-	_load: {	// ( u -- )
-		w = P4_POP(ctx->ds);
+
+		// ( u -- )
+_load:		w = P4_POP(ctx->ds);
 		p4BlockLoad(ctx, w.u);
 		NEXT;
-	}
-	_empty_buffers: { // ( -- )
-		ctx->block.state = P4_BLOCK_FREE;
-	}
-	_save_buffers: { // ( -- )
-		if (ctx->block.state == P4_BLOCK_DIRTY && p4BlockWrite(ctx->block_fd, &ctx->block)) {
+
+		// ( -- )
+_empty_buffers:	ctx->block.state = P4_BLOCK_FREE;
+
+		// ( -- )
+_save_buffers:	if (ctx->block.state == P4_BLOCK_DIRTY && p4BlockWrite(ctx->block_fd, &ctx->block)) {
 			LONGJMP(ctx->on_throw, P4_THROW_BLOCK_WR);
 		}
 		NEXT;
-	}
-	_update: {	// ( -- )
-		ctx->block.state = P4_BLOCK_DIRTY;
-		NEXT;
-	}
 
-	/*
-	 */
-	_parse: {	// ( char -- c-addr u )
-		w = P4_POP(ctx->ds);
+		// ( -- )
+_update:	ctx->block.state = P4_BLOCK_DIRTY;
+		NEXT;
+
+
+		/*
+		 */
+		// ( char -- c-addr u )
+_parse:		w = P4_POP(ctx->ds);
 		str = p4Parse(&ctx->input, w.u, 0);
 		P4_PUSH(ctx->ds, str.string);
 		P4_PUSH(ctx->ds, str.length);
 		NEXT;
-	}
-	_parse_escape: {	// ( char -- c-addr u )
-		w = P4_POP(ctx->ds);
+
+		// ( char -- c-addr u )
+_parse_escape:	w = P4_POP(ctx->ds);
 		str = p4Parse(&ctx->input, w.u, 1);
 		P4_PUSH(ctx->ds, str.string);
 		P4_PUSH(ctx->ds, str.length);
 		NEXT;
-	}
-	_parse_name: {	// ( -- c-addr u )
-		str = p4ParseName(&ctx->input);
+
+		// ( -- c-addr u )
+_parse_name:	str = p4ParseName(&ctx->input);
 		P4_PUSH(ctx->ds, str.string);
 		P4_PUSH(ctx->ds, str.length);
 		NEXT;
-	}
-	_ms: {		// ( ms -- )
-		w = P4_POP(ctx->ds);
+
+		// ( ms -- )
+_ms:		w = P4_POP(ctx->ds);
 		p4Nap(w.u / 1000L, (w.u % 1000L) * 1000000L);
 		NEXT;
-	}
 
-	/*
-	 * Tools
-	 */
-	_ds: {	// ( -- aaddr u )
-		w.u = P4_LENGTH(ctx->ds);
+		/*
+		 * Tools
+		 */
+		// ( -- aaddr u )
+_ds:		w.u = P4_LENGTH(ctx->ds);
 		P4_PUSH(ctx->ds, ctx->ds.base);
 		P4_PUSH(ctx->ds, w);
 		NEXT;
-	}
-	_rs: {	// ( -- aaddr u )
-		w.u = P4_LENGTH(ctx->rs);
+
+		// ( -- aaddr u )
+_rs:		w.u = P4_LENGTH(ctx->rs);
 		P4_PUSH(ctx->ds, ctx->rs.base);
 		P4_PUSH(ctx->ds, w);
 		NEXT;
-	}
-	_stack_dump: {	// ( addr u -- )
-		x = P4_POP(ctx->ds);
+
+		// ( addr u -- )
+_stack_dump:	x = P4_POP(ctx->ds);
 		w = P4_POP(ctx->ds);
 		p4StackDump(stdout, w.p, x.u);
 		NEXT;
-	}
-	_dump: {	// ( addr u -- )
-		x = P4_POP(ctx->ds);
+
+		// ( addr u -- )
+_dump:		x = P4_POP(ctx->ds);
 		w = P4_POP(ctx->ds);
 		p4MemDump(stdout, w.s, x.u);
 		NEXT;
-	}
-	_see: {		// ( -- )
-		str = p4ParseName(&ctx->input);
+
+		// ( -- )
+_see:		str = p4ParseName(&ctx->input);
 		word = p4FindWord(ctx, str.string, str.length);
 		if (word == NULL) {
 			(void) printf("\"%.*s\" ", (int)str.length, str.string);
@@ -2001,22 +1984,14 @@ _repl:
 			);
 			for (w.p = word->data; w.p->xt != &w_exit; w.p++) {
 				x = *w.p;
-				if (x.w->code == &&_lit) {
-					P4_Word *xt_word = p4FindXt(ctx, w.p[1].xt);
-					if (xt_word == NULL) {
-						(void) printf(P4_INT_FMT" ", (*++w.p).n);
-					} else {
-						(void) printf("['] %.*s ", (int)xt_word->name.length, xt_word->name.string);
-						w.p++;
-					}
-					continue;
-				}
 				(void) printf(
 					"%.*s ",
 					(int) x.w->name.length, x.w->name.string
 				);
-				if (x.w->code == &&_branch || x.w->code == &&_branchz) {
-					(void) printf("[ "P4_INT_FMT" CELLS ] ", (*++w.p).n / P4_CELL);
+				if (x.w->code == &&_lit) {
+					(void) printf("[ "P4_INT_FMT" , ] ", (*++w.p).n);
+				} else if (x.w->code == &&_branch || x.w->code == &&_branchz) {
+					(void) printf("[ "P4_INT_FMT" CELLS , ] ", (*++w.p).n / P4_CELL);
 				}
 			}
 			(void) printf("; %s\r\n", P4_WORD_IS_IMM(word) ? "IMMEDIATE" : "");
@@ -2036,14 +2011,21 @@ _repl:
 				(int) w.w->name.length, w.w->name.string,
 				(int) word->name.length, word->name.string
 			);
+		} else if (word->code == &&_data_field) {
+			(void) printf("CREATE %.*s ( length %lu )\r\n",
+				(int) word->name.length, word->name.string,
+				word->ndata
+			);
+			p4MemDump(stdout, (P4_Char *) word->data, word->ndata);
 		} else {
 			(void) printf("(unknown) 0x%p ", word->code);
 		}
 		NEXT;
-	}
-	_words: {	// ( -- )
+
+	{	// ( -- )
 		P4_Uint column = 0;
 		unsigned short window[4] = { 24, 80 };
+_words:
 #ifdef TIOCGWINSZ
 		ioctl(0, TIOCGWINSZ, window);
 #endif
