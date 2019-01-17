@@ -1176,11 +1176,8 @@ _repl:
 				if (stop - str.string != str.length) {
 					/* Not a word, not a number. */
 					(void) printf("\"%.*s\" ", (int)str.length, str.string);
-					if (ctx->state == P4_STATE_COMPILE) {
-						LONGJMP(ctx->on_throw, P4_THROW_UNDEFINED);
-					}
-					(void) printf("?\r\n");
-					continue;
+					/* Forth 200x 18-1 3.4.d */
+					LONGJMP(ctx->on_throw, P4_THROW_UNDEFINED);
 				}
 
 			compile_or_push:
