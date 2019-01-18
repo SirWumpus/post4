@@ -262,6 +262,8 @@ struct p4_ctx {
 	P4_Stack	ds;		/* Data stack */
 	P4_Stack	rs;		/* Return stack */
 	P4_State	state;
+	P4_Size		mdata;		/* Newest word size of data[] in address units. */
+	P4_Size		ndata;		/* Newest word length of data[] in address units. */
 	P4_Word *	words;		/* Head of the dictionary word list. */
 	P4_Uint		radix;		/* Input/Output radix */
 	P4_Int		unget;
