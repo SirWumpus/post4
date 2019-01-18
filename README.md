@@ -7,9 +7,9 @@ Copyright 2007, 2019 Anthony Howe.  All rights reserved.
 Overview
 --------
 
-Post4 (`p4`) is an indirect threaded Forth dialect written in C, based on the ["Forth 200x Draft 16.1, 2016-08-30"](http://www.forth200x.org/documents/forth16-1.pdf).  Post4 aims to implement the fewest possible built-in words in C, those that are needed to interact with memory and I/O, leaving the remaining standard words to be implemented in Forth.
+Post4 (`p4`) is a hosted indirect threaded Forth dialect written in C, based on the ["Forth 200x Draft 16.1, 2016-08-30"](http://www.forth200x.org/documents/forth16-1.pdf).  Post4 aims to implement the fewest possible built-in words in C, those that are needed to interact with memory and I/O, leaving the remaining standard words to be implemented in Forth.
 
-```
+```lang=shell
 usage: p4 [-V][-b file][-c file][-d size][-r size] [script [args ...]]
 
 -b file         block file; default ./.p4.blk or $HOME/.p4.blk
@@ -19,25 +19,19 @@ usage: p4 [-V][-b file][-c file][-d size][-r size] [script [args ...]]
 -V              build and version information
 ```
 
-The environment variable `POST4_PATH` provides a colon separated search path for the `p4.p4` core word definitions file.  If `POST4_PATH` is undefined, then an OS specific default path is used.  A specific word defintion file can be specified with `-c`.
+The environment variable `POST4_PATH` provides a colon separated search path for the `p4.p4` core word definitions file.  If `POST4_PATH` is undefined, then an OS specific default path is used.  A specific word definition file can be specified with `-c`.
 
-By default a user block file, `.p4.blk`, is opened from the current directory or user's `HOME` directory.  This can be overriden with the `-b` option.
+By default a user block file, `.p4.blk`, is opened from the current directory or user's `HOME` directory.  This can be overridden with the `-b` option.
 
 `p4` reads input from standard input and writes to standard output, which can be redirected:
 
-```
+```lang=shell
 echo "123 69 + ." | p4
 ```
 
 
 Examples
 --------
-
-### cat.p4 - A simple clone of `cat(1)`
-
-```lang=shell
-$ p4 cat.p4 file ...
-```
 
 ### ed.p4 - Block Editor
 
@@ -47,7 +41,7 @@ There are actually three block editor word sets:
 2. An interactive single line editor using `EDIT`; left & right cursor keys, tab toggles insert or replace mode, delete backspace, ESC quits.
 3. A full "screen" block editor using `ED`; all the commands of the interactive single line editor, plus up & down cursor keys, `CTRL+G` goto block, `CTRL+P` & `CTRL+N` block, and `ESC` menu.
 
-NOTE: that `EDIT` and `ED` are hard coded with ANSI termainal escape sequences.
+NOTE: that `EDIT` and `ED` are hard coded with ANSI terminal escape sequences.
 
 ```lang=shell
 $ p4
@@ -61,11 +55,11 @@ ok ED
 
 The universe of the Game of Life is an infinite two-dimensional orthogonal
 grid of square cells, each of which is in one of two possible states, live
-or dead. Every cell interacts with its eight neighbors, which are the cells
+or dead. Every cell interacts with its eight neighbours, which are the cells
 that are directly horizontally, vertically, or diagonally adjacent. At each
 step in time, the following transitions occur:
 
-   1. Any live cell with fewer than two live neighbours dies, as if caused by underpopulation.
+   1. Any live cell with fewer than two live neighbours dies, as if caused by under population.
    2. Any live cell with more than three live neighbours dies, as if by overcrowding.
    3. Any live cell with two or three live neighbours lives on to the next generation.
    4. Any dead cell with exactly three live neighbours becomes a live cell.
@@ -85,7 +79,7 @@ $ p4 life.p4
 Standard Words
 --------------
 
-### ! 
+### !
 ( `x` `aaddr` -- )  
 Store `x` at `aaddr`.
 
@@ -95,24 +89,24 @@ Store `x` at `aaddr`.
 Divide `ud1` by the number in `BASE` giving the quotient `ud2` and the remainder `n`.  (`n` is the least significant digit of `ud1`.)  Convert `n` to external form and append the resulting character to the pictured numeric output string. 
 
 - - -
-### #> 
+### #>
 ( `xd` -- `caddr` `u` )  
 Drop `xd`.  Make the pictured numeric output string available as a character string.  `caddr` and `u` specify the resulting character string.  A program may replace characters within the string.
 
 - - -
-### #S 
+### #S
 ( `ud1` -- `0` )  
 Convert one digit of `ud1` according to the rule for `#`.  Continue conversion until the quotient is zero.
 
 - - -
 ### ' name
-( `"<spaces>name"` -- `xt` )  
+( `<spaces>name` -- `xt` )  
 Find `name` and place its execution token on the stack.  Throw undefined word (-13) if not found.
 
 - - -
 ### ( ccc)
-( `"ccc )"` -- ) immediate  
-Parse and ignore characters upto the closing right parenthesis.
+( `ccc)` -- ) immediate  
+Parse and ignore characters up to the closing right parenthesis.
 
 - - -
 
@@ -245,7 +239,7 @@ End definition of word.
 - - -
 ### <#
 ( -- )  
-Initialize the pictured numeric output conversion process.
+Initialise the pictured numeric output conversion process.
 
 - - -
 ### =
@@ -260,7 +254,6 @@ Initialize the pictured numeric output conversion process.
 - - -
 ### >BODY
 ( `xt` -- `aaddr` )  
-
 `aaddr` is the data-field address corresponding to `xt`.  Will throw `-31` if `xt` is not a word defined by `CREATE`.
 
 - - -
@@ -296,7 +289,7 @@ Throw -1.  Clear the data stack and perform a `QUIT`, which clears the return st
 - - -
 ### ABORT" ccc"
 ( `i*x` `x1` -- | `i*x` ) ( R: `j*x` -- | `j*x` )  
-If `x1` is not equal to zero, display the message that follows upto the closing double-quote and perform an `ABORT`.
+If `x1` is not equal to zero, display the message that follows up to the closing double-quote and perform an `ABORT`.
 
 - - -
 ### ABS
@@ -306,7 +299,7 @@ Return the absolute value of `n`.
 - - -
 ### ACCEPT
 ( `caddr` `+n1` -- `+n2` )  
-Accept upto `+n1` (between 1 and +32767) characters into the buffer given by `caddr`; the number of characters actually received, `+n2`, is pushed.
+Accept up to `+n1` (between 1 and +32767) characters into the buffer given by `caddr`; the number of characters actually received, `+n2`, is pushed.
 
 - - -
 ### ALIGN
@@ -321,8 +314,7 @@ If the data-space pointer is not aligned, reserve enough space to align it.
 - - -
 ### ALLOT
 ( `n` -- )  
-If `n` is greater than zero, reserve `n` address units of data space.  If `n` is less than zero, release `|n|` address units of
-data space.  If `n` is zero, leave the data-space pointer unchanged.
+If `n` is greater than zero, reserve `n` address units of data space.  If `n` is less than zero, release `|n|` address units of data space.  If `n` is zero, leave the data-space pointer unchanged.
 
 - - -
 ### AND
@@ -337,7 +329,7 @@ Position cursor on the terminal, `row` and `col` are 0 based.
 - - -
 ### BASE
 ( -- `aaddr` )  
-`aaddr`is the address of a cell containing the current number conversion radix, between 2..36.
+`aaddr` is the address of a cell containing the current number conversion radix, between 2..36.
 
 - - -
 ### BEGIN
@@ -387,13 +379,28 @@ Add the size in address units of a cell to `aaddr1` giving `aaddr2`.
 `n2` is the size in address units of `n1` cells.
 
 - - -
-### CHAR text
-( `"<spaces>text"` -- `char` )  
+### CHAR ccc
+( `<spaces>ccc` -- `char` )  
 Parse `text` placing the first character of text on the stack.
 
 - - -
+### CHARS
+( `n1` -- `n2` )  
+`n2` is the size in address units of `n1` characters.
+
+- - -
+### CMOVE
+
+- - -
+### CMOVE>
+
+- - -
+### COMPILE,
+( -- )  
+
+- - -
 ### CONSTANT name
-( `x` `"<spaces>name"` -- )  
+( `x` `<spaces>name` -- )  
 Define the word `name` to represent the constant value `x`.  When `name` is executed, the value `x` is pushed on to the stack.
 
 - - -
@@ -403,7 +410,7 @@ Write a newline to standard output.
 
 - - -
 ### CREATE
-( `"<spaces>name"` -- )  
+( `<spaces>name` -- )  
 Create a new word definition.  When `name` is executed, the `aaddr` of its data space is pushed onto the stack.  `CREATE` can be used to define new data structure, eg.
 
 ```
@@ -432,6 +439,12 @@ Or when combined with `DOES>` make new "defining" words, eg.
 \ Use the new word.
 monaco ( -- 377 )
 ```
+
+- - -
+### CS-PICK
+
+- - -
+### CS-ROLL
 
 - - -
 ### DECIMAL
@@ -565,7 +578,7 @@ Make the most recent definition an immediate word.
 
 - - -
 ### INCLUDED
-( `caddr` `u` -- )
+( `caddr` `u` -- )  
 
 - - -
 ### INVERT
@@ -600,6 +613,12 @@ List the block given by `blk_num`, 1 based, and save `blk_num` in `SCR` on succe
 ( `blk_num` -- )  
 
 - - -
+### MOVE
+
+- - -
+### PICK
+
+- - -
 ### ROLL
 ( `xu` `xu-1` ... `x0` `u` -- `xu-1` ... `x0` `xu` )  
 Left rotate the stack `u` cells.
@@ -615,6 +634,21 @@ A character buffer space available to developers and //not// used by standard wo
 Clear the terminal (advance next page).
 
 - - -
+### POSTPONE word
+( `"<spaces>word"` --  )  
+
+
+- - -
+### S" ccc"
+( `ccc"` -- caddr u )  
+When interpreting, copy the string `ccc` as-is to a transient buffer and return `caddr u`.  When compiling, append the string `ccc` as-is to the current word so when executed it leaves `caddr u` of the string on the stack.
+
+- - -
+### S\" ccc"
+( `ccc"` -- caddr u )  
+When interpreting, copy the escaped string `ccc` to a transient buffer and return `caddr u`.  When compiling, append the escaped string `ccc` to the current word so when executed it leaves `caddr u` of the string on the stack.
+
+- - -
 ### SAVE-BUFFERS
 ( -- )  
 Save all the dirty buffer to the block file.
@@ -625,19 +659,43 @@ Save all the dirty buffer to the block file.
 `aaddr` is the address of a cell containing the block number from the most recent `LIST`.
 
 - - -
+### SIGN
+( `n` -- )  
+If `n` is negative, add a minus sign to the beginning of the pictured numeric output string.  An ambiguous condition exists if `SIGN` executes outside of a `<# #>` delimited number conversion.
+
+- - -
 ### SM/REM
 ( `dend` `dsor` -- `rem` `quot` )  
 Symmetric division of `dend` and `dsor`.
 
 - - -
-### UPDATE
-( -- )  
-Mark the current as dirty.
+### STATE
+( -- `aaddr` )  
+Return the `aaddr` address of the compilation state; true when compiling, otherwise false when interpreting.
+
+- - -
+### SWAP
+( `x1` `x2` -- `x2` `x1` )  
+Exchange the top two stack items.
 
 - - -
 ### THRU
 ( `u1` `u2` -- )  
 `LOAD` in sequence blocks `u1` through to `u2` inclusive.
+
+- - -
+### UNLOOP
+( –– ) ( R: `loop-sys` –– )  
+
+- - -
+### UNUSED
+( -- `u` )  
+`u` is the amount of data space remaining in the region addressed by `HERE`, in address units.
+
+- - -
+### UPDATE
+( -- )  
+Mark the current as dirty.
 
 - - -
 
@@ -704,7 +762,7 @@ Push the data stack base address and size (depth).  This stack is a fixed size (
 - - -
 ### _dsp!
 ( `aaddr` -- )  
-Store `addr`into the data stack pointer.
+Store `addr` into the data stack pointer.
 
 - - -
 ### _dsp@
@@ -715,6 +773,11 @@ Fetch data stack pointer.
 ### _ip
 ( -- `aaddr` )  
 Address of the cell holding the inner interpreter's instruction pointer.
+
+- - -
+### _is_immediate
+( xt -- flag )  
+Return true if the execution token is for an immediate word.
 
 - - -
 ### _longjmp
@@ -729,7 +792,7 @@ Push the return stack base address and size (depth).  This stack is a fixed size
 - - -
 ### _rsp!
 ( `aaddr` -- )  
-Store `addr`into the return stack pointer.
+Store `addr` into the return stack pointer.
 
 - - -
 ### _rsp@
@@ -743,7 +806,7 @@ Utility word used to define `.S` and `.rs`.
 
 - - -
 ### bye_code
-( exit_code -- )
+( exit_code -- )  
 Terminate and return to the host OS an exit code; zero (0) for normal/success, non-zero an error occurred.
 
 - - -
