@@ -37,9 +37,9 @@ MARKER rm_core_words
 : .RS 'r' EMIT 's' EMIT '\n' EMIT _rs 1 -  _stack_dump ;
 
 \
-\  value CONSTANT name
+\ value CONSTANT name
 \
-\  (C: x <spaces>name -- ) \ (S: -- x )
+\ (C: x <spaces>name -- ) \ (S: -- x )
 \
 : CONSTANT CREATE , DOES> @ ;
 
@@ -82,14 +82,16 @@ FALSE INVERT CONSTANT TRUE
 \
 \ ... PAD ...
 \
-\  ( -- )
+\ ( -- )
+\
+\ Minimum size shall be 84 characters.
 \
 /PAD CREATE PAD CHARS ALLOT
 
 \
-\  VARIABLE name
+\ VARIABLE name
 \
-\  (C: <spaces>name -- ) \ (S: -- aaddr )
+\ (C: <spaces>name -- ) \ (S: -- aaddr )
 \
 : VARIABLE CREATE 0 , ;
 
@@ -102,16 +104,16 @@ FALSE INVERT CONSTANT TRUE
 \  (C: x <spaces>name -- ) \ (S: -- x )
 \
 \ @note
-\ 	Similar definition to CONSTANT.  Essentially VALUE when defined does:
+\	Similar definition to CONSTANT.  Essentially VALUE when defined does:
 \
-\ 		VARIABLE name value name !
+\		VARIABLE name value name !
 \
-\ 	Referencing name does:
+\	Referencing name does:
 \
-\ 		name @
+\		name @
 \
 \ @see
-\ 	TO
+\	TO
 \
 : VALUE CREATE , DOES> @ ;
 
@@ -122,10 +124,10 @@ FALSE INVERT CONSTANT TRUE
 \
 \ @note
 \
-\ 	x name !
+\	x name !
 \
 \ @see
-\ 	VALUE
+\	VALUE
 \
 : TO ' >BODY ! ;
 
@@ -386,7 +388,7 @@ FALSE INVERT CONSTANT TRUE
 \ (S: nu1 nu2 nu3 -- flag )
 \
 \ @note
-\ 	True if nu2 <= nu1 < nu3, otherwise false.
+\	True if nu2 <= nu1 < nu3, otherwise false.
 \
 : WITHIN OVER - >R - R> U< ;
 
@@ -495,7 +497,7 @@ FALSE INVERT CONSTANT TRUE
 \  (C: -- dest )
 \
 \ @see
-\ 	A.3.2.3.2 Control-flow stack
+\	A.3.2.3.2 Control-flow stack
 \
 : BEGIN >HERE ; IMMEDIATE
 
@@ -505,7 +507,7 @@ FALSE INVERT CONSTANT TRUE
 \  (C: dest -- )
 \
 \ @see
-\ 	A.3.2.3.2 Control-flow stack
+\	A.3.2.3.2 Control-flow stack
 \
 : AGAIN POSTPONE _branch >HERE - , ; IMMEDIATE
 
@@ -515,7 +517,7 @@ FALSE INVERT CONSTANT TRUE
 \  (C: dest -- ) \ (S: flag -- )
 \
 \ @see
-\ 	A.3.2.3.2 Control-flow stack
+\	A.3.2.3.2 Control-flow stack
 \
 : UNTIL POSTPONE _branchz >HERE - , ; IMMEDIATE
 
@@ -525,7 +527,7 @@ FALSE INVERT CONSTANT TRUE
 \  (C: -- forw )
 \
 \ @see
-\ 	A.3.2.3.2 Control-flow stack
+\	A.3.2.3.2 Control-flow stack
 \
 : AHEAD POSTPONE _branch >HERE 0 , ; IMMEDIATE
 
@@ -537,21 +539,21 @@ FALSE INVERT CONSTANT TRUE
 \  (C: -- forw ) \ (S: flag -- )
 \
 \ @see
-\ 	A.3.2.3.2 Control-flow stack
+\	A.3.2.3.2 Control-flow stack
 \
 \ @note
-\ 	It's possible to put an IF...THEN (or IF...ELSE...THEN) statement
-\ 	inside another IF...THEN statement, so long as every IF has one THEN.
+\	It's possible to put an IF...THEN (or IF...ELSE...THEN) statement
+\	inside another IF...THEN statement, so long as every IF has one THEN.
 \
-\ 	DUP test1 IF
-\ 		...
-\ 	ELSE
-\ 		DUP test2 IF
-\ 			...
-\ 		ELSE
-\ 			...
-\ 		THEN
-\ 	THEN DROP
+\	DUP test1 IF
+\	  ...
+\	ELSE
+\	  DUP test2 IF
+\	    ...
+\	  ELSE
+\	    ...
+\	  THEN
+\	THEN DROP
 \
 : IF POSTPONE _branchz >HERE 0 , ; IMMEDIATE
 
@@ -565,7 +567,7 @@ FALSE INVERT CONSTANT TRUE
 \  (C: forw -- )
 \
 \ @see
-\ 	A.3.2.3.2 Control-flow stack
+\	A.3.2.3.2 Control-flow stack
 \
 : THEN				\  C: forw_off
 	>HERE SWAP -		\  C: dist
@@ -580,7 +582,7 @@ FALSE INVERT CONSTANT TRUE
 \  (C: forw1 -- forw2 )
 \
 \ @see
-\ 	A.3.2.3.2 Control-flow stack
+\	A.3.2.3.2 Control-flow stack
 \
 : ELSE				\  C: forw1
 	POSTPONE AHEAD		\  C: forw1 forw2
@@ -602,7 +604,7 @@ FALSE INVERT CONSTANT TRUE
 \  reference remaining on the stack.
 \
 \ @see
-\ 	A.3.2.3.2 Control-flow stack
+\	A.3.2.3.2 Control-flow stack
 \
 : WHILE				\  C: dest
 	POSTPONE IF		\  C: dest forw
@@ -615,7 +617,7 @@ FALSE INVERT CONSTANT TRUE
 \  (C: forw dest -- )
 \
 \ @see
-\ 	A.3.2.3.2 Control-flow stack
+\	A.3.2.3.2 Control-flow stack
 \
 : REPEAT			\  C: forw dest
 	POSTPONE AGAIN		\  C: forw
@@ -665,9 +667,9 @@ FALSE INVERT CONSTANT TRUE
 : \
 	BLK @
 	IF			( Block input source? )
-	 >IN @ $3F OR 1+ >IN !	(   Advance >IN to next line in 16x64 block. )
+	  >IN @ $3F OR 1+ >IN !	(   Advance >IN to next line in 16x64 block. )
 	ELSE			( Streaming input... )
-	 '\n' PARSE 2DROP	(  Skip up to and including newline. )
+	  '\n' PARSE 2DROP	(  Skip up to and including newline. )
 	THEN
 ; IMMEDIATE
 
@@ -694,17 +696,17 @@ VARIABLE catch_frame 0 catch_frame !
 : THROW				\ S: n    R:
 	\ 0 THROW is a no-op.
 	?DUP IF			\ S: n    R:
-	 \ When no catch frame, throw to C.
-	 catch_frame @ 0= IF	\ S: n    R:
-	  _longjmp		\ S: --   R: --
-	 THEN
-	 \ Restore return stack of CATCH at EXECUTE.
-	 catch_frame @ _rsp!	\ S: n    R: ip ds cf
-	 R> catch_frame !	\ S: n    R: ip ds
-	 R> SWAP >R		\ S: ds   R: ip n
-	 \ Restore data stack at start of CATCH
-	 _dsp!			\ S: xt   R: ip n
-	 DROP R>		\ S: n    R: ip
+	  \ When no catch frame, throw to C.
+	  catch_frame @ 0= IF	\ S: n    R:
+	    _longjmp		\ S: --   R: --
+	  THEN
+	  \ Restore return stack of CATCH at EXECUTE.
+	  catch_frame @ _rsp!	\ S: n    R: ip ds cf
+	  R> catch_frame !	\ S: n    R: ip ds
+	  R> SWAP >R		\ S: ds   R: ip n
+	  \ Restore data stack at start of CATCH
+	  _dsp!			\ S: xt   R: ip n
+	  DROP R>		\ S: n    R: ip
 	THEN
 ;				\ S: 0 | n  R: --
 
@@ -729,9 +731,9 @@ VARIABLE catch_frame 0 catch_frame !
 \
 : TYPE
 	BEGIN DUP 0> WHILE	\  S: caddr u
-	 1- SWAP		\  S: u' caddr
-	 DUP @ EMIT		\  S: u' caddr
-	 CHAR+ SWAP		\  S: caddr' u'
+	  1- SWAP		\  S: u' caddr
+	  DUP @ EMIT		\  S: u' caddr
+	  CHAR+ SWAP		\  S: caddr' u'
 	REPEAT 2DROP		\  S: --
 ;
 
@@ -742,7 +744,7 @@ VARIABLE catch_frame 0 catch_frame !
 \
 : SPACES
 	BEGIN DUP 0> WHILE	\  S: n
-	 SPACE 1-		\  S: n'
+	  SPACE 1-		\  S: n'
 	REPEAT DROP		\  S: --
 ;
 
@@ -803,8 +805,8 @@ VARIABLE catch_frame 0 catch_frame !
 : N>R				\  S: i*x n R: ip
 	R> SWAP DUP		\  S: i*x ip n n R:
 	BEGIN DUP 0> WHILE	\  S: j*x ip n j
-	 3 ROLL			\  S: j*x ip n j x
-	 >R 1-			\  S: j*x ip n j' R: j*x
+	  3 ROLL			\  S: j*x ip n j x
+	  >R 1-			\  S: j*x ip n j' R: j*x
 	REPEAT
 	DROP >R >R		\  S: -- R: j*x +n ip (j*x reverse of start i*x)
 ;				\  S: -- R: j*x +n
@@ -819,10 +821,10 @@ VARIABLE catch_frame 0 catch_frame !
 : NR>				\  S: -- R: i*x n ip (i*x reverse of original)
 	R> R> DUP		\  S: ip n i R: i*x
 	BEGIN DUP 0> WHILE	\  S: ip j*x n i R: i*x
-	 R> 			\  S: ip j*x n i x' R: i*x
-	 ROT			\  S: ip j*x i x' n R: i*x
-	 ROT			\  S: ip j*x x' n i R: i*x
-	 1-			\  S: ip j*x n i' R: i'*x
+	  R> 			\  S: ip j*x n i x' R: i*x
+	  ROT			\  S: ip j*x i x' n R: i*x
+	  ROT			\  S: ip j*x x' n i R: i*x
+	  1-			\  S: ip j*x n i' R: i'*x
 	REPEAT
 	DROP DUP 1+ ROLL >R	\  S: ip j*x n R: ip
 ;				\  S: ip j*x n R:
@@ -910,11 +912,11 @@ VARIABLE catch_frame 0 catch_frame !
 	\ Resolve LEAVE forward references.
 	R> R>			\ C: ip n  R: n*forw
 	BEGIN
-	 DUP 0>			\ C: ip n flag  R: n*forw
+	  DUP 0>		\ C: ip n flag  R: n*forw
 	WHILE			\ C: ip n  R: n*forw
-	 1-			\ C: ip n' R: n*forw
-	 R>			\ C: ip n' forw  R: n'*forw
-	 POSTPONE THEN		\ C: ip n'  R: n'*forw
+	  1-			\ C: ip n' R: n*forw
+	  R>			\ C: ip n' forw  R: n'*forw
+	  POSTPONE THEN		\ C: ip n'  R: n'*forw
 	REPEAT
 	DROP >R			\ C: -- R: ip
 
@@ -976,11 +978,11 @@ int_max INVERT CONSTANT int_min	\ 0x80...00
 	\ Resolve LEAVE forward references.
 	R> R>			\ C: ip n  R: n*forw
 	BEGIN
-	 DUP 0>			\ C: ip n flag  R: n*forw
+	  DUP 0>		\ C: ip n flag  R: n*forw
 	WHILE			\ C: ip n  R: n*forw
-	 1-			\ C: ip n' R: n*forw
-	 R>			\ C: ip n' forw  R: n'*forw
-	 POSTPONE THEN		\ C: ip n'  R: n'*forw
+	  1-			\ C: ip n' R: n*forw
+	  R>			\ C: ip n' forw  R: n'*forw
+	  POSTPONE THEN		\ C: ip n'  R: n'*forw
 	REPEAT
 	DROP >R			\ C: -- R: ip
 
@@ -993,11 +995,11 @@ int_max INVERT CONSTANT int_min	\ 0x80...00
 \
 \ (C: -- #of ) (S: x -- x )
 \
-\ 	CASE
-\	 test1 OF ... ENDOF
-\	 ...
-\	 testN OF ... ENDOF
-\	 default action
+\	CASE
+\	  test1 OF ... ENDOF
+\	  ...
+\	  testN OF ... ENDOF
+\	  default action
 \	ENDCASE
 \
 0 CONSTANT CASE IMMEDIATE
@@ -1012,7 +1014,7 @@ int_max INVERT CONSTANT int_min	\ 0x80...00
 	POSTPONE OVER		\ S: x1 x2 x1
 	POSTPONE =		\ S: x1 f
 	POSTPONE IF		\ S: x1
-	 POSTPONE DROP		\ S: --
+	POSTPONE DROP		\ S: --
 	R>			\ C: #of'
 ; IMMEDIATE
 
@@ -1035,7 +1037,7 @@ int_max INVERT CONSTANT int_min	\ 0x80...00
 : ENDCASE
 	POSTPONE DROP		\ S: --
 	0 ?DO
-	 POSTPONE THEN
+	  POSTPONE THEN
 	LOOP
 ; IMMEDIATE
 
@@ -1047,21 +1049,21 @@ int_max INVERT CONSTANT int_min	\ 0x80...00
 \
 : _backslash_literal
 	CASE			\ S: char
-	 \ While alphabetical is nice, more frequent is faster.
-	 [CHAR] n OF $0A ENDOF	\ S: ascii char
-	 [CHAR] r OF $0D ENDOF	\ S: ascii char
-	 [CHAR] t OF $09 ENDOF	\ S: ascii char
-	 [CHAR] e OF $1B ENDOF	\ S: ascii char
-	 \ Less frequent
-	 [CHAR] a OF $07 ENDOF	\ S: ascii char
-	 [CHAR] b OF $08 ENDOF	\ S: ascii char
-	 [CHAR] f OF $0C ENDOF	\ S: ascii char
-	 [CHAR] s OF  BL ENDOF	\ S: ascii char
-	 [CHAR] v OF $0B ENDOF	\ S: ascii char
-	 [CHAR] ? OF $7F ENDOF	\ S: ascii char
-	 [CHAR] 0 OF $00 ENDOF	\ S: ascii char
-	 \ identity, ie. \x == x
-	 DUP			\ S: ascii char
+	  \ While alphabetical is nice, more frequent is faster.
+	  [CHAR] n OF $0A ENDOF	\ S: ascii char
+	  [CHAR] r OF $0D ENDOF	\ S: ascii char
+	  [CHAR] t OF $09 ENDOF	\ S: ascii char
+	  [CHAR] e OF $1B ENDOF	\ S: ascii char
+	  \ Less frequent
+	  [CHAR] a OF $07 ENDOF	\ S: ascii char
+	  [CHAR] b OF $08 ENDOF	\ S: ascii char
+	  [CHAR] f OF $0C ENDOF	\ S: ascii char
+	  [CHAR] s OF  BL ENDOF	\ S: ascii char
+	  [CHAR] v OF $0B ENDOF	\ S: ascii char
+	  [CHAR] ? OF $7F ENDOF	\ S: ascii char
+	  [CHAR] 0 OF $00 ENDOF	\ S: ascii char
+	  \ identity, ie. \x == x
+	  DUP			\ S: ascii char
 	ENDCASE			\ S: ascii
 ;
 
@@ -1071,19 +1073,19 @@ int_max INVERT CONSTANT int_min	\ 0x80...00
 \ (S: u -- aaddr )
 \
 \ @note
-\ 	During the compiliation of a word in C based implementations
-\ 	data-space regions may be relocated when they are enlarged,
-\ 	thus invalidating previous values of HERE.  Therefore:
+\	During the compiliation of a word in C based implementations
+\	data-space regions may be relocated when they are enlarged,
+\	thus invalidating previous values of HERE.  Therefore:
 \
-\ 	... HERE 100 ALLOT ... \ fill in allotment
+\	... HERE 100 ALLOT ... \ fill in allotment
 \
-\ 	Should ALLOT enlarge and relocate the data-space, the address
-\ 	saved by HERE on the stack will now point into invalid memory.
+\	Should ALLOT enlarge and relocate the data-space, the address
+\	saved by HERE on the stack will now point into invalid memory.
 \
-\ 	With RESERVE the address of the region just reserved is on
-\ 	top of the stack insuring that the address is valid until the
-\ 	next enlargement of the data-space by RESERVE, comma (,),
-\ 	c-comma (C,), compile-comma (COMPILE,), or ALIGN.
+\	With RESERVE the address of the region just reserved is on
+\	top of the stack insuring that the address is valid until the
+\	next enlargement of the data-space by RESERVE, comma (,),
+\	c-comma (C,), compile-comma (COMPILE,), or ALIGN.
 \
 : reserve DUP ALLOT HERE SWAP - ;
 
@@ -1099,7 +1101,7 @@ int_max INVERT CONSTANT int_min	\ 0x80...00
 \
 \ Append NUL terminated string to the most recent word's data space.
 \
-\ 	CREATE greet ," Hello world.\n"
+\	CREATE greet ," Hello world.\n"
 \
 : ," [CHAR] " parse-escape _append_string ALIGN ;
 
@@ -1108,7 +1110,7 @@ int_max INVERT CONSTANT int_min	\ 0x80...00
 \
 \ Print a NUL terminated string.
 \
-\ 	CREATE greet ," Hello world.\n"
+\	CREATE greet ," Hello world.\n"
 \	greet TYPE0
 \
 : type0 BEGIN DUP @ ?DUP WHILE EMIT 1+ REPEAT DROP ;
@@ -1126,9 +1128,9 @@ int_max INVERT CONSTANT int_min	\ 0x80...00
 \ (S: -- caddr u )
 \
 \ @note
-\ 	The caller's return address is used to find and compute the
-\ 	address and length of the string stored within the word.
-\ 	It is then modified to point to just after the string.
+\	The caller's return address is used to find and compute the
+\	address and length of the string stored within the word.
+\	It is then modified to point to just after the string.
 \
 : _slit					\ S: -- R: ip
 	R@				\ S: ip R: ip
@@ -1144,7 +1146,7 @@ int_max INVERT CONSTANT int_min	\ 0x80...00
 \
 : SLITERAL
 	POSTPONE _slit DUP ,	\ S: caddr u
-	_append_string ALIGN		\ S: --
+	_append_string ALIGN	\ S: --
 ; IMMEDIATE
 
 \
@@ -1191,11 +1193,11 @@ VARIABLE SCR 0 SCR !
 	DUP SCR !		\ S: u
 	BLOCK			\ S: aaddr
 	16 0 DO
-	 I 1+ 2 .R
-	 [CHAR] | EMIT
-	 DUP 64 TYPE		\ S: aaddr
-	 [CHAR] | EMIT CR
-	 64 CHARS +		\ S: aaddr'
+	  I 1+ 2 .R
+	  [CHAR] | EMIT
+	  DUP 64 TYPE		\ S: aaddr
+	  [CHAR] | EMIT CR
+	  64 CHARS +		\ S: aaddr'
 	LOOP DROP		\ S: --
 ;
 
@@ -1219,7 +1221,7 @@ VARIABLE SCR 0 SCR !
 \ (S: column row -- )
 \
 \ @note
-\ 	ANSI / VT100 terminal assumed.
+\	ANSI / VT100 terminal assumed.
 \
 : AT-XY
 	S\" \e[" TYPE
@@ -1235,7 +1237,7 @@ VARIABLE SCR 0 SCR !
 \ (S: -- )
 \
 \ @note
-\ 	ANSI / VT100 terminal assumed.
+\	ANSI / VT100 terminal assumed.
 \
 : PAGE 0 0 AT-XY S\" \e[0J" TYPE ;
 
@@ -1261,10 +1263,10 @@ VARIABLE SCR 0 SCR !
 \
 \ (S: start end -- )
 \
-: THRU				\  S: start end
-	1+ SWAP			\  S: end' start
-	DO			\  S: --
-	 I LOAD
+: THRU				\ S: start end
+	1+ SWAP			\ S: end' start
+	DO			\ S: --
+	  I LOAD
 	LOOP
 ;
 
