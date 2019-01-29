@@ -756,8 +756,13 @@ Branch relative if zero.  The integer that immediately follows is the relative d
 
 - - -
 ### _ds
-( -- `aaddr` `u` )  
-Push the data stack base address and size (depth).  This stack is a fixed size (default 32 cells) and grows upward.
+( -- `aaddr` `n` )  
+Push the data stack base address and current depth.  This stack is a fixed size (default 32 cells) and grows upward.
+
+- - -
+### _ds_size
+( -- `n`)  
+Push the data stack's size.
 
 - - -
 ### _dsp!
@@ -786,8 +791,12 @@ Return to the context saved at the start of the REPL (`QUIT`) passing `n`.  Valu
 
 - - -
 ### _rs
-( -- `aaddr` `u` )  
-Push the return stack base address and size (depth).  This stack is a fixed size (default 32 cells) and grows upward.
+( -- `aaddr` `n` )  
+Push the return stack base address and current depth.  This stack is a fixed size (default 32 cells) and grows upward.
+
+### _rs_size
+( -- `n`)  
+Push the return stack's size.
 
 - - -
 ### _rsp!

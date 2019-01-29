@@ -977,12 +977,14 @@ p4Repl(P4_Ctx *ctx)
 		P4_WORD("_ds",		&&_ds,		0),		// p4
 		P4_WORD("_dsp@",	&&_dsp_get,	0),		// p4
 		P4_WORD("_dsp!",	&&_dsp_put,	0),		// p4
+		P4_WORD("_ds_size",	&&_ds_size,	0),		// p4
 		P4_WORD("_ip",		&&_ip,		0),		// p4
 		P4_WORD("_lit",		&&_lit,		0),		// p4
 		P4_WORD("_longjmp",	&&_longjmp,	0),		// p4
 		P4_WORD("_rs",		&&_rs,		0),		// p4
 		P4_WORD("_rsp@",	&&_rsp_get,	0),		// p4
 		P4_WORD("_rsp!",	&&_rsp_put,	0),		// p4
+		P4_WORD("_rs_size",	&&_rs_size,	0),		// p4
 		P4_WORD("_stack_dump",	&&_stack_dump,	0),		// p4
 
 		/* Compiling Words */
@@ -1939,16 +1941,24 @@ _ms:		w = P4_POP(ctx->ds);
 		/*
 		 * Tools
 		 */
-		// ( -- aaddr u )
-_ds:		w.u = P4_LENGTH(ctx->ds);
+		// ( -- aaddr n )
+_ds:		w.n = P4_LENGTH(ctx->ds);
 		P4_PUSH(ctx->ds, ctx->ds.base);
 		P4_PUSH(ctx->ds, w);
 		NEXT;
 
-		// ( -- aaddr u )
-_rs:		w.u = P4_LENGTH(ctx->rs);
+		// ( -- u )
+_ds_size:	P4_PUSH(ctx->ds, (P4_Size) ctx->ds.size);
+		NEXT;
+
+		// ( -- aaddr n )
+_rs:		w.n = P4_LENGTH(ctx->rs);
 		P4_PUSH(ctx->ds, ctx->rs.base);
 		P4_PUSH(ctx->ds, w);
+		NEXT;
+
+		// ( -- u )
+_rs_size:	P4_PUSH(ctx->ds, (P4_Size) ctx->rs.size);
 		NEXT;
 
 		// ( addr u -- )
