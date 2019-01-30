@@ -684,6 +684,11 @@ Exchange the top two stack items.
 `LOAD` in sequence blocks `u1` through to `u2` inclusive.
 
 - - -
+### UM/MOD
+( `dend` `dsor` -- `mod` `quot` )  
+Divide `dend` by `dsor`, giving the quotient `quot` and the remainder `mod`. All values and arithmetic are unsigned.
+
+- - -
 ### UNLOOP
 ( –– ) ( R: `loop-sys` –– )  
 

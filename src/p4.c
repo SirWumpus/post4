@@ -1064,6 +1064,7 @@ p4Repl(P4_Ctx *ctx)
 		P4_WORD("OR",		&&_or,		0),
 		P4_WORD("RSHIFT",	&&_rshift,	0),
 		P4_WORD("SM/REM",	&&_sm_div_rem,	0),
+		P4_WORD("UM/MOD",	&&_um_div_mod,	0),
 		P4_WORD("XOR",		&&_xor,		0),
 
 		/* Comparisons */
@@ -1722,6 +1723,16 @@ _fm_div_mod:	w = P4_POP(ctx->ds);
 			m += x.n;
 		}
 		P4_TOP(ctx->ds).n = m;
+		P4_PUSH(ctx->ds, q);
+		NEXT;
+	}
+	{	// ( dend dsor -- mod quot )
+		P4_Uint q, m;
+_um_div_mod:	w = P4_POP(ctx->ds);
+		x = P4_TOP(ctx->ds);
+		q = x.u / w.u;
+		m = x.u % w.u;
+		P4_TOP(ctx->ds).u = m;
 		P4_PUSH(ctx->ds, q);
 		NEXT;
 	}
