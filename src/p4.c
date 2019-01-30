@@ -1704,6 +1704,12 @@ _div:		w = P4_POP(ctx->ds);
 
 	{	// ( dend dsor -- rem quot )
 		// C99+ specifies symmetric division.
+		// Dividend Divisor Remainder Quotient
+		//       10       7         3        1
+		//      -10       7        -3       -1
+		//       10      -7         3       -1
+		//      -10      -7        -3        1
+		//
 		DIV_T qr;
 _sm_div_rem:	w = P4_POP(ctx->ds);
 		x = P4_TOP(ctx->ds);
@@ -1713,6 +1719,12 @@ _sm_div_rem:	w = P4_POP(ctx->ds);
 		NEXT;
 	}
 	{	// ( dend dsor -- mod quot )
+		// Dividend Divisor Remainder Quotient
+		//       10       7         3        1
+		//      -10       7         4       -2
+		//       10      -7        -4       -2
+		//      -10      -7        -3        1
+		//
 		P4_Int q, m;
 _fm_div_mod:	w = P4_POP(ctx->ds);
 		x = P4_TOP(ctx->ds);
@@ -1720,7 +1732,7 @@ _fm_div_mod:	w = P4_POP(ctx->ds);
 		m = x.n % w.n;
 		if (m != 0 && (w.n ^ x.n) < 0) {
 			q -= 1;
-			m += x.n;
+			m += w.n;
 		}
 		P4_TOP(ctx->ds).n = m;
 		P4_PUSH(ctx->ds, q);
