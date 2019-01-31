@@ -7,7 +7,7 @@ Copyright 2007, 2019 Anthony Howe.  All rights reserved.
 Overview
 --------
 
-Post4 (`p4`) is a hosted indirect threaded Forth dialect written in C, based on the ["Forth 200x Draft 16.1, 2016-08-30"](http://www.forth200x.org/documents/forth16-1.pdf).  Post4 aims to implement the fewest possible built-in words in C, those that are needed to interact with memory and I/O, leaving the remaining standard words to be implemented in Forth.
+Post4 (`p4`) is a hosted indirect threaded Forth dialect written in C, based on the ["Forth 200x Draft 18.1, 2018-08-27"](http://www.forth200x.org/documents/forth18-1.pdf).  Post4 aims to implement the fewest possible built-in words in C, those that are needed to interact with memory and I/O, leaving the remaining standard words to be implemented in Forth.
 
 ```lang=shell
 usage: p4 [-V][-b file][-c file][-d size][-r size] [script [args ...]]
@@ -111,13 +111,13 @@ Parse and ignore characters up to the closing right parenthesis.
 - - -
 
 ### \*
-( `n1|u1` `n2|u2` -- `n3|n3` )  
+( `n1|u1` `n2|u2` -- `n3|u3` )  
 Multiply the top two stack values.
 
 - - -
 
 ### +
-( `n1|u1` `n2|u2` -- `n3|n3` )  
+( `n1|u1` `n2|u2` -- `n3|u3` )  
 Add the top two stack values.
 
 - - -
@@ -135,7 +135,7 @@ Add `n|u` to the cell at `aaddr`.
 - - -
 
 ### -
-( `n1|u1` `n2|u2` -- `n3|n3` )  
+( `n1|u1` `n2|u2` -- `n3|u3` )  
 Subtract the top two stack values.
 
 - - -
@@ -151,15 +151,14 @@ Display `ccc`.
 - - -
 
 ### /
-( `n1|u1` `n2|u2` -- `n3|n3` )  
-Divide the top two stack values.
+( `dend` `dsor` -- `quot` )  
+Divide the dividend `dend` by the divisor `dsor` leaving the symmetric quotient `quot` on top of the stack.  This is the same as the `SM/REM` quotient.
 
 - - -
 
 ### /MOD
-( `n1` `n2` -- `rem` `quot` )  
-
-Divide the top two stack values and place the remainder and quotient back on the stack.
+( `dend` `dsor` -- `rem` `quot` )  
+Divide the dividend `dend` by the divisor `dsor` leaving the remainder `rem` and quotient `quot` on top the stack.  This is the same as the `SM/REM` remainder.
 
 - - -
 ### 0<
@@ -215,17 +214,17 @@ Duplicate cell pair `x1 x2`.
 
 - - -
 ### 2OVER
-( `x1` `x2` x3 x4 -- `x1` `x2` x3 x4 `x1` `x2` )  
+( `x1` `x2` `x3` `x4` -- `x1` `x2` `x3` `x4` `x1` `x2` )  
 Copy cell pair `x1 x2` to the top of the stack.
 
 - - -
 ### 2SWAP
-( `x1` `x2` x3 x4 -- x3 x4 `x1` `x2` )  
+( `x1` `x2` `x3` `x4` -- `x3` `x4` `x1` `x2` )  
 Exchange the top two cell pairs.
 
 - - -
 ### : name ...
-Start definition of word `name`.
+Start definition of word `name`.  The current definition shall not be findable in the dictionary until it is ended (or until the execution of `DOES>`).
 
 - - -
 ### ;
@@ -243,7 +242,7 @@ Initialise the pictured numeric output conversion process.
 
 - - -
 ### =
-( `n1` `n2` -- `bool` )  
+( `x1` `x2` -- `bool` )  
 `bool` is true if and only if `x1` is bit-for-bit the same as `x2`.
 
 - - -
@@ -344,6 +343,7 @@ Mark the start of `BEGIN...AGAIN` or `BEGIN...WHILE...REPEAT` loop.
 - - -
 ### BLK
 ( -- `aaddr` )  
+`aaddr` is the address of a cell containing zero or the number of the mass-storage block being interpreted.  If `BLK` contains zero, the input source is not a block and can be identified by `SOURCE-ID`.  If a program alters `BLK`, the results are undefined.
 
 - - -
 ### BLOCK
@@ -390,9 +390,11 @@ Parse `text` placing the first character of text on the stack.
 
 - - -
 ### CMOVE
+( `src` `dst` `u` -- )  
 
 - - -
 ### CMOVE>
+( `src` `dst` `u` -- )  
 
 - - -
 ### COMPILE,
@@ -531,7 +533,13 @@ Save and free all dirty buffers.
 - - -
 ### FM/MOD
 ( `dend` `dsor` -- `mod` `quot` )  
-Floored division of `dend` and `dsor`.
+Floored division of the dividend `dend` by the divisor `dsor` leaving the modulus `mod` and quotient `quot`.  In floored division the modulus `mod` carries the sign of the divisor `dsor`.
+
+        Dividend Divisor Remainder Quotient
+            10       7         3        1
+           -10       7         4       -2
+            10      -7        -4       -2
+           -10      -7        -3        1
 
 - - -
 ### HERE
@@ -614,6 +622,7 @@ List the block given by `blk_num`, 1 based, and save `blk_num` in `SCR` on succe
 
 - - -
 ### MOVE
+( `src` `dst` `u` -- )  
 
 - - -
 ### PICK
@@ -640,12 +649,12 @@ Clear the terminal (advance next page).
 
 - - -
 ### S" ccc"
-( `ccc"` -- caddr u )  
+( `ccc"` -- `caddr` `u` )  
 When interpreting, copy the string `ccc` as-is to a transient buffer and return `caddr u`.  When compiling, append the string `ccc` as-is to the current word so when executed it leaves `caddr u` of the string on the stack.
 
 - - -
 ### S\" ccc"
-( `ccc"` -- caddr u )  
+( `ccc"` -- `caddr` `u` )  
 When interpreting, copy the escaped string `ccc` to a transient buffer and return `caddr u`.  When compiling, append the escaped string `ccc` to the current word so when executed it leaves `caddr u` of the string on the stack.
 
 - - -
@@ -666,7 +675,13 @@ If `n` is negative, add a minus sign to the beginning of the pictured numeric ou
 - - -
 ### SM/REM
 ( `dend` `dsor` -- `rem` `quot` )  
-Symmetric division of `dend` and `dsor`.
+Symmetric division of the dividend `dend` by the divisor `dsor` leaving the remainder `rem` and quotient `quot`.  In symmetric division the remainder `rem` carries the sign of the dividend `dend`.
+
+        Dividend Divisor Remainder Quotient
+            10       7         3        1
+           -10       7        -3       -1
+            10      -7         3       -1
+           -10      -7        -3        1
 
 - - -
 ### STATE
@@ -700,7 +715,7 @@ Divide `dend` by `dsor`, giving the quotient `quot` and the remainder `mod`. All
 - - -
 ### UPDATE
 ( -- )  
-Mark the current as dirty.
+Mark the current block as dirty.
 
 - - -
 
@@ -748,6 +763,7 @@ Offset into the current data-space for the word being compiled.  Similar to the 
 - - -
 ### _bp
 ( -- )  
+Breakpoint.
 
 - - -
 ### _branch
@@ -792,7 +808,7 @@ Return true if the execution token is for an immediate word.
 - - -
 ### _longjmp
 ( `n` -- )  
-Return to the context saved at the start of the REPL (`QUIT`) passing `n`.  Values of `n` from -1 to -255 are the Forth 2012 standard `THROW` codes.  Passing -256 is equivalent to `BYE`.
+Return to the context saved at the start of the REPL (`QUIT`) passing `n`.  Values of `n` from -1 to -255 are the Forth 200x standard `THROW` codes.  Passing -256 is equivalent to `BYE`.
 
 - - -
 ### _rs
@@ -875,7 +891,9 @@ This is a list of `THROW` codes used internally by `p4`.
 * -6 return stack underflow  
 * -9 invalid memory address (SIGSEGV)  
 * -13 undefined word  
+* -14 interpreting a compile-only word  
 * -17 pictured numeric output string overflow  
+* -21 unsupported operation  
 * -23 address alignment exception (SIGBUS)  
 * -28 user interrupt (SIGINT)  
 * -29 compiler nesting  
