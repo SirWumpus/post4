@@ -777,16 +777,17 @@ p4WordAllot(P4_Ctx *ctx, P4_Word *word, P4_Int n)
 	size_t size = P4_CELL_ALIGN(word->ndata + n);
 
 	/* Check for size overflow. */
-	if (size < SIZE_MAX - word->mdata) {
-		if ((word = realloc(word, sizeof (*word) + size)) == NULL) {
-			LONGJMP(ctx->on_throw, P4_THROW_RESIZE);
-		}
-		/* ... but house keeping done in address units. */
-		word->mdata = size;
-		word->ndata += n;
-	} else {
+	if (SIZE_MAX - word->mdata <= size) {
 		LONGJMP(ctx->on_throw, P4_THROW_RESIZE);
 	}
+
+	if ((word = realloc(word, sizeof (*word) + size)) == NULL) {
+		LONGJMP(ctx->on_throw, P4_THROW_RESIZE);
+	}
+
+	/* ... but house keeping done in address units. */
+	word->mdata = size;
+	word->ndata += n;
 
 	return word;
 }
@@ -913,12 +914,11 @@ p4StackCheck(P4_Ctx *ctx)
 static void
 p4Align(P4_Ctx *ctx)
 {
-	if (ctx->words->ndata <= ctx->words->mdata) {
-		ctx->words->ndata = P4_CELL_ALIGN(ctx->words->ndata);
-		return;
+	if (ctx->words->mdata < ctx->words->ndata) {
+		p4Bp(ctx);
+		LONGJMP(ctx->on_throw, P4_THROW_RESIZE);
 	}
-	p4Bp(ctx);
-	LONGJMP(ctx->on_throw, P4_THROW_RESIZE);
+	ctx->words->ndata = P4_CELL_ALIGN(ctx->words->ndata);
 }
 
 static int
@@ -1357,8 +1357,7 @@ _evaluate:	w = P4_POP(ctx->ds);
 		 *              DOES>  ... word2 executes this code with data
 		 *      ;
 		 *
-		 *	a b c word1 word2 ...
-		 *	x y z word2 ...
+		 * This page http://forth.org/svfig/Len/definwds.htm explains it well.
 		 */
 		// ( -- addr )
 _create:	str = p4ParseName(&ctx->input);
@@ -1376,13 +1375,13 @@ _data_field:	P4_PUSH(ctx->ds, w.xt->data + 1);
 
 		// DOES>
 _does:		word = ctx->words;
-		if (P4_WORD_WAS_CREATED(word)) {
-			word->code = &&_do_does;
-			// New word's code follows DOES> of the defining word.
-			word->data[0].p = ip;
-			goto _exit;
+		if (!P4_WORD_WAS_CREATED(word)) {
+			LONGJMP(ctx->on_throw, P4_THROW_NOT_CREATED);
 		}
-		LONGJMP(ctx->on_throw, P4_THROW_NOT_CREATED);
+		word->code = &&_do_does;
+		// New word's code follows DOES> of the defining word.
+		word->data[0].p = ip;
+		goto _exit;
 
 		// ( -- addr) and chain to defining word after DOES>.
 _do_does:	P4_PUSH(ctx->ds, w.xt->data + 1);
@@ -1392,11 +1391,11 @@ _do_does:	P4_PUSH(ctx->ds, w.xt->data + 1);
 
 		// ( xt -- addr )
 _body:		w = P4_TOP(ctx->ds);
-		if (P4_WORD_WAS_CREATED(w.w)) {
-			P4_TOP(ctx->ds) = (P4_Cell) &w.w->data[1];
-			NEXT;
+		if (!P4_WORD_WAS_CREATED(w.w)) {
+			LONGJMP(ctx->on_throw, P4_THROW_NOT_CREATED);
 		}
-		LONGJMP(ctx->on_throw, P4_THROW_NOT_CREATED);
+		P4_TOP(ctx->ds) = (P4_Cell) &w.w->data[1];
+		NEXT;
 
 
 		/*
@@ -1405,12 +1404,12 @@ _body:		w = P4_TOP(ctx->ds);
 		// ( -- xt )
 _tick:		str = p4ParseName(&ctx->input);
 		word = p4FindWord(ctx, str.string, str.length);
-		if (word != NULL) {
-			P4_PUSH(ctx->ds, word);
-			NEXT;
+		if (word == NULL) {
+			p4Bp(ctx);
+			LONGJMP(ctx->on_throw, P4_THROW_UNDEFINED);
 		}
-		p4Bp(ctx);
-		LONGJMP(ctx->on_throw, P4_THROW_UNDEFINED);
+		P4_PUSH(ctx->ds, word);
+		NEXT;
 
 _compile:	// ( xt -- )
 		// ( x -- )
@@ -1451,13 +1450,13 @@ _align:		p4Align(ctx);
 		 */
 _postpone:	str = p4ParseName(&ctx->input);
 		word = p4FindWord(ctx, str.string, str.length);
-		if (word != NULL) {
-			ctx->words = p4WordAppend(ctx, ctx->words, (P4_Cell) &w_post);
-			ctx->words = p4WordAppend(ctx, ctx->words, (P4_Cell) word);
-			NEXT;
+		if (word == NULL) {
+			p4Bp(ctx);
+			LONGJMP(ctx->on_throw, P4_THROW_UNDEFINED);
 		}
-		p4Bp(ctx);
-		LONGJMP(ctx->on_throw, P4_THROW_UNDEFINED);
+		ctx->words = p4WordAppend(ctx, ctx->words, (P4_Cell) &w_post);
+		ctx->words = p4WordAppend(ctx, ctx->words, (P4_Cell) word);
+		NEXT;
 
 _post:		w = *ip++;
 		if (P4_WORD_IS_IMM(w.w)) {
@@ -1469,7 +1468,7 @@ _post:		w = *ip++;
 		/*
 		 * Context variables
 		 */
-		// ( -- aaddr u )
+		// ( -- caddr u )
 _args:		P4_PUSH(ctx->ds, (P4_Cell *) options.argv);
 		P4_PUSH(ctx->ds, (P4_Int) options.argc);
 		NEXT;
@@ -1486,8 +1485,7 @@ _base:		P4_PUSH(ctx->ds, (P4_Cell *) &ctx->radix);
 		NEXT;
 
 		// ( -- )
-_pic_start:	(void) memset(ctx->pic, ' ', sizeof (ctx->pic));
-		ctx->picptr = ctx->pic;
+_pic_start:	ctx->picptr = memset(ctx->pic, ' ', sizeof (ctx->pic));
 		NEXT;
 
 		// ( x -- caddr u )
@@ -1879,12 +1877,12 @@ _emit:		w = P4_POP(ctx->ds);
 		// ( caddr u -- )
 _included:	w = P4_POP(ctx->ds);
 		x = P4_POP(ctx->ds);
-		if ((cstr = p4StrDup(x.s, w.u)) != NULL) {
-			(void) p4LoadFile(ctx, cstr);
-			free(cstr);
-			NEXT;
+		if ((cstr = p4StrDup(x.s, w.u)) == NULL) {
+			LONGJMP(ctx->on_throw, P4_THROW_ALLOCATE);
 		}
-		LONGJMP(ctx->on_throw, P4_THROW_ALLOCATE);
+		(void) p4LoadFile(ctx, cstr);
+		free(cstr);
+		NEXT;
 
 
 		/*
@@ -1902,12 +1900,12 @@ _block:		w = P4_TOP(ctx->ds);
 
 	{	// ( -- u )
 		struct stat sb;
-_block_count:	if (fstat(ctx->block_fd, &sb) == 0) {
-			w.u = sb.st_size / P4_BLOCK_SIZE;
-			P4_PUSH(ctx->ds, w);
-			NEXT;
+_block_count:	if (fstat(ctx->block_fd, &sb) != 0) {
+			LONGJMP(ctx->on_throw, P4_THROW_EIO);
 		}
-		LONGJMP(ctx->on_throw, P4_THROW_EIO);
+		w.u = sb.st_size / P4_BLOCK_SIZE;
+		P4_PUSH(ctx->ds, w);
+		NEXT;
 	}
 		// ( u -- aaddr )
 _buffer:	w = P4_TOP(ctx->ds);
