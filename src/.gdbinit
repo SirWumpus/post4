@@ -27,3 +27,5 @@ b p4Bp
 commands
 finish
 end
+
+show user
