@@ -38,6 +38,8 @@ static struct termios tty_raw_nb;
 static struct termios tty_saved;
 #endif
 
+#define P4_INTERACTIVE(ctx)	(ctx->state == P4_STATE_INTERPRET && is_tty && P4_INPUT_IS_TERM(ctx->input))
+
 /*
  * See P4_THROW_*
  */
@@ -1179,8 +1181,15 @@ _repl:
 				if (stop - str.string != str.length) {
 					/* Not a word, not a number. */
 					(void) printf("\"%.*s\" ", (int)str.length, str.string);
-					/* Forth 200x 18-1 3.4.d */
-					LONGJMP(ctx->on_throw, P4_THROW_UNDEFINED);
+					/* Throwing while interactive is really annoying, since
+					 * it clears the stacks of the user's workspace; disagrees
+					 * with Forth 200x 18-1 3.4.d
+					 */
+					if (!P4_INTERACTIVE(ctx)) {
+						LONGJMP(ctx->on_throw, P4_THROW_UNDEFINED);
+					}
+					(void) printf("?\r\n");
+					continue;
 				}
 
 			compile_or_push:
@@ -1200,13 +1209,13 @@ _repl:
 				goto _execute;
 			}
 		}
-		if (ctx->state == P4_STATE_INTERPRET && is_tty && P4_INPUT_IS_TERM(ctx->input)) {
+		if (P4_INTERACTIVE(ctx)) {
 			(void) fputs("ok ", stdout);
 			(void) fflush(stdout);
 		}
 	} while (p4Refill(ctx, &ctx->input));
 
-	if (ctx->state == P4_STATE_INTERPRET && is_tty && P4_INPUT_IS_TERM(ctx->input)) {
+	if (P4_INTERACTIVE(ctx)) {
 		(void) fputc('\n', stdout);
 	}
 
