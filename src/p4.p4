@@ -45,16 +45,11 @@ MARKER rm_core_words
 
 \
 \ ... FALSE ...
-\
-\ (S: -- 0 )
-\
-0 CONSTANT FALSE
-
-\
 \ ... TRUE ...
 \
-\ (S: -- 1 )
+\ (S: -- flag )
 \
+0 CONSTANT FALSE
 FALSE INVERT CONSTANT TRUE
 
 \
@@ -95,8 +90,8 @@ FALSE INVERT CONSTANT TRUE
 \
 : VARIABLE CREATE 0 , ;
 
-: [ 0 STATE ! ; IMMEDIATE
-: ] 1 STATE ! ;
+: [ FALSE STATE ! ; IMMEDIATE
+: ] TRUE STATE ! ;
 
 \
 \  value VALUE name
@@ -150,7 +145,7 @@ FALSE INVERT CONSTANT TRUE
 \
 \ ... CHAR+ ...
 \
-\ (S: c-addr1 -- c-addr2 )
+\ (S: caddr1 -- caddr2 )
 \
 : CHAR+ /CHAR + ;
 
@@ -409,7 +404,7 @@ FALSE INVERT CONSTANT TRUE
 \
 \ ... FILL ...
 \
-\ (S: c-addr u char -- )
+\ (S: caddr u char -- )
 \
 : FILL
 	2 PICK			\  S: c- u c c-
@@ -1182,7 +1177,7 @@ int_max INVERT CONSTANT int_min	\ 0x80...00
 \
 \ (S: -- aaddr )
 \
-VARIABLE SCR 0 SCR !
+VARIABLE SCR
 
 \
 \ ... LIST ...

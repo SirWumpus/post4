@@ -105,7 +105,7 @@ Find `name` and place its execution token on the stack.  Throw undefined word (-
 
 - - -
 ### ( ccc)
-( `ccc)` -- ) immediate  
+( `ccc<paren>` -- ) immediate  
 Parse and ignore characters up to the closing right parenthesis.
 
 - - -
@@ -145,7 +145,7 @@ Display `n` in free field format.
 
 - - -
 ### ." ccc"
-( `"ccc \""` -- )  
+( `ccc<quote>` -- )  
 Display `ccc`.
 
 - - -
@@ -487,6 +487,11 @@ Define the execution semantics for the most recently defined word by `CREATE`.  
 Remove the top of the stack.
 
 - - -
+### DUMP
+( `addr` `u` -- )  
+Display the contents of `u` consecutive addresses starting at `addr`.
+
+- - -
 ### DUP
 ( `x` -- `x` `x` )  
 Duplicate `x`.
@@ -643,18 +648,22 @@ A character buffer space available to developers and //not// used by standard wo
 Clear the terminal (advance next page).
 
 - - -
+### PARSE
+( `char` `ccc<char>` –– caddr u )  
+Parse `ccc` delimited by the delimiter `char`.  `caddr` and `u` are the address and length within the input buffer of the parsed string.  If the parse area was empty, the resulting string has a zero length.
+
+- - -
 ### POSTPONE word
 ( `"<spaces>word"` --  )  
 
-
 - - -
 ### S" ccc"
-( `ccc"` -- `caddr` `u` )  
+( `ccc<quote>` -- `caddr` `u` )  
 When interpreting, copy the string `ccc` as-is to a transient buffer and return `caddr u`.  When compiling, append the string `ccc` as-is to the current word so when executed it leaves `caddr u` of the string on the stack.
 
 - - -
-### S\" ccc"
-( `ccc"` -- `caddr` `u` )  
+### S\\" ccc"
+( `ccc<quote>` -- `caddr` `u` )  
 When interpreting, copy the escaped string `ccc` to a transient buffer and return `caddr u`.  When compiling, append the escaped string `ccc` to the current word so when executed it leaves `caddr u` of the string on the stack.
 
 - - -
@@ -671,6 +680,9 @@ Save all the dirty buffer to the block file.
 ### SIGN
 ( `n` -- )  
 If `n` is negative, add a minus sign to the beginning of the pictured numeric output string.  An ambiguous condition exists if `SIGN` executes outside of a `<# #>` delimited number conversion.
+
+- - -
+### SLITERAL
 
 - - -
 ### SM/REM
@@ -705,7 +717,7 @@ Divide `dend` by `dsor`, giving the quotient `quot` and the remainder `mod`. All
 
 - - -
 ### UNLOOP
-( –– ) ( R: `loop-sys` –– )  
+( -- ) ( R: `loop-sys` -- )  
 
 - - -
 ### UNUSED
@@ -857,10 +869,10 @@ Right rotate the stack `u` cells; `ROLL` in the opposite direction.
 Similar to `ALLOT`, reserve `n` address-units of data-space and return its start address.  While defining a word in C based implementations, like `p4`, data-space regions may be relocated when they are enlarged, thus invalidating previous values of `HERE`.  Therefore:
 
 ```
-... HERE 100 CELLS ALLOT ...
+HERE 100 CELLS ALLOT
 ```
 
-Should `ALLOT` enlarge and relocate the data-space, the address saved by `HERE` on the stack will now point into invalid memory.  With `reserve` the address of the region just reserved is on top of the stack insuring that the address is valid until the next enlargement of the data-space by `reserve`,`,`, `C,`, `COMPILE,`, or `ALIGN`.
+Should `ALLOT` enlarge and relocate the data-space, the address saved by `HERE` on the stack will now point into invalid memory.  With `reserve` the address of the region just reserved is on top of the stack insuring that the address is valid until the next enlargement of the data-space by `reserve`,`,`, `ALIGN`, `ALLOT`, `C,`, or `COMPILE,`.
 
 - - -
 ### strlen

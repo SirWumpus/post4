@@ -374,6 +374,7 @@ p4Parse(P4_Input *input, P4_Uint delim, P4_Uint escape)
 P4_String
 p4ParseName(P4_Input *input)
 {
+	/* Skip leading spaces */
 	for ( ; input->offset < input->length; input->offset++) {
 		if (isprint(input->buffer[input->offset]) && input->buffer[input->offset] != ' ') {
 			break;
@@ -1077,7 +1078,7 @@ p4Repl(P4_Ctx *ctx)
 		P4_WORD("ACCEPT",	&&_accept,	0),
 		P4_WORD("BLK",		&&_blk,		0),
 		P4_WORD("BLOCK",	&&_block,	0),
-		P4_WORD("block_count",	&&_block_count, 0),
+		P4_WORD("block_count",	&&_block_count, 0),		// p4
 		P4_WORD("BUFFER",	&&_buffer,	0),
 		P4_WORD("DUMP",		&&_dump,	0),
 		P4_WORD("EMIT",		&&_emit,	0),
@@ -1088,7 +1089,7 @@ p4Repl(P4_Ctx *ctx)
 		P4_WORD("LOAD",		&&_load,	0),
 		P4_WORD("MS",		&&_ms,		0),
 		P4_WORD("PARSE",	&&_parse,	0),
-		P4_WORD("PARSE-ESCAPE",	&&_parse_escape,0),
+		P4_WORD("PARSE-ESCAPE",	&&_parse_escape,0),		// p4
 		P4_WORD("PARSE-NAME",	&&_parse_name,	0),
 		P4_WORD("REFILL",	&&_refill,	0),
 		P4_WORD("SAVE-BUFFERS",	&&_save_buffers, 0),
@@ -1155,11 +1156,10 @@ _repl:
 					offset++;
 					break;
 				case '0':	/* 0377 octal or 0xFF hex */
+					radix = 8;
 					if (2 < str.length && str.string[1] == 'x') {
 						radix = 16;
 						offset += 2;
-					} else {
-						radix = 8;
 					}
 					break;
 				case '\'':	/* 'c' and '\x' escaped characters */
@@ -1888,7 +1888,7 @@ _included:	w = P4_POP(ctx->ds);
 		/*
 		 * Block I/O
 		 */
-		// ( -- addr )
+		// ( -- aaddr )
 _blk:		P4_PUSH(ctx->ds, (P4_Cell *) &ctx->block.number);
 		NEXT;
 
