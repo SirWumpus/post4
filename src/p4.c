@@ -1092,6 +1092,7 @@ p4Repl(P4_Ctx *ctx)
 		P4_WORD("DUMP",		&&_dump,	0),
 		P4_WORD("EMIT",		&&_emit,	0),
 		P4_WORD("EMPTY-BUFFERS", &&_empty_buffers, 0),
+		P4_WORD("epoch_seconds", &&_epoch_seconds, 0),		// p4
 		P4_WORD("INCLUDED",	&&_included,	0),
 		P4_WORD("KEY",		&&_key,		0),
 		P4_WORD("KEY?",		&&_key_ready,	0),
@@ -1104,6 +1105,7 @@ p4Repl(P4_Ctx *ctx)
 		P4_WORD("SAVE-BUFFERS",	&&_save_buffers, 0),
 		P4_WORD("SOURCE",	&&_source,	0),
 		P4_WORD("SOURCE-ID",	&&_source_id,	0),
+		P4_WORD("TIME&DATE",	&&_time_date,	0),
 		P4_WORD("UPDATE",	&&_update,	0),
 
 		/* Tools*/
@@ -1994,6 +1996,23 @@ _parse_name:	str = p4ParseName(&ctx->input);
 		// ( ms -- )
 _ms:		w = P4_POP(ctx->ds);
 		p4Nap(w.u / 1000L, (w.u % 1000L) * 1000000L);
+		NEXT;
+
+	{	// ( -- sec min hour day month year )
+		struct tm *now;
+_time_date:	(void) time(&w.t);
+		now = localtime(&w.t);
+		P4_PUSH(ctx->ds, (P4_Int) now->tm_sec);
+		P4_PUSH(ctx->ds, (P4_Int) now->tm_min);
+		P4_PUSH(ctx->ds, (P4_Int) now->tm_hour);
+		P4_PUSH(ctx->ds, (P4_Int) now->tm_mday);
+		P4_PUSH(ctx->ds, (P4_Int) now->tm_mon+1);
+		P4_PUSH(ctx->ds, (P4_Int) now->tm_year+1900);
+		NEXT;
+	}
+
+_epoch_seconds:	(void) time(&w.t);
+		P4_PUSH(ctx->ds, w);
 		NEXT;
 
 		/*

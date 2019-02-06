@@ -635,6 +635,11 @@ List the block given by `blk_num`, 1 based, and save `blk_num` in `SCR` on succe
 ( `src` `dst` `u` -- )  
 
 - - -
+### MS
+( `u` -- )  
+Wait at least `u` milliseconds.
+
+- - -
 ### PICK
 
 - - -
@@ -714,6 +719,11 @@ Exchange the top two stack items.
 ### THRU
 ( `u1` `u2` -- )  
 `LOAD` in sequence blocks `u1` through to `u2` inclusive.
+
+- - -
+### TIME&DATE
+( -- `sec` `min` `hour` `day` `month` `year` )  
+Time current local system time.  `sec` {0..59}, `min` {0..59}, `hour` {0..23}, `day` {1..31}, `month` {1..12}, `year` eg. 1970.
 
 - - -
 ### UM/MOD
@@ -796,6 +806,11 @@ When interpreting, copy the escaped string `ccc` to a transient buffer and retur
 ### cputs
 ( caddr -- )  
 Print the counted string.  See also `puts`.
+
+- - -
+### epoch_seconds
+( -- `u` )  
+System clock time in seconds from the epoch.
 
 - - -
 ### floored

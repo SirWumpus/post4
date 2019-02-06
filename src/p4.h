@@ -153,6 +153,9 @@ typedef unsigned long P4_Uint;
 typedef size_t P4_Size;
 #define P4_SIZE_FMT "%zu"
 
+typedef time_t P4_Time;
+#define P4_TIME_FMT P4_UINT_FMT
+
 typedef union p4_cell P4_Cell;
 typedef struct p4_word P4_Word;
 typedef struct p4_ctx P4_Ctx;
@@ -200,6 +203,7 @@ union p4_cell {
 	P4_Int		n;
 	P4_Uint		u;
 	P4_Size		z;
+	P4_Time		t;
 	P4_Cell	*	p;
 	P4_Char *	s;
 	P4_Word *	w;
