@@ -68,20 +68,18 @@ FALSE INVERT CONSTANT TRUE
 \
 '\s' CONSTANT BL
 
-\ ... /PAD ...
 \
 \ ( -- n )
+\ Size must be at least 84 characters.
 \
-256 CONSTANT /PAD
+128 CONSTANT /PAD
 
 \
 \ ... PAD ...
 \
 \ ( -- )
 \
-\ Minimum size shall be 84 characters.
-\
-/PAD CREATE PAD CHARS ALLOT
+CREATE PAD /PAD CHARS ALLOT
 
 \
 \ VARIABLE name
@@ -1062,6 +1060,33 @@ int_max INVERT CONSTANT int_min	\ 0x80...00
 	ENDCASE			\ S: ascii
 ;
 
+\ Number of transitent string buffers, power of 2.
+\ Minimum 2 buffers for S" and S\".
+2 CONSTANT _str_buf_max
+
+\ Size of each string buffer, min 80 characters.
+/PAD CHARS CONSTANT _str_buf_size
+
+_str_buf_max 1- CONSTANT _str_buf_mask
+
+\ Transient string buffers.
+CREATE _str_bufs _str_buf_size _str_buf_max * ALLOT
+
+\ Offset of last used buffer.
+VARIABLE _str_buf_index
+
+\ Next string buffer address.
+\
+\ ( -- caddr )
+\
+: _str_buf_next
+	_str_buf_index @	\ S: u
+	1+ _str_buf_mask AND	\ S: u'
+	DUP _str_buf_index !	\ S: u'
+	_str_buf_size *		\ S: offset
+	_str_bufs +		\ S: caddr
+;
+
 \
 \ ... reserve ...
 \
@@ -1080,35 +1105,35 @@ int_max INVERT CONSTANT int_min	\ 0x80...00
 \	With RESERVE the address of the region just reserved is on
 \	top of the stack insuring that the address is valid until the
 \	next enlargement of the data-space by RESERVE, comma (,),
-\	c-comma (C,), compile-comma (COMPILE,), or ALIGN.
+\	c-comma (C,), or ALIGN.
 \
 : reserve DUP ALLOT HERE SWAP - ;
 
 \
 \ ( caddr u -- )
 \
-: _append_string DUP >R reserve R> MOVE 0 C, ;
+: _allot_cstring DUP >R reserve R> CMOVE 0 C, ;
 
 \
-\ ... ," ccc" ...
+\ ... 0" ccc" ...
 \
 \ (S: -- )
 \
-\ Append NUL terminated string to the most recent word's data space.
+\ Append NUL terminated escaped string to the most recent word's data space.
 \
-\	CREATE greet ," Hello world.\n"
+\	CREATE greet 0" Hello world.\n"
 \
-: ," [CHAR] " parse-escape _append_string ALIGN ;
+: 0" [CHAR] " parse-escape _allot_cstring ALIGN ;
 
 \
 \ ( caddr -- )
 \
 \ Print a NUL terminated string.
 \
-\	CREATE greet ," Hello world.\n"
-\	greet TYPE0
+\	CREATE greet 0" Hello world.\n"
+\	greet puts
 \
-: type0 BEGIN DUP @ ?DUP WHILE EMIT 1+ REPEAT DROP ;
+: puts BEGIN DUP @ ?DUP WHILE EMIT 1+ REPEAT DROP ;
 
 \
 \ ( caddr -- u )
@@ -1116,6 +1141,67 @@ int_max INVERT CONSTANT int_min	\ 0x80...00
 \ String length of NUL terminated string.
 \
 : strlen DUP BEGIN DUP @ WHILE 1+ REPEAT SWAP - ;
+
+\ Maximum for octet addressable units.
+MAX-CHAR CONSTANT /COUNTED-STRING
+
+\ (S: src dst u -- )
+: _copy_counted
+	DUP /COUNTED-STRING > IF
+	  -24 THROW
+	THEN			\ S: src dst u
+	DUP >R OVER 		\ S: src dst u dst R: u
+	C! CHAR+ R>		\ S: src dst' u R: --
+	CMOVE			\ S: --
+;
+
+\ ( S: -- caddr )
+: _clit 			\ S: -- R: ip
+	R> DUP DUP C@		\ S: ip ip u R: --
+	CHARS + ALIGNED >R	\ S: ip R: ip'
+;
+
+\ ( C: src u -- )
+: cliteral
+	POSTPONE _clit		\ C: src u
+	DUP CHAR+ reserve	\ C: src u dst
+	SWAP _copy_counted	\ C: --
+	ALIGN
+; IMMEDIATE
+
+\ (C: src u -- ) || (S: src u -- caddr )
+: _store_counted
+	STATE @ IF
+	  POSTPONE cliteral
+	ELSE
+	  _str_buf_next DUP >R	\ S: src u dst R: dst
+	  SWAP _copy_counted R>	\ S: dst R: --
+	THEN
+;
+
+\
+\ ... C" ccc" ...
+\
+\ (C: ccc<quote>" -- ) || (S: ccc<quote>" -- caddr )
+\
+: C" [CHAR] " PARSE _store_counted ; IMMEDIATE
+
+\
+\ ... c\" ccc" ...
+\
+\ (C: ccc<quote>" -- ) || (S: ccc<quote>" -- caddr u )
+\
+: c\" [CHAR] " parse-escape _store_counted ; IMMEDIATE
+
+\
+\ ( caddr -- )
+\
+\ Print a counted string.
+\
+\	CREATE greet c\" Hello world.\n"
+\	greet cputs
+\
+: cputs DUP C@ SWAP CHAR+ SWAP TYPE ;
 
 \
 \ ... _slit ...
@@ -1127,13 +1213,12 @@ int_max INVERT CONSTANT int_min	\ 0x80...00
 \	address and length of the string stored within the word.
 \	It is then modified to point to just after the string.
 \
-: _slit					\ S: -- R: ip
-	R@				\ S: ip R: ip
-	@				\ S: u  R: ip
-	R> CELL+ SWAP 2DUP		\ S: caddr u caddr u R: --
-	CHAR+				\ account for NUL from _append_string
-	CHARS + ALIGNED			\ S: caddr u ip' R: --
-	>R				\ S: caddr u R: ip'
+: _slit				\ S: -- R: ip
+	R@ @ R>			\ S: u ip R: --
+	CELL+ SWAP 2DUP		\ S: caddr u caddr u R: --
+	CHAR+			\ account for NUL from _allot_cstring
+	CHARS + ALIGNED		\ S: caddr u ip' R: --
+	>R			\ S: caddr u R: ip'
 ;
 
 \
@@ -1141,22 +1226,34 @@ int_max INVERT CONSTANT int_min	\ 0x80...00
 \
 : SLITERAL
 	POSTPONE _slit DUP ,	\ S: caddr u
-	_append_string ALIGN	\ S: --
+	_allot_cstring ALIGN	\ S: --
 ; IMMEDIATE
+
+\ (C: src u -- ) || (S: src u -- caddr u )
+: _store_str
+	STATE @ IF
+	  POSTPONE SLITERAL	\ S: --
+	ELSE
+	  DUP >R _str_buf_next	\ S: src u dst R: u
+	  DUP >R SWAP		\ S: src dst u R: u dst
+	  CMOVE			\ S: -- R: u dst
+	  R> R>			\ S: dst u R: --
+	THEN
+;
 
 \
 \ ... S" ccc" ...
 \
-\ (C: ccc<quote>" -- ) || (S: -- caddr u )
+\ (C: ccc<quote>" -- ) || (S: ccc<quote>" -- caddr u )
 \
-: S" [CHAR] " PARSE STATE @ IF POSTPONE SLITERAL THEN ; IMMEDIATE
+: S" [CHAR] " PARSE _store_str ; IMMEDIATE
 
 \
 \ ... S\" ccc" ...
 \
-\ (C: ccc<quote>" -- ) || (S: -- c-addr u )
+\ (C: ccc<quote>" -- ) || (S: ccc<quote>" -- caddr u )
 \
-: S\" [CHAR] " parse-escape STATE @ IF POSTPONE SLITERAL THEN ; IMMEDIATE
+: S\" [CHAR] " parse-escape _store_str ; IMMEDIATE
 
 \
 \ ... ." ccc" ...

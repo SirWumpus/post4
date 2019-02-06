@@ -359,6 +359,11 @@ Mark the start of `BEGIN...AGAIN` or `BEGIN...WHILE...REPEAT` loop.
 Store `char` at `caddr`.
 
 - - -
+### C" ccc"
+( `ccc<quote>` -- `caddr` )  
+When interpreting, copy the string `ccc` as-is to a transient buffer and return counted string `caddr`.  When compiling, append the string `ccc` as-is to the current word so when executed it leaves the counted string `caddr` on the stack.  See also `S"`.
+
+- - -
 ### C,
 ( `char` -- )  
 Reserve one character of data space and store `char` there.
@@ -739,15 +744,6 @@ Post4 Specific Words
 Dump the return stack.
 
 - - -
-### ," ccc"
-( `<spaces>ccc"` -- )  
-Append NUL terminated string to the most recent word's data space.
-
-```
-CREATE greet ," Hello world.\n"
-```
-
-- - -
 ### /char
 ( -- `u` )  
 Size of an address unit in octets.
@@ -766,6 +762,15 @@ Size of a numeric picture buffer in characters.  This is a deviation from `ENVIR
 ### /pad
 ( -- `u` )  
 Size of a pad buffer in characters.  This is a deviation from `ENVIRONMENT?` queries.
+
+- - -
+### 0" ccc"
+( `ccc<quote>` -- )  
+Append NUL terminated escaped string to the most recent word's data space.
+
+```
+CREATE greet 0" Hello world.\n"
+```
 
 - - -
 ### >here
@@ -877,6 +882,16 @@ Utility word used to define `.S` and `.rs`.
 Terminate and return to the host OS an exit code; zero (0) for normal/success, non-zero an error occurred.
 
 - - -
+### c\\" ccc"
+( `ccc<quote>` -- `caddr` )  
+When interpreting, copy the escaped string `ccc` to a transient buffer and return counted string `caddr`.  When compiling, append the escaped string `ccc` to the current word so when executed it leaves the counted string `caddr` on the stack.  See also `S\"`.
+
+- - -
+### cputs
+( caddr -- )  
+Print the counted string.  See also `puts`.
+
+- - -
 ### list+
 ( -- )  
 Increment variable `SCR` and list next block.
@@ -886,6 +901,36 @@ Increment variable `SCR` and list next block.
 
 ( `xu` `xu-1` ... `x0` `u` -- `x0` `xu` `xu-1` ... `x1` )  
 Right rotate the stack `u` cells; `ROLL` in the opposite direction.
+
+- - -
+### parse-escape
+( `char` `ccc<char>` -- caddr u )  
+Parse `ccc` delimited by the delimiter `char`.  `caddr` and `u` are the address and length within the input buffer of the parsed C-style escaped string.  If the parse area was empty, the resulting string has a zero length.  Supported escapes:
+
+    \?          delete
+    \\          backslash
+    \a          bell
+    \b          backspace
+    \e          escape
+    \f          formfeed
+    \n          linefeed
+    \r          carriage-return
+    \s          space
+    \t          tab
+    \v          vertical tab
+    \0          nul
+
+Backslash followed by any other character escapes that character, ie. `\\` is a literal backslash, `\"` is a literal double quote.  Note that alpha-numeric characters are reserved for future extensions.
+
+- - -
+### puts
+( caddr -- )  
+Print a NUL terminated string.
+
+```
+CREATE greet 0" Hello world.\n"
+greet puts
+```
 
 - - -
 ### reserve
@@ -905,16 +950,6 @@ Should `ALLOT` enlarge and relocate the data-space, the address saved by `HERE` 
 String length of NUL terminated string.
 
 - - -
-### type0
-( caddr -- )  
-Print a NUL terminated string.
-
-```
-CREATE greet ," Hello world.\n"
-greet TYPE0
-```
-
-- - -
 
 ## THROW Codes Used
 
@@ -932,6 +967,7 @@ This is a list of `THROW` codes used internally by `p4`.
 * -17 pictured numeric output string overflow  
 * -21 unsupported operation  
 * -23 address alignment exception (SIGBUS)  
+* -24 invalid numeric argument
 * -28 user interrupt (SIGINT)  
 * -29 compiler nesting  
 * -31 word not defined by `CREATE`
