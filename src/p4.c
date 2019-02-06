@@ -972,6 +972,13 @@ p4Repl(P4_Ctx *ctx)
 	static P4_Cell exec[] = { (P4_Cell) &w_repl };
 
 	static P4_Word words[] = {
+		/* Constants. */
+		P4_WORD("address-unit-bits",	&&_char_bit,	0),	// p4
+		P4_WORD("floored",		&&_floored,	0),	// p4
+		P4_WORD("max-char",		&&_max_char,	0),	// p4
+		P4_WORD("max-n",		&&_max_n,	0),	// p4
+		P4_WORD("max-u",		&&_max_u,	0),	// p4
+
 		/* Internal support. */
 		P4_WORD("_args",	&&_args,	0),		// p4
 		P4_WORD("_bp",		&&_bp,		P4_BIT_IMM),	// p4
@@ -1015,7 +1022,7 @@ p4Repl(P4_Ctx *ctx)
 		P4_WORD("BASE",		&&_base,	0),
 		P4_WORD("HOLD",		&&_pic_hold,	0),
 		P4_WORD("SIGN",		&&_pic_sign,	0),
-		P4_WORD("/HOLD",	&&_pic_size,	0),
+		P4_WORD("/HOLD",	&&_pic_size,	0),		// p4
 
 		/* Data Space - Alignment */
 		P4_WORD("CELLS",	&&_cells,	0),
@@ -1240,6 +1247,27 @@ _bye_code:	w = P4_TOP(ctx->ds);
 
 		// ( -- )
 _bp:		p4Bp(ctx);
+		NEXT;
+
+		// ( -- u )
+_char_bit:	P4_PUSH(ctx->ds, (P4_Uint) P4_CHAR_BIT);
+		NEXT;
+
+		// ( -- flag )
+		// C11 defines symmetric division, not floored.
+_floored:	P4_PUSH(ctx->ds, (P4_Int) 0);
+		NEXT;
+
+		// ( -- u )
+_max_char:	P4_PUSH(ctx->ds, (P4_Uint) P4_CHAR_MAX);
+		NEXT;
+
+		// ( -- u )
+_max_n:		P4_PUSH(ctx->ds, (P4_Uint) P4_INT_MAX);
+		NEXT;
+
+		// ( -- u )
+_max_u:		P4_PUSH(ctx->ds, (P4_Uint) P4_UINT_MAX);
 		NEXT;
 
 		// ( n1 -- n2 )

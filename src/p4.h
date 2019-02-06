@@ -136,14 +136,18 @@ typedef void *P4_Ptr;
 
 typedef char P4_Char;
 #define P4_CHAR_FMT "0x%.2x"
+#define P4_CHAR_BIT CHAR_BIT
+#define P4_CHAR_MAX UCHAR_MAX
 
 typedef signed long P4_Int;
 #define P4_INT_FMT "%ld"
+#define P4_INT_MAX LONG_MAX
 #define DIV ldiv
 #define DIV_T ldiv_t
 
 typedef unsigned long P4_Uint;
 #define P4_UINT_FMT "%lu"
+#define P4_UINT_MAX ULONG_MAX
 #define P4_HEX_FMT "0x%.8lx"
 
 typedef size_t P4_Size;

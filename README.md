@@ -750,7 +750,7 @@ CREATE greet ," Hello world.\n"
 - - -
 ### /char
 ( -- `u` )  
-Size of an address unit.
+Size of an address unit in octets.
 
 - - -
 ### /cell
@@ -760,17 +760,42 @@ Size of a cell.
 - - -
 ### /hold
 ( -- `u` )  
-Size of a numeric picture buffer in characters.
+Size of a numeric picture buffer in characters.  This is a deviation from `ENVIRONMENT?` queries.
 
 - - -
 ### /pad
 ( -- `u` )  
-Size of a pad buffer in characters.
+Size of a pad buffer in characters.  This is a deviation from `ENVIRONMENT?` queries.
 
 - - -
 ### >here
 ( -- `u` )  
 Offset into the current data-space for the word being compiled.  Similar to the word `HERE`, except expressed as an offset from the start of the data-space when the current word was created.  During the compiliation of a word in C based implementations, the data-space region may be relocated when its enlarged by `,`, `ALIGN`, `ALLOT`, `C,`, `COMPILE,` thus invalidating previous values of `HERE` on the stack.  Providing an offset into the current data-region allows for computing relative locations.
+
+- - -
+### address-unit-bits
+( -- `u` )  
+Size of one address unit in bits.  This is a deviation from `ENVIRONMENT?` queries.
+
+- - -
+### floored
+( -- `false` )  
+True if floored division is the default.  This is a deviation from `ENVIRONMENT?` queries.
+
+- - -
+### max-char
+( -- `u` )  
+Maximum value of any character.  Currently Post4 only supports ASCII and addressable units are octets.  This is a deviation from `ENVIRONMENT?` queries.
+
+- - -
+### max-n
+( -- `u` )  
+Largest usable signed integer.  This is a deviation from `ENVIRONMENT?` queries.
+
+- - -
+### max-u
+( -- `u` )  
+Largest usable unsigned integer.  This is a deviation from `ENVIRONMENT?` queries.
 
 - - -
 ### _bp
