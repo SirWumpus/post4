@@ -23,7 +23,7 @@ The environment variable `POST4_PATH` provides a colon separated search path for
 
 By default a user block file, `.p4.blk`, is opened from the current directory or user's `HOME` directory.  This can be overridden with the `-b` option.
 
-`p4` reads input from standard input and writes to standard output, which can be redirected:
+Post4 reads input from standard input and writes to standard output, which can be redirected:
 
 ```lang=shell
 echo "123 69 + ." | p4
@@ -783,9 +783,35 @@ Offset into the current data-space for the word being compiled.  Similar to the 
 Size of one address unit in bits.  This is a deviation from `ENVIRONMENT?` queries.
 
 - - -
+### bye_code
+( exit_code -- )  
+Terminate and return to the host OS an exit code; zero (0) for normal/success, non-zero an error occurred.
+
+- - -
+### c\\" ccc"
+( `ccc<quote>` -- `caddr` )  
+When interpreting, copy the escaped string `ccc` to a transient buffer and return counted string `caddr`.  When compiling, append the escaped string `ccc` to the current word so when executed it leaves the counted string `caddr` on the stack.  See also `S\"`.
+
+- - -
+### cputs
+( caddr -- )  
+Print the counted string.  See also `puts`.
+
+- - -
 ### floored
 ( -- `false` )  
 True if floored division is the default.  This is a deviation from `ENVIRONMENT?` queries.
+
+- - -
+### list+
+( -- )  
+Increment variable `SCR` and list next block.
+
+- - -
+### llor
+
+( `xu` `xu-1` ... `x0` `u` -- `x0` `xu` `xu-1` ... `x1` )  
+Right rotate the stack `u` cells; `ROLL` in the opposite direction.
 
 - - -
 ### max-char
@@ -801,6 +827,53 @@ Largest usable signed integer.  This is a deviation from `ENVIRONMENT?` queries.
 ### max-u
 ( -- `u` )  
 Largest usable unsigned integer.  This is a deviation from `ENVIRONMENT?` queries.
+
+- - -
+### parse-escape
+( `char` `ccc<char>` -- caddr u )  
+Parse `ccc` delimited by the delimiter `char`.  `caddr` and `u` are the address and length within the input buffer of the parsed C-style escaped string.  If the parse area was empty, the resulting string has a zero length.  Supported escapes:
+
+    \?          delete
+    \\          backslash
+    \a          bell
+    \b          backspace
+    \e          escape
+    \f          formfeed
+    \n          linefeed
+    \r          carriage-return
+    \s          space
+    \t          tab
+    \v          vertical tab
+    \0          nul
+
+Backslash followed by any other character escapes that character, ie. `\\` is a literal backslash, `\"` is a literal double quote.  Note that alpha-numeric characters are reserved for future extensions.
+
+- - -
+### puts
+( caddr -- )  
+Print a NUL terminated string.
+
+```
+CREATE greet 0" Hello world.\n"
+greet puts
+```
+
+- - -
+### reserve
+
+( `n` -- `addr` )  
+Similar to `ALLOT`, reserve `n` address-units of data-space and return its start address.  While defining a word in C based implementations, like Post4, data-space regions may be relocated when they are enlarged, thus invalidating previous values of `HERE`.  Therefore:
+
+```
+HERE 100 CELLS ALLOT
+```
+
+Should `ALLOT` enlarge and relocate the data-space, the address saved by `HERE` on the stack will now point into invalid memory.  With `reserve` the address of the region just reserved is on top of the stack insuring that the address is valid until the next enlargement of the data-space by `reserve`,`,`, `ALIGN`, `ALLOT`, `C,`, or `COMPILE,`.
+
+- - -
+### strlen
+( caddr -- u )  
+String length of NUL terminated string.
 
 - - -
 ### _bp
@@ -877,83 +950,10 @@ Fetch return stack pointer.
 Utility word used to define `.S` and `.rs`.
 
 - - -
-### bye_code
-( exit_code -- )  
-Terminate and return to the host OS an exit code; zero (0) for normal/success, non-zero an error occurred.
-
-- - -
-### c\\" ccc"
-( `ccc<quote>` -- `caddr` )  
-When interpreting, copy the escaped string `ccc` to a transient buffer and return counted string `caddr`.  When compiling, append the escaped string `ccc` to the current word so when executed it leaves the counted string `caddr` on the stack.  See also `S\"`.
-
-- - -
-### cputs
-( caddr -- )  
-Print the counted string.  See also `puts`.
-
-- - -
-### list+
-( -- )  
-Increment variable `SCR` and list next block.
-
-- - -
-### llor
-
-( `xu` `xu-1` ... `x0` `u` -- `x0` `xu` `xu-1` ... `x1` )  
-Right rotate the stack `u` cells; `ROLL` in the opposite direction.
-
-- - -
-### parse-escape
-( `char` `ccc<char>` -- caddr u )  
-Parse `ccc` delimited by the delimiter `char`.  `caddr` and `u` are the address and length within the input buffer of the parsed C-style escaped string.  If the parse area was empty, the resulting string has a zero length.  Supported escapes:
-
-    \?          delete
-    \\          backslash
-    \a          bell
-    \b          backspace
-    \e          escape
-    \f          formfeed
-    \n          linefeed
-    \r          carriage-return
-    \s          space
-    \t          tab
-    \v          vertical tab
-    \0          nul
-
-Backslash followed by any other character escapes that character, ie. `\\` is a literal backslash, `\"` is a literal double quote.  Note that alpha-numeric characters are reserved for future extensions.
-
-- - -
-### puts
-( caddr -- )  
-Print a NUL terminated string.
-
-```
-CREATE greet 0" Hello world.\n"
-greet puts
-```
-
-- - -
-### reserve
-
-( `n` -- `addr` )  
-Similar to `ALLOT`, reserve `n` address-units of data-space and return its start address.  While defining a word in C based implementations, like `p4`, data-space regions may be relocated when they are enlarged, thus invalidating previous values of `HERE`.  Therefore:
-
-```
-HERE 100 CELLS ALLOT
-```
-
-Should `ALLOT` enlarge and relocate the data-space, the address saved by `HERE` on the stack will now point into invalid memory.  With `reserve` the address of the region just reserved is on top of the stack insuring that the address is valid until the next enlargement of the data-space by `reserve`,`,`, `ALIGN`, `ALLOT`, `C,`, or `COMPILE,`.
-
-- - -
-### strlen
-( caddr -- u )  
-String length of NUL terminated string.
-
-- - -
 
 ## THROW Codes Used
 
-This is a list of `THROW` codes used internally by `p4`.
+This is a list of `THROW` codes used internally by Post4.
 
 * -1 `ABORT`  
 * -2 `ABORT"`  
