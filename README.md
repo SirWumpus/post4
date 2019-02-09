@@ -115,6 +115,16 @@ Parse and ignore characters up to the closing right parenthesis.
 Multiply the top two stack values.
 
 - - -
+### \*/
+( `n1` `n2` `dsor` -- `quot` )  
+Multiply `n1` by `n2` then divide by divisor `dsor` giving the quotient `quot`.
+
+- - -
+### \*/MOD
+( `n1` `n2` `dsor` -- `rem` `quot` )  
+Multiply `n1` by `n2` then divide by divisor `dsor` giving the remainder `rem` and quotient `quot`.
+
+- - -
 
 ### +
 ( `n1|u1` `n2|u2` -- `n3|u3` )  
