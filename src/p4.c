@@ -330,6 +330,74 @@ p4StrDup(const P4_Char *str, P4_Size length)
 	return dup;
 }
 
+int
+p4StrNum(P4_String str, P4_Uint base, P4_Int *out)
+{
+	P4_Int value;
+	int negate = 0;
+	int offset = 0;
+
+	*out = 0;
+
+	if (str.length == 0) {
+		return 0;
+	}
+
+	switch (str.string[0]) {
+	case '$':	/* $F9 hex */
+		base = 16;
+		offset++;
+		break;
+	case '#':	/* #99 decimal */
+		base = 10;
+		offset++;
+		break;
+	case '%':	/* %1011 binary */
+		base = 2;
+		offset++;
+		break;
+	case '0':	/* 0377 octal or 0xFF hex */
+		base = 8;
+		offset++;
+		if (2 < str.length && str.string[1] == 'x') {
+			base = 16;
+			offset++;
+		}
+		break;
+	case '\'':	/* 'c' and '\x' escaped characters */
+		if (str.length == 3 && str.string[2] == '\'') {
+			*out = (P4_Int) str.string[1];
+			return str.length;
+		}
+		/* Extension C style backslash literals */
+		if (str.length == 4 && str.string[1] == '\\' && str.string[3] == '\'') {
+			*out = (P4_Int) p4CharLiteral(str.string[2]);
+			return str.length;
+		}
+		/* Nothing parsed. */
+		return 0;
+	}
+
+	if (offset < str.length && str.string[offset] == '-') {
+		negate = 1;
+		offset++;
+	}
+
+	for (value = 0; offset < str.length; offset++) {
+		int digit = base36[str.string[offset]];
+		if (base <= digit) {
+			break;
+		}
+		value = value * base + digit;
+	}
+	if (negate) {
+		value = -value;
+	}
+
+	*out = value;
+	return offset;
+}
+
 /***********************************************************************
  *** Utility
  ***********************************************************************/
@@ -1150,44 +1218,7 @@ _repl:
 			}
 			word = p4FindWord(ctx, str.string, str.length);
 			if (word == NULL) {
-				int offset = 0;
-				int radix = ctx->radix;
-
-				switch (str.string[0]) {
-				case '$':	/* $F9 hex */
-					radix = 16;
-					offset++;
-					break;
-				case '#':	/* #99 decimal */
-					radix = 10;
-					offset++;
-					break;
-				case '%':	/* %1011 binary */
-					radix = 2;
-					offset++;
-					break;
-				case '0':	/* 0377 octal or 0xFF hex */
-					radix = 8;
-					if (2 < str.length && str.string[1] == 'x') {
-						radix = 16;
-						offset += 2;
-					}
-					break;
-				case '\'':	/* 'c' and '\x' escaped characters */
-					if (str.length == 3 && str.string[2] == '\'') {
-						x.u = str.string[1];
-						goto compile_or_push;
-					}
-					/* Extension C style backslash literals */
-					if (str.length == 4 && str.string[1] == '\\' && str.string[3] == '\'') {
-						x.n = p4CharLiteral(str.string[2]);
-						goto compile_or_push;
-					}
-				}
-
-				char *stop;
-				x.n = (P4_Int) strtol(str.string + offset, &stop, radix);
-				if (stop - str.string != str.length) {
+				if (p4StrNum(str, ctx->radix, &x.n) != str.length) {
 					/* Not a word, not a number. */
 					(void) printf("\"%.*s\" ", (int)str.length, str.string);
 					/* Throwing while interactive is really annoying, since
@@ -1200,8 +1231,6 @@ _repl:
 					(void) printf("?\r\n");
 					continue;
 				}
-
-			compile_or_push:
 				if (ctx->state == P4_STATE_COMPILE) {
 					ctx->words = p4WordAppend(ctx, ctx->words, (P4_Cell) &w_lit);
 					ctx->words = p4WordAppend(ctx, ctx->words, x);
