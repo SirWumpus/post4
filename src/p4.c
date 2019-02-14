@@ -1067,11 +1067,9 @@ p4Repl(P4_Ctx *ctx)
 
 		/* Compiling Words */
 		P4_WORD("'",		&&_tick,	0),
-		P4_WORD(",",		&&_comma,	0),
 		P4_WORD(":",		&&_colon,	0),
 		P4_WORD(";",		&&_semicolon,	P4_BIT_IMM),
 		P4_WORD(">BODY",	&&_body,	0),
-		P4_WORD("COMPILE,",	&&_compile,	0),
 		P4_WORD("CREATE",	&&_create,	0),
 		P4_WORD("DOES>",	&&_does,	0),
 		P4_WORD("EVALUATE",	&&_evaluate,	0),
@@ -1106,7 +1104,6 @@ p4Repl(P4_Ctx *ctx)
 		P4_WORD(">R",		&&_to_rs,	0),
 		P4_WORD("@",		&&_fetch,	0),
 		P4_WORD("C!",		&&_cstore,	0),
-		P4_WORD("C,",		&&_ccomma,	0),
 		P4_WORD("C@",		&&_cfetch,	0),
 		P4_WORD("CMOVE",	&&_move,	0),
 		P4_WORD("CMOVE>",	&&_move,	0),
@@ -1477,19 +1474,6 @@ _tick:		str = p4ParseName(&ctx->input);
 			LONGJMP(ctx->on_throw, P4_THROW_UNDEFINED);
 		}
 		P4_PUSH(ctx->ds, word);
-		NEXT;
-
-_compile:	// ( xt -- )
-		// ( x -- )
-_comma:		p4Align(ctx);
-		w = P4_POP(ctx->ds);
-		ctx->words = p4WordAppend(ctx, ctx->words, w);
-		NEXT;
-
-		// ( char -- )
-_ccomma:	w = P4_POP(ctx->ds);
-		ctx->words = p4WordAllot(ctx, ctx->words, 1);
-		((P4_Char *) ctx->words->data)[ctx->words->ndata - 1] = (P4_Char) w.u;
 		NEXT;
 
 		// ( n -- )

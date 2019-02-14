@@ -5,24 +5,6 @@ MARKER rm_core_words
 \ Post4 Copyright 2007, 2019 by Anthony Howe.  All rights reserved.
 
 \
-\ ... _ds ...
-\
-\ ( -- aaddr u )
-\
-
-\
-\ ... _rs ...
-\
-\ ( -- aaddr u )
-\
-
-\
-\ ... _stack_dump ...
-\
-\ ( aaddr u -- )
-\
-
-\
 \ ... .S ...
 \
 \ ( -- )
@@ -34,7 +16,38 @@ MARKER rm_core_words
 \
 \ ( -- )
 \
-: .RS 'r' EMIT 's' EMIT '\n' EMIT _rs 1 -  _stack_dump ;
+: .RS 'r' EMIT 's' EMIT '\n' EMIT _rs 1 - _stack_dump ;
+
+\
+\ ... reserve ...
+\
+\ (S: u -- addr )
+\
+\ @note
+\	During the compiliation of a word in C based implementations
+\	data-space regions may be relocated when they are enlarged,
+\	thus invalidating previous values of HERE.  Therefore:
+\
+\	... HERE 100 ALLOT ... \ fill in allotment
+\
+\	Should ALLOT enlarge and relocate the data-space, the address
+\	saved by HERE on the stack will now point into invalid memory.
+\
+\	With RESERVE the address of the region just reserved is on
+\	top of the stack insuring that the address is valid until the
+\	next enlargement of the data-space by RESERVE, comma (,),
+\	c-comma (C,), or ALIGN.
+\
+: reserve DUP ALLOT HERE SWAP - ;
+
+\ ( x -- )
+: , 1 CELLS reserve ! ;
+
+\ ( char -- )
+: C, 1 CHARS reserve ! ;
+
+\ ( xt -- )
+: COMPILE, , ;
 
 \
 \ value CONSTANT name
@@ -1100,28 +1113,6 @@ VARIABLE _str_buf_index
 	_str_buf_size *		\ S: offset
 	_str_bufs +		\ S: caddr
 ;
-
-\
-\ ... reserve ...
-\
-\ (S: u -- aaddr )
-\
-\ @note
-\	During the compiliation of a word in C based implementations
-\	data-space regions may be relocated when they are enlarged,
-\	thus invalidating previous values of HERE.  Therefore:
-\
-\	... HERE 100 ALLOT ... \ fill in allotment
-\
-\	Should ALLOT enlarge and relocate the data-space, the address
-\	saved by HERE on the stack will now point into invalid memory.
-\
-\	With RESERVE the address of the region just reserved is on
-\	top of the stack insuring that the address is valid until the
-\	next enlargement of the data-space by RESERVE, comma (,),
-\	c-comma (C,), or ALIGN.
-\
-: reserve DUP ALLOT HERE SWAP - ;
 
 \
 \ ( caddr u -- )
