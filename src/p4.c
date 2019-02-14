@@ -2094,7 +2094,7 @@ _see:		str = p4ParseName(&ctx->input);
 			(void) printf("; %s\r\n", P4_WORD_IS_IMM(word) ? "IMMEDIATE" : "");
 		} else if (word->code == &&_do_does) {
 			// Dump word's data.
-			for (w.u = 1; w.u < word->ndata; w.u++) {
+			for (w.u = 1, x.u = P4_CELL; x.u < word->ndata; x.u += P4_CELL, w.u++) {
 				(void) printf(P4_HEX_FMT" ", word->data[w.u].u);
 			}
 			// Search back for code field with _enter.
@@ -2109,13 +2109,18 @@ _see:		str = p4ParseName(&ctx->input);
 				(int) word->name.length, word->name.string
 			);
 		} else if (word->code == &&_data_field) {
-			(void) printf("CREATE %.*s ( length %lu )\r\n",
-				(int) word->name.length, word->name.string,
-				word->ndata
-			);
-			p4MemDump(stdout, (P4_Char *) word->data, word->ndata);
+			P4_Uint stop;
+			(void) printf("CREATE %.*s ", (int) word->name.length, word->name.string);
+			for (stop = word->ndata / P4_CELL, x.u = 1; x.u < stop; x.u++) {
+				(void) printf(P4_HEX_FMT" , ", word->data[x.u].u);
+			}
+			for (x.u *= P4_CELL; x.u < word->ndata; x.u++) {
+				(void) printf(P4_CHAR_FMT" C, ", ((P4_Char *) word->data)[x.u]);
+			}
+			(void) printf("\r\n");
+			p4MemDump(stdout, (P4_Char *)(word->data + 1), word->ndata - P4_CELL);
 		} else {
-			(void) printf("(unknown) 0x%p ", word->code);
+			(void) printf("(unknown) 0x%p\r\n", word->code);
 		}
 		NEXT;
 
@@ -2128,12 +2133,12 @@ _words:
 #endif
 		for (word = ctx->words; word != NULL; word = word->prev) {
 			if (window[1] <= column + word->name.length + 1) {
-				(void) fputc('\n', stdout);
+				(void) printf("\r\n");
 				column = 0;
 			}
 			column += fprintf(stdout, "%s ", word->name.string);
 		}
-		(void) fputc('\n', stdout);
+		(void) printf("\r\n");
 		NEXT;
 	}
 }
