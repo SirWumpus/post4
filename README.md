@@ -176,6 +176,16 @@ Divide the dividend `dend` by the divisor `dsor` leaving the remainder `rem` and
 `bool` is true if and only if `n` is less than zero.
 
 - - -
+### 0<>
+( `nu` -- `bool` )  
+`bool` is true if `nu` is not equal to zero.
+
+- - -
+### 0>
+( `nu` -- `bool` )  
+`bool` is true if `nu` is greater to zero.
+
+- - -
 ### 0=
 ( `x` -- `bool` )  
 `bool` is true if and only if `x` is equal to zero.
