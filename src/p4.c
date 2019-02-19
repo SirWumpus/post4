@@ -834,6 +834,9 @@ p4WordCreate(P4_Ctx *ctx, const char *name, size_t length, P4_Code code)
 	word->name.length = length;
 	word->code = code;
 
+	word->prev = ctx->words;
+	ctx->words = word;
+
 	return word;
 error1:
 	free(word);
@@ -1361,8 +1364,6 @@ _colon:		if (ctx->state == P4_STATE_COMPILE) {
 		str = p4ParseName(&ctx->input);
 		word = p4WordCreate(ctx, str.string, str.length, &&_enter);
 		P4_WORD_SET_HIDDEN(word);
-		word->prev = ctx->words;
-		ctx->words = word;
 		NEXT;
 
  		// ( i*x -- j*y )(R: -- ip)
@@ -1385,9 +1386,7 @@ _immediate:	P4_WORD_SET_IMM(ctx->words);
 		NEXT;
 
 _marker:	str = p4ParseName(&ctx->input);
-		word = p4WordCreate(ctx, str.string, str.length, &&_rm_marker);
-		word->prev = ctx->words;
-		ctx->words = word;
+		(void) p4WordCreate(ctx, str.string, str.length, &&_rm_marker);
 		NEXT;
 
 _rm_marker:	x.w = w.xt;
@@ -1428,8 +1427,6 @@ _evaluate:	w = P4_POP(ctx->ds);
 _create:	str = p4ParseName(&ctx->input);
 		word = p4WordCreate(ctx, str.string, str.length, &&_data_field);
 		P4_WORD_SET_CREATED(word);
-		word->prev = ctx->words;
-		ctx->words = word;
 		// Reserve the first cell for a code pointer for DOES>.
 		word->ndata += P4_CELL;
 		NEXT;
