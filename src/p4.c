@@ -242,7 +242,7 @@ p4LoadFile(P4_Ctx *ctx, const char *file)
 		}
 	}
 	if (path == NULL) {
-		(void) fprintf(stderr, "cannot find file: %s", file);
+		(void) fprintf(stderr, "cannot find file: %s\n", file);
 	} else {
 		rc = p4EvalFile(ctx, file);
 	}
@@ -960,7 +960,7 @@ error0:
 static void
 p4Bp(P4_Ctx *ctx)
 {
-	(void) printf(">> %.*s", (int)ctx->input.length, ctx->input.buffer);
+	(void) printf(">> %.*s\r\n", (int)ctx->input.length, ctx->input.buffer);
 	(void) printf(">> %*c\r\n", (int)ctx->input.offset, '^');
 }
 
