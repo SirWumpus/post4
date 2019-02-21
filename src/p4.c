@@ -1040,7 +1040,7 @@ p4Repl(P4_Ctx *ctx)
 	 * word completes the next XT (w_repl) transitions from threaded
 	 * code back into the C driven REPL.
 	 */
-	static P4_Cell exec[] = { (P4_Cell) &w_repl };
+	static P4_Cell exec[] = { { 0 }, { .w = &w_repl } };
 
 	static P4_Word words[] = {
 		/* Constants. */
@@ -1242,9 +1242,9 @@ _repl:
 				ctx->words = p4WordAppend(ctx, ctx->words, (P4_Cell) word);
 			} else {
 				// Setup XT of word found to execute.
-				P4_PUSH(ctx->ds, word);
+				exec[0].w = word;
 				ip = exec;
-				goto _execute;
+				NEXT;
 			}
 		}
 		if (P4_INTERACTIVE(ctx)) {
