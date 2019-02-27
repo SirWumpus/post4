@@ -2120,12 +2120,13 @@ _see:		str = p4ParseName(&ctx->input);
 		NEXT;
 
 	{	// ( -- )
-		P4_Uint column = 0;
+		P4_Uint column;
 		unsigned short window[4] = { 24, 80 };
 _words:
 #ifdef TIOCGWINSZ
 		ioctl(0, TIOCGWINSZ, window);
 #endif
+		column = 0;
 		for (word = ctx->words; word != NULL; word = word->prev) {
 			if (window[1] <= column + word->name.length + 1) {
 				(void) printf("\r\n");
