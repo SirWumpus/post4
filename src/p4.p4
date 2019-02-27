@@ -386,7 +386,14 @@ CREATE PAD /PAD CHARS ALLOT
 \
 \ (S: n1 n2 -- flag )
 \
-: > - 0> ;
+: > SWAP < ;
+
+\
+\ ... U> ...
+\
+\ (S: n1 n2 -- flag )
+\
+: U> SWAP U< ;
 
 \
 \ ... <= ...
