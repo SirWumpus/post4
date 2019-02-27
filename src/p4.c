@@ -659,7 +659,7 @@ p4BlockGrow(P4_Int fd, P4_Uint block)
 		if (lseek(fd, 0, SEEK_END) == (off_t) -1) {
 			return -1;
 		}
-		memset(blanks, ' ', sizeof (blanks));
+		(void) memset(blanks, ' ', sizeof (blanks));
 
 		/* P4_BLOCK_SIZE is a power of 2. */
 		if ((n = (sb.st_size & (P4_BLOCK_SIZE-1))) != 0) {
@@ -767,7 +767,7 @@ p4BlockBuffer(P4_Ctx *ctx, P4_Uint blk_num, int with_read)
 	if (blk_num == ctx->block.number) {
 		return;
 	}
-	/* Current there is no block buffer assignment stragegy beyond
+	/* Current there is no block buffer assignment strategy beyond
 	 * a single buffer per context.  Might add one day.
 	 */
 	if (ctx->block.state == P4_BLOCK_DIRTY && p4BlockWrite(ctx->block_fd, &ctx->block)) {
@@ -800,7 +800,7 @@ p4BlockLoad(P4_Ctx *ctx, P4_Uint blk_num)
 	 */
 	ctx->input.fd = P4_INPUT_STR;
 
-	p4Repl(ctx);
+	(void) p4Repl(ctx);
 
 	P4_INPUT_POP(&ctx->input);
 }
@@ -1091,7 +1091,7 @@ p4Repl(P4_Ctx *ctx)
 		P4_WORD("BASE",		&&_base,	0),
 		P4_WORD("HOLD",		&&_pic_hold,	0),
 		P4_WORD("SIGN",		&&_pic_sign,	0),
-		P4_WORD("/HOLD",	&&_pic_size,	0),		// p4
+		P4_WORD("/hold",	&&_pic_size,	0),		// p4
 
 		/* Data Space - Alignment */
 		P4_WORD("CELLS",	&&_cells,	0),
@@ -1114,7 +1114,7 @@ p4Repl(P4_Ctx *ctx)
 		P4_WORD("CS-ROLL",	&&_roll,	0),		// C: on data stack
 		P4_WORD("DROP",		&&_drop,	0),
 		P4_WORD("DUP",		&&_dup,		0),
-		P4_WORD("LLOR",		&&_llor,	0),		// p4
+		P4_WORD("llor",		&&_llor,	0),		// p4
 		P4_WORD("MOVE",		&&_move,	0),
 		P4_WORD("PICK",		&&_pick,	0),
 		P4_WORD("R>",		&&_from_rs,	0),
@@ -1155,19 +1155,19 @@ p4Repl(P4_Ctx *ctx)
 		P4_WORD("ACCEPT",	&&_accept,	0),
 		P4_WORD("BLK",		&&_blk,		0),
 		P4_WORD("BLOCK",	&&_block,	0),
-		P4_WORD("block_count",	&&_block_count, 0),		// p4
+		P4_WORD("blocks",	&&_blocks, 	0),		// p4
 		P4_WORD("BUFFER",	&&_buffer,	0),
-		P4_WORD("DUMP",		&&_dump,	0),
+		P4_WORD("DUMP",		&&_dump,	P4_BIT_IMM),
 		P4_WORD("EMIT",		&&_emit,	0),
 		P4_WORD("EMPTY-BUFFERS", &&_empty_buffers, 0),
-		P4_WORD("epoch_seconds", &&_epoch_seconds, 0),		// p4
+		P4_WORD("epoch-seconds", &&_epoch_seconds, 0),		// p4
 		P4_WORD("INCLUDED",	&&_included,	0),
 		P4_WORD("KEY",		&&_key,		0),
 		P4_WORD("KEY?",		&&_key_ready,	0),
 		P4_WORD("LOAD",		&&_load,	0),
 		P4_WORD("MS",		&&_ms,		0),
 		P4_WORD("PARSE",	&&_parse,	0),
-		P4_WORD("PARSE-ESCAPE",	&&_parse_escape,0),		// p4
+		P4_WORD("parse-escape",	&&_parse_escape,0),		// p4
 		P4_WORD("PARSE-NAME",	&&_parse_name,	0),
 		P4_WORD("REFILL",	&&_refill,	0),
 		P4_WORD("SAVE-BUFFERS",	&&_save_buffers, 0),
@@ -1178,7 +1178,7 @@ p4Repl(P4_Ctx *ctx)
 
 		/* Tools*/
 		P4_WORD("BYE",		&&_bye,		0),
-		P4_WORD("bye_code",	&&_bye_code,	0),		// p4
+		P4_WORD("bye-code",	&&_bye_code,	0),		// p4
 		P4_WORD("SEE",		&&_see,		P4_BIT_IMM),
 		P4_WORD("WORDS",	&&_words,	0),
 
@@ -1269,6 +1269,16 @@ _next:		p4StackCheck(ctx);
 _execute:	w = P4_POP(ctx->ds);
 		goto *w.xt->code;
 
+		// ( i*x -- j*y )(R: -- ip)
+_enter:		P4_PUSH(ctx->rs, ip);
+		// w contains xt loaded by _next or _execute.
+		ip = w.xt->data;
+		NEXT;
+
+		// ( i*x -- i*x )(R:ip -- )
+_exit:		ip = P4_POP(ctx->rs).p;
+		NEXT;
+
 		// ( -- )
 _bye:		exit(0);
 
@@ -1278,35 +1288,6 @@ _bye_code:	w = P4_TOP(ctx->ds);
 
 		// ( -- )
 _bp:		p4Bp(ctx);
-		NEXT;
-
-		// ( -- u )
-_char_bit:	P4_PUSH(ctx->ds, (P4_Uint) P4_CHAR_BIT);
-		NEXT;
-
-		// ( -- flag )
-		// C11 defines symmetric division, not floored.
-_floored:	P4_PUSH(ctx->ds, (P4_Int) 0);
-		NEXT;
-
-		// ( -- u )
-_max_char:	P4_PUSH(ctx->ds, (P4_Uint) P4_CHAR_MAX);
-		NEXT;
-
-		// ( -- u )
-_max_n:		P4_PUSH(ctx->ds, (P4_Uint) P4_INT_MAX);
-		NEXT;
-
-		// ( -- u )
-_max_u:		P4_PUSH(ctx->ds, (P4_Uint) P4_UINT_MAX);
-		NEXT;
-
-		// ( n1 -- n2 )
-_chars:		P4_TOP(ctx->ds).n *= sizeof (P4_Char);
-		NEXT;
-
-		// ( n1 -- n2 )
-_cells:		P4_TOP(ctx->ds).n *= P4_CELL;
 		NEXT;
 
 		// ( -- )
@@ -1354,6 +1335,38 @@ _lit:		w = *ip++;
 		NEXT;
 
 		/*
+		 * Environment Constants.
+		 */
+		// ( -- u )
+_char_bit:	P4_PUSH(ctx->ds, (P4_Uint) P4_CHAR_BIT);
+		NEXT;
+
+		// ( -- flag )
+		// C11 defines symmetric division, not floored.
+_floored:	P4_PUSH(ctx->ds, (P4_Int) 0);
+		NEXT;
+
+		// ( -- u )
+_max_char:	P4_PUSH(ctx->ds, (P4_Uint) P4_CHAR_MAX);
+		NEXT;
+
+		// ( -- u )
+_max_n:		P4_PUSH(ctx->ds, (P4_Uint) P4_INT_MAX);
+		NEXT;
+
+		// ( -- u )
+_max_u:		P4_PUSH(ctx->ds, (P4_Uint) P4_UINT_MAX);
+		NEXT;
+
+		// ( n1 -- n2 )
+_chars:		P4_TOP(ctx->ds).n *= sizeof (P4_Char);
+		NEXT;
+
+		// ( n1 -- n2 )
+_cells:		P4_TOP(ctx->ds).n *= P4_CELL;
+		NEXT;
+
+		/*
 		 * Defining words.
 		 */
 		// (R: -- ip)
@@ -1366,19 +1379,10 @@ _colon:		if (ctx->state == P4_STATE_COMPILE) {
 		P4_WORD_SET_HIDDEN(word);
 		NEXT;
 
- 		// ( i*x -- j*y )(R: -- ip)
-_enter:		P4_PUSH(ctx->rs, ip);
-		ip = w.xt->data;
-		NEXT;
-
 		// (C: colon -- )
 _semicolon:	ctx->state = P4_STATE_INTERPRET;
 		ctx->words = p4WordAppend(ctx, ctx->words, (P4_Cell) &w_exit);
 		P4_WORD_CLEAR_HIDDEN(ctx->words);
-		NEXT;
-
-		// ( i*x -- i*x )(R:ip -- )
-_exit:		ip = P4_POP(ctx->rs).p;
 		NEXT;
 
 		// ( -- )
@@ -1431,10 +1435,6 @@ _create:	str = p4ParseName(&ctx->input);
 		word->ndata += P4_CELL;
 		NEXT;
 
-		// ( -- addr )
-_data_field:	P4_PUSH(ctx->ds, w.xt->data + 1);
-		NEXT;
-
 		// DOES>
 _does:		word = ctx->words;
 		if (!P4_WORD_WAS_CREATED(word)) {
@@ -1451,12 +1451,16 @@ _do_does:	P4_PUSH(ctx->ds, w.xt->data + 1);
 		ip = w.xt->data[0].p;
 		NEXT;
 
+		// ( -- addr )
+_data_field:	P4_PUSH(ctx->ds, w.xt->data + 1);
+		NEXT;
+
 		// ( xt -- addr )
 _body:		w = P4_TOP(ctx->ds);
 		if (!P4_WORD_WAS_CREATED(w.w)) {
 			LONGJMP(ctx->on_throw, P4_THROW_NOT_CREATED);
 		}
-		P4_TOP(ctx->ds) = (P4_Cell) &w.w->data[1];
+		P4_TOP(ctx->ds).p = w.xt->data + 1;
 		NEXT;
 
 
@@ -1682,7 +1686,7 @@ _dup:		w = P4_TOP(ctx->ds);
 		P4_PUSH(ctx->ds, w);
 		NEXT;
 
-		// ( xU ... x1 x0 -- xU ... x1 x0 xU )
+		// ( xu ... x1 x0 u -- xu ... x1 x0 xu )
 		// 0 PICK == DUP, 1 PICK == OVER
 _pick:		w = P4_POP(ctx->ds);
 		x = P4_PICK(ctx->ds, w.n);
@@ -1949,7 +1953,7 @@ _block:		w = P4_TOP(ctx->ds);
 
 	{	// ( -- u )
 		struct stat sb;
-_block_count:	if (fstat(ctx->block_fd, &sb) != 0) {
+_blocks:	if (fstat(ctx->block_fd, &sb) != 0) {
 			LONGJMP(ctx->on_throw, P4_THROW_EIO);
 		}
 		w.u = sb.st_size / P4_BLOCK_SIZE;

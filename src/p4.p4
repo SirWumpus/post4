@@ -1,6 +1,6 @@
 MARKER rm_core_words
 
-: \  '\n' PARSE DROP DROP ; IMMEDIATE
+: \ '\n' PARSE DROP DROP ; IMMEDIATE
 
 \ Post4 Copyright 2007, 2019 by Anthony Howe.  All rights reserved.
 
@@ -179,7 +179,7 @@ CREATE PAD /PAD CHARS ALLOT
 \
 \ (S: -- )
 \
-: OCTAL #8 BASE ! ;
+: octal #8 BASE ! ;
 
 \
 \ ... NIP ...
@@ -211,7 +211,7 @@ CREATE PAD /PAD CHARS ALLOT
 \	This assumes that 0< returns a proper flag (all bits 1) for true
 \	as oppose simply any non-zero value for true.
 \
-: S>D DUP 0< SWAP ;
+: S>D DUP 0< SWAP ;		\ Sign extend into high word.
 
 \
 \ ... TUCK ...
@@ -311,7 +311,7 @@ CREATE PAD /PAD CHARS ALLOT
 ;
 
 \
-\ ... 2>R ...
+\ ... 2R> ...
 \
 \ (S: -- x1 x2 )(R: x1 x2 -- )
 \
@@ -685,11 +685,10 @@ CREATE PAD /PAD CHARS ALLOT
 \ (S: ccc<eol>" -- )
 \
 : \
-	BLK @
-	IF			( Block input source? )
+	BLK @ IF		( Block input source? )
 	  >IN @ $3F OR 1+ >IN !	(   Advance >IN to next line in 16x64 block. )
 	ELSE			( Streaming input... )
-	  '\n' PARSE 2DROP	(  Skip up to and including newline. )
+	  '\n' PARSE 2DROP	(   Skip up to and including newline. )
 	THEN
 ; IMMEDIATE
 
@@ -1310,7 +1309,7 @@ VARIABLE SCR
 \
 \ (S: -- )
 \
-: LIST+ SCR @ 1+ LIST ;
+: list+ SCR @ 1+ LIST ;
 
 \
 \ ... AT-XY ...
