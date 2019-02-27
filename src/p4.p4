@@ -105,39 +105,6 @@ CREATE PAD /PAD CHARS ALLOT
 : ] TRUE STATE ! ;
 
 \
-\  value VALUE name
-\
-\  (C: x <spaces>name -- ) \ (S: -- x )
-\
-\ @note
-\	Similar definition to CONSTANT.  Essentially VALUE when defined does:
-\
-\		VARIABLE name value name !
-\
-\	Referencing name does:
-\
-\		name @
-\
-\ @see
-\	TO
-\
-: VALUE CREATE , DOES> @ ;
-
-\
-\ ... x TO name ...
-\
-\ (S: x <spaces>name -- )
-\
-\ @note
-\
-\	x name !
-\
-\ @see
-\	VALUE
-\
-: TO ' >BODY ! ;
-
-\
 \ ... CELL+ ...
 \
 \ (S: aaddr1 -- aaddr2 )
@@ -684,6 +651,47 @@ CREATE PAD /PAD CHARS ALLOT
 \ (S: x -- 0 | x x )
 \
 : ?DUP DUP 0<> IF DUP THEN ;
+
+\
+\  value VALUE name
+\
+\  (C: x <spaces>name -- ) \ (S: -- x )
+\
+\ @note
+\	Similar definition to CONSTANT.  Essentially VALUE when defined does:
+\
+\		VARIABLE name value name !
+\
+\	Referencing name does:
+\
+\		name @
+\
+\ @see
+\	TO
+\
+: VALUE CREATE , DOES> @ ;
+
+\
+\ ... x TO name ...
+\
+\ (S: x <spaces>name -- )
+\
+\ @note
+\
+\	x name !
+\
+\ @see
+\	VALUE
+\
+: TO
+	' >BODY
+	STATE @ IF
+	  POSTPONE LITERAL
+	  POSTPONE !
+	ELSE
+	  !
+	THEN
+; IMMEDIATE
 
 \
 \ ... ( comment) ...
