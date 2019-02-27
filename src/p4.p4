@@ -145,6 +145,12 @@ CREATE PAD /PAD CHARS ALLOT
 : CELL+ /CELL + ;
 
 \
+\ ... NEGATE ...
+\ (S: n1 -- n2 )
+\
+: NEGATE INVERT 1 + ;
+
+\
 \ ... ALIGNED ...
 \
 \ (S: addr -- aaddr )

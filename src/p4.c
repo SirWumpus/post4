@@ -1138,7 +1138,6 @@ p4Repl(P4_Ctx *ctx)
 		P4_WORD("INVERT",	&&_not,		0),
 		P4_WORD("LSHIFT",	&&_lshift,	0),
 		P4_WORD("MOD",		&&_mod,		0),
-		P4_WORD("NEGATE",	&&_neg,		0),
 		P4_WORD("OR",		&&_or,		0),
 		P4_WORD("RSHIFT",	&&_rshift,	0),
 		P4_WORD("SM/REM",	&&_sm_div_rem,	0),
@@ -1822,11 +1821,6 @@ _xor:		w = P4_POP(ctx->ds);
 		// ( n1 -- n2 )
 _not:		w = P4_TOP(ctx->ds);
 		P4_TOP(ctx->ds).u = ~w.u;
-		NEXT;
-
-		// ( n1 -- n2 )
-_neg:		w = P4_TOP(ctx->ds);
-		P4_TOP(ctx->ds).n = -w.n;
 		NEXT;
 
 		// ( x1 u -- x2 )
