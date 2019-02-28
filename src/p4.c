@@ -1055,6 +1055,7 @@ p4Repl(P4_Ctx *ctx)
 		P4_WORD("_bp",		&&_bp,		P4_BIT_IMM),	// p4
 		P4_WORD("_branch",	&&_branch,	0),		// p4
 		P4_WORD("_branchz",	&&_branchz,	0),		// p4
+		P4_WORD("_call",	&&_call,	0),		// p4
 		P4_WORD("_ds",		&&_ds,		0),		// p4
 		P4_WORD("_dsp@",	&&_dsp_get,	0),		// p4
 		P4_WORD("_dsp!",	&&_dsp_put,	0),		// p4
@@ -1287,6 +1288,12 @@ _bye_code:	w = P4_TOP(ctx->ds);
 
 		// ( -- )
 _bp:		p4Bp(ctx);
+		NEXT;
+
+		// ( -- )
+_call:		w = *ip;
+		P4_PUSH(ctx->rs, ip + 1);
+		ip = (P4_Cell *)((P4_Char *) ip + w.n);
 		NEXT;
 
 		// ( -- )
@@ -2082,7 +2089,7 @@ _see:		str = p4ParseName(&ctx->input);
 				);
 				if (x.w->code == &&_lit) {
 					(void) printf("[ "P4_INT_FMT" , ] ", (*++w.p).n);
-				} else if (x.w->code == &&_branch || x.w->code == &&_branchz) {
+				} else if (x.w->code == &&_branch || x.w->code == &&_branchz || x.w->code == &&_call) {
 					(void) printf("[ "P4_INT_FMT" CELLS , ] ", (*++w.p).n / P4_CELL);
 				}
 			}

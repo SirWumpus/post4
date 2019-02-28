@@ -625,6 +625,14 @@ CREATE PAD /PAD CHARS ALLOT
 ; IMMEDIATE
 
 \
+\ (R: -- ip )
+\
+: RECURSE
+	POSTPONE _call
+	>HERE NEGATE ,
+; IMMEDIATE
+
+\
 \ ... ABS ...
 \
 \ (S: n -- u )
