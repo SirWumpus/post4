@@ -9,15 +9,13 @@ Overview
 
 Post4 (`p4`) is a hosted indirect threaded Forth dialect written in C, based on the ["Forth 200x Draft 18.1, 2018-08-27"](http://www.forth200x.org/documents/forth18-1.pdf).  Post4 aims to implement the fewest possible built-in words in C, those that are needed to interact with memory and I/O, leaving the remaining standard words to be implemented in Forth.
 
-```lang=shell
-usage: p4 [-V][-b file][-c file][-d size][-r size] [script [args ...]]
+        usage: p4 [-V][-b file][-c file][-d size][-r size] [script [args ...]]
 
--b file         block file; default ./.p4.blk or $HOME/.p4.blk
--c file         word definition file; default p4.p4
--d size         data stack size in cells; default 32
--r size         return stack size in cells; default 32
--V              build and version information
-```
+        -b file         block file; default ./.p4.blk or $HOME/.p4.blk
+        -c file         word definition file; default p4.p4
+        -d size         data stack size in cells; default 32
+        -r size         return stack size in cells; default 32
+        -V              build and version information
 
 The environment variable `POST4_PATH` provides a colon separated search path for the `p4.p4` core word definitions file.  If `POST4_PATH` is undefined, then an OS specific default path is used.  A specific word definition file can be specified with `-c`.
 
@@ -106,7 +104,7 @@ Find `name` and place its execution token on the stack.  Throw undefined word (-
 - - -
 ### ( ccc)
 ( `ccc<paren>` -- ) immediate  
-Parse and ignore characters up to the closing right parenthesis.
+Parse and ignore characters up to the closing right parenthesis, which an empty string or span multiple lines.
 
 - - -
 
@@ -125,25 +123,28 @@ Multiply `n1` by `n2` then divide by divisor `dsor` giving the quotient `quot`.
 Multiply `n1` by `n2` then divide by divisor `dsor` giving the remainder `rem` and quotient `quot`.
 
 - - -
-
 ### +
 ( `n1|u1` `n2|u2` -- `n3|u3` )  
 Add the top two stack values.
 
 - - -
-
 ### +!
 ( `n|u` `aaddr` -- )  
 Add `n|u` to the cell at `aaddr`.
 
 - - -
+### +LOOP
+( `step` -- )  
+Add `step` to the loop index.  If the loop index did not cross the boundary between the loop limit minus one and the loop limit, continue execution at the beginning of the loop.  Otherwise, end the current loop and continue execution immediately following the loop.
 
+        : SOMEWORD ... limit first DO ... step +LOOP ... ;
+
+- - -
 ### ,
 ( `x` -- )  
 //Align// and reserve one cell of data-space and store `x` there.
 
 - - -
-
 ### -
 ( `n1|u1` `n2|u2` -- `n3|u3` )  
 Subtract the top two stack values.
@@ -159,13 +160,11 @@ Display `n` in free field format.
 Display `ccc`.
 
 - - -
-
 ### /
 ( `dend` `dsor` -- `quot` )  
 Divide the dividend `dend` by the divisor `dsor` leaving the symmetric quotient `quot` on top of the stack.  This is the same as the `SM/REM` quotient.
 
 - - -
-
 ### /MOD
 ( `dend` `dsor` -- `rem` `quot` )  
 Divide the dividend `dend` by the divisor `dsor` leaving the remainder `rem` and quotient `quot` on top the stack.  This is the same as the `SM/REM` remainder.
@@ -283,7 +282,12 @@ input buffer to the start of the parse area.
 
 ### >R
 ( `x` -- )(R: -- `x` )  
-Move cell `x` from the data stack to the return stack.
+Move top of the data stack to the return stack.
+
+- - -
+### ?
+( `aaddr` -- )  
+Display the value stored at `aaddr`.
 
 - - -
 ### ?DO
@@ -294,6 +298,12 @@ Mark the start of `?DO ... +LOOP` or `?DO ... LOOP`.
 ### ?DUP
 ( `x` -- `x` `x` )  
 Duplicate `x` if it is non-zero.
+
+- - -
+### ?LEAVE
+( -- )  
+
+        : SOMEWORD ... limit first DO ... test ?LEAVE ... LOOP ... ;
 
 - - -
 ### @
@@ -319,6 +329,25 @@ Return the absolute value of `n`.
 ### ACCEPT
 ( `caddr` `+n1` -- `+n2` )  
 Accept up to `+n1` (between 1 and +32767) characters into the buffer given by `caddr`; the number of characters actually received, `+n2`, is pushed.
+
+- - -
+### AGAIN
+( -- )  
+Loop back to matching `BEGIN` indefinitely.
+
+        BEGIN
+            \ loop body
+        AGAIN
+
+- - -
+### AHEAD
+( -- )  
+Jump ahead over a block of code.  A building block for several flow control words.
+
+        AHEAD
+            \ not executed
+        THEN
+        \ continue
 
 - - -
 ### ALIGN
@@ -353,7 +382,7 @@ Position cursor on the terminal, `row` and `col` are 0 based.
 - - -
 ### BEGIN
 ( -- )  
-Mark the start of `BEGIN...AGAIN` or `BEGIN...WHILE...REPEAT` loop.
+Mark the start of `BEGIN ... AGAIN` or `BEGIN ... WHILE ... REPEAT` loops.
 
 - - -
 ### BL
@@ -368,10 +397,12 @@ Mark the start of `BEGIN...AGAIN` or `BEGIN...WHILE...REPEAT` loop.
 - - -
 ### BLOCK
 ( `blk_num` -- `aaddr` )  
+`BLOCK` assigns a block buffer, `aaddr`, writing the old contents to mass storage if dirty, before reading the new contents of block `blk_num` from mass storage.   The block buffer pointed to by `aaddr` is now the current block buffer assigned to `blk_num`.
 
 - - -
 ### BUFFER
 ( `blk_num` -- `aaddr` )  
+`BUFFER` assigns a block buffer, `aaddr`, writing the old contents to mass storage if dirty, but does not read anything.  The block buffer pointed to by `aaddr` is now the current block buffer assigned to `blk_num`.
 
 - - -
 ### C!
@@ -394,6 +425,24 @@ Reserve one character of data space and store `char` there.
 Fetch from `caddr` the character `char` stored there.
 
 - - -
+### CASE
+( -- )  
+
+    CASE
+        test1 OF ... ENDOF
+        ...
+        testN OF ... ENDOF
+        default action
+    ENDCASE
+
+- - -
+### CATCH
+( `i*x` `xt` -- `j*x` `0` | `i*x` `n` )  
+Push an exception frame on the exception stack and then execute the execution token `xt` (as with `EXECUTE`) in such a way that control can be transferred to a point just after `CATCH` if `THROW` is executed during the execution of `xt`.
+
+If the execution of `xt` completes normally (ie. the exception frame pushed by this `CATCH` is not popped by an execution of `THROW`) pop the exception frame and return zero on top of the data stack, above whatever stack items would have been returned by `xt EXECUTE`.  Otherwise, the remainder of the execution semantics are given by `THROW`.
+
+- - -
 ### CELL+
 ( `aaddr1` -- `aaddr2` )  
 Add the size in address units of a cell to `aaddr1` giving `aaddr2`.
@@ -407,6 +456,11 @@ Add the size in address units of a cell to `aaddr1` giving `aaddr2`.
 ### CHAR ccc
 ( `<spaces>ccc` -- `char` )  
 Parse `text` placing the first character of text on the stack.
+
+- - -
+### CHAR+
+( `caddr1` -- `caddr2` )  
+Add the size in address units of a character.
 
 - - -
 ### CHARS
@@ -431,47 +485,52 @@ Parse `text` placing the first character of text on the stack.
 Define the word `name` to represent the constant value `x`.  When `name` is executed, the value `x` is pushed on to the stack.
 
 - - -
+### COUNT
+( `caddr1` -- `caddr2` `u` )  
+Return the character string `caddr2 u` specification for the counted string `caddr1`.
+
+- - -
 ### CR
 ( -- )  
 Write a newline to standard output.
 
 - - -
-### CREATE
+### CREATE name
 ( `<spaces>name` -- )  
 Create a new word definition.  When `name` is executed, the `aaddr` of its data space is pushed onto the stack.  `CREATE` can be used to define new data structure, eg.
 
-```
-\ Define how to make an array.
-: array ( n "<spaces>name" -- ) CREATE CELLS ALLOT ;
+        \ Define how to make an array.
+        : array ( n "<spaces>name" -- ) CREATE CELLS ALLOT ;
 
-\ Define a new array of 3 cells.
-3 array fred
+        \ Define a new array of 3 cells.
+        3 array fred
 
-\ Store 123 into fred[1].
-123 fred 1 CELLS + !
-```
+        \ Store 123 into fred[1].
+        123 fred 1 CELLS + !
 
 Or when combined with `DOES>` make new "defining" words, eg. 
 
-```
-\ General structure:
-: word1 CREATE ( build data space of word2 ) DOES> ( actions applied to data of word2 ) ;
+        \ General structure:
+        : word1 CREATE ( build data space of word2 ) DOES> ( actions applied to data of word2 ) ;
 
-\ Make a new defining word CONSTANT.
-: CONSTANT CREATE , DOES> @ ;
+        \ Make a new defining word CONSTANT.
+        : CONSTANT CREATE , DOES> @ ;
 
-\ Use CONSTANT to define a word representing a value.
-377 CONSTANT monaco
+        \ Use CONSTANT to define a word representing a value.
+        377 CONSTANT monaco
 
-\ Use the new word.
-monaco ( -- 377 )
-```
+        \ Use the new word.
+        monaco ( -- 377 )
 
 - - -
 ### CS-PICK
+( `xu` `xu-1` ... `x1` `x0` `u` -- `xu` `xu-1` ... `x1` `x0` `xu` )  
+Remove `u`.  Copy the `xu` to the top of the control-stack.  `0 CS-PICK` equivalent to `DUP`, `1 CS-PICK` equivalent to `OVER`.
 
 - - -
 ### CS-ROLL
+( `xu` `xu-1` ... `x0` `u` -- `xu-1` ... `x0` `xu` )  
+Left rotate the control-stack `u` cells.
 
 - - -
 ### DECIMAL
@@ -492,7 +551,6 @@ Mark the start of `DO ... +LOOP` or `DO ... LOOP`.
 ### DOES>
 Define the execution semantics for the most recently defined word by `CREATE`.  Throws -31 if `DOES>` is applied to a word not defined by `CREATE`.
 
-```
         \ General structure:
         : word1 CREATE ( build data space of word2 ) DOES> ( actions applied to data of word2 ) ;
 
@@ -504,7 +562,6 @@ Define the execution semantics for the most recently defined word by `CREATE`.  
 
         \ Use the new word.
         monaco ( -- 377 )
-```
 
 - - -
 ### DROP
@@ -523,7 +580,14 @@ Duplicate `x`.
 
 - - -
 ### ELSE
+( -- )
 
+        test IF
+            \ execute for true
+        ELSE
+            \ execute for false
+        THEN
+        \ continue
 
 - - -
 ### EMIT
@@ -534,6 +598,29 @@ Write the character octet to standard output.
 ### EMPTY-BUFFERS
 ( -- )  
 Mark all block buffers as free without saving any dirty buffers.
+
+- - -
+### ENDCASE
+( `x` --- )  
+Discard the case selector `x` and continue execution.
+
+    CASE
+        test1 OF ... ENDOF
+        ...
+        testN OF ... ENDOF
+        default action
+    ENDCASE
+
+- - -
+### ENDOF
+( -- )  
+
+    CASE
+        test1 OF ... ENDOF
+        ...
+        testN OF ... ENDOF
+        default action
+    ENDCASE
 
 - - -
 ### EVALUATE
@@ -551,6 +638,11 @@ Remove the execution token `xt` from the stack and perform the semantics identif
 Return control from the currently executing word to its caller.  Before executing `EXIT` within a do-loop, a program shall discard the loop-control parameters by executing `UNLOOP`.
 
 - - -
+### FALSE
+( -- `false` )  
+Return false value, equivalent to zero (all bits cleared).
+
+- - -
 ### FILL
 ( `caddr` `u` `char` -- )  
 Fill memory at address `caddr` with `u` consecutive characters `char`.
@@ -558,7 +650,7 @@ Fill memory at address `caddr` with `u` consecutive characters `char`.
 - - -
 ### FLUSH
 ( -- )  
-Save and free all dirty buffers.
+Save and free all dirty block buffers.
 
 - - -
 ### FM/MOD
@@ -577,6 +669,11 @@ Floored division of the dividend `dend` by the divisor `dsor` leaving the modulu
 `addr` is the data-space pointer that will next be assigned by `,`, `ALIGN`, `ALLOT`, `C,`, `COMPILE,`.
 
 - - -
+### HEX
+( -- )  
+Set the numeric conversion radix to sixteen (hexdecimal).
+
+- - -
 ### HOLD
 ( `char` -- )  
 Append `char` to the picture numeric output string.
@@ -591,7 +688,6 @@ Append `char` to the picture numeric output string.
 ( `bool` -- )  
 If `bool` is zero (`FALSE`), continue execution following the matching `ELSE` or `THEN`.
 
-```
         test IF 
             \ execute for true
         THEN
@@ -603,7 +699,6 @@ If `bool` is zero (`FALSE`), continue execution following the matching `ELSE` or
             \ execute for false
         THEN
         \ continue
-```
 
 - - -
 ### IMMEDIATE
@@ -612,7 +707,7 @@ Make the most recent definition an immediate word.
 
 - - -
 ### INCLUDE filepath
-( `"<spaces>filepath"` --  )  
+( `<spaces>filepath` --  )  
 
 - - -
 ### INCLUDED
@@ -645,14 +740,54 @@ List the block given by `blk_num`, 1 based, and save `blk_num` in `SCR` on succe
 
 - - -
 ### LITERAL
+( `x` -- )  
+Compile `x` into the definition so that it is later pushed onto the stack during execution of the definition.
+
+         : SOMEWORD ... [ x ] LITERAL ... ;
 
 - - -
 ### LOAD
-( `blk_num` -- )  
+( `i*x` `blk_num` -- `j*x` )  
+Save the current input-source specification.  Store `blk_num` in `BLK` (thus making block `blk_num` the input source and setting the input buffer to encompass its contents), set `>IN` to zero, and interpret.  When the parse area is exhausted, restore the prior input source specification.  Other stack effects are due to the words interpreted.
+
+- - -
+### LOOP
+Add `n` to the loop index.  If the loop index did not cross the boundary between the loop limit minus one and the loop limit, continue execution at the beginning of the loop.  Otherwise, end the current loop and continue execution immediately following the loop.
+
+        : SOMEWORD ... limit first DO ... LOOP ... ;
+
+Or
+
+        : SOMEWORD ... limit first ?DO ... LOOP ... ;
+
+- - -
+### LSHIFT
+( `x1` `u` -- `x2`)  
+Logical left shift of `x1` by `u` bits, putting `u` zeroes into the least significant bits.
+
+- - -
+### MARKER name
+( `<spaces>name` -- )  
+Create `name` in the dictionary, which when executed will remove `name` and restore the dictionary to the state it had just prior to the `name` being added.
+
+- - -
+### MAX
+( `n1` `n2` -- `n3` )  
+`n3` is the greater of `n1` and `n2`.
+
+### MIN
+( `n1` `n2` -- `n3` )  
+`n3` is the lesser of `n1` and `n2`.
+
+- - -
+### MOD
+( `dend` `dsor` -- `rem` )  
+Divide the dividend `dend` by the divisor `dsor` leaving the remainder `rem`.
 
 - - -
 ### MOVE
 ( `src` `dst` `u` -- )  
+If `u` is greater than zero, copy from `src` the contents of `u` consecutive address units to `dst`.
 
 - - -
 ### MS
@@ -660,12 +795,43 @@ List the block given by `blk_num`, 1 based, and save `blk_num` in `SCR` on succe
 Wait at least `u` milliseconds.
 
 - - -
-### PICK
+### NEGATE
+( `n1` -- `n2` )  
+Negate `n1`, giving its arithmetic inverse `n2`.
 
 - - -
-### ROLL
-( `xu` `xu-1` ... `x0` `u` -- `xu-1` ... `x0` `xu` )  
-Left rotate the stack `u` cells.
+### NIP
+( `x1` `x2` -- `x2` )  
+Drop the first item below the top of stack.
+
+- - -
+### N>R
+( `i*x` `n` –– ) (R: –– `i*x` `n` )
+
+- - -
+### NR>
+( –– `i*x` `n` ) (R: `i*x` `n` –– )
+
+- - -
+### OF
+( `x1` `x2` --  | `x1` )  
+
+    CASE
+        test1 OF ... ENDOF
+        ...
+        testN OF ... ENDOF
+        default action
+    ENDCASE
+
+- - -
+### OR
+( `x1` `x2` -- `x3` )  
+Bit-wise or of the top two stack values.
+
+- - -
+### OVER
+( `x1` `x2` -- `x1` `x2` `x1` )  
+Copy the second value `x1` below the stack to the top.
 
 - - -
 ### PAD
@@ -679,12 +845,92 @@ Clear the terminal (advance next page).
 
 - - -
 ### PARSE
-( `char` `ccc<char>` –– caddr u )  
+( `char` `ccc<char>` -- `caddr` `u` )  
 Parse `ccc` delimited by the delimiter `char`.  `caddr` and `u` are the address and length within the input buffer of the parsed string.  If the parse area was empty, the resulting string has a zero length.
 
 - - -
-### POSTPONE word
-( `"<spaces>word"` --  )  
+### PARSE-NAME name
+( `<spaces>name<space>` -- `caddr` `u` )  
+Skip leading space delimiters. Parse name delimited by a space.
+
+- - -
+### PICK
+( `xu` `xu-1` ... `x1` `x0` `u` -- `xu` `xu-1` ... `x1` `x0` `xu` )  
+Remove `u`.  Copy the `xu` to the top of the stack.  `0 PICK` equivalent to `DUP`, `1 PICK` equivalent to `OVER`.
+
+- - -
+### POSTPONE name
+( `<spaces>name` --  )  
+Parse and find `name` appending the compilation semantics of `name` to the current definition.  For an immediate word, it is compiled into the definition, instead of executed.  Otherwise compile the word during the definition of another word.
+
+An example:
+
+        : [CHAR] CHAR POSTPONE LITERAL ; IMMEDIATE
+
+- - -
+### QUIT
+( -- )(R: `i*x` -- )  
+Empty the return stack, reset `SOURCE-ID` to zero, set the console as the input source, enter interpretation state, and start REPL:
+
+  * Accept a line from the input source into the input buffer, set `>IN` to zero, and interpret.
+  * Display the prompt if in interpretation state, all processing has been completed, and no ambiguous condition exists.
+
+- - -
+### R>
+( -- `x` )(R: `x` -- )  
+Move top of the return stack to the data stack.
+
+- - -
+### R@
+( -- `x` )(R: `x` -- `x` )  
+Copy top of return stack to the data stack.
+
+- - -
+### RECURSE
+( -- )  
+Call the current definition.  The behaviour of `RECURSE` following a `DOES>` is undefined.
+
+        : FACTORIAL ( +n1 -- +n2)
+            DUP 2 < IF DROP 1 EXIT THEN DUP 1- RECURSE *
+        ;
+
+- - -
+### REPEAT
+( -- )  
+Loop back to matching `BEGIN`.
+
+        BEGIN
+            \ test expression
+        WHILE
+            \ loop body while true
+        REPEAT
+        \ continue once test is false
+
+- - -
+### REFILL
+( -- `bool` )  
+Attempt to fill the input buffer from the input source, returning a true if successful.
+
+When the input source is the user input device, attempt to receive input into the terminal input buffer.  If successful, make the result the input buffer, set `>IN` to zero, and return true.  Receipt of a line containing no characters is considered successful.  If there is no input available from the current input source, return false.
+
+When the input source is a string from `EVALUATE`, return false and perform no other action.
+
+When the input source is a block, make the next block the input source and current input buffer by adding one to the value of `BLK` and setting `>IN` to zero.  Return true if the new value of `BLK` is a valid block number, otherwise false.
+
+- - -
+### ROLL
+( `xu` `xu-1` ... `x0` `u` -- `xu-1` ... `x0` `xu` )  
+Left rotate the stack `u` cells.
+
+- - -
+### ROT
+( `x1` `x2` `x3` -- `x2` `x3` `x1` )  
+Rotate the top three stack entries.
+
+- - -
+### RSHIFT
+( `x1` `u` -- `x2`)  
+Logical right shift of `x1` by `u` bits, putting `u` zeroes into the most significant bits.
 
 - - -
 ### S" ccc"
@@ -699,7 +945,7 @@ When interpreting, copy the escaped string `ccc` to a transient buffer and retur
 - - -
 ### SAVE-BUFFERS
 ( -- )  
-Save all the dirty buffer to the block file.
+Save all the dirty block buffers to the block file.
 
 - - -
 ### SCR
@@ -713,6 +959,13 @@ If `n` is negative, add a minus sign to the beginning of the pictured numeric ou
 
 - - -
 ### SLITERAL
+( `caddr` `u` -- )  
+Compile the string `caddr` and length `u` into the definition so that it is later pushed onto the stack during execution of the definition.
+
+        \ Simplistic version of S"
+        : S"
+            [CHAR] " PARSE POSTPONE SLITERAL
+        ; IMMEDIATE
 
 - - -
 ### SM/REM
@@ -724,6 +977,21 @@ Symmetric division of the dividend `dend` by the divisor `dsor` leaving the rema
            -10       7        -3       -1
             10      -7         3       -1
            -10      -7        -3        1
+
+- - -
+### SOURCE
+( -- `caddr` `u` )  
+Push the string address `caddr` and the number of characters `u` in the input buffer.
+
+- - -
+### SPACE
+( -- )  
+Display a space.
+
+- - -
+### SPACES
+( `n` -- )  
+If `n` is greater than zero, display `n` spaces.
 
 - - -
 ### STATE
@@ -746,6 +1014,71 @@ Exchange the top two stack items.
 Time current local system time.  `sec` {0..59}, `min` {0..59}, `hour` {0..23}, `day` {1..31}, `month` {1..12}, `year` eg. 1970.
 
 - - -
+### THEN
+( -- )
+See `IF`.
+
+        AHEAD
+            \ not executed
+        THEN
+        \ continue
+
+        test IF
+            \ execute for true
+        THEN
+        \ continue
+
+        test IF
+            \ execute for true
+        ELSE
+            \ execute for false
+        THEN
+        \ continue
+
+- - -
+### THROW
+( `k*x` `n` -- `k*x` | `i*x` `n` )  
+If `n` is non-zero, pop the top most exception frame from the exception stack, along with everything on the return stack above that frame.  Then restore the input source specification in use before the corresponding `CATCH` and adjust the depths of all stacks so that they are the same as the depths saved in the exception frame (`i` is the same number as the `i` in the input arguments to the corresponding `CATCH`), put `n` on top of the data stack, and transfer control to a point just after the `CATCH` that pushed that exception frame.
+
+If the top of the stack is non-zero and there is no exception frame on the exception stack the system may display an implementation-dependent message giving information about the condition associated with the `THROW` code `n`.  Subsequently, the system shall perform the function of `ABORT`.
+
+- - -
+### TO
+( `i*x` `<spaces>name` -- )  
+
+See `VALUE`.
+
+- - -
+### TRUE
+( -- `true` )  
+Return a true flag, a single-cell value with all bits set.
+
+- - -
+### TUCK
+( `x1` `x2` -- `x2` `x1` `x2` )  
+Copy the first (top) stack item below the second stack item.
+
+- - -
+### TYPE
+( `caddr` `u` -- )  
+If `u` is greater than zero, display the character string specified by `caddr` and `u`.
+
+- - -
+### U.
+( `u` -- )  
+Display u in free field format.
+
+- - -
+### U<
+( `u1` `u2` -- `bool` )  
+`bool` is true if and only if `n1` is less than `n2`.
+
+- - -
+### U>
+( `u1` `u2` -- `bool` )  
+`bool` is true if and only if `n1` is greater than `n2`.
+
+- - -
 ### UM/MOD
 ( `dend` `dsor` -- `mod` `quot` )  
 Divide `dend` by `dsor`, giving the quotient `quot` and the remainder `mod`. All values and arithmetic are unsigned.
@@ -753,6 +1086,18 @@ Divide `dend` by `dsor`, giving the quotient `quot` and the remainder `mod`. All
 - - -
 ### UNLOOP
 ( -- ) ( R: `loop-sys` -- )  
+Drop the loop control for the current loop.  An `UNLOOP` is needed for each nesting level before a definition may leave by means of `EXIT`.
+
+        limit first DO
+            \ stuff
+            \ test expression
+            IF
+                \ other stuff
+                UNLOOP EXIT
+            THEN
+            \ more stuff
+        LOOP
+        \ continue
 
 - - -
 ### UNUSED
@@ -763,6 +1108,80 @@ Divide `dend` by `dsor`, giving the quotient `quot` and the remainder `mod`. All
 ### UPDATE
 ( -- )  
 Mark the current block as dirty.
+
+- - -
+### UNTIL
+( `x` -- )  
+Loop back to `BEGIN` until `x` equals zero.
+
+        BEGIN
+            \ loop body
+            \ test expression
+        UNTIL
+
+- - -
+### VALUE name
+( `x` `<spaces>name` -- )  
+Create `name` with one cell of data assigned `x`.  When `name` is executed, the value `x` is pushed to the stack.  See `TO`.
+
+        69 VALUE position
+        : change ( new -- old ) position SWAP TO position ;
+
+- - -
+### VARIABLE name
+( `<spaces>name` -- )  
+Create `name` with one cell of data.  When `name` is executed push the `aaddr` of the data cell.
+
+        VARIABLE name           \ define name
+        123 name !              \ store value to variable
+        name @                  \ fetch value from variable
+
+- - -
+### WHILE
+( `x` -- )  
+If `x` equals zero, continue execution following `REPEAT`.
+
+        BEGIN
+            \ test expression
+        WHILE
+            \ loop body while true
+        REPEAT
+        \ continue
+
+- - -
+### WORD
+( `char` `<chars>ccc<char>` -- `caddr` )  
+Skip leading delimiters.  Parse characters `ccc` delimited by `char`.
+
+- - -
+### XOR
+( `x1` `x2` -- `x3` )  
+Bit-wise exclusive-or of the top two stack values.
+
+- - -
+### [
+( -- ) immediate
+Enter interpretation state.
+
+- - -
+### ['] name
+( `<spaces>name` -- `xt` )  
+Place name's execution token xt on the stack.
+
+- - -
+### [CHAR] ccc
+( `<spaces>ccc` -- `char` )  
+Place char, the value of the first character of name, on the stack.
+
+- - -
+### \\ ccc<LF>
+( `ccc<LF>` -- ) immediate  
+Parse and discard the remainder of the parse area.
+
+- - -
+### ]
+( -- )  
+Enter compilation state.
 
 - - -
 
@@ -776,12 +1195,17 @@ Dump the return stack.
 - - -
 ### /char
 ( -- `u` )  
-Size of an address unit in octets.
+Size of an character in octets.
 
 - - -
 ### /cell
 ( -- `u` )  
-Size of a cell.
+Size of a cell in octets.
+
+- - -
+### /counted-string
+( -- `u` )  
+Maximum size of a counted string in characters.  This is a deviation from `ENVIRONMENT?` queries.
 
 - - -
 ### /hold
@@ -801,6 +1225,10 @@ Append NUL terminated escaped string to the most recent word's data space.
 ```
 CREATE greet 0" Hello world.\n"
 ```
+- - -
+### >code
+( `xt` -- `aaddr` )
+Address of the start of the definition's code.  Similar to `>BODY` in concept.
 
 - - -
 ### >here
@@ -864,22 +1292,27 @@ Largest usable signed integer.  This is a deviation from `ENVIRONMENT?` queries.
 Largest usable unsigned integer.  This is a deviation from `ENVIRONMENT?` queries.
 
 - - -
+### octal
+( -- )  
+Set the numeric conversion radix to eight (octal).
+
+- - -
 ### parse-escape
 ( `char` `ccc<char>` -- caddr u )  
 Parse `ccc` delimited by the delimiter `char`.  `caddr` and `u` are the address and length within the input buffer of the parsed C-style escaped string.  If the parse area was empty, the resulting string has a zero length.  Supported escapes:
 
-    \?          delete
-    \\          backslash
-    \a          bell
-    \b          backspace
-    \e          escape
-    \f          formfeed
-    \n          linefeed
-    \r          carriage-return
-    \s          space
-    \t          tab
-    \v          vertical tab
-    \0          nul
+        \?          delete
+        \\          backslash
+        \a          bell
+        \b          backspace
+        \e          escape
+        \f          formfeed
+        \n          linefeed
+        \r          carriage-return
+        \s          space
+        \t          tab
+        \v          vertical tab
+        \0          nul
 
 Backslash followed by any other character escapes that character, ie. `\\` is a literal backslash, `\"` is a literal double quote.  Note that alpha-numeric characters are reserved for future extensions.
 
@@ -926,6 +1359,16 @@ Branch relative.  The integer that immediately follows is the relative distance 
 Branch relative if zero.  The integer that immediately follows is the relative distance in address units from the integer's address.  Used in the definition of flow control words, like `IF`, `WHILE`, `UNTIL`.
 
 - - -
+### _call
+( -- )  
+Call relative.  The integer that immediately follows is the relative distance in address units from the integer's address.  Used in the definition of flow control words, like `RECURSE`.
+
+- - -
+### _blocks
+( -- `u` )  
+Number of blocks `u` currently in the block file.
+
+- - -
 ### _ds
 ( -- `aaddr` `n` )  
 Push the data stack base address and current depth.  This stack is a fixed size (default 32 cells) and grows upward.
@@ -952,7 +1395,7 @@ Address of the cell holding the inner interpreter's instruction pointer.
 
 - - -
 ### _is_immediate
-( xt -- flag )  
+( `xt` -- `bool` )  
 Return true if the execution token is for an immediate word.
 
 - - -
