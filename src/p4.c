@@ -435,7 +435,9 @@ p4Parse(P4_Input *input, P4_Uint delim, P4_Uint escape)
 		}
 	}
 
+	/* Length of parsed string less the delimiter. */
 	parsed.length = offset - input->offset;
+	/* Input offset just after delimiter or end of buffer. */
 	input->offset = offset + (offset < input->length);
 
 	return parsed;

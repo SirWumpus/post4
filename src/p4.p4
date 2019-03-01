@@ -701,12 +701,46 @@ CREATE PAD /PAD CHARS ALLOT
 	THEN
 ; IMMEDIATE
 
+\ ( delim -- bool )
+\
+\ Scan the input buffer character at a time until either the input
+\ is exhusted, returning true; or an input character matches delim,
+\ returning false.
+\
+: parse-more
+	BEGIN
+	  SOURCE 0= IF
+	    2DROP TRUE EXIT	\ empty input buffer
+	  THEN
+	  1 >IN +!
+	  C@ OVER = IF
+	    DROP FALSE EXIT	\ input char matches delim
+	  THEN
+	AGAIN
+;
+
 \
 \ ... ( comment) ...
 \
-\ (S: ccc<paren>" -- )
+\ (S: ccc<paren> -- )
 \
-: ( [CHAR] ) PARSE 2DROP ; IMMEDIATE
+\ Test cases:
+\
+\	( )		empty string
+\	( abc)		single line string
+\	( abc 123	multiline string
+\	def 456
+\	)
+\
+: (
+	[CHAR] )
+	BEGIN
+	  DUP parse-more	\ find delim in input buffer
+	WHILE			\ found delim yet?
+	  REFILL 0=		\ read more input; EOF yet?
+	UNTIL THEN
+	DROP
+; IMMEDIATE
 
 \
 \ ... \ comment to end of line
