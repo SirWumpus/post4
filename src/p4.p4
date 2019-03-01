@@ -858,12 +858,39 @@ VARIABLE catch_frame 0 catch_frame !
 \
 : .R >R DUP ABS <# #S SWAP SIGN #> R> OVER - SPACES TYPE ;
 
+\ ( delim -- bool )
 \
-\ ... .( ccc) ...
+\ Scan the input buffer character at a time until either the input
+\ is exhusted, returning true; or an input character matches delim,
+\ returning false.
 \
-\ (S: ccc<paren>) -- )
+: emit-more
+	BEGIN
+	  SOURCE 0= IF
+	    CR
+	    2DROP TRUE EXIT	\ empty input buffer
+	  THEN
+	  1 >IN +!
+	  C@ 2DUP = IF
+	    2DROP FALSE EXIT	\ input char matches delim
+	  THEN
+	  EMIT
+	AGAIN
+;
+
 \
-: .( [CHAR] ) PARSE TYPE ; IMMEDIATE
+\ .( ccc)
+\
+\ (S: ccc<paren> -- )
+: .(
+	[CHAR] )
+	BEGIN
+	  DUP emit-more		\ find delim in input buffer
+	WHILE			\ found delim yet?
+	  REFILL 0=		\ read more input; EOF yet?
+	UNTIL THEN
+	DROP
+; IMMEDIATE
 
 \
 \ ... ? ...
@@ -1442,4 +1469,5 @@ VARIABLE SCR
 
 MARKER rm_user_words
 
-\ .( Post4 Copyright 2007, 2019 by Anthony Howe.  All rights reserved. )
+.( Post4 Copyright 2007, 2019 by Anthony Howe.  All rights reserved.
+)

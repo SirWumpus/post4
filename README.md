@@ -160,6 +160,11 @@ Display `n` in free field format.
 Display `ccc`.
 
 - - -
+### .( ccc)
+( `ccc<paren>` -- ) immediate  
+Parse and display text until a closing parenthesis.
+
+- - -
 ### /
 ( `dend` `dsor` -- `quot` )  
 Divide the dividend `dend` by the divisor `dsor` leaving the symmetric quotient `quot` on top of the stack.  This is the same as the `SM/REM` quotient.
