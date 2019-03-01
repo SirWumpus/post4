@@ -1000,7 +1000,7 @@ p4Align(P4_Ctx *ctx)
 static int
 p4Exception(P4_Ctx *ctx, int code)
 {
-	if (code == P4_THROW_OK) {
+	if (code == P4_THROW_OK || code == P4_THROW_ABORT_MSG) {
 		return code;
 	}
 	(void) printf("%d thrown: %s", code, P4_THROW_future < code && code < 0 ? p4_exceptions[-code] : "?");

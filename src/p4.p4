@@ -1356,12 +1356,15 @@ MAX-CHAR CONSTANT /COUNTED-STRING
 \
 : ." POSTPONE S" POSTPONE TYPE ; IMMEDIATE
 
+\ (S: bool caddr u -- )
+: _abort ROT IF TYPE CR -2 THROW ELSE 2DROP THEN ;
+
 \
 \  : X ... test ABORT" message" ...
 \
 \  (C: ccc<quote>" -- ) \ (S: i*x x1 --  | i*x ) ( R: j*x --  | j*x )
 \
-: ABORT" IF POSTPONE ." SPACE -2 THROW THEN ;
+: ABORT" POSTPONE S" POSTPONE _abort ; IMMEDIATE
 
 \
 \ ... SCR ...
