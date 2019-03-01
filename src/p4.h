@@ -132,7 +132,7 @@ typedef struct {
 
 typedef void *P4_Code;			/* Address of labels, eg. ptr = &&label; */
 typedef void *P4_Ptr;
-#define P4_PTR_FMT "0x%p"
+#define P4_PTR_FMT "%p"
 
 typedef char P4_Char;
 #define P4_CHAR_FMT "0x%.2x"

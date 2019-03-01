@@ -1157,7 +1157,7 @@ p4Repl(P4_Ctx *ctx)
 		P4_WORD("BLOCK",	&&_block,	0),
 		P4_WORD("blocks",	&&_blocks, 	0),		// p4
 		P4_WORD("BUFFER",	&&_buffer,	0),
-		P4_WORD("DUMP",		&&_dump,	P4_BIT_IMM),
+		P4_WORD("DUMP",		&&_dump,	0),
 		P4_WORD("EMIT",		&&_emit,	0),
 		P4_WORD("EMPTY-BUFFERS", &&_empty_buffers, 0),
 		P4_WORD("epoch-seconds", &&_epoch_seconds, 0),		// p4
