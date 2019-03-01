@@ -1062,7 +1062,6 @@ p4Repl(P4_Ctx *ctx)
 		P4_WORD("_dsp@",	&&_dsp_get,	0),		// p4
 		P4_WORD("_dsp!",	&&_dsp_put,	0),		// p4
 		P4_WORD("_ds_size",	&&_ds_size,	0),		// p4
-		P4_WORD("_ip",		&&_ip,		0),		// p4
 		P4_WORD("_lit",		&&_lit,		0),		// p4
 		P4_WORD("_longjmp",	&&_longjmp,	0),		// p4
 		P4_WORD("_rs",		&&_rs,		0),		// p4
@@ -1307,10 +1306,6 @@ _branch:	w = *ip;
 _branchz:	w = *ip;
 		x = P4_POP(ctx->ds);
 		ip = (P4_Cell *)((P4_Char *) ip + (x.u == 0 ? w.n : P4_CELL));
-		NEXT;
-
-		// ( -- addr )
-_ip:		P4_PUSH(ctx->ds, (P4_Cell *) &ip);
 		NEXT;
 
 		// ( -- aaddr )
