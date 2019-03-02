@@ -1255,6 +1255,10 @@ Terminate and return to the host OS an exit code; zero (0) for normal/success, n
 ( `ccc<quote>` -- `caddr` )  
 When interpreting, copy the escaped string `ccc` to a transient buffer and return counted string `caddr`.  When compiling, append the escaped string `ccc` to the current word so when executed it leaves the counted string `caddr` on the stack.  See also `S\"`.
 
+### char-
+( `caddr1` -- `caddr2` )  
+Subtract the size in address units of a character.
+
 - - -
 ### cputs
 ( caddr -- )  

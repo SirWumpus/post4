@@ -1110,8 +1110,6 @@ p4Repl(P4_Ctx *ctx)
 		P4_WORD("@",		&&_fetch,	0),
 		P4_WORD("C!",		&&_cstore,	0),
 		P4_WORD("C@",		&&_cfetch,	0),
-		P4_WORD("CMOVE",	&&_move,	0),
-		P4_WORD("CMOVE>",	&&_move,	0),
 		P4_WORD("CS-PICK",	&&_pick,	0),		// C: on data stack
 		P4_WORD("CS-ROLL",	&&_roll,	0),		// C: on data stack
 		P4_WORD("DROP",		&&_drop,	0),

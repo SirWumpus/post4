@@ -132,6 +132,7 @@ CREATE PAD /PAD CHARS ALLOT
 \ (S: caddr1 -- caddr2 )
 \
 : CHAR+ /CHAR + ;
+: CHAR- /CHAR - ;
 
 \
 \ ... DECIMAL ...
@@ -407,32 +408,6 @@ CREATE PAD /PAD CHARS ALLOT
 : DEPTH _ds NIP ;
 
 \
-\ ... FILL ...
-\
-\ (S: caddr u char -- )
-\
-: FILL
-	2 PICK			\  S: c- u c c-
-	! 1- OVER		\  S: c- u' c-
-	1+ SWAP			\  S: c- c-' u
-	CMOVE			\  S: --
-;
-
-\
-\ ... BLANK ...
-\
-\ (S: caddr u -- )
-\
-: BLANK BL FILL ;
-
-\
-\ ... ERASE ...
-\
-\ (S: addr u -- )
-\
-: ERASE 0 FILL ;
-
-\
 \ ... SPACE ...
 \
 \ (S: -- )
@@ -445,19 +420,6 @@ CREATE PAD /PAD CHARS ALLOT
 \ (S: caddr1 -- caddr2 u )
 \
 : COUNT DUP C@ SWAP CHAR+ SWAP ;
-
-\
-\ ... char WORD ...
-\
-\ (S: char "<chars>ccc<char>" -- caddr )
-\
-: WORD				\ S: char
-	PARSE 			\ S: caddr u
-	>R R@ OVER		\ S: caddr u caddr R: u
-	DUP DUP CHAR+ R>	\ S: caddr u caddr caddr caddr' u
-	CMOVE>			\ S: caddr u caddr
-	C!			\ S: caddr
-;
 
 \
 \ ...  CHAR  ...
@@ -828,6 +790,73 @@ VARIABLE catch_frame 0 catch_frame !
 	BEGIN DUP 0> WHILE	\  S: n
 	  SPACE 1-		\  S: n'
 	REPEAT DROP		\  S: --
+;
+
+\ ... CMOVE ...
+\
+\ (S: src tar u -- )
+: CMOVE
+	BEGIN ?DUP WHILE	\ S: src tar u
+	  1- >R			\ S: src tar R: u'
+	  2DUP SWAP		\ S: src tar tar src R: u'
+	  C@ SWAP C!            \ S: src tar R: u'
+	  CHAR+ SWAP		\ S: tar' src R: u'
+	  CHAR+ SWAP		\ S: src' tar' R: u'
+	  R>			\ S: src' tar' u' R --
+	REPEAT 2DROP
+;
+
+\ ... CMOVE> ...
+\
+\ (S: src tar u -- )
+: CMOVE>
+	BEGIN ?DUP WHILE	\ S: src tar u
+	  1- >R			\ S: src tar R: u'
+	  2DUP SWAP		\ S: src tar tar src R: u'
+	  C@ SWAP C!            \ S: src tar R: u'
+	  CHAR- SWAP		\ S: tar' src R: u'
+	  CHAR- SWAP		\ S: src' tar' R: u'
+	  R>			\ S: src' tar' u' R --
+	REPEAT 2DROP
+;
+
+\
+\ ... FILL ...
+\
+\ (S: caddr u char -- )
+\
+: FILL
+	2 PICK			\  S: caddr u char caddr
+	C! 1- OVER		\  S: caddr u' caddr
+	CHAR+ SWAP		\  S: caddr caddr' u
+	CMOVE			\  S: --
+;
+
+\
+\ ... BLANK ...
+\
+\ (S: caddr u -- )
+\
+: BLANK BL FILL ;
+
+\
+\ ... ERASE ...
+\
+\ (S: addr u -- )
+\
+: ERASE 0 FILL ;
+
+\
+\ ... char WORD ...
+\
+\ (S: char "<chars>ccc<char>" -- caddr )
+\
+: WORD				\ S: char
+	PARSE 			\ S: caddr u
+	>R R@ OVER		\ S: caddr u caddr R: u
+	DUP DUP CHAR+ R>	\ S: caddr u caddr caddr caddr' u
+	CMOVE>			\ S: caddr u caddr
+	C!			\ S: caddr
 ;
 
 \
@@ -1380,13 +1409,13 @@ VARIABLE SCR
 \
 : LIST				\ S: u
 	DUP SCR !		\ S: u
-	BLOCK			\ S: aaddr
+	BLOCK			\ S: caddr
 	16 0 DO
 	  I 1+ 2 .R
 	  [CHAR] | EMIT
-	  DUP 64 TYPE		\ S: aaddr
+	  DUP 64 TYPE		\ S: caddr
 	  [CHAR] | EMIT CR
-	  64 CHARS +		\ S: aaddr'
+	  64 CHARS +		\ S: caddr'
 	LOOP DROP		\ S: --
 ;
 
