@@ -74,10 +74,10 @@ screen1 VALUE screen_next
 ;
 
 ( row -- flag )
-: ?row 0 rows WITH-IN ;
+: ?row 0 rows WITHIN ;
 
 ( column -- flag )
-: ?column 0 columns WITH-IN ;
+: ?column 0 columns WITHIN ;
 
 ( column row -- flag )
 : ?screen ?row SWAP ?column AND ;
@@ -118,7 +118,7 @@ screen1 VALUE screen_next
 
 ( count -- char )
 : death
-	#3 #5 WITH-IN					\ flag
+	#3 #5 WITHIN					\ flag
 	IF on ELSE off THEN 				\ char
 ;
 
