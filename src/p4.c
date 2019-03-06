@@ -1938,7 +1938,7 @@ _included:	w = P4_POP(ctx->ds);
 		 * Block I/O
 		 */
 		// ( -- aaddr )
-_blk:		P4_PUSH(ctx->ds, (P4_Cell *) &ctx->block.number);
+_blk:		P4_PUSH(ctx->ds, (P4_Cell *) &ctx->input.blk);
 		NEXT;
 
 		// ( u -- aaddr )
