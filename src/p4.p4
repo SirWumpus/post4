@@ -620,7 +620,7 @@ CREATE PAD /PAD CHARS ALLOT
 \
 \ (S: x -- 0 | x x )
 \
-: ?DUP DUP 0<> IF DUP THEN ;
+: ?DUP DUP IF DUP THEN ;
 
 \
 \  value VALUE name
