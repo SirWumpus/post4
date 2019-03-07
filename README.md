@@ -23,9 +23,7 @@ By default a user block file, `.p4.blk`, is opened from the current directory or
 
 Post4 reads input from standard input and writes to standard output, which can be redirected:
 
-```lang=shell
-echo "123 69 + ." | p4
-```
+        echo "123 69 + ." | p4
 
 
 Examples
@@ -41,11 +39,10 @@ There are actually three block editor word sets:
 
 NOTE: that `EDIT` and `ED` are hard coded with ANSI terminal escape sequences.
 
-```lang=shell
-$ p4
-ok INCLUDE ed.p4
-ok ED
-```
+        $ p4
+        ok INCLUDE ed.p4
+        ok ED
+
 
 ### life.p4 - [Conway's Game of Life](http://en.wikipedia.org/wiki/Conway%27s_Game_of_Life)
 
@@ -69,9 +66,7 @@ which this happens is sometimes called a tick (in other words, each generation
 is a pure function of the one before). The rules continue to be applied
 repeatedly to create further generations.
 
-```lang=shell
-$ p4 life.p4
-```
+        $ p4 life.p4
 
 
 Standard Words
@@ -433,12 +428,12 @@ Fetch from `caddr` the character `char` stored there.
 ### CASE
 ( -- )  
 
-    CASE
-        test1 OF ... ENDOF
-        ...
-        testN OF ... ENDOF
-        default action
-    ENDCASE
+        CASE
+            test1 OF ... ENDOF
+            ...
+            testN OF ... ENDOF
+            default action
+        ENDCASE
 
 - - -
 ### CATCH
@@ -609,23 +604,23 @@ Mark all block buffers as free without saving any dirty buffers.
 ( `x` --- )  
 Discard the case selector `x` and continue execution.
 
-    CASE
-        test1 OF ... ENDOF
-        ...
-        testN OF ... ENDOF
-        default action
-    ENDCASE
+        CASE
+            test1 OF ... ENDOF
+            ...
+            testN OF ... ENDOF
+            default action
+        ENDCASE
 
 - - -
 ### ENDOF
 ( -- )  
 
-    CASE
-        test1 OF ... ENDOF
-        ...
-        testN OF ... ENDOF
-        default action
-    ENDCASE
+        CASE
+            test1 OF ... ENDOF
+            ...
+            testN OF ... ENDOF
+            default action
+        ENDCASE
 
 - - -
 ### EVALUATE
@@ -821,12 +816,12 @@ Drop the first item below the top of stack.
 ### OF
 ( `x1` `x2` --  | `x1` )  
 
-    CASE
-        test1 OF ... ENDOF
-        ...
-        testN OF ... ENDOF
-        default action
-    ENDCASE
+        CASE
+            test1 OF ... ENDOF
+            ...
+            testN OF ... ENDOF
+            default action
+        ENDCASE
 
 - - -
 ### OR
@@ -1227,13 +1222,7 @@ Size of a pad buffer in characters.  This is a deviation from `ENVIRONMENT?` que
 ( `ccc<quote>` -- )  
 Append NUL terminated escaped string to the most recent word's data space.
 
-```
-CREATE greet 0" Hello world.\n"
-```
-- - -
-### >code
-( `xt` -- `aaddr` )
-Address of the start of the definition's code.  Similar to `>BODY` in concept.
+        CREATE greet 0" Hello world.\n"
 
 - - -
 ### >here
@@ -1244,6 +1233,11 @@ Offset into the current data-space for the word being compiled.  Similar to the 
 ### address-unit-bits
 ( -- `u` )  
 Size of one address unit in bits.  This is a deviation from `ENVIRONMENT?` queries.
+
+- - -
+### blocks
+( -- `u` )  
+Number of blocks `u` currently in the block file.
 
 - - -
 ### bye_code
@@ -1281,7 +1275,6 @@ Increment variable `SCR` and list next block.
 
 - - -
 ### llor
-
 ( `xu` `xu-1` ... `x0` `u` -- `x0` `xu` `xu-1` ... `x1` )  
 Right rotate the stack `u` cells; `ROLL` in the opposite direction.
 
@@ -1330,10 +1323,8 @@ Backslash followed by any other character escapes that character, ie. `\\` is a 
 ( caddr -- )  
 Print a NUL terminated string.
 
-```
-CREATE greet 0" Hello world.\n"
-greet puts
-```
+        CREATE greet 0" Hello world.\n"
+        greet puts
 
 - - -
 ### reserve
@@ -1341,9 +1332,7 @@ greet puts
 ( `n` -- `addr` )  
 Similar to `ALLOT`, reserve `n` address-units of data-space and return its start address.  While defining a word in C based implementations, like Post4, data-space regions may be relocated when they are enlarged, thus invalidating previous values of `HERE`.  Therefore:
 
-```
-HERE 100 CELLS ALLOT
-```
+        HERE 100 CELLS ALLOT
 
 Should `ALLOT` enlarge and relocate the data-space, the address saved by `HERE` on the stack will now point into invalid memory.  With `reserve` the address of the region just reserved is on top of the stack insuring that the address is valid until the next enlargement of the data-space by `reserve`,`,`, `ALIGN`, `ALLOT`, `C,`, or `COMPILE,`.
 
@@ -1371,11 +1360,6 @@ Branch relative if zero.  The integer that immediately follows is the relative d
 ### _call
 ( -- )  
 Call relative.  The integer that immediately follows is the relative distance in address units from the integer's address.  Used in the definition of flow control words, like `RECURSE`.
-
-- - -
-### _blocks
-( -- `u` )  
-Number of blocks `u` currently in the block file.
 
 - - -
 ### _ds
