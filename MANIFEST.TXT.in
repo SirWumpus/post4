@@ -13,4 +13,5 @@ com/snert/src/@PACKAGE_NAME@/src/p4.h
 com/snert/src/@PACKAGE_NAME@/src/p4.p4
 com/snert/src/@PACKAGE_NAME@/examples/ed.p4
 com/snert/src/@PACKAGE_NAME@/examples/life.p4
+com/snert/src/@PACKAGE_NAME@/examples/rand.p4
 com/snert/src/@PACKAGE_NAME@/reference/Forth-200x/forth18-1.pdf
