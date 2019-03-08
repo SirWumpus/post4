@@ -1361,6 +1361,9 @@ MAX-CHAR CONSTANT /COUNTED-STRING
 	  DUP >R SWAP		\ S: src dst u R: u dst
 	  CMOVE			\ S: -- R: u dst
 	  R> R>			\ S: dst u R: --
+	  \ Add terminating NUL byte for convenience for C.
+	  2DUP CHARS + 0	\ S: dst u end NUL
+	  SWAP C!		\ S: dst u
 	THEN
 ;
 

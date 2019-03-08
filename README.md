@@ -1264,6 +1264,11 @@ Print the counted string.  See also `puts`.
 System clock time in seconds from the epoch.
 
 - - -
+### env
+( key k -- value v )  
+Lookup the environment variable string `key k`.  Return string `value v`; if length `v` is `-1`, then the environment variable `key` was not found and `value` is invalid.
+
+- - -
 ### floored
 ( -- `false` )  
 True if floored division is the default.  This is a deviation from `ENVIRONMENT?` queries.

@@ -1178,6 +1178,7 @@ p4Repl(P4_Ctx *ctx)
 		/* Tools*/
 		P4_WORD("BYE",		&&_bye,		0),
 		P4_WORD("bye-code",	&&_bye_code,	0),		// p4
+		P4_WORD("env",		&&_env,		0),		// p4
 		P4_WORD("SEE",		&&_see,		P4_BIT_IMM),
 		P4_WORD("WORDS",	&&_words,	0),
 
@@ -1525,6 +1526,14 @@ _post:		w = *ip++;
 		// ( -- caddr u )
 _args:		P4_PUSH(ctx->ds, (P4_Cell *) options.argv);
 		P4_PUSH(ctx->ds, (P4_Int) options.argc);
+		NEXT;
+
+		// ( key k -- value v )
+_env:		w = P4_POP(ctx->ds);		// Ignore k, S" NUL terminates.
+		w = P4_TOP(ctx->ds);
+		x.s = getenv(w.s);
+		P4_TOP(ctx->ds) = x;
+		P4_PUSH(ctx->ds, (P4_Int)(x.s == NULL ? -1 : strlen(x.s)));
 		NEXT;
 
 		// ( -- addr )
