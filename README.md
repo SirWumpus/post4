@@ -32,6 +32,13 @@ Post4 reads input from standard input and writes to standard output, which can b
 Examples
 --------
 
+### dumpargs.p4
+
+Simple demostration on how to access the command line arguments.
+
+        $ p4 dumpargs.p4 hello world, tell us more!
+
+
 ### ed.p4 - Block Editor
 
 There are actually three block editor word sets:
@@ -70,6 +77,50 @@ is a pure function of the one before). The rules continue to be applied
 repeatedly to create further generations.
 
         $ p4 life.p4
+
+
+### rand.p4
+
+Pseudo-random number generators.  One is the simple code example from the ISO C11 draft April 12, 2011,
+
+        \ Example from the ISO C11 draft April 12, 2011
+        
+        SRAND ( -- aaddr )
+            Random number seed variable.
+            
+        RAND ( -- u )
+            Return random number between 0..32767.
+        
+        \ Pseudo-Random Sequence Generator for 32-Bit CPUs
+        \ Bruce Schneier, Dr. Dobb's Journal, v. 17, n. 2, February 1992, pp. 34-40.
+        
+        RANDA ( -- aaddr )
+        RANDB ( -- aaddr )
+        RANDC ( -- aaddr )
+            Random number seed variables for three Linear Feedback Shift
+            Registers.
+            
+        RANDOMXOR ( bits -- u )
+            Return random number u generated from bits, XORing the bits from the
+            three generators.
+            
+        RANDOMMAJ ( bits -- u )
+            Return random number u generated from bits, based on the majority of
+            one or zero returned from the three generators.         
+
+Example:
+
+        $ p4
+        ok incl rand.p4
+        ok 12345 srand !
+        ok rand . rand . rand . CR
+        21468 9988 22117
+        ok 12345 randa ! 54321 randb ! $deadbeef randc !
+        ok 16 randomxor U. 16 randomxor U. 16 randomxor U. CR
+        52917 27383 64651
+        ok 16 randommaj U. 16 randommaj U. 16 randommaj U. CR
+        7 9885 36906
+        ok 
 
 
 Standard Words
