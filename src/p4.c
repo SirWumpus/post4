@@ -1053,7 +1053,6 @@ p4Repl(P4_Ctx *ctx)
 		P4_WORD("max-u",		&&_max_u,	0),	// p4
 
 		/* Internal support. */
-		P4_WORD("_args",	&&_args,	0),		// p4
 		P4_WORD("_bp",		&&_bp,		P4_BIT_IMM),	// p4
 		P4_WORD("_branch",	&&_branch,	0),		// p4
 		P4_WORD("_branchz",	&&_branchz,	0),		// p4
@@ -1176,6 +1175,7 @@ p4Repl(P4_Ctx *ctx)
 		P4_WORD("UPDATE",	&&_update,	0),
 
 		/* Tools*/
+		P4_WORD("args",		&&_args,	0),		// p4
 		P4_WORD("BYE",		&&_bye,		0),
 		P4_WORD("bye-code",	&&_bye_code,	0),		// p4
 		P4_WORD("env",		&&_env,		0),		// p4
@@ -1523,7 +1523,7 @@ _post:		w = *ip++;
 		/*
 		 * Context variables
 		 */
-		// ( -- caddr u )
+		// ( -- argv argc )
 _args:		P4_PUSH(ctx->ds, (P4_Cell *) options.argv);
 		P4_PUSH(ctx->ds, (P4_Int) options.argc);
 		NEXT;
@@ -2257,7 +2257,8 @@ static const char usage[] =
 "-c file\t\tword definition file; default " P4_CORE_FILE "\n"
 "-d size\t\tdata stack size in cells; default " QUOTE(P4_STACK_SIZE) "\n"
 "-r size\t\treturn stack size in cells; default " QUOTE(P4_STACK_SIZE) "\n"
-"-V\t\tbuild and version information\n"
+"-V\t\tbuild and version information\n\n"
+"If script is \"-\", read it from standard input."
 "\n"
 ;
 
@@ -2301,7 +2302,7 @@ main(int argc, char **argv)
 		return EXIT_FAILURE;
 	}
 
-	if (argc <= optind) {
+	if (argc <= optind || (argv[optind][0] == '-' && argv[optind][1] == '\0')) {
 		rc = p4Eval(ctx);
 	} else if (optind < argc && (rc = p4EvalFile(ctx, argv[optind]))) {
 		(void) fprintf(stderr, "p4: %s: %s\n", argv[optind], strerror(errno));

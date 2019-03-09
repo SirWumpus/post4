@@ -1238,17 +1238,6 @@ VARIABLE _str_buf_index
 : _allot_cstring DUP >R reserve R> CMOVE 0 C, ;
 
 \
-\ ... 0" ccc" ...
-\
-\ (S: -- )
-\
-\ Append NUL terminated escaped string to the most recent word's data space.
-\
-\	CREATE greet 0" Hello world.\n"
-\
-: 0" [CHAR] " parse-escape _allot_cstring ALIGN ;
-
-\
 \ ( caddr -- )
 \
 \ Print a NUL terminated string.
@@ -1256,14 +1245,14 @@ VARIABLE _str_buf_index
 \	CREATE greet 0" Hello world.\n"
 \	greet puts
 \
-: puts BEGIN DUP @ ?DUP WHILE EMIT 1+ REPEAT DROP ;
+: puts BEGIN DUP C@ ?DUP WHILE EMIT 1+ REPEAT DROP ;
 
 \
 \ ( caddr -- u )
 \
 \ String length of NUL terminated string.
 \
-: strlen DUP BEGIN DUP @ WHILE 1+ REPEAT SWAP - ;
+: strlen DUP BEGIN DUP C@ WHILE 1+ REPEAT SWAP - ;
 
 \ Maximum for octet addressable units.
 MAX-CHAR CONSTANT /COUNTED-STRING

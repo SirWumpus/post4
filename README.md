@@ -16,6 +16,9 @@ Post4 (`p4`) is a hosted indirect threaded Forth dialect written in C, based on 
         -d size         data stack size in cells; default 32
         -r size         return stack size in cells; default 32
         -V              build and version information
+        
+        If script is "-", read it from standard input.
+
 
 The environment variable `POST4_PATH` provides a colon separated search path for the `p4.p4` core word definitions file.  If `POST4_PATH` is undefined, then an OS specific default path is used.  A specific word definition file can be specified with `-c`.
 
@@ -1218,16 +1221,14 @@ Size of a numeric picture buffer in characters.  This is a deviation from `ENVIR
 Size of a pad buffer in characters.  This is a deviation from `ENVIRONMENT?` queries.
 
 - - -
-### 0" ccc"
-( `ccc<quote>` -- )  
-Append NUL terminated escaped string to the most recent word's data space.
-
-        CREATE greet 0" Hello world.\n"
-
-- - -
 ### >here
 ( -- `u` )  
 Offset into the current data-space for the word being compiled.  Similar to the word `HERE`, except expressed as an offset from the start of the data-space when the current word was created.  During the compiliation of a word in C based implementations, the data-space region may be relocated when its enlarged by `,`, `ALIGN`, `ALLOT`, `C,`, `COMPILE,` thus invalidating previous values of `HERE` on the stack.  Providing an offset into the current data-region allows for computing relative locations.
+
+- - -
+### args
+( -- `argv` `argc` )  
+Return the number of arguments on the command line `argc` and the NULL terminated array of C string pointers `argv`.
 
 - - -
 ### address-unit-bits
