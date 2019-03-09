@@ -1,5 +1,5 @@
 /*
- * p4.h
+ * post4.h
  *
  * Copyright 2007, 2019 by Anthony Howe. All rights reserved.
  */
@@ -42,7 +42,7 @@ extern "C" {
 #endif
 
 #ifndef P4_BLOCK_FILE
-#define P4_BLOCK_FILE			".p4.blk"
+#define P4_BLOCK_FILE			".post4.blk"
 #endif
 
 #ifndef P4_CORE_PATH
@@ -50,7 +50,7 @@ extern "C" {
 #endif
 
 #ifndef P4_CORE_FILE
-#define P4_CORE_FILE			"p4.p4"
+#define P4_CORE_FILE			"post4.p4"
 #endif
 
 /***********************************************************************

@@ -11,7 +11,7 @@ Post4 is a hosted indirect threaded Forth dialect written in C, based on the ["F
 
         usage: post4 [-V][-b file][-c file][-d size][-r size] [script [args ...]]
 
-        -b file         block file; default ./.p4.blk or $HOME/.p4.blk
+        -b file         block file; default ./.post4.blk or $HOME/.post4.blk
         -c file         word definition file; default p4.p4
         -d size         data stack size in cells; default 32
         -r size         return stack size in cells; default 32
@@ -20,9 +20,9 @@ Post4 is a hosted indirect threaded Forth dialect written in C, based on the ["F
         If script is "-", read it from standard input.
 
 
-The environment variable `POST4_PATH` provides a colon separated search path for the `p4.p4` core word definitions file.  If `POST4_PATH` is undefined, then an OS specific default path is used.  A specific word definition file can be specified with `-c`.
+The environment variable `POST4_PATH` provides a colon separated search path for the `post4.p4` core word definitions file.  If `POST4_PATH` is undefined, then an OS specific default path is used.  A specific word definition file can be specified with `-c`.
 
-By default a user block file, `.p4.blk`, is opened from the current directory or user's `HOME` directory.  This can be overridden with the `-b` option.
+By default a user block file, `.post4.blk`, is opened from the current directory or user's `HOME` directory.  This can be overridden with the `-b` option.
 
 Post4 reads input from standard input and writes to standard output, which can be redirected:
 

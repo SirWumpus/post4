@@ -1,10 +1,10 @@
 /*
- * p4.c
+ * post4.c
  *
  * Copyright 2007, 2019 by Anthony Howe. All rights reserved.
  */
 
-#include "p4.h"
+#include "post4.h"
 
 /***********************************************************************
  *** Globals
@@ -2251,7 +2251,7 @@ p4EvalString(P4_Ctx *ctx, P4_Char *str, size_t len)
  ***********************************************************************/
 
 static const char usage[] =
-"usage: p4 [-V][-b file][-c file][-d size][-r size] [script [args ...]]\n"
+"usage: post4 [-V][-b file][-c file][-d size][-r size] [script [args ...]]\n"
 "\n"
 "-b file\t\tblock file; default " P4_BLOCK_FILE "\n"
 "-c file\t\tword definition file; default " P4_CORE_FILE "\n"
@@ -2298,14 +2298,14 @@ main(int argc, char **argv)
 	(void) atexit(p4Fini);
 
 	if ((ctx = p4Create()) == NULL) {
-		(void) fprintf(stderr, "p4: %s\n", strerror(errno));
+		(void) fprintf(stderr, "post4: %s\n", strerror(errno));
 		return EXIT_FAILURE;
 	}
 
 	if (argc <= optind || (argv[optind][0] == '-' && argv[optind][1] == '\0')) {
 		rc = p4Eval(ctx);
 	} else if (optind < argc && (rc = p4EvalFile(ctx, argv[optind]))) {
-		(void) fprintf(stderr, "p4: %s: %s\n", argv[optind], strerror(errno));
+		(void) fprintf(stderr, "post4: %s: %s\n", argv[optind], strerror(errno));
 	}
 
 	p4Free(ctx);
