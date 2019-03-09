@@ -75,11 +75,11 @@ $O$E :
 
 all: build
 
-build: title p4$E
+build: title post4$E
 
 clean : title
 	-rm -f *.o *.obj *.i *.map *.tds *.TR2 *.stackdump core *.core core.* *.log
-	-rm -f p4$E
+	-rm -f post4$E
 
 distclean: clean
 	-rm -f config.h config.h.in makefile
@@ -96,9 +96,9 @@ title :
 install: build
 	-cp -p post4$E ${bindir}
 
-p4$O : config.h p4.h p4.c
-	${CC} ${CFLAGS} -Wno-unused-const-variable -DP4_BUILT="\"${BUILT}\"" -c p4.c
+post4$O : config.h post4.h post4.c
+	${CC} ${CFLAGS} -Wno-unused-const-variable -DP4_BUILT="\"${BUILT}\"" -c post4.c
 
-p4$E : config.h p4.h p4.c
-	${CC} ${CFLAGS} ${LDFLAGS} -DTEST -DP4_BUILT="\"${BUILT}\"" -o p4$E p4.c
+post4$E : config.h post4.h post4.c
+	${CC} ${CFLAGS} ${LDFLAGS} -DTEST -DP4_BUILT="\"${BUILT}\"" -o post4$E post4.c
 

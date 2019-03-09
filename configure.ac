@@ -16,7 +16,7 @@ AC_DEFINE_UNQUOTED(P4_PLATFORM, [["${platform}"]])
 
 AC_SUBST(rel_tardir, '../../../..')
 
-AC_CONFIG_SRCDIR(src/p4.c)
+AC_CONFIG_SRCDIR(src/post4.c)
 
 #######################################################################
 #	Auxliary files to be modified later

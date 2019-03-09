@@ -7,9 +7,9 @@ Copyright 2007, 2019 Anthony Howe.  All rights reserved.
 Overview
 --------
 
-Post4 (`p4`) is a hosted indirect threaded Forth dialect written in C, based on the ["Forth 200x Draft 18.1, 2018-08-27"](http://www.forth200x.org/documents/forth18-1.pdf).  Post4 aims to implement the fewest possible built-in words in C, those that are needed to interact with memory and I/O, leaving the remaining standard words to be implemented in Forth.
+Post4 is a hosted indirect threaded Forth dialect written in C, based on the ["Forth 200x Draft 18.1, 2018-08-27"](http://www.forth200x.org/documents/forth18-1.pdf).  Post4 aims to implement the fewest possible built-in words in C, those that are needed to interact with memory and I/O, leaving the remaining standard words to be implemented in Forth.
 
-        usage: p4 [-V][-b file][-c file][-d size][-r size] [script [args ...]]
+        usage: post4 [-V][-b file][-c file][-d size][-r size] [script [args ...]]
 
         -b file         block file; default ./.p4.blk or $HOME/.p4.blk
         -c file         word definition file; default p4.p4
@@ -36,7 +36,7 @@ Examples
 
 Simple demostration on how to access the command line arguments.
 
-        $ p4 dumpargs.p4 hello world, tell us more!
+        $ post4 dumpargs.p4 hello world, tell us more!
 
 
 ### ed.p4 - Block Editor
@@ -76,7 +76,7 @@ which this happens is sometimes called a tick (in other words, each generation
 is a pure function of the one before). The rules continue to be applied
 repeatedly to create further generations.
 
-        $ p4 life.p4
+        $ post4 life.p4
 
 
 ### rand.p4
@@ -110,7 +110,7 @@ Pseudo-random number generators.  One is the simple code example from the ISO C1
 
 Example:
 
-        $ p4
+        $ post4
         ok incl rand.p4
         ok 12345 srand !
         ok rand . rand . rand . CR
