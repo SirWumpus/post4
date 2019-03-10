@@ -82,6 +82,8 @@ $1b5b367e CONSTANT key_pgdn
 ;
 
 ( -- x y )
+\ Query the cursor position, "\e[6n" , responds with "\e[rrr;cccR"
+\ where rrr and ccc are one or more ASCII digits, 1-based.
 : ansi_report S\" \e[6n" TYPE KEY KEY 2DROP key_number DROP 1- key_number DROP 1- SWAP ;
 
 VARIABLE edit_x
