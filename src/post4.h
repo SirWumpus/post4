@@ -57,6 +57,7 @@ extern "C" {
  *** No configuration below this point.
  ***********************************************************************/
 
+#include <err.h>
 #include <ctype.h>
 #include <errno.h>
 #include <assert.h>

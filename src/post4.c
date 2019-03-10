@@ -955,6 +955,15 @@ p4Create()
 
 	ctx->block_fd = p4BlockOpen(options.block_file);
 
+	if (p4_builtin_words == NULL) {
+		/* Link up the base dictionary. */
+		(void) p4EvalString(ctx, "", 0);
+	}
+
+	if (*options.core_file != '\0' && p4LoadFile(ctx, options.core_file)) {
+		goto error0;
+	}
+
 	return ctx;
 error0:
 	p4Free(ctx);
@@ -1193,12 +1202,7 @@ p4Repl(P4_Ctx *ctx)
 			word[1].prev = word;
 		}
 		p4_builtin_words = word->prev;
-	}
-	if (ctx->words == NULL) {
 		ctx->words = p4_builtin_words;
-		if (*options.core_file != '\0' && p4LoadFile(ctx, options.core_file)) {
-			return P4_THROW_EIO;
-		}
 	}
 
 #define NEXT	goto _next
@@ -2253,11 +2257,12 @@ p4EvalString(P4_Ctx *ctx, P4_Char *str, size_t len)
  ***********************************************************************/
 
 static const char usage[] =
-"usage: post4 [-V][-b file][-c file][-d size][-r size] [script [args ...]]\n"
+"usage: post4 [-V][-b file][-c file][-d size][-i file][-r size] [script [args ...]]\n"
 "\n"
 "-b file\t\tblock file; default " P4_BLOCK_FILE "\n"
 "-c file\t\tword definition file; default " P4_CORE_FILE "\n"
 "-d size\t\tdata stack size in cells; default " QUOTE(P4_STACK_SIZE) "\n"
+"-i file\t\tinclude file; can be repeated\n"
 "-r size\t\treturn stack size in cells; default " QUOTE(P4_STACK_SIZE) "\n"
 "-V\t\tbuild and version information\n\n"
 "If script is \"-\", read it from standard input."
@@ -2270,7 +2275,10 @@ main(int argc, char **argv)
 	int ch, rc;
 	P4_Ctx *ctx;
 
-	while ((ch = getopt(argc, argv, "b:c:d:r:V")) != -1) {
+	p4Init();
+	(void) atexit(p4Fini);
+
+	while ((ch = getopt(argc, argv, "b:c:d:i:r:V")) != -1) {
 		switch (ch) {
 		case 'b':
 			options.block_file = optarg;
@@ -2280,6 +2288,9 @@ main(int argc, char **argv)
 			break;
 		case 'd':
 			options.data_stack_size = strtol(optarg, NULL, 10);
+			break;
+		case 'i':
+			// Ignore for now.
 			break;
 		case 'r':
 			options.return_stack_size = strtol(optarg, NULL, 10);
@@ -2296,18 +2307,21 @@ main(int argc, char **argv)
 	options.argc = argc - optind;
 	options.argv = argv + optind;
 
-	p4Init();
-	(void) atexit(p4Fini);
-
 	if ((ctx = p4Create()) == NULL) {
-		(void) fprintf(stderr, "post4: %s\n", strerror(errno));
-		return EXIT_FAILURE;
+		err(EXIT_FAILURE, NULL);
+	}
+
+	optind = 1;
+	while ((ch = getopt(argc, argv, "b:c:d:i:r:V")) != -1) {
+		if (ch == 'i' && (rc = p4EvalFile(ctx, argv[optind-1])) != P4_THROW_OK) {
+			err(EXIT_FAILURE, "%s", argv[optind-1]);
+		}
 	}
 
 	if (argc <= optind || (argv[optind][0] == '-' && argv[optind][1] == '\0')) {
 		rc = p4Eval(ctx);
 	} else if (optind < argc && (rc = p4EvalFile(ctx, argv[optind]))) {
-		(void) fprintf(stderr, "post4: %s: %s\n", argv[optind], strerror(errno));
+		err(EXIT_FAILURE, "%s", argv[optind]);
 	}
 
 	p4Free(ctx);
