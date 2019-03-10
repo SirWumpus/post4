@@ -170,8 +170,10 @@ p4Init(void)
 	signal(SIGSEGV, sig_int);
 
 	is_tty = isatty(fileno(stdin));
+#ifdef ASSERT_LINE_BUFFERING
 	setvbuf(stdout, NULL, _IOLBF, 0);
 	setvbuf(stderr, NULL, _IOLBF, 0);
+#endif
 
 	/* Remember the split between the program and its static
 	 * data and data dynamically allocated later.  This can be
