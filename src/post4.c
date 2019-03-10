@@ -951,7 +951,7 @@ p4Create()
 	ctx->ds.size = options.data_stack_size;
 	P4_RESET(ctx->ds);
 
-	ctx->block_fd = p4BlockOpen(P4_BLOCK_FILE);
+	ctx->block_fd = p4BlockOpen(options.block_file);
 
 	return ctx;
 error0:

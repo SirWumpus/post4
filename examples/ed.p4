@@ -25,6 +25,16 @@ block_width block_height * CONSTANT block_size
 
 1 SCR !
 
+: block_append ( -- )
+	SCR @ blocks U> IF
+	  \ Extend block file by a blank block.
+	  SCR @ BUFFER block_size BLANK UPDATE SAVE-BUFFERS
+	THEN
+;
+
+\ Assert block file has at least one block.
+block_append
+
 ( row -- c- )
 : block_row block_width * SCR @ BLOCK + ;
 
@@ -213,14 +223,7 @@ MARKER rm_ed
 ( k -- k )
 : ed_quit 'q' edit_on_key SAVE-BUFFERS 2DROP 0 block_height 1+ AT-XY QUIT ;
 : ed_prev $10 edit_on_key SCR @ 1- 1 MAX DUP SCR ! BLOCK DROP ;
-: ed_next
-	$0e edit_on_key
-	1 SCR +! SCR @ blocks U> IF
-	  \ Extend block file by a blank block.
-	  SCR @ BUFFER block_size BLANK UPDATE SAVE-BUFFERS
-	THEN
-	SCR @ BLOCK DROP
-;
+: ed_next $0e edit_on_key 1 SCR +! block_append SCR @ BLOCK DROP ;
 
 ( row -- )
 : ed_erase_line block_row block_width BLANK 0 edit_x ! UPDATE ;
