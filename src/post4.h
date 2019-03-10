@@ -181,7 +181,7 @@ typedef struct {
 #define P4_INPUT_BLK		(-2)
 #define P4_INPUT_STR		(-1)
 #define P4_INPUT_TERM		( 0)
-#define P4_INPUT_IS_BLK(input)	((input).fd == P4_INPUT_BLK && (input).blk == 0)
+#define P4_INPUT_IS_BLK(input)	((input).fd == P4_INPUT_BLK && (input).blk > 0)
 #define P4_INPUT_IS_STR(input)	((input).fd == P4_INPUT_STR)
 #define P4_INPUT_IS_TERM(input)	((input).fd == P4_INPUT_TERM)
 #define P4_INPUT_IS_FILE(input)	((input).fd > 0)
