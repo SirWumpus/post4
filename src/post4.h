@@ -261,6 +261,8 @@ typedef struct {
 # define P4_PUSH_CSTR(stack, s)		(P4_PUSH(stack, s), P4_PUSH(stack, strlen(s)))
 # define P4_IS_OVER(stack)		((stack).base + (stack).size <= (stack).top)
 # define P4_IS_UNDER(stack)		((stack).top + 1 < (stack).base)
+# define P4_CAN_PUSH(stack, n)		(P4_LENGTH(stack) + (n) <= (stack).size)
+# define P4_CAN_POP(stack, n)		((n) <= P4_LENGTH(stack))
 
 typedef enum {
 	P4_STATE_INTERPRET,

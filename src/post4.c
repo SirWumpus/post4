@@ -794,6 +794,7 @@ p4BlockLoad(P4_Ctx *ctx, P4_Uint blk_num)
 	/* Change input source to the block buffer. */
 	ctx->input.buffer = ctx->block.buffer;
 	ctx->input.length = P4_BLOCK_SIZE;
+	ctx->input.size = P4_BLOCK_SIZE;
 	ctx->input.blk = blk_num;
 	ctx->input.offset = 0;
 	ctx->input.fp = NULL;
@@ -1178,8 +1179,10 @@ p4Repl(P4_Ctx *ctx)
 		P4_WORD("PARSE",	&&_parse,	0),
 		P4_WORD("parse-escape",	&&_parse_escape,0),		// p4
 		P4_WORD("PARSE-NAME",	&&_parse_name,	0),
+		P4_WORD("RESTORE-INPUT", &&_restore_input, 0),
 		P4_WORD("REFILL",	&&_refill,	0),
 		P4_WORD("SAVE-BUFFERS",	&&_save_buffers, 0),
+		P4_WORD("SAVE-INPUT",	&&_save_input, 0),
 		P4_WORD("SOURCE",	&&_source,	0),
 		P4_WORD("SOURCE-ID",	&&_source_id,	0),
 		P4_WORD("TIME&DATE",	&&_time_date,	0),
@@ -1535,7 +1538,7 @@ _args:		P4_PUSH(ctx->ds, (P4_Cell *) options.argv);
 		NEXT;
 
 		// ( key k -- value v )
-_env:		w = P4_POP(ctx->ds);		// Ignore k, S" NUL terminates.
+_env:		P4_DROP(ctx->ds, 1);		// Ignore k, S" NUL terminates.
 		w = P4_TOP(ctx->ds);
 		x.s = getenv(w.s);
 		P4_TOP(ctx->ds) = x;
@@ -1894,6 +1897,22 @@ _accept:	w = P4_POP(ctx->ds);
 		P4_TOP(ctx->ds) = w;
 		NEXT;
 
+		// ( -- xn ... x1 n )
+_save_input:	w.n = sizeof (P4_Input) / P4_CELL;
+		if (!P4_CAN_PUSH(ctx->ds, w.n)) {
+			LONGJMP(ctx->on_throw, P4_THROW_DS_OVER);
+		}
+		(void) memcpy(ctx->ds.top + 1, &ctx->input, sizeof (ctx->input));
+		P4_DROP(ctx->ds, -w.n);
+		P4_PUSH(ctx->ds, w.n);
+		NEXT;
+
+		// ( xn ... x1 n -- )
+_restore_input:	w = P4_POP(ctx->ds);
+		P4_DROP(ctx->ds, w.n);
+		(void) memcpy(&ctx->input, ctx->ds.top + 1, sizeof (ctx->input));
+		NEXT;
+
 		// ( -- flag)
 _refill:	w.u = p4Refill(ctx, &ctx->input);
 		P4_PUSH(ctx->ds, w);
@@ -2100,6 +2119,7 @@ _see:		str = p4ParseName(&ctx->input);
 				if (x.w->code == &&_lit) {
 					(void) printf("[ "P4_INT_FMT" , ] ", (*++w.p).n);
 				} else if (x.w->code == &&_branch || x.w->code == &&_branchz || x.w->code == &&_call) {
+// when the word after branch is actually an XT, like >here, shouldn't hit here.
 					(void) printf("[ "P4_INT_FMT" CELLS , ] ", (*++w.p).n / P4_CELL);
 				}
 			}
