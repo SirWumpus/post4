@@ -36,6 +36,7 @@ static int tty_fd = -1;
 static struct termios tty_raw;
 static struct termios tty_raw_nb;
 static struct termios tty_saved;
+static struct termios *tty_mode;
 #endif
 
 #define P4_INTERACTIVE(ctx)	(ctx->state == P4_STATE_INTERPRET && is_tty && P4_INPUT_IS_TERM(ctx->input))
@@ -195,6 +196,7 @@ p4Init(void)
 # endif
 	if (tty_fd != -1) {
 		(void) tcgetattr(tty_fd, &tty_saved);
+		tty_mode = &tty_saved;
 
 		tty_raw = tty_saved;
 
@@ -631,8 +633,9 @@ p4Refill(P4_Ctx *ctx, P4_Input *input)
 	}
 #ifdef HAVE_TCSETATTR
 	/* For a terminal restore original line input and echo settings. */
-	if (tty_fd != 0 && P4_INPUT_IS_TERM(ctx->input)) {
+	if (is_tty && tty_mode != &tty_saved) {
 		(void) tcsetattr(tty_fd, TCSADRAIN, &tty_saved);
+		tty_mode = &tty_saved;
 	}
 #endif
 	if ((n = p4Accept(&ctx->input, ctx->input.buffer, ctx->input.size)) < 0) {
@@ -1926,22 +1929,23 @@ _key:		(void) fflush(stdout);
 			NEXT;
 		}
 #ifdef HAVE_TCSETATTR
-		P4_PUSH(ctx->ds, (P4_Int)EOF);
-		if (tcsetattr(tty_fd, TCSANOW, &tty_raw) == 0) {
-			P4_TOP(ctx->ds).u = p4ReadByte(tty_fd);
+		if (is_tty && tty_mode != &tty_raw) {
+			(void) tcsetattr(tty_fd, TCSANOW, &tty_raw);
+			tty_mode = &tty_raw;
 		}
-#else
-		P4_PUSH(ctx->ds, p4ReadByte(tty_fd));
 #endif
+		P4_PUSH(ctx->ds, p4ReadByte(tty_fd));
 		NEXT;
 
 		// ( -- flag )
 _key_ready:	(void) fflush(stdout);
 		if (ctx->unget == EOF) {
 #ifdef HAVE_TCSETATTR
-			if (tcsetattr(tty_fd, TCSANOW, &tty_raw_nb) == 0) {
-				ctx->unget = p4ReadByte(tty_fd);
+			if (is_tty && tty_mode != &tty_raw_nb) {
+				(void) tcsetattr(tty_fd, TCSANOW, &tty_raw_nb);
+				tty_mode = &tty_raw_nb;
 			}
+			ctx->unget = p4ReadByte(tty_fd);
 #else
 			if (p4SetNonBlocking(tty_fd, 1) == 0) {
 				ctx->unget = p4ReadByte(tty_fd);
