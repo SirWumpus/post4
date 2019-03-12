@@ -1435,6 +1435,13 @@ VARIABLE SCR
 : list+ SCR @ 1+ LIST ;
 
 \
+\ ... LOAD ...
+\
+\ (S: i*x u -- j*x )
+\
+: LOAD >R SAVE-INPUT R> DUP BLK ! BLOCK 1024 EVALUATE RESTORE-INPUT ;
+
+\
 \ ... AT-XY ...
 \
 \ (S: column row -- )

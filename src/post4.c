@@ -787,32 +787,6 @@ p4BlockBuffer(P4_Ctx *ctx, P4_Uint blk_num, int with_read)
 	ctx->block.number = blk_num;
 }
 
-void
-p4BlockLoad(P4_Ctx *ctx, P4_Uint blk_num)
-{
-	P4_INPUT_PUSH(&ctx->input);
-
-	p4BlockBuffer(ctx, blk_num, 1);
-
-	/* Change input source to the block buffer. */
-	ctx->input.buffer = ctx->block.buffer;
-	ctx->input.length = P4_BLOCK_SIZE;
-	ctx->input.size = P4_BLOCK_SIZE;
-	ctx->input.blk = blk_num;
-	ctx->input.offset = 0;
-	ctx->input.fp = NULL;
-
-	/* While input is a block, treat it as an input string for
-	 * interpreting, otherwise REFILL would proceed to the next
-	 * block, contrary to the defintion of LOAD.
-	 */
-	ctx->input.fd = P4_INPUT_STR;
-
-	(void) p4Repl(ctx);
-
-	P4_INPUT_POP(&ctx->input);
-}
-
 /***********************************************************************
  *** Core
  ***********************************************************************/
@@ -1177,7 +1151,6 @@ p4Repl(P4_Ctx *ctx)
 		P4_WORD("INCLUDED",	&&_included,	0),
 		P4_WORD("KEY",		&&_key,		0),
 		P4_WORD("KEY?",		&&_key_ready,	0),
-		P4_WORD("LOAD",		&&_load,	0),
 		P4_WORD("MS",		&&_ms,		0),
 		P4_WORD("PARSE",	&&_parse,	0),
 		P4_WORD("parse-escape",	&&_parse_escape,0),		// p4
@@ -2000,11 +1973,6 @@ _buffer:	w = P4_TOP(ctx->ds);
 		P4_TOP(ctx->ds).s = ctx->block.buffer;
 		NEXT;
 
-		// ( u -- )
-_load:		w = P4_POP(ctx->ds);
-		p4BlockLoad(ctx, w.u);
-		NEXT;
-
 		// ( -- )
 _empty_buffers:	ctx->block.state = P4_BLOCK_FREE;
 
@@ -2262,7 +2230,6 @@ p4EvalString(P4_Ctx *ctx, P4_Char *str, size_t len)
 	ctx->input.length = len;
 	ctx->input.buffer = str;
 	ctx->input.offset = 0;
-	ctx->input.blk = 0;
 
 	if ((rc = p4Exception(ctx, p4Repl(ctx))) != 0) {
 		ctx->rs.top = rs;
