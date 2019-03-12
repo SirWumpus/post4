@@ -1885,8 +1885,8 @@ _input_offset:	P4_PUSH(ctx->ds, (P4_Cell *) &ctx->input.offset);
 		NEXT;
 
 		// ( -- caddr u )
-_source:	P4_PUSH(ctx->ds, ctx->input.buffer + ctx->input.offset);
-		P4_PUSH(ctx->ds, ctx->input.length - ctx->input.offset);
+_source:	P4_PUSH(ctx->ds, ctx->input.buffer);
+		P4_PUSH(ctx->ds, ctx->input.length);
 		NEXT;
 
 		// ( -- -2 | -1 | 0 | fd )

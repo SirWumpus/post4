@@ -201,6 +201,12 @@ CREATE PAD /PAD CHARS ALLOT
 \
 : +! DUP @ ROT + SWAP ! ;
 
+\ ... /STRING ...
+\
+\ (S: caddr u n -- caddr' u' )
+\
+: /STRING >R R@ - SWAP R> CHARS + SWAP ;
+
 \
 \ ... 1+ ...
 \
@@ -663,6 +669,9 @@ CREATE PAD /PAD CHARS ALLOT
 	THEN
 ; IMMEDIATE
 
+\ ( -- caddr u )
+: source-remaining SOURCE >IN @ /STRING ;
+
 \ ( delim -- bool )
 \
 \ Scan the input buffer character at a time until either the input
@@ -671,7 +680,7 @@ CREATE PAD /PAD CHARS ALLOT
 \
 : parse-more
 	BEGIN
-	  SOURCE 0= IF
+	  source-remaining 0= IF
 	    2DROP TRUE EXIT	\ empty input buffer
 	  THEN
 	  1 >IN +!
@@ -895,7 +904,7 @@ VARIABLE catch_frame 0 catch_frame !
 \
 : emit-more
 	BEGIN
-	  SOURCE 0= IF
+	  source-remaining 0= IF
 	    CR
 	    2DROP TRUE EXIT	\ empty input buffer
 	  THEN

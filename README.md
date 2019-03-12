@@ -224,6 +224,11 @@ Divide the dividend `dend` by the divisor `dsor` leaving the symmetric quotient 
 ( `dend` `dsor` -- `rem` `quot` )  
 Divide the dividend `dend` by the divisor `dsor` leaving the remainder `rem` and quotient `quot` on top the stack.  This is the same as the `SM/REM` remainder.
 
+- - - 
+### /STRING
+( `caddr` `u` `n` -- `caddr'` `u'` )  
+Adjust the character string at `caddr u` by offset `n` characters, by adding `n` to `caddr` and subtracting `n` from length `u`.
+
 - - -
 ### 0<
 ( `n` -- `bool` )  
