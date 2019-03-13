@@ -134,15 +134,23 @@ static int p4Repl(P4_Ctx *ctx);
  *** Context
  ***********************************************************************/
 
+static int sig_map[][2] = {
+	{ SIGINT, P4_THROW_SIGINT },
+	{ SIGFPE, P4_THROW_SIGFPE },
+	{ SIGBUS, P4_THROW_SIGBUS },
+	{ SIGSEGV, P4_THROW_SIGSEGV },
+	{ 0, 0 }
+};
+
 static void
 sig_int(int signum)
 {
 	if (signal_ctx != NULL) {
-		switch (signum) {
-		case SIGINT:
-			signum = P4_THROW_USER; break;
-		case SIGSEGV:
-			signum = P4_THROW_EFAULT; break;
+		for (int i = 0; sig_map[i][0] != 0; i++) {
+			if (sig_map[i][0] == signum) {
+				signum = sig_map[i][1];
+				break;
+			}
 		}
 		LONGJMP(signal_ctx->on_throw, signum);
 	}
@@ -169,6 +177,8 @@ p4Init(void)
 
 	signal(SIGINT, sig_int);
 	signal(SIGSEGV, sig_int);
+	signal(SIGFPE, sig_int);
+	signal(SIGBUS, sig_int);
 
 	is_tty = isatty(fileno(stdin));
 #ifdef ASSERT_LINE_BUFFERING
@@ -1745,6 +1755,9 @@ _mul:		w = P4_POP(ctx->ds);
 
 		// ( n1 n2 -- n3 )
 _div:		w = P4_POP(ctx->ds);
+		if (w.n == 0) {
+			LONGJMP(ctx->on_throw, P4_THROW_DIV_ZERO);
+		}
 		P4_TOP(ctx->ds).n /= w.n;
 		NEXT;
 
@@ -1759,6 +1772,9 @@ _div:		w = P4_POP(ctx->ds);
 		DIV_T qr;
 _sm_div_rem:	w = P4_POP(ctx->ds);
 		x = P4_TOP(ctx->ds);
+		if (w.n == 0) {
+			LONGJMP(ctx->on_throw, P4_THROW_DIV_ZERO);
+		}
 		qr = DIV(x.n, w.n);
 		P4_TOP(ctx->ds).n = qr.rem;
 		P4_PUSH(ctx->ds, qr.quot);
@@ -1774,6 +1790,9 @@ _sm_div_rem:	w = P4_POP(ctx->ds);
 		P4_Int q, m;
 _fm_div_mod:	w = P4_POP(ctx->ds);
 		x = P4_TOP(ctx->ds);
+		if (w.n == 0) {
+			LONGJMP(ctx->on_throw, P4_THROW_DIV_ZERO);
+		}
 		q = x.n / w.n;
 		m = x.n % w.n;
 		if (m != 0 && (w.n ^ x.n) < 0) {
@@ -1788,6 +1807,9 @@ _fm_div_mod:	w = P4_POP(ctx->ds);
 		P4_Uint q, m;
 _um_div_mod:	w = P4_POP(ctx->ds);
 		x = P4_TOP(ctx->ds);
+		if (w.n == 0) {
+			LONGJMP(ctx->on_throw, P4_THROW_DIV_ZERO);
+		}
 		q = x.u / w.u;
 		m = x.u % w.u;
 		P4_TOP(ctx->ds).u = m;
@@ -1796,6 +1818,9 @@ _um_div_mod:	w = P4_POP(ctx->ds);
 	}
 		// ( n1 n2 -- n3 )
 _mod:		w = P4_POP(ctx->ds);
+		if (w.n == 0) {
+			LONGJMP(ctx->on_throw, P4_THROW_DIV_ZERO);
+		}
 		P4_TOP(ctx->ds).n %= w.n;
 		NEXT;
 

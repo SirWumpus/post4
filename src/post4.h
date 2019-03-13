@@ -302,7 +302,7 @@ struct p4_ctx {
 #define P4_THROW_RS_UNDER	(-6)	/* return stack underflow */
 #define P4_THROW_LOOP_DEPTH	(-7)	/* do-loops nested too deeply during execution */
 #define P4_THROW_DICT_OVER	(-8)	/* dictionary overflow */
-#define P4_THROW_EFAULT		(-9)	/* invalid memory address */
+#define P4_THROW_SIGSEGV	(-9)	/* invalid memory address */
 #define P4_THROW_DIV_ZERO	(-10)	/* division by zero */
 #define P4_THROW_ERANGE		(-11)	/* result out of range */
 #define P4_THROW_EINVAL		(-12)	/* argument type mismatch */
@@ -321,7 +321,7 @@ struct p4_ctx {
 #define P4_THROW__25		(-25)	/* return stack imbalance */
 #define P4_THROW__26		(-26)	/* loop parameters unavailable */
 #define P4_THROW__27		(-27)	/* invalid recursion */
-#define P4_THROW_USER		(-28)	/* user interrupt */
+#define P4_THROW_SIGINT		(-28)	/* user interrupt */
 #define P4_THROW_COMPILING	(-29)	/* compiler nesting */
 #define P4_THROW__30		(-30)	/* obsolescent feature */
 #define P4_THROW_NOT_CREATED	(-31)	/* word not defined by CREATE */
