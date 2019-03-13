@@ -12,10 +12,10 @@ Post4 is a hosted indirect threaded Forth dialect written in C, based on the ["F
         usage: post4 [-V][-b file][-c file][-d size][-i file][-r size] [script [args ...]]
 
         -b file         block file; default ./.post4.blk or $HOME/.post4.blk
-        -c file         word definition file; default p4.p4
-        -d size         data stack size in cells; default 32
-        -i file         include file; can be repeated
-        -r size         return stack size in cells; default 32
+        -c file         word definition file; default post4.p4 from $POST4_PATH
+        -d size         data stack size in cells; default 64
+        -i file         include file; can be repeated; searches $POST4_PATH
+        -r size         return stack size in cells; default 64
         -V              build and version information
         
         If script is "-", read it from standard input.
@@ -27,7 +27,7 @@ By default a user block file, `.post4.blk`, is opened from the current directory
 
 Post4 reads input from standard input and writes to standard output, which can be redirected:
 
-        echo "123 69 + ." | p4
+        echo "123 69 + ." | post4
 
 
 Examples
@@ -607,6 +607,17 @@ Set the numeric conversion radix to ten (decimal).
 ( `<spaces>name` -- )  
 Create a definition for `name`, which when executed will execute the saved execution token; default `ABORT`.  (Think indirect word execution.)
 
+        ok DEFER foo
+        ok foo
+        -1 thrown: ABORT
+        ok : hello S\" Hello world! woot woot\n" TYPE ;
+        ok ' hello IS foo
+        ok foo
+        Hello world! woot woot
+        ok ACTION-OF foo EXECUTE
+        Hello world! woot woot
+        ok
+
 - - -
 ### DEFER!
 ( `xt2` `xt1` -- )  
@@ -746,7 +757,7 @@ Floored division of the dividend `dend` by the divisor `dsor` leaving the modulu
 - - -
 ### HERE
 ( -- `addr` )  
-`addr` is the data-space pointer that will next be assigned by `,`, `ALIGN`, `ALLOT`, `C,`, `COMPILE,`.
+`addr` is the data-space pointer that will next be assigned by `,`, `ALIGN`, `ALLOT`, `C,`, `COMPILE,`.  See `RESERVE` below.
 
 - - -
 ### HEX
@@ -1025,12 +1036,12 @@ Logical right shift of `x1` by `u` bits, putting `u` zeroes into the most signif
 - - -
 ### S" ccc"
 ( `ccc<quote>` -- `caddr` `u` )  
-When interpreting, copy the string `ccc` as-is to a transient buffer and return `caddr u`.  When compiling, append the string `ccc` as-is to the current word so when executed it leaves `caddr u` of the string on the stack.
+When interpreting, copy the string `ccc` as-is to a transient buffer and return `caddr u`.  When compiling, append the string `ccc` as-is to the current word so when executed it leaves `caddr u` of the string on the stack.  Note as an extension strings are also `NUL` terminated to facilitate use of host environment functions.
 
 - - -
 ### S\\" ccc"
 ( `ccc<quote>` -- `caddr` `u` )  
-When interpreting, copy the escaped string `ccc` to a transient buffer and return `caddr u`.  When compiling, append the escaped string `ccc` to the current word so when executed it leaves `caddr u` of the string on the stack.
+When interpreting, copy the escaped string `ccc` to a transient buffer and return `caddr u`.  When compiling, append the escaped string `ccc` to the current word so when executed it leaves `caddr u` of the string on the stack. Note as an extension strings are also `NUL` terminated to facilitate use of host environment functions.
 
 - - -
 ### SAVE-BUFFERS
@@ -1315,7 +1326,7 @@ Offset into the current data-space for the word being compiled.  Similar to the 
 - - -
 ### args
 ( -- `argv` `argc` )  
-Return the number of arguments on the command line `argc` and the NULL terminated array of C string pointers `argv`.
+Return the number of arguments on the command line `argc` and the NULL terminated array of C string pointers `argv`.  See example `dumpargs.p4`.
 
 - - -
 ### address-unit-bits
@@ -1325,7 +1336,7 @@ Size of one address unit in bits.  This is a deviation from `ENVIRONMENT?` queri
 - - -
 ### blocks
 ( -- `u` )  
-Number of blocks `u` currently in the block file.
+Number of blocks `u` currently in the block file, one through to `u`.  The block file can be extended by writing to block `u`, the file will be extended with intervening blank blocks from the current end upto but not including block `u`, which the actual write will fill.
 
 - - -
 ### bye_code
@@ -1347,14 +1358,17 @@ Subtract the size in address units of a character.
 Print the counted string.  See also `puts`.
 
 - - -
-### epoch_seconds
+### epoch-seconds
 ( -- `u` )  
 System clock time in seconds from the epoch.
 
 - - -
 ### env
-( key k -- value v )  
-Lookup the environment variable string `key k`.  Return string `value v`; if length `v` is `-1`, then the environment variable `key` was not found and `value` is invalid.
+( `key` `k` -- `value` `v` )  
+Lookup the environment variable string `key` `k`.  Return string `value` `v`; if length `v` is `-1`, then the environment variable `key` was not found and `value` is invalid.
+
+        S" HOME" env puts CR
+        S" USER" env puts CR
 
 - - -
 ### floored
@@ -1416,8 +1430,8 @@ Backslash followed by any other character escapes that character, ie. `\\` is a 
 ( caddr -- )  
 Print a NUL terminated string.
 
-        CREATE greet 0" Hello world.\n"
-        greet puts
+        CREATE greet S\" Hello world.\n"
+        greet drop puts
 
 - - -
 ### reserve
@@ -1432,7 +1446,7 @@ Should `ALLOT` enlarge and relocate the data-space, the address saved by `HERE` 
 - - -
 ### strlen
 ( caddr -- u )  
-String length of NUL terminated string.
+String length of NUL terminated string.  
 
 - - -
 ### _bp
@@ -1457,7 +1471,7 @@ Call relative.  The integer that immediately follows is the relative distance in
 - - -
 ### _ds
 ( -- `aaddr` `n` )  
-Push the data stack base address and current depth.  This stack is a fixed size (default 32 cells) and grows upward.
+Push the data stack base address and current depth.  This stack is a fixed size and grows upward.
 
 - - -
 ### _ds_size
@@ -1472,12 +1486,7 @@ Store `addr` into the data stack pointer.
 - - -
 ### _dsp@
 ( -- `aaddr` )  
-Fetch data stack pointer.
-
-- - -
-### _ip
-( -- `aaddr` )  
-Address of the cell holding the inner interpreter's instruction pointer.
+Fetch the data stack pointer.
 
 - - -
 ### _is_immediate
@@ -1492,7 +1501,7 @@ Return to the context saved at the start of the REPL (`QUIT`) passing `n`.  Valu
 - - -
 ### _rs
 ( -- `aaddr` `n` )  
-Push the return stack base address and current depth.  This stack is a fixed size (default 32 cells) and grows upward.
+Push the return stack base address and current depth.  This stack is a fixed size and grows upward.
 
 ### _rs_size
 ( -- `n`)  
@@ -1506,7 +1515,7 @@ Store `addr` into the return stack pointer.
 - - -
 ### _rsp@
 ( -- `aaddr` )  
-Fetch return stack pointer.
+Fetch the return stack pointer.
 
 - - -
 ### _stack_dump
@@ -1525,20 +1534,20 @@ This is a list of `THROW` codes used internally by Post4.
 * -4 stack underflow  
 * -5 return stack overflow  
 * -6 return stack underflow  
-* -9 invalid memory address (SIGSEGV)  
+* -9 invalid memory address (`SIGSEGV`)  
 * -13 undefined word  
 * -14 interpreting a compile-only word  
 * -17 pictured numeric output string overflow  
 * -21 unsupported operation  
-* -23 address alignment exception (SIGBUS)  
+* -23 address alignment exception (`SIGBUS`)  
 * -24 invalid numeric argument
-* -28 user interrupt (SIGINT)  
+* -28 user interrupt (`SIGINT`)  
 * -29 compiler nesting  
 * -31 word not defined by `CREATE`
 * -33 block read exception
 * -34 block write exception
 * -35 invalid block number, such as zero (0)
-* -55 floating-point unidentified fault (SIGFPE)  
+* -55 floating-point unidentified fault (`SIGFPE`)  
 * -56 `QUIT`  
 * -61 `ALLOT` or `RESIZE`
 

@@ -26,7 +26,7 @@ extern "C" {
 #endif
 
 #ifndef P4_STACK_SIZE
-#define P4_STACK_SIZE			32		/* in CELLS */
+#define P4_STACK_SIZE			64		/* in CELLS */
 #endif
 
 #ifndef P4_STRING_SIZE
