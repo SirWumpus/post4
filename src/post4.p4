@@ -778,6 +778,13 @@ VARIABLE catch_frame 0 catch_frame !
 : QUIT -56 THROW ;
 
 \
+\ ... HOLDS ...
+\
+\ (S: caddr u -- )
+\
+: HOLDS BEGIN DUP WHILE 1- 2DUP + C@ HOLD REPEAT 2DROP ;
+
+\
 \ ... TYPE ...
 \
 \ (S: caddr u -- )
@@ -1506,6 +1513,50 @@ VARIABLE SCR
 \	would require extra handling.
 \
 : BUFFER: CREATE ALLOT ;
+
+\ ... DEFER name ...
+\
+\ (S: <spaces>name -- )
+\
+: DEFER CREATE ['] ABORT , DOES> @ EXECUTE ;
+
+\ ... DEFER! ...
+\
+\ (S: xt2 xt1 -- )
+\
+: DEFER! >BODY ! ;
+
+\ ... DEFER@ ...
+\
+\ (S: xt1 -- xt2 )
+\
+: DEFER@ >BODY @ ;
+
+\ ... ACTION-OF ...
+\
+\ (S: <spaces>name -- xt )
+\
+: ACTION-OF
+	STATE @ IF
+	  POSTPONE [']
+	  POSTPONE DEFER@
+	ELSE
+	  ' DEFER@
+	THEN
+; IMMEDIATE
+
+\ ... IS name ...
+\
+\ (S: xt <spaces>name -- )
+\
+: IS
+	STATE @ IF
+	  POSTPONE [']
+	  POSTPONE DEFER!
+	ELSE
+	  ' DEFER!
+	THEN
+; IMMEDIATE
 
 MARKER rm_user_words
 

@@ -386,6 +386,11 @@ If `x1` is not equal to zero, display the message that follows up to the closing
 Return the absolute value of `n`.
 
 - - -
+### ACTION-OF name
+( `<spaces>name` -- `xt` )  
+Return the execution token `xt` of a deferred `name`.  See `DEFER`.
+
+- - -
 ### ACCEPT
 ( `caddr` `+n1` -- `+n2` )  
 Accept up to `+n1` (between 1 and +32767) characters into the buffer given by `caddr`; the number of characters actually received, `+n2`, is pushed.
@@ -598,6 +603,21 @@ Left rotate the control-stack `u` cells.
 Set the numeric conversion radix to ten (decimal).
 
 - - -
+### DEFER name
+( `<spaces>name` -- )  
+Create a definition for `name`, which when executed will execute the saved execution token; default `ABORT`.  (Think indirect word execution.)
+
+- - -
+### DEFER!
+( `xt2` `xt1` -- )  
+Set the deferred word `xt1` to execute `xt2` when called.
+
+- - -
+### DEFER@
+( `xt1` -- `xt2` )  
+Get the execute token `xt2` stored by deferred word `xt1`.
+
+- - -
 ### DEPTH
 ( -- `u` )  
 Number of cells on the data stack before `u` was placed there.
@@ -739,6 +759,11 @@ Set the numeric conversion radix to sixteen (hexdecimal).
 Append `char` to the picture numeric output string.
 
 - - -
+### HOLDS
+( `caddr` `u` -- )
+Append string `caddr` `u` to the pictured numeric output string.
+
+- - -
 ### I
 ( -- `n|u` )  
 `n|u` is a copy of the current (innermost) loop index.
@@ -777,6 +802,11 @@ Make the most recent definition an immediate word.
 ### INVERT
 ( `x1` -- `x2` )  
 Take the one's complement of `x1`.
+
+- - -
+### IS name
+( `xt` `<spaces>name` -- )  
+Set deferred word `name` to the execution token `xt`.  See `DEFER`.
 
 - - -
 ### J
