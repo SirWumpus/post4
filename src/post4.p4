@@ -4,21 +4,18 @@ MARKER rm_core_words
 
 \ Post4 Copyright 2007, 2019 by Anthony Howe.  All rights reserved.
 
-\
 \ ... .S ...
 \
 \ ( -- )
 \
 : .S 'd' EMIT 's' EMIT '\n' EMIT _ds _stack_dump ;
 
-\
 \ ... .RS ...
 \
 \ ( -- )
 \
 : .RS 'r' EMIT 's' EMIT '\n' EMIT _rs 1 - _stack_dump ;
 
-\
 \ ... reserve ...
 \
 \ (S: u -- addr )
@@ -49,14 +46,12 @@ MARKER rm_core_words
 \ ( xt -- )
 : COMPILE, , ;
 
-\
 \ value CONSTANT name
 \
 \ (C: x <spaces>name -- ) \ (S: -- x )
 \
 : CONSTANT CREATE , DOES> @ ;
 
-\
 \ ... FALSE ...
 \ ... TRUE ...
 \
@@ -65,7 +60,6 @@ MARKER rm_core_words
 0 CONSTANT FALSE
 FALSE INVERT CONSTANT TRUE
 
-\
 \ ... /CHAR ...
 \ ... /CELL ...
 \
@@ -74,27 +68,25 @@ FALSE INVERT CONSTANT TRUE
 1 CHARS CONSTANT /CHAR
 1 CELLS CONSTANT /CELL
 
-\
 \ ... BL ...
 \
 \ (S: -- ' ' )
 \
 '\s' CONSTANT BL
 
+\ ... /PAD ...
 \
 \ ( -- n )
 \ Size must be at least 84 characters.
 \
 128 CONSTANT /PAD
 
-\
 \ ... PAD ...
 \
 \ ( -- )
 \
 CREATE PAD /PAD CHARS ALLOT
 
-\
 \ VARIABLE name
 \
 \ (C: <spaces>name -- ) \ (S: -- aaddr )
@@ -104,29 +96,26 @@ CREATE PAD /PAD CHARS ALLOT
 : [ FALSE STATE ! ; IMMEDIATE
 : ] TRUE STATE ! ;
 
-\
 \ ... CELL+ ...
 \
 \ (S: aaddr1 -- aaddr2 )
 \
 : CELL+ /CELL + ;
 
-\
 \ ... NEGATE ...
+\
 \ (S: n1 -- n2 )
 \
 : NEGATE INVERT 1 + ;
 
-\
 \ ... ALIGNED ...
 \
 \ (S: addr -- aaddr )
 \
-\  (addr + (pow2-1)) & -pow2
+\ 	(addr + (pow2-1)) & -pow2
 \
 : ALIGNED /CELL 1 - + /CELL NEGATE AND ;
 
-\
 \ ... CHAR+ ...
 \
 \ (S: caddr1 -- caddr2 )
@@ -134,49 +123,42 @@ CREATE PAD /PAD CHARS ALLOT
 : CHAR+ /CHAR + ;
 : CHAR- /CHAR - ;
 
-\
 \ ... DECIMAL ...
 \
 \ (S: -- )
 \
 : DECIMAL #10 BASE ! ;
 
-\
 \ ... HEX ...
 \
 \ (S: -- )
 \
 : HEX #16 BASE ! ;
 
-\
 \ ... OCTAL ...
 \
 \ (S: -- )
 \
 : octal #8 BASE ! ;
 
-\
 \ ... NIP ...
 \
 \ (S: x1 x2 -- x2 )
 \
 : NIP SWAP DROP ;
 
-\
 \ ... OVER ...
 \
 \ (S: x1 x2 -- x1 x2 x1 )
 \
 : OVER 1 PICK ;
 
-\
 \ ... ROT ...
 \
 \ (S: a b c -- b c a )
 \
 : ROT 2 ROLL ;
 
-\
 \ ... S>D ...
 \
 \ ( n -- d )
@@ -187,14 +169,12 @@ CREATE PAD /PAD CHARS ALLOT
 \
 : S>D DUP 0< SWAP ;		\ Sign extend into high word.
 
-\
 \ ... TUCK ...
 \
 \ (S: x1 x2 -- x2 x1 x2 )
 \
 : TUCK SWAP OVER ;
 
-\
 \ ... +! ...
 \
 \ (S: n addr --  )
@@ -207,28 +187,24 @@ CREATE PAD /PAD CHARS ALLOT
 \
 : /STRING >R R@ - SWAP R> CHARS + SWAP ;
 
-\
 \ ... 1+ ...
 \
 \ (S: nu1 -- nu2 )
 \
 : 1+ 1 + ;
 
-\
 \ ... 1- ...
 \
 \ (S: nu1 -- nu2 )
 \
 : 1- 1 - ;
 
-\
 \ ... 2! ...
 \
 \ (S: lo hi aaddr -- )
 \
 : 2! SWAP OVER ! CELL+ ! ;
 
-\
 \ ... 2@ ...
 \
 \ (S: aaddr -- lo hi )
@@ -237,49 +213,42 @@ CREATE PAD /PAD CHARS ALLOT
 \
 : 2@ DUP CELL+ @ SWAP @ ;
 
-\
 \ ... 2* ...
 \
 \ (S: x1 -- x2 )
 \
 : 2* 1 LSHIFT ;
 
-\
 \ ... 2/ ...
 \
 \ (S: x1 -- x2 )
 \
 : 2/ 1 RSHIFT ;
 
-\
 \ ... 2DROP ...
 \
 \ (S: x1 x2 -- )
 \
 : 2DROP DROP DROP ;
 
-\
 \ ... 2DUP ...
 \
 \ (S: x1 x2 -- x1 x2 x1 x2 )
 \
 : 2DUP OVER OVER ;
 
-\
 \ ... 2OVER ...
 \
 \ (S: x1 x2 x3 x4 -- x1 x2 x3 x4 x1 x2 )
 \
 : 2OVER 3 PICK 3 PICK ;
 
-\
 \ ... 2SWAP ...
 \
 \ (S: x1 x2 x3 x4 -- x3 x4 x1 x2 )
 \
 : 2SWAP 3 ROLL 3 ROLL ;
 
-\
 \ ... 2>R ...
 \
 \ (S: x1 x2 -- )(R: -- x1 x2 )
@@ -290,7 +259,6 @@ CREATE PAD /PAD CHARS ALLOT
 	>R >R			\ S: --  R: x1 x2 ip
 ;
 
-\
 \ ... 2R> ...
 \
 \ (S: -- x1 x2 )(R: x1 x2 -- )
@@ -301,7 +269,6 @@ CREATE PAD /PAD CHARS ALLOT
 	>R SWAP			\ S: x1 x2  R: ip
 ;
 
-\
 \ ... 2R@ ...
 \
 \ (S: -- x1 x2 )(R: x1 x2 -- x1 x2 )
@@ -312,84 +279,72 @@ CREATE PAD /PAD CHARS ALLOT
 	ROT >R			\ S: x1 x2  R: x1 x2 ip
 ;
 
-\
 \ ... */ ...
 \
 \ (S: n1 n2 dsor -- quot )
 \
 : */ >R * R> / ;
 
-\
 \ ... */MOD ...
 \
 \ (S: n1 n2 dsor -- rem quot )
 \
 : */ >R * R> /MOD ;
 
-\
 \ ... 0<> ...
 \
 \ (S: nu -- flag )
 \
 : 0<> 0= 0= ;
 
-\
 \ ... 0> ...
 \
 \ (S: n -- flag )
 \
 : 0> 0 SWAP - 0< ;
 
-\
 \ ... = ...
 \
 \ (S: nu1 nu2 -- flag )
 \
 : = - 0= ;
 
-\
 \ ... <> ...
 \
 \ (S: nu1 nu2 -- flag )
 \
 : <> = 0= ;
 
-\
 \ ... < ...
 \
 \ (S: n1 n2 -- flag )
 \
 : < - 0< ;
 
-\
 \ ... > ...
 \
 \ (S: n1 n2 -- flag )
 \
 : > SWAP < ;
 
-\
 \ ... U> ...
 \
 \ (S: n1 n2 -- flag )
 \
 : U> SWAP U< ;
 
-\
 \ ... <= ...
 \
 \ (S: n1 n2 -- flag )
 \
 : <= - DUP 0= SWAP 0< OR ;
 
-\
 \ ... >= ...
 \
 \ (S: n1 n2 -- flag )
 \
 : >= < 0= ;
 
-\
 \ ... WITHIN ...
 \
 \ (S: nu1 nu2 nu3 -- flag )
@@ -399,67 +354,56 @@ CREATE PAD /PAD CHARS ALLOT
 \
 : WITHIN OVER - >R - R> U< ;
 
-\
 \ ... CR ...
 \
 \ (S: -- )
 \
 : CR '\r' EMIT '\n' EMIT ;
 
-\
 \ ... DEPTH ...
 \
 \  ( -- u )
 \
 : DEPTH _ds NIP ;
 
-\
 \ ... SPACE ...
 \
 \ (S: -- )
 \
 : SPACE BL EMIT ;
 
-\
 \ ... COUNT ...
 \
 \ (S: caddr1 -- caddr2 u )
 \
 : COUNT DUP C@ SWAP CHAR+ SWAP ;
 
-\
 \ ...  CHAR  ...
 \
 \ (S: <spaces>name -- char )
 \
 : CHAR PARSE-NAME DROP C@ ;
 
-\
 \ ... : name ... [ x ] LITERAL ... ;
 \
 \ (S: x -- )
 \
 : LITERAL POSTPONE _lit , ; IMMEDIATE
 
-\
 \ ...  [CHAR]  ...
 \
 \  (C: <spaces>name -- ) \ (S: -- char )
 \
 : [CHAR] CHAR POSTPONE LITERAL ; IMMEDIATE
 
-\
 \ ... ['] name ...
 \
 \  (C: <spaces>name -- ) \ (S: -- xt )
 \
 : ['] ' POSTPONE LITERAL ; IMMEDIATE
 
-\
 \ ... BEGIN ... AGAIN
-\
 \ ... BEGIN ... test UNTIL ...
-\
 \ ... BEGIN ... test WHILE ... REPEAT ...
 \
 \  (C: -- dest )
@@ -469,7 +413,6 @@ CREATE PAD /PAD CHARS ALLOT
 \
 : BEGIN >HERE ; IMMEDIATE
 
-\
 \ ... BEGIN ... AGAIN
 \
 \  (C: dest -- )
@@ -479,7 +422,6 @@ CREATE PAD /PAD CHARS ALLOT
 \
 : AGAIN POSTPONE _branch >HERE - , ; IMMEDIATE
 
-\
 \ ... BEGIN ... test UNTIL ...
 \
 \  (C: dest -- ) \ (S: flag -- )
@@ -489,7 +431,6 @@ CREATE PAD /PAD CHARS ALLOT
 \
 : UNTIL POSTPONE _branchz >HERE - , ; IMMEDIATE
 
-\
 \ ... AHEAD ... THEN ...
 \
 \  (C: -- forw )
@@ -499,9 +440,7 @@ CREATE PAD /PAD CHARS ALLOT
 \
 : AHEAD POSTPONE _branch >HERE 0 , ; IMMEDIATE
 
-\
 \ ... test IF ... THEN ...
-\
 \ ... test IF ... ELSE ... THEN ...
 \
 \  (C: -- forw ) \ (S: flag -- )
@@ -525,11 +464,8 @@ CREATE PAD /PAD CHARS ALLOT
 \
 : IF POSTPONE _branchz >HERE 0 , ; IMMEDIATE
 
-\
 \ ... AHEAD ... THEN ...
-\
 \ ... test IF ... THEN ...
-\
 \ ... test IF ... ELSE ... THEN ...
 \
 \  (C: forw -- )
@@ -544,7 +480,6 @@ CREATE PAD /PAD CHARS ALLOT
 	!			\  C: --
 ; IMMEDIATE
 
-\
 \ ... test IF ... ELSE ... THEN ...
 \
 \  (C: forw1 -- forw2 )
@@ -558,13 +493,10 @@ CREATE PAD /PAD CHARS ALLOT
 	POSTPONE THEN		\  C: forw2
 ; IMMEDIATE
 
-\
 \ ... BEGIN ... test WHILE ... REPEAT ...
 \
 \  (C: dest -- forw dest ) \ (S: flag -- )
-\
 \ ... BEGIN ... test WHILE ... test WHILE ... REPEAT THEN ...
-\
 \ ... BEGIN ... test WHILE ... test WHILE ... AGAIN THEN THEN ...
 \
 \  Multiple WHILE possible to provide short-circuit testing, but each
@@ -579,7 +511,6 @@ CREATE PAD /PAD CHARS ALLOT
 	1 CS-ROLL		\  C: forw dest
 ; IMMEDIATE
 
-\
 \ ... BEGIN ... test WHILE ... REPEAT ...
 \
 \  (C: forw dest -- )
@@ -600,28 +531,24 @@ CREATE PAD /PAD CHARS ALLOT
 	>HERE NEGATE ,
 ; IMMEDIATE
 
-\
 \ ... ABS ...
 \
 \ (S: n -- u )
 \
 : ABS DUP 0< IF NEGATE THEN ;
 
-\
 \ ... MAX ...
 \
 \ (S: n1 n2 -- n3 )
 \
 : MAX 2DUP < IF SWAP THEN DROP ;
 
-\
 \ ... MIN ...
 \
 \ (S: n1 n2 -- n3 )
 \
 : MIN 2DUP > IF SWAP THEN DROP ;
 
-\
 \ ... ?DUP ...
 \
 \ (S: x -- 0 | x x )
@@ -647,7 +574,6 @@ CREATE PAD /PAD CHARS ALLOT
 \
 : VALUE CREATE , DOES> @ ;
 
-\
 \ ... x TO name ...
 \
 \ (S: x <spaces>name -- )
@@ -690,7 +616,6 @@ CREATE PAD /PAD CHARS ALLOT
 	AGAIN
 ;
 
-\
 \ ... ( comment) ...
 \
 \ (S: ccc<paren> -- )
@@ -713,7 +638,6 @@ CREATE PAD /PAD CHARS ALLOT
 	DROP
 ; IMMEDIATE
 
-\
 \ ... \ comment to end of line
 \
 \ (S: ccc<eol>" -- )
@@ -763,28 +687,24 @@ VARIABLE catch_frame 0 catch_frame !
 	THEN
 ;				\ S: 0 | n  R: --
 
-\
 \ ... ABORT ...
 \
 \  ( i*x -- ) ( R: j*x -- )
 \
 : ABORT -1 THROW ;
 
-\
 \ ... ABORT ...
 \
 \  ( -- ) ( R: i*x -- )
 \
 : QUIT -56 THROW ;
 
-\
 \ ... HOLDS ...
 \
 \ (S: caddr u -- )
 \
 : HOLDS BEGIN DUP WHILE 1- 2DUP + C@ HOLD REPEAT 2DROP ;
 
-\
 \ ... TYPE ...
 \
 \ (S: caddr u -- )
@@ -797,7 +717,6 @@ VARIABLE catch_frame 0 catch_frame !
 	REPEAT 2DROP		\  S: --
 ;
 
-\
 \ ... SPACES ...
 \
 \ (S: n -- )
@@ -836,7 +755,6 @@ VARIABLE catch_frame 0 catch_frame !
 	REPEAT 2DROP
 ;
 
-\
 \ ... FILL ...
 \
 \ (S: caddr u char -- )
@@ -848,21 +766,18 @@ VARIABLE catch_frame 0 catch_frame !
 	CMOVE			\  S: --
 ;
 
-\
 \ ... BLANK ...
 \
 \ (S: caddr u -- )
 \
 : BLANK BL FILL ;
 
-\
 \ ... ERASE ...
 \
 \ (S: addr u -- )
 \
 : ERASE 0 FILL ;
 
-\
 \ ... char WORD ...
 \
 \ (S: char "<chars>ccc<char>" -- caddr )
@@ -875,28 +790,24 @@ VARIABLE catch_frame 0 catch_frame !
 	C!			\ S: caddr
 ;
 
-\
 \ ...  U.  ...
 \
 \ (S: u -- )
 \
 : U. <# #S #> TYPE SPACE ;
 
-\
 \ ... . ...
 \
 \ (S: n -- )
 \
 : . DUP ABS <# #S SWAP SIGN #> TYPE SPACE ;
 
-\
 \ ... U.R  ...
 \
 \ (S: u n -- )
 \
 : U.R >R <# #S #> R> OVER - SPACES TYPE ;
 
-\
 \ ... .R  ...
 \
 \ (S: n n -- )
@@ -937,7 +848,6 @@ VARIABLE catch_frame 0 catch_frame !
 	DROP
 ; IMMEDIATE
 
-\
 \ ... ? ...
 \
 \ (S: aaddr -- )
@@ -951,7 +861,6 @@ VARIABLE catch_frame 0 catch_frame !
 	R> BASE !
 ;
 
-\
 \ ... N>R ...
 \
 \ (S: i*x n –– ) (R: –– i*x n )
@@ -965,7 +874,6 @@ VARIABLE catch_frame 0 catch_frame !
 	DROP >R >R		\  S: -- R: j*x +n ip (j*x reverse of start i*x)
 ;				\  S: -- R: j*x +n
 
-\
 \ ... NR> ...
 \
 \ (S: –– i*x +n ) (R: i*x +n –– )
@@ -983,7 +891,6 @@ VARIABLE catch_frame 0 catch_frame !
 	DROP DUP 1+ ROLL >R	\  S: ip j*x n R: ip
 ;				\  S: ip j*x n R:
 
-\
 \ ... limit first DO ... LOOP ...
 \
 \ (C: -- dest )(R: -- count) || (S: limit first -- ) (R: -- limit first )
@@ -994,7 +901,6 @@ VARIABLE catch_frame 0 catch_frame !
 	POSTPONE BEGIN		\ C: dest R: 0 ip
 ; IMMEDIATE
 
-\
 \ ... limit first ?DO ... LOOP ...
 \
 \ (C: -- dest ) (R: -- forw 1 ) || (S: limit first -- ) (R: -- limit first )
@@ -1009,7 +915,6 @@ VARIABLE catch_frame 0 catch_frame !
 	POSTPONE BEGIN		\ C: dest  R: forw 1 ip
 ; IMMEDIATE
 
-\
 \ ... limit first DO ... IF ... LEAVE THEN ... LOOP ...
 \
 \ (C: dest -- dest ) (R: n*forw n -- n'*forw n' )
@@ -1020,7 +925,6 @@ VARIABLE catch_frame 0 catch_frame !
 	>R >R >R		\ C: dest  R: n'*forw n' ip
 ; IMMEDIATE
 
-\
 \ ... limit first DO ... test ?LEAVE ... LOOP ...
 \
 \ (C: dest -- dest ) (R: n*forw n -- n'*forw n' )
@@ -1031,14 +935,12 @@ VARIABLE catch_frame 0 catch_frame !
 	POSTPONE THEN		\ C: --  R: n'*forw n' ip
 ;
 
-\
 \ : X ... limit first DO ... test IF ... UNLOOP EXIT THEN ... LOOP ... ;
 \
 \ (S: --  ) (R: limit index ip -- ip )
 \
 : UNLOOP R> 2R> 2DROP >R ;
 
-\
 \ ... limit first DO ... LOOP ...
 \
 \ (S: -- flag ) (R: limit index ip -- limit index' ip )
@@ -1054,7 +956,6 @@ VARIABLE catch_frame 0 catch_frame !
 	SWAP >R			\ S: flag R: limit index' ip
 ;
 
-\
 \ ... limit first DO ... LOOP ...
 \
 \ (C: dest -- ) (R: n*forw n ip -- ip )
@@ -1078,14 +979,12 @@ VARIABLE catch_frame 0 catch_frame !
 	POSTPONE UNLOOP
 ; IMMEDIATE
 
-\
 \ ... limit first DO ... LOOP ...
 \
 \ (S: -- index ) (R: limit index ip -- limit index ip )
 \
 : I R> R@ SWAP >R ;
 
-\
 \ ... limit first DO ... LOOP ...
 \
 \ (S: -- index1 ) (R: limit1 index1 limit2 index2 ip -- limit1 index1 limit2 index2 ip )
@@ -1100,7 +999,6 @@ VARIABLE catch_frame 0 catch_frame !
 -1 1 RSHIFT CONSTANT int_max	\ 0x7F...FF
 int_max INVERT CONSTANT int_min	\ 0x80...00
 
-\
 \ ... limit first DO ... LOOP ...
 \
 \ (S: n -- flag ) (R: limit index ip -- limit index' ip )
@@ -1119,7 +1017,6 @@ int_max INVERT CONSTANT int_min	\ 0x80...00
 	<> SWAP >R		\ S: flag  R: l x' ip
 ;
 
-\
 \ ... limit first DO ... LOOP ...
 \
 \ (C: dest -- ) (R: n*forw n ip -- ip )
@@ -1144,7 +1041,6 @@ int_max INVERT CONSTANT int_min	\ 0x80...00
 	POSTPONE UNLOOP
 ; IMMEDIATE
 
-\
 \ ... x CASE ... ENDCASE
 \
 \ (C: -- #of ) (S: x -- x )
@@ -1158,7 +1054,6 @@ int_max INVERT CONSTANT int_min	\ 0x80...00
 \
 0 CONSTANT CASE IMMEDIATE
 
-\
 \ ... test OF ... ENDOF ...
 \
 \ (C: i*forw #of -- j*forw #of' )
@@ -1172,7 +1067,6 @@ int_max INVERT CONSTANT int_min	\ 0x80...00
 	R>			\ C: #of'
 ; IMMEDIATE
 
-\
 \ ... ENDOF ...
 \
 \ (C: forw1 #of -- forw2 #of )
@@ -1183,7 +1077,6 @@ int_max INVERT CONSTANT int_min	\ 0x80...00
 	R>			\ C: forw2 #of
 ; IMMEDIATE
 
-\
 \ ... CASE ... ENDCASE ...
 \
 \ (C: i*forw i -- )(S: x -- )
@@ -1307,20 +1200,19 @@ MAX-CHAR CONSTANT /COUNTED-STRING
 	THEN
 ;
 
-\
 \ ... C" ccc" ...
 \
 \ (C: ccc<quote>" -- ) || (S: ccc<quote>" -- caddr )
 \
 : C" [CHAR] " PARSE _store_counted ; IMMEDIATE
 
-\
 \ ... c\" ccc" ...
 \
 \ (C: ccc<quote>" -- ) || (S: ccc<quote>" -- caddr u )
 \
 : c\" [CHAR] " parse-escape _store_counted ; IMMEDIATE
 
+\ ... cputs ...
 \
 \ ( caddr -- )
 \
@@ -1331,7 +1223,6 @@ MAX-CHAR CONSTANT /COUNTED-STRING
 \
 : cputs DUP C@ SWAP CHAR+ SWAP TYPE ;
 
-\
 \ ... _slit ...
 \
 \ (S: -- caddr u )
@@ -1372,21 +1263,18 @@ MAX-CHAR CONSTANT /COUNTED-STRING
 	THEN
 ;
 
-\
 \ ... S" ccc" ...
 \
 \ (C: ccc<quote>" -- ) || (S: ccc<quote>" -- caddr u )
 \
 : S" [CHAR] " PARSE _store_str ; IMMEDIATE
 
-\
 \ ... S\" ccc" ...
 \
 \ (C: ccc<quote>" -- ) || (S: ccc<quote>" -- caddr u )
 \
 : S\" [CHAR] " parse-escape _store_str ; IMMEDIATE
 
-\
 \ ... ." ccc" ...
 \
 \ (S: ccc<quote>" -- )
@@ -1396,21 +1284,18 @@ MAX-CHAR CONSTANT /COUNTED-STRING
 \ (S: bool caddr u -- )
 : _abort ROT IF TYPE CR -2 THROW ELSE 2DROP THEN ;
 
+\ : X ... test ABORT" message" ...
 \
-\  : X ... test ABORT" message" ...
-\
-\  (C: ccc<quote>" -- ) \ (S: i*x x1 --  | i*x ) ( R: j*x --  | j*x )
+\ (C: ccc<quote>" -- ) \ (S: i*x x1 --  | i*x ) ( R: j*x --  | j*x )
 \
 : ABORT" POSTPONE S" POSTPONE _abort ; IMMEDIATE
 
-\
 \ ... SCR ...
 \
 \ (S: -- aaddr )
 \
 VARIABLE SCR
 
-\
 \ ... LIST ...
 \
 \ (S: u -- )
@@ -1427,28 +1312,35 @@ VARIABLE SCR
 	LOOP DROP		\ S: --
 ;
 
-\
 \ ... FLUSH ...
 \
 \ (S: -- )
 \
 : FLUSH SAVE-BUFFERS EMPTY-BUFFERS ;
 
-\
 \ ... LIST+ ...
 \
 \ (S: -- )
 \
 : list+ SCR @ 1+ LIST ;
 
-\
 \ ... LOAD ...
 \
 \ (S: i*x u -- j*x )
 \
 : LOAD >R SAVE-INPUT R> DUP BLK ! BLOCK 1024 EVALUATE RESTORE-INPUT ;
 
+\ ... THRU ...
 \
+\ (S: start end -- )
+\
+: THRU				\ S: start end
+	1+ SWAP			\ S: end' start
+	DO			\ S: --
+	  I LOAD
+	LOOP
+;
+
 \ ... AT-XY ...
 \
 \ (S: column row -- )
@@ -1464,7 +1356,6 @@ VARIABLE SCR
 	'H' EMIT
 ;
 
-\
 \ ... PAGE ...
 \
 \ (S: -- )
@@ -1474,14 +1365,12 @@ VARIABLE SCR
 \
 : PAGE 0 0 AT-XY S\" \e[0J" TYPE ;
 
-\
 \ ... INCLUDE filename ...
 \
 \ (S: <spaces>filename" -- )
 \
 : INCLUDE PARSE-NAME INCLUDED ;
 
-\
 \ ... INCL filename ...
 \
 \ (S: <spaces>filename" -- )
@@ -1491,26 +1380,9 @@ VARIABLE SCR
 \
 : incl S" MARKER rm_incl" EVALUATE INCLUDE ;
 
-\
-\ ... THRU ...
-\
-\ (S: start end -- )
-\
-: THRU				\ S: start end
-	1+ SWAP			\ S: end' start
-	DO			\ S: --
-	  I LOAD
-	LOOP
-;
-
-\
 \ ... BUFFER: name
 \
 \ ( u "<spaces>name" -- ; -- aaddr )
-\
-\ @note
-\	Choose not to use ALLOCATE since removing marked dictionary words
-\	would require extra handling.
 \
 : BUFFER: CREATE ALLOT ;
 
