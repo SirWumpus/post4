@@ -289,7 +289,7 @@ CREATE PAD /PAD CHARS ALLOT
 \
 \ (S: n1 n2 dsor -- rem quot )
 \
-: */ >R * R> /MOD ;
+: */MOD >R * R> /MOD ;
 
 \ ... 0<> ...
 \
