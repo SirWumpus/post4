@@ -298,6 +298,7 @@ CREATE PAD /PAD CHARS ALLOT
 : 0<> 0= 0= ;
 
 \ ... 0> ...
+\ Greater than zero.
 \
 \ (S: n -- flag )
 \
@@ -777,6 +778,20 @@ VARIABLE catch_frame 0 catch_frame !
 \ (S: addr u -- )
 \
 : ERASE 0 FILL ;
+
+\ ... -TRAILING ...
+\
+\ (S: caddr u -- caddr u' )
+\
+: -TRAILING
+	BEGIN DUP 0> WHILE
+	  2DUP 1- +
+	  C@ BL <> IF
+	    EXIT
+	  THEN
+	  1-
+	REPEAT
+;
 
 \ ... char WORD ...
 \

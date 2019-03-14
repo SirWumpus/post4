@@ -219,6 +219,11 @@ Add `step` to the loop index.  If the loop index did not cross the boundary betw
 Subtract the top two stack values.
 
 - - -
+### -TRAILING
+( `caddr` `u` -- `caddr` `u'` )  
+Trim trailing spaces from end of string `caddr` `u`.
+
+- - -
 ### .
 ( `n` -- )  
 Display `n` in free field format.
