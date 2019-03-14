@@ -1297,7 +1297,17 @@ MAX-CHAR CONSTANT /COUNTED-STRING
 : ." POSTPONE S" POSTPONE TYPE ; IMMEDIATE
 
 \ (S: bool caddr u -- )
-: _abort ROT IF TYPE CR -2 THROW ELSE 2DROP THEN ;
+: _abort
+	ROT IF
+	  \ Only write the exception message if nobody to CATCH.
+	  catch_frame @ 0= IF
+	    TYPE CR
+	  THEN
+	  -2 THROW
+        ELSE
+	  2DROP
+	THEN
+; IMMEDIATE
 
 \ : X ... test ABORT" message" ...
 \
