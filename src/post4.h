@@ -532,7 +532,7 @@ extern P4_String p4Parse(P4_Input *input, P4_Uint delim, P4_Uint escape);
  */
 extern P4_String p4ParseName(P4_Input *input);
 
-extern P4_Word *p4FindWord(P4_Ctx *ctx, P4_Char *caddr, P4_Size length);
+extern P4_Word *p4FindName(P4_Ctx *ctx, P4_Char *caddr, P4_Size length);
 
 /***********************************************************************
  *** END

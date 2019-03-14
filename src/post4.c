@@ -869,7 +869,7 @@ p4WordAppend(P4_Ctx *ctx, P4_Word *word, P4_Cell data)
 }
 
 P4_Word *
-p4FindWord(P4_Ctx *ctx, P4_Char *caddr, P4_Size length)
+p4FindName(P4_Ctx *ctx, P4_Char *caddr, P4_Size length)
 {
 	P4_Word *word;
 
@@ -877,20 +877,6 @@ p4FindWord(P4_Ctx *ctx, P4_Char *caddr, P4_Size length)
 		if (!P4_WORD_IS_HIDDEN(word)
 		&& word->name.length > 0 && word->name.length == length
 		&& strncasecmp((char *)word->name.string, caddr, length) == 0) {
-			return word;
-		}
-	}
-
-	return NULL;
-}
-
-P4_Word *
-p4FindXt(P4_Ctx *ctx, P4_Xt xt)
-{
-	P4_Word *word;
-
-	for (word = ctx->words; word != NULL; word = word->prev) {
-		if (xt == word) {
 			return word;
 		}
 	}
@@ -1158,6 +1144,7 @@ p4Repl(P4_Ctx *ctx)
 		P4_WORD("EMIT",		&&_emit,	0),
 		P4_WORD("EMPTY-BUFFERS", &&_empty_buffers, 0),
 		P4_WORD("epoch-seconds", &&_epoch_seconds, 0),		// p4
+		P4_WORD("find-name",	&&_find_name,	0),		// p4
 		P4_WORD("INCLUDED",	&&_included,	0),
 		P4_WORD("KEY",		&&_key,		0),
 		P4_WORD("KEY?",		&&_key_ready,	0),
@@ -1211,7 +1198,7 @@ _repl:
 			if (str.length == 0) {
 				break;
 			}
-			word = p4FindWord(ctx, str.string, str.length);
+			word = p4FindName(ctx, str.string, str.length);
 			if (word == NULL) {
 				if (p4StrNum(str, ctx->radix, &x.n) != str.length) {
 					/* Not a word, not a number. */
@@ -1466,7 +1453,7 @@ _body:		w = P4_TOP(ctx->ds);
 		 */
 		// ( -- xt )
 _tick:		str = p4ParseName(&ctx->input);
-		word = p4FindWord(ctx, str.string, str.length);
+		word = p4FindName(ctx, str.string, str.length);
 		if (word == NULL) {
 			p4Bp(ctx);
 			LONGJMP(ctx->on_throw, P4_THROW_UNDEFINED);
@@ -1499,7 +1486,7 @@ _align:		p4Align(ctx);
 		 * SEE easier to implement.
 		 */
 _postpone:	str = p4ParseName(&ctx->input);
-		word = p4FindWord(ctx, str.string, str.length);
+		word = p4FindName(ctx, str.string, str.length);
 		if (word == NULL) {
 			p4Bp(ctx);
 			LONGJMP(ctx->on_throw, P4_THROW_UNDEFINED);
@@ -2034,6 +2021,12 @@ _parse_name:	str = p4ParseName(&ctx->input);
 		P4_PUSH(ctx->ds, str.length);
 		NEXT;
 
+		// ( caddr u -- xt | 0 )
+_find_name:	w = P4_POP(ctx->ds);
+		x = P4_TOP(ctx->ds);
+		P4_TOP(ctx->ds).w = p4FindName(ctx, x.s, w.z);
+		NEXT;
+
 		// ( ms -- )
 _ms:		w = P4_POP(ctx->ds);
 		p4Nap(w.u / 1000L, (w.u % 1000L) * 1000000L);
@@ -2093,7 +2086,7 @@ _dump:		x = P4_POP(ctx->ds);
 
 		// ( -- )
 _see:		str = p4ParseName(&ctx->input);
-		word = p4FindWord(ctx, str.string, str.length);
+		word = p4FindName(ctx, str.string, str.length);
 		if (word == NULL) {
 			(void) printf("\"%.*s\" ", (int)str.length, str.string);
 			LONGJMP(ctx->on_throw, P4_THROW_UNDEFINED);
