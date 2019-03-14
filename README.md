@@ -107,7 +107,7 @@ Pseudo-random number generators.  One is the simple code example from the ISO C1
             
         RANDOMMAJ ( bits -- u )
             Return random number u generated from bits, based on the majority of
-            one or zero returned from the three generators.         
+            one or zero returned from the three generators.
 
 Example:
 
@@ -144,7 +144,7 @@ Drop `xd`.  Make the pictured numeric output string available as a character str
 - - -
 ### #S
 ( `ud1` -- `0` )  
-Convert one digit of `ud1` according to the rule for `#`.  Continue conversion until the quotient is zero.
+Convert one digit of `ud1` according to the rule for `#`.  Continue conversion until the quotient is zero (0).
 
 - - -
 ### ' name
@@ -256,22 +256,22 @@ Adjust the character string at `caddr u` by offset `n` characters, by adding `n`
 - - -
 ### 0<
 ( `n` -- `bool` )  
-`bool` is true if and only if `n` is less than zero.
+`bool` is true if and only if `n` is less than zero (0).
 
 - - -
 ### 0<>
 ( `nu` -- `bool` )  
-`bool` is true if `nu` is not equal to zero.
+`bool` is true if `nu` is not equal to zero (0).
 
 - - -
 ### 0>
 ( `nu` -- `bool` )  
-`bool` is true if `nu` is greater to zero.
+`bool` is true if `nu` is greater to zero (0).
 
 - - -
 ### 0=
 ( `x` -- `bool` )  
-`bool` is true if and only if `x` is equal to zero.
+`bool` is true if and only if `x` is equal to zero (0).
 
 - - -
 ### 1+
@@ -293,7 +293,7 @@ Store the cell pair `lo hi` at `aaddr` as `hi lo`.
 - - -
 ### 2*
 ( `x1` -- `x2` )  
-`x2` is the result of shifting `x1` one bit toward the most-significant bit, filling the vacated least-significant bit with zero.
+`x2` is the result of shifting `x1` one bit toward the most-significant bit, filling the vacated least-significant bit with zero (0).
 
 - - -
 ### 2/
@@ -402,7 +402,7 @@ Throw -1.  Clear the data stack and perform a `QUIT`, which clears the return st
 - - -
 ### ABORT" ccc"
 ( `i*x` `x1` -- | `i*x` ) ( R: `j*x` -- | `j*x` )  
-If `x1` is not equal to zero, display the message that follows up to the closing double-quote and perform an `ABORT`.
+If `x1` is not equal to zero (0), display the message that follows up to the closing double-quote and perform an `ABORT`.
 
 - - -
 ### ABS
@@ -451,7 +451,7 @@ If the data-space pointer is not aligned, reserve enough space to align it.
 - - -
 ### ALLOT
 ( `n` -- )  
-If `n` is greater than zero, reserve `n` address units of data space.  If `n` is less than zero, release `|n|` address units of data space.  If `n` is zero, leave the data-space pointer unchanged.
+If `n` is greater than zero (0), reserve `n` address units of data space.  If `n` is less than zero (0), release `|n|` address units of data space.  If `n` is zero (0), leave the data-space pointer unchanged.
 
 - - -
 ### AND
@@ -485,7 +485,7 @@ Mark the start of `BEGIN ... AGAIN` or `BEGIN ... WHILE ... REPEAT` loops.
 - - -
 ### BLK
 ( -- `aaddr` )  
-`aaddr` is the address of a cell containing zero or the number of the mass-storage block being interpreted.  If `BLK` contains zero, the input source is not a block and can be identified by `SOURCE-ID`.  If a program alters `BLK`, the results are undefined.
+`aaddr` is the address of a cell containing zero (0) or the number of the mass-storage block being interpreted.  If `BLK` contains zero (0), the input source is not a block and can be identified by `SOURCE-ID`.  If a program alters `BLK`, the results are undefined.
 
 - - -
 ### BLOCK
@@ -533,7 +533,7 @@ Fetch from `caddr` the character `char` stored there.
 ( `i*x` `xt` -- `j*x` `0` | `i*x` `n` )  
 Push an exception frame on the exception stack and then execute the execution token `xt` (as with `EXECUTE`) in such a way that control can be transferred to a point just after `CATCH` if `THROW` is executed during the execution of `xt`.
 
-If the execution of `xt` completes normally (ie. the exception frame pushed by this `CATCH` is not popped by an execution of `THROW`) pop the exception frame and return zero on top of the data stack, above whatever stack items would have been returned by `xt EXECUTE`.  Otherwise, the remainder of the execution semantics are given by `THROW`.
+If the execution of `xt` completes normally (ie. the exception frame pushed by this `CATCH` is not popped by an execution of `THROW`) pop the exception frame and return zero (0) on top of the data stack, above whatever stack items would have been returned by `xt EXECUTE`.  Otherwise, the remainder of the execution semantics are given by `THROW`.
 
 - - -
 ### CELL+
@@ -759,7 +759,7 @@ Discard the case selector `x` and continue execution.
 - - -
 ### EVALUATE
 ( `i*x` `caddr` `u` -- `j*x` )  
-Save the current input source specification and make the string described by `caddr` and `u` both the input source and buffer, reset >IN to zero, and interpret.  When the parse area is empty, restore the prior input source specification.
+Save the current input source specification and make the string described by `caddr` and `u` both the input source and buffer, reset >IN to zero (0), and interpret.  When the parse area is empty, restore the prior input source specification.
 
 - - -
 ### EXECUTE
@@ -774,7 +774,7 @@ Return control from the currently executing word to its caller.  Before executin
 - - -
 ### FALSE
 ( -- `false` )  
-Return false value, equivalent to zero (all bits cleared).
+Return false value, equivalent to zero (0).
 
 - - -
 ### FIELD: name
@@ -830,7 +830,7 @@ Append string `caddr` `u` to the pictured numeric output string.
 - - -
 ### IF
 ( `bool` -- )  
-If `bool` is zero (`FALSE`), continue execution following the matching `ELSE` or `THEN`.
+If `bool` is zero (0) (`FALSE`), continue execution following the matching `ELSE` or `THEN`.
 
         test IF 
             \ execute for true
@@ -897,7 +897,7 @@ Compile `x` into the definition so that it is later pushed onto the stack during
 - - -
 ### LOAD
 ( `i*x` `blk_num` -- `j*x` )  
-Save the current input-source specification.  Store `blk_num` in `BLK` (thus making block `blk_num` the input source and setting the input buffer to encompass its contents), set `>IN` to zero, and interpret.  When the parse area is exhausted, restore the prior input source specification.  Other stack effects are due to the words interpreted.
+Save the current input-source specification.  Store `blk_num` in `BLK` (thus making block `blk_num` the input source and setting the input buffer to encompass its contents), set `>IN` to zero (0), and interpret.  When the parse area is exhausted, restore the prior input source specification.  Other stack effects are due to the words interpreted.
 
 - - -
 ### LOOP
@@ -936,7 +936,7 @@ Divide the dividend `dend` by the divisor `dsor` leaving the remainder `rem`.
 - - -
 ### MOVE
 ( `src` `dst` `u` -- )  
-If `u` is greater than zero, copy from `src` the contents of `u` consecutive address units to `dst`.
+If `u` is greater than zero (0), copy from `src` the contents of `u` consecutive address units to `dst`.
 
 - - -
 ### MS
@@ -995,7 +995,7 @@ Clear the terminal (advance next page).
 - - -
 ### PARSE
 ( `char` `ccc<char>` -- `caddr` `u` )  
-Parse `ccc` delimited by the delimiter `char`.  `caddr` and `u` are the address and length within the input buffer of the parsed string.  If the parse area was empty, the resulting string has a zero length.
+Parse `ccc` delimited by the delimiter `char`.  `caddr` and `u` are the address and length within the input buffer of the parsed string.  If the parse area was empty, the resulting string has a zero (0) length.
 
 - - -
 ### PARSE-NAME name
@@ -1019,9 +1019,9 @@ An example:
 - - -
 ### QUIT
 ( -- )(R: `i*x` -- )  
-Empty the return stack, reset `SOURCE-ID` to zero, set the console as the input source, enter interpretation state, and start REPL:
+Empty the return stack, reset `SOURCE-ID` to zero (0), set the console as the input source, enter interpretation state, and start REPL:
 
-  * Accept a line from the input source into the input buffer, set `>IN` to zero, and interpret.
+  * Accept a line from the input source into the input buffer, set `>IN` to zero (0), and interpret.
   * Display the prompt if in interpretation state, all processing has been completed, and no ambiguous condition exists.
 
 - - -
@@ -1060,11 +1060,11 @@ Loop back to matching `BEGIN`.
 ( -- `bool` )  
 Attempt to fill the input buffer from the input source, returning a true if successful.
 
-When the input source is the user input device, attempt to receive input into the terminal input buffer.  If successful, make the result the input buffer, set `>IN` to zero, and return true.  Receipt of a line containing no characters is considered successful.  If there is no input available from the current input source, return false.
+When the input source is the user input device, attempt to receive input into the terminal input buffer.  If successful, make the result the input buffer, set `>IN` to zero (0), and return true.  Receipt of a line containing no characters is considered successful.  If there is no input available from the current input source, return false.
 
 When the input source is a string from `EVALUATE`, return false and perform no other action.
 
-When the input source is a block, make the next block the input source and current input buffer by adding one to the value of `BLK` and setting `>IN` to zero.  Return true if the new value of `BLK` is a valid block number, otherwise false.
+When the input source is a block, make the next block the input source and current input buffer by adding one to the value of `BLK` and setting `>IN` to zero (0).  Return true if the new value of `BLK` is a valid block number, otherwise false.
 
 - - -
 ### ROLL
@@ -1140,7 +1140,7 @@ Display a space.
 - - -
 ### SPACES
 ( `n` -- )  
-If `n` is greater than zero, display `n` spaces.
+If `n` is greater than zero (0), display `n` spaces.
 
 - - -
 ### STATE
@@ -1210,7 +1210,7 @@ Copy the first (top) stack item below the second stack item.
 - - -
 ### TYPE
 ( `caddr` `u` -- )  
-If `u` is greater than zero, display the character string specified by `caddr` and `u`.
+If `u` is greater than zero (0), display the character string specified by `caddr` and `u`.
 
 - - -
 ### U.
@@ -1261,7 +1261,7 @@ Mark the current block as dirty.
 - - -
 ### UNTIL
 ( `x` -- )  
-Loop back to `BEGIN` until `x` equals zero.
+Loop back to `BEGIN` until `x` equals zero (0).
 
         BEGIN
             \ loop body
@@ -1288,7 +1288,7 @@ Create `name` with one cell of data.  When `name` is executed push the `aaddr` o
 - - -
 ### WHILE
 ( `x` -- )  
-If `x` equals zero, continue execution following `REPEAT`.
+If `x` equals zero (0), continue execution following `REPEAT`.
 
         BEGIN
             \ test expression
@@ -1456,7 +1456,7 @@ Set the numeric conversion radix to eight (octal).
 - - -
 ### parse-escape
 ( `char` `ccc<char>` -- caddr u )  
-Parse `ccc` delimited by the delimiter `char`.  `caddr` and `u` are the address and length within the input buffer of the parsed C-style escaped string.  If the parse area was empty, the resulting string has a zero length.  Supported escapes:
+Parse `ccc` delimited by the delimiter `char`.  `caddr` and `u` are the address and length within the input buffer of the parsed C-style escaped string.  If the parse area was empty, the resulting string has a zero (0) length.  Supported escapes:
 
         \?          delete
         \\          backslash
@@ -1514,7 +1514,7 @@ Branch relative.  The integer that immediately follows is the relative distance 
 - - -
 ### _branchz
 ( `bool` -- )  
-Branch relative if zero.  The integer that immediately follows is the relative distance in address units from the integer's address.  Used in the definition of flow control words, like `IF`, `WHILE`, `UNTIL`.
+Branch relative if zero (0).  The integer that immediately follows is the relative distance in address units from the integer's address.  Used in the definition of flow control words, like `IF`, `WHILE`, `UNTIL`.
 
 - - -
 ### _call
