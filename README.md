@@ -183,6 +183,25 @@ Add the top two stack values.
 Add `n|u` to the cell at `aaddr`.
 
 - - -
+### +FIELD name
+( `addr` -- `addr'` )  
+Define unaligned structure field `name`, which when executed adds the field offset to `addr` giving `addr'`.
+
+        Structure name defined last:
+
+          0                         \ initial total byte count
+            1 CELLS +FIELD p.x      \ single cell field named p.x
+            1 CELLS +FIELD p.y      \ single cell field named p.y
+          CONSTANT point            \ save structure size
+
+        Structure name defined first:
+
+          BEGIN-STRUCTURE point     \ create the named structure
+            1 CELLS +FIELD p.x      \ A single cell filed named p.x
+            1 CELLS +FIELD p.y      \ A single cell field named p.y
+          END-STRUCTURE
+
+- - -
 ### +LOOP
 ( `step` -- )  
 Add `step` to the loop index.  If the loop index did not cross the boundary between the loop limit minus one and the loop limit, continue execution at the beginning of the loop.  Otherwise, end the current loop and continue execution immediately following the loop.
@@ -450,6 +469,10 @@ Position cursor on the terminal, `row` and `col` are 0 based.
 Mark the start of `BEGIN ... AGAIN` or `BEGIN ... WHILE ... REPEAT` loops.
 
 - - -
+### BEGIN-STRUCTURE name
+( `<spaces>name` -- `addr` `0` )  
+
+- - -
 ### BL
 ( -- `char` )  
 `char` is the character value for a space, since Forth words are delimited by space.  A space can also be specified with `'\s'`.
@@ -516,6 +539,11 @@ Add the size in address units of a cell to `aaddr1` giving `aaddr2`.
 ### CELLS
 ( `n1` -- `n2` )  
 `n2` is the size in address units of `n1` cells.
+
+- - -
+### CFIELD: name
+( `addr` -- `addr'` )  
+Define character structure field `name`, which when executed adds the field offset to `addr` giving `addr'`.
 
 - - -
 ### CHAR ccc
@@ -691,6 +719,11 @@ Write the character octet to standard output.
 Mark all block buffers as free without saving any dirty buffers.
 
 - - -
+### END-STRUCTURE
+( `addr` `0` -- )  
+Terminate definition of a structure started by `BEGIN-STRUCTURE`.
+
+- - -
 ### ENDCASE
 ( `x` --- )  
 Discard the case selector `x` and continue execution.
@@ -732,6 +765,11 @@ Return control from the currently executing word to its caller.  Before executin
 ### FALSE
 ( -- `false` )  
 Return false value, equivalent to zero (all bits cleared).
+
+- - -
+### FIELD: name
+( `addr` -- `addr'` )  
+Define cell aligned structure field `name`, which when executed adds the field offset to `addr` giving `addr'`.
 
 - - -
 ### FILL

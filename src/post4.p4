@@ -1430,6 +1430,58 @@ VARIABLE SCR
 	THEN
 ; IMMEDIATE
 
+\ ... BEGIN-STRUCTURE name ...
+\
+\ (C: <spaces>name -- aaddr 0 ) \ (S: -- size )
+\
+: BEGIN-STRUCTURE
+	CREATE HERE 0 0 , 	\ C: aaddr 0
+	DOES> @ 		\ S: -- size
+;
+
+\ ... END-STRUCTURE ...
+\
+\ (C: aaddr size -- )
+\
+: END-STRUCTURE SWAP ! ;
+
+\ ... +FIELD name ...
+\
+\ (C: offset size <spaces>name -- offset' ) \ (S: addr -- addr' )
+\
+\ Note does not align items.
+\
+\ Structure name defined last:
+\
+\	0			\ initial total byte count
+\	  1 CELLS +FIELD p.x	\ single cell field named p.x
+\	  1 CELLS +FIELD p.y	\ single cell field named p.y
+\	CONSTANT point 		\ save structure size
+\
+\ Structure name defined first:
+\
+\	BEGIN-STRUCTURE point	\ create the named structure
+\	  1 CELLS +FIELD p.x	\ A single cell filed named p.x
+\	  1 CELLS +FIELD p.y	\ A single cell field named p.y
+\	END-STRUCTURE
+\
+: +FIELD
+	CREATE OVER , +		\ C: save offset and advance
+	DOES> @ +		\ add offset to addr
+;
+
+\ ... CFIELD: name ...
+\
+\ (C: offset <spaces>name -- offset' ) \ (S: addr -- addr' )
+\
+: CFIELD: 1 CHARS +FIELD ;
+
+\ ... FIELD: name ...
+\
+\ (C: offset <spaces>name -- offset' ) \ (S: addr -- addr' )
+\
+: FIELD: ALIGNED 1 CELLS +FIELD ;
+
 MARKER rm_user_words
 
 .( Post4 Copyright 2007, 2019 by Anthony Howe.  All rights reserved.
