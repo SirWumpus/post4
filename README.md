@@ -574,6 +574,11 @@ Add the size in address units of a character.
 ( `src` `dst` `u` -- )  
 
 - - -
+### COMPARE
+( `caddr1` `u1` `caddr2` `u2` -- `n` )  
+Compare the two strings lexicographically.  Return `n` as 1, zero (0), or -1, according to whether the string `caddr1` `u1` is greater than, equal to, or less than the string `caddr2` `u2`.
+
+- - -
 ### COMPILE,
 ( -- )  
 
@@ -1485,6 +1490,11 @@ Similar to `ALLOT`, reserve `n` address-units of data-space and return its start
         HERE 100 CELLS ALLOT
 
 Should `ALLOT` enlarge and relocate the data-space, the address saved by `HERE` on the stack will now point into invalid memory.  With `reserve` the address of the region just reserved is on top of the stack insuring that the address is valid until the next enlargement of the data-space by `reserve`,`,`, `ALIGN`, `ALLOT`, `C,`, or `COMPILE,`.
+
+- - -
+### strcmp
+( `caddr1` `u1` `caddr2` `u2` -- `n` )  
+Compare the two strings lexicographically.  Return `n` greater than, equal to, or less than zero (0), according to whether the string `caddr1` `u1` is greater than, equal to, or less than the string `caddr2` `u2`.
 
 - - -
 ### strlen

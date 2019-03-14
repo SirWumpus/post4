@@ -1296,6 +1296,39 @@ MAX-CHAR CONSTANT /COUNTED-STRING
 \
 : ." POSTPONE S" POSTPONE TYPE ; IMMEDIATE
 
+\ ... strcmp ...
+\
+\ (S: caddr1 u1 caddr2 u2 -- n )
+\
+: strcmp
+	ROT 2DUP		\ S: caddr1 caddr2 u2 u1 u2 u1
+	SWAP - >R 2DUP		\ S: caddr1 caddr2 u2 u1 u2 u1 R: udiff
+	> IF SWAP THEN DROP	\ S: caddr1 caddr2 u R: udiff
+	BEGIN ?DUP WHILE	\ S: caddr1 caddr2 u R: udiff
+	  1- >R			\ S: caddr1 caddr2 R: u' R: udiff
+	  DUP C@ >R CHAR+ SWAP	\ S: caddr2' caddr1 R: udiff u' c2
+	  DUP C@ >R CHAR+ SWAP  \ S: caddr1' caddr2' R: udiff u' c2 c1
+	  R> R> - ?DUP IF	\ S: caddr1' caddr2' diff R: udiff u'
+	    R> R> 2DROP 	\ S: caddr1' caddr2' diff R: --
+	    >R 2DROP R>	        \ S: diff
+	    EXIT
+	  THEN
+	  R>			\ S: caddr1' caddr2' u' R: udiff
+	REPEAT
+	2DROP R>		\ S: udiff
+;
+
+\ ... COMPARE ...
+\
+\ (S: caddr1 u1 caddr2 u2 -- n )
+\
+: COMPARE
+	strcmp DUP IF
+	  0< IF -1 ELSE 1 THEN
+	THEN
+;
+
+
 \ (S: bool caddr u -- )
 : _abort
 	ROT IF
