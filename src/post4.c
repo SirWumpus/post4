@@ -509,9 +509,9 @@ p4StackDump(FILE *fp, P4_Cell *base, P4_Uint length)
 	P4_Cell *cell;
 	unsigned count;
 
-	for (count = 0, cell = base + length; base <= --cell; ) {
+	for (count = 0, cell = base; 0 < length--; cell++) {
 		if ((count & 3) == 0) {
-			(void) fprintf(fp, "top-%.2u  ", count);
+			(void) fprintf(fp, "top-%.2u  ", (unsigned) length);
 		}
 		(void) fprintf(fp, P4_HEX_FMT" ", cell->u);
 		if ((++count & 3) == 0) {
