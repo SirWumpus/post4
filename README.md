@@ -1323,6 +1323,32 @@ Place name's execution token xt on the stack.
 Place char, the value of the first character of name, on the stack.
 
 - - -
+### [DEFINED]
+( `<spaces>name` -- `bool` ) immediate  
+Return `TRUE` if `name` is word that can be found in the dictionary; otherwise `FALSE`.
+
+
+- - -
+### [ELSE]
+( `<spaces>name ...` -- ) immediate  
+Discard space delimited words, including nested `[IF]...[THEN]` and `[IF]...[ELSE]...[THEN]`, until the matching (same level) `[THEN]` is found.
+
+- - -
+### [IF]
+( `bool` | `bool` `<spaces>name ...` -- ) immediate  
+If `bool` is false then discard space delimited words, including nested `[IF]...[THEN]` and `[IF]...[ELSE]...[THEN]`, until the  matching (same level) `[ELSE]` or `[THEN]` is found.
+
+- - -
+### [THEN]
+( -- ) immediate  
+End conditional source block.
+
+- - -
+### [UNDEFINED]
+( `<spaces>name` -- `bool` ) immediate  
+Return `FALSE` if `name` is word that can be found in the dictionary; otherwise `TRUE`.
+
+- - -
 ### \\ ccc<LF>
 ( `ccc<LF>` -- ) immediate  
 Parse and discard the remainder of the parse area.

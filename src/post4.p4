@@ -81,6 +81,9 @@ FALSE INVERT CONSTANT TRUE
 \
 128 CONSTANT /PAD
 
+_ds_size CONSTANT STACK-CELLS
+_rs_size CONSTANT RETURN-STACK-CELLS
+
 \ ... PAD ...
 \
 \ ( -- )
@@ -1539,6 +1542,37 @@ VARIABLE SCR
 \ (C: offset <spaces>name -- offset' ) \ (S: addr -- addr' )
 \
 : FIELD: ALIGNED 1 CELLS +FIELD ;
+
+: [DEFINED] ( <space>name -- bool ) BL PARSE-NAME FIND-NAME 0<> ; IMMEDIATE
+: [UNDEFINED] ( <space>name -- bool ) POSTPONE [DEFINED] 0= ; IMMEDIATE
+
+: [ELSE] ( -- )
+	1 BEGIN 				\ level
+	  BEGIN PARSE-NAME DUP WHILE		\ level adr len
+	    2DUP S" [IF]" COMPARE 0= IF		\ level adr len
+	      2DROP 1+				\ level'
+	    ELSE				\ level adr len
+	      2DUP S" [ELSE]" COMPARE 0= IF	\ level adr len
+	        2DROP 1-			\ level'
+		\ Not yet zero, then restore previous level while nested.
+		DUP IF 1+ THEN			\ level'
+	      ELSE 				\ level adr len
+	        S" [THEN]" COMPARE 0= IF	\ level
+	          1-				\ level'
+	        THEN
+	      THEN
+	    THEN
+	    ?DUP 0= IF EXIT THEN		\ level'
+	  REPEAT 2DROP				\ level
+	REFILL 0= UNTIL				\ level
+	DROP
+; IMMEDIATE
+
+: [IF] ( flag -- )
+	0= IF POSTPONE [ELSE] THEN
+; IMMEDIATE
+
+: [THEN] ( -- ) ; IMMEDIATE
 
 MARKER rm_user_words
 
