@@ -326,6 +326,11 @@ Copy cell pair `x1 x2` to the top of the stack.
 Exchange the top two cell pairs.
 
 - - -
+### 2VALUE name
+( `lo` `hi` `<spaces>name` -- )  
+Create `name` with two cells of data assigned `hi` and `lo`.  When `name` is executed, the values `lo` `hi` are pushed to the stack.  See `TO`.
+
+- - -
 ### : name ...
 Start definition of word `name`.  The current definition shall not be findable in the dictionary until it is ended (or until the execution of `DOES>`).
 
@@ -1195,7 +1200,7 @@ If the top of the stack is non-zero and there is no exception frame on the excep
 ### TO
 ( `i*x` `<spaces>name` -- )  
 
-See `VALUE`.
+See `VALUE` and `2VALUE`.
 
 - - -
 ### TRUE
@@ -1473,6 +1478,18 @@ Largest usable signed integer.  This is a deviation from `ENVIRONMENT?` queries.
 ### max-u
 ( -- `u` )  
 Largest usable unsigned integer.  This is a deviation from `ENVIRONMENT?` queries.
+
+- - -
+### n!
+( i*x aaddr -- )  
+
+- - -
+### n,
+( i*x i -- )  
+
+- - -
+### n@
+( aaddr -- i*x )  
 
 - - -
 ### octal

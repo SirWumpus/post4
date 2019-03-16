@@ -104,6 +104,7 @@ CREATE PAD /PAD CHARS ALLOT
 \ (S: aaddr1 -- aaddr2 )
 \
 : CELL+ /CELL + ;
+: CELL- /CELL - ;
 
 \ ... NEGATE ...
 \
@@ -559,7 +560,35 @@ CREATE PAD /PAD CHARS ALLOT
 \
 : ?DUP DUP IF DUP THEN ;
 
-\
+\ (S: i*x i -- )
+: n,
+	DUP ,
+	BEGIN ?DUP WHILE
+	  1- SWAP ,
+	REPEAT
+;
+
+\ (S: aaddr -- i*x )
+: n@
+	DUP @ SWAP		\ S: n aaddr
+	OVER CELLS + SWAP	\ S: aaddr' n
+	BEGIN ?DUP WHILE
+	  1- >R
+	  DUP @ SWAP CELL-
+	  R>
+	REPEAT DROP
+;
+
+\ (S: i*x aaddr -- )
+: n!
+	DUP @
+	BEGIN ?DUP WHILE
+	  1- >R
+	  CELL+ SWAP OVER !
+	  R>
+	REPEAT DROP
+;
+
 \  value VALUE name
 \
 \  (C: x <spaces>name -- ) \ (S: -- x )
@@ -576,11 +605,12 @@ CREATE PAD /PAD CHARS ALLOT
 \ @see
 \	TO
 \
-: VALUE CREATE , DOES> @ ;
+: VALUE CREATE 1 n, DOES> n@ ;	\ CELL+ @
+: 2VALUE CREATE 2 n, DOES> n@ ;	\ CELL+ 2@
 
 \ ... x TO name ...
 \
-\ (S: x <spaces>name -- )
+\ (S: i*x <spaces>name -- )
 \
 \ @note
 \
@@ -593,9 +623,9 @@ CREATE PAD /PAD CHARS ALLOT
 	' >BODY
 	STATE @ IF
 	  POSTPONE LITERAL
-	  POSTPONE !
+	  POSTPONE n!
 	ELSE
-	  !
+	  n!
 	THEN
 ; IMMEDIATE
 
