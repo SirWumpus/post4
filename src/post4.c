@@ -599,13 +599,10 @@ p4ReadByte(int fd)
 P4_Int
 p4GetC(P4_Input *input)
 {
-	if (input->fd < STDIN_FILENO) {
+	if (input->fp == (FILE *) -1) {
 		return input->offset < input->length ? input->buffer[input->offset++] : EOF;
 	}
-	if (input->fp != NULL) {
-		return fgetc(input->fp);
-	}
-	return p4ReadByte(input->fd);
+	return fgetc(input->fp == NULL ? stdin : input->fp);
 }
 
 P4_Int
@@ -614,7 +611,7 @@ p4Accept(P4_Input *input, P4_Char *buf, P4_Size size)
 	int ch;
 	P4_Char *ptr;
 
-	if (input->fp == NULL || size-- <= 1) {
+	if (input->fp == (FILE *) -1 || size-- <= 1) {
 		return 0;
 	}
 	for (ptr = buf; ptr - buf < size; ) {
@@ -912,7 +909,6 @@ p4Create()
 	ctx->radix = 10;
 	ctx->unget = EOF;
 	ctx->input.fp = stdin;
-	ctx->input.fd = fileno(stdin);
 	ctx->state = P4_STATE_INTERPRET;
 
 	if ((ctx->rs.base = malloc(options.return_stack_size * sizeof (*ctx->rs.base))) == NULL) {
@@ -988,7 +984,7 @@ p4Exception(P4_Ctx *ctx, int code)
 	if (code == P4_THROW_OK || code == P4_THROW_ABORT_MSG) {
 		return code;
 	}
-	(void) printf("%d thrown: %s", code, P4_THROW_future < code && code < 0 ? p4_exceptions[-code] : "?");
+	(void) printf("%d thrown: %s", code, P4_THROW_future <= code && code < 0 ? p4_exceptions[-code] : "?");
 	if (ctx->state == P4_STATE_COMPILE) {
 		/* A thrown error while compiling a word leaves the
 		 * definition in an incomplete state; discard it.
@@ -1685,7 +1681,7 @@ _pick:		w = P4_POP(ctx->ds);
 		P4_PUSH(ctx->ds, x);
 		NEXT;
 
-		// ( x y -- y x )
+		// ( x y -- y x ) aka 1 ROLL
 _swap:		w = P4_POP(ctx->ds);
 		x = P4_TOP(ctx->ds);
 		P4_TOP(ctx->ds) = w;
@@ -1874,8 +1870,9 @@ _source:	P4_PUSH(ctx->ds, ctx->input.buffer);
 		P4_PUSH(ctx->ds, ctx->input.length);
 		NEXT;
 
-		// ( -- -2 | -1 | 0 | fd )
-_source_id:	P4_PUSH(ctx->ds, ctx->input.fd);
+		// ( -- -1 | 0 | fp )
+		// Alias FILE *stdin to NULL.
+_source_id:	P4_PUSH(ctx->ds, (P4_Cell *)(ctx->input.fp == stdin ? NULL : ctx->input.fp));
 		NEXT;
 
 		// ( caddr +n1 -- +n2 )
@@ -2187,7 +2184,6 @@ p4Eval(P4_Ctx *ctx)
 
 		case P4_THROW_OK:
 			ctx->state = P4_STATE_INTERPRET;
-			ctx->input.fd = fileno(ctx->input.fp);
 			ctx->input.size = sizeof (ctx->tty);
 			ctx->input.buffer = ctx->tty;
 			ctx->input.length = 0;
@@ -2213,7 +2209,6 @@ p4EvalFile(P4_Ctx *ctx, const char *file)
 		rc = P4_THROW_EIO;
 	} else {
 		ctx->state = P4_STATE_INTERPRET;
-		ctx->input.fd = fileno(ctx->input.fp);
 		ctx->input.size = sizeof (ctx->tty);
 		ctx->input.buffer = ctx->tty;
 		ctx->input.length = 0;
@@ -2243,8 +2238,7 @@ p4EvalString(P4_Ctx *ctx, P4_Char *str, size_t len)
 	P4_INPUT_PUSH(&ctx->input);
 
 	ctx->state = P4_STATE_INTERPRET;
-	ctx->input.fd = P4_INPUT_STR;
-	ctx->input.fp = NULL;
+	ctx->input.fp = (FILE *) -1;
 	ctx->input.length = len;
 	ctx->input.buffer = str;
 	ctx->input.offset = 0;

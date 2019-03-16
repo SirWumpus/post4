@@ -169,22 +169,17 @@ typedef struct {
 } P4_String;
 
 typedef struct {
-	FILE *		fp;		/* stdin or an open file, never NULL. */
-	P4_Int		fd;		/* -1=string 0=stdin otherwise file descriptor */
+	FILE *		fp;		/* stdin or an open file, -1 string. */
 	P4_Uint		blk;		/* If 0< then buffer is a block and this is the block number. */
-	P4_Size		size;
+	P4_Size		size;		/* Size of buffer. */
 	P4_Size		length;		/* Length of input in buffer. */
 	P4_Size		offset;		/* Offset of unconsumed input. */
 	P4_Char *	buffer;
 } P4_Input;
 
-#define P4_INPUT_BLK		(-2)
-#define P4_INPUT_STR		(-1)
-#define P4_INPUT_TERM		( 0)
-#define P4_INPUT_IS_BLK(input)	((input).fd == P4_INPUT_BLK && (input).blk > 0)
-#define P4_INPUT_IS_STR(input)	((input).fd == P4_INPUT_STR)
-#define P4_INPUT_IS_TERM(input)	((input).fd == P4_INPUT_TERM)
-#define P4_INPUT_IS_FILE(input)	((input).fd > 0)
+#define P4_INPUT_IS_BLK(input)	((input).fp == (FILE *) -1 && (input).blk > 0)
+#define P4_INPUT_IS_STR(input)	((input).fp == (FILE *) -1)
+#define P4_INPUT_IS_TERM(input)	((input).fp == stdin)
 #define P4_INPUT_PUSH(input)	{ P4_Input input_save = *input;
 #define P4_INPUT_POP(input)	*input = input_save; }
 
@@ -293,7 +288,8 @@ struct p4_ctx {
 
 #define P4_THROW_OK		( 0)
 
-/* -255..-1 reserved for by standard. */
+/* -255..-1 reserved by the standard. */
+
 #define P4_THROW_ABORT		(-1)	/* ABORT */
 #define P4_THROW_ABORT_MSG	(-2)	/* ABORT" */
 #define P4_THROW_DS_OVER	(-3)	/* stack overflow */
@@ -373,7 +369,7 @@ struct p4_ctx {
 #define P4_THROW__77		(-77)	/* Malformed xchar */
 #define P4_THROW__78		(-78)	/* SUBSTITUTE */
 #define P4_THROW__79		(-79)	/* REPLACES */
-#define P4_THROW_future		(-79)	/* -79 .. -255 reserved for future assignment by standard */
+#define P4_THROW_future		(-80)	/* -80 .. -255 reserved for future assignment */
 
 /* -4095..-256 reserved for system assignment. */
 
