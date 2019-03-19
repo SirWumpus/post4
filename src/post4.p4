@@ -207,7 +207,7 @@ CREATE PAD /PAD CHARS ALLOT
 \
 \ (S: lo hi aaddr -- )
 \
-: 2! SWAP OVER ! CELL+ ! ;
+: 2! TUCK ! CELL+ ! ;
 
 \ ... 2@ ...
 \
@@ -584,7 +584,7 @@ CREATE PAD /PAD CHARS ALLOT
 	DUP @
 	BEGIN ?DUP WHILE
 	  1- >R
-	  CELL+ SWAP OVER !
+	  CELL+ TUCK !
 	  R>
 	REPEAT DROP
 ;
@@ -1014,14 +1014,12 @@ VARIABLE catch_frame 0 catch_frame !
 
 	\ Resolve LEAVE forward references.
 	R> R>			\ C: ip n  R: n*forw
-	BEGIN
-	  DUP 0>		\ C: ip n flag  R: n*forw
-	WHILE			\ C: ip n  R: n*forw
+	BEGIN ?DUP WHILE        \ C: ip n  R: n*forw
 	  1-			\ C: ip n' R: n*forw
 	  R>			\ C: ip n' forw  R: n'*forw
 	  POSTPONE THEN		\ C: ip n'  R: n'*forw
 	REPEAT
-	DROP >R			\ C: -- R: ip
+	>R			\ C: -- R: ip
 
 	\  LEAVE branches to just after UNTIL and before UNLOOP.
 	POSTPONE UNLOOP
@@ -1076,14 +1074,12 @@ int_max INVERT CONSTANT int_min	\ 0x80...00
 
 	\ Resolve LEAVE forward references.
 	R> R>			\ C: ip n  R: n*forw
-	BEGIN
-	  DUP 0>		\ C: ip n flag  R: n*forw
-	WHILE			\ C: ip n  R: n*forw
+	BEGIN ?DUP WHILE        \ C: ip n  R: n*forw
 	  1-			\ C: ip n' R: n*forw
 	  R>			\ C: ip n' forw  R: n'*forw
 	  POSTPONE THEN		\ C: ip n'  R: n'*forw
 	REPEAT
-	DROP >R			\ C: -- R: ip
+	>R			\ C: -- R: ip
 
 	\  LEAVE branches to just after UNTIL and before UNLOOP.
 	POSTPONE UNLOOP
@@ -1122,7 +1118,7 @@ int_max INVERT CONSTANT int_min	\ 0x80...00
 : ENDOF
 	>R			\ C: forw1 R: #of
 	POSTPONE ELSE		\ C: forw2 R: #of
-	R>			\ C: forw2 #of
+	R>			\ C: forw2 #of R: --
 ; IMMEDIATE
 
 \ ... CASE ... ENDCASE ...
@@ -1131,8 +1127,8 @@ int_max INVERT CONSTANT int_min	\ 0x80...00
 \
 : ENDCASE
 	POSTPONE DROP		\ S: --
-	0 ?DO
-	  POSTPONE THEN
+	0 ?DO			\ C: i*forw
+	  POSTPONE THEN		\ C: i'*forw
 	LOOP
 ; IMMEDIATE
 
