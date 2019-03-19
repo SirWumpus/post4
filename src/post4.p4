@@ -1329,26 +1329,36 @@ MAX-CHAR CONSTANT /COUNTED-STRING
 \
 : ." POSTPONE S" POSTPONE TYPE ; IMMEDIATE
 
+\ (S: caddr1 caddr2 u -- n )
+: _strcmp
+	BEGIN ?DUP WHILE	\ S: caddr1 caddr2 u
+	  1- >R			\ S: caddr1 caddr2 R: u'
+	  DUP C@ >R CHAR+ SWAP	\ S: caddr2' caddr1 R: u' c2
+	  DUP C@ >R CHAR+ SWAP  \ S: caddr1' caddr2' R: u' c2 c1
+	  R> R> - ?DUP IF	\ S: caddr1' caddr2' diff R: u'
+	    \ Different strings.
+	    R> DROP 		\ S: caddr1' caddr2' diff R: --
+	    >R 2DROP R>	        \ S: diff
+	    EXIT
+	  THEN
+	  R>			\ S: caddr1' caddr2' u' R:
+	REPEAT
+	\ Equal strings.
+	2DROP 0			\ S: 0
+;
+
 \ ... strcmp ...
 \
 \ (S: caddr1 u1 caddr2 u2 -- n )
 \
 : strcmp
-	ROT 2DUP		\ S: caddr1 caddr2 u2 u1 u2 u1
-	SWAP - >R 2DUP		\ S: caddr1 caddr2 u2 u1 u2 u1 R: udiff
-	> IF SWAP THEN DROP	\ S: caddr1 caddr2 u R: udiff
-	BEGIN ?DUP WHILE	\ S: caddr1 caddr2 u R: udiff
-	  1- >R			\ S: caddr1 caddr2 R: u' R: udiff
-	  DUP C@ >R CHAR+ SWAP	\ S: caddr2' caddr1 R: udiff u' c2
-	  DUP C@ >R CHAR+ SWAP  \ S: caddr1' caddr2' R: udiff u' c2 c1
-	  R> R> - ?DUP IF	\ S: caddr1' caddr2' diff R: udiff u'
-	    R> R> 2DROP 	\ S: caddr1' caddr2' diff R: --
-	    >R 2DROP R>	        \ S: diff
-	    EXIT
-	  THEN
-	  R>			\ S: caddr1' caddr2' u' R: udiff
-	REPEAT
-	2DROP R>		\ S: udiff
+	ROT SWAP 2DUP -		\ S: caddr1 caddr2 u1 u2 udiff
+	IF
+	  \ Different length strings.
+	  - >R 2DROP R> EXIT	\ S: udiff
+	THEN
+	\ Same length strings.
+	DROP _strcmp
 ;
 
 \ ... COMPARE ...
@@ -1361,6 +1371,35 @@ MAX-CHAR CONSTANT /COUNTED-STRING
 	THEN
 ;
 
+\ (S: caddr1 u1 caddr2 u2 -- bool )
+: starts-with
+	ROT SWAP 2DUP <		\ S: caddr1 caddr2 u1 u2
+	IF
+	  \ String too short to start with prefix.
+	  2DROP 2DROP FALSE
+	  EXIT			\ S: bool
+	THEN
+	NIP _strcmp 0=		\ S: bool
+;
+
+\ ... SEARCH ...
+\
+\ (S: caddr1 u1 caddr2 u2 -- caddr u bool )
+\
+: SEARCH
+	2>R 2DUP		\ S: caddr1 u1 caddr1 u1 R: caddr2 u2
+	BEGIN ?DUP WHILE
+	  2DUP 2R@ starts-with	\ S: caddr1 u1 caddr1 u1 bool R: caddr2 u2
+	  IF
+	    R> R> 2DROP		\ S: caddr1 u1 caddr1' u1' R: --
+	    2SWAP 2DROP	TRUE	\ S: caddr1' u1' true
+	    EXIT
+	  THEN
+	  1- SWAP CHAR+ SWAP	\ S: caddr1 u1 caddr' u1' R: caddr2 u2
+	REPEAT
+	DROP R> R> 2DROP	\ S: caddr1 u1 R: --
+	FALSE			\ S: caddr1 u1 false
+;
 
 \ (S: bool caddr u -- )
 : _abort

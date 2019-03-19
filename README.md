@@ -1107,6 +1107,11 @@ Save all the dirty block buffers to the block file.
 `aaddr` is the address of a cell containing the block number from the most recent `LIST`.
 
 - - -
+### SEARCH
+( `caddr1` `u1` `caddr2` `u2` -- `caddr3` `u3` `bool` )  
+Search the string `caddr1` `u1` for the string `caddr2` `u2`.  If `bool` is true, a match was found at `caddr3` with `u3` characters remaining.  If `bool` is false there was no match and `caddr3` `u3` are just `caddr1` `u1`.
+
+- - -
 ### SIGN
 ( `n` -- )  
 If `n` is negative, add a minus sign to the beginning of the pictured numeric output string.  An ambiguous condition exists if `SIGN` executes outside of a `<# #>` delimited number conversion.
@@ -1533,6 +1538,11 @@ Similar to `ALLOT`, reserve `n` address-units of data-space and return its start
         HERE 100 CELLS ALLOT
 
 Should `ALLOT` enlarge and relocate the data-space, the address saved by `HERE` on the stack will now point into invalid memory.  With `reserve` the address of the region just reserved is on top of the stack insuring that the address is valid until the next enlargement of the data-space by `reserve`,`,`, `ALIGN`, `ALLOT`, `C,`, or `COMPILE,`.
+
+- - -
+### starts-with
+( `caddr1` `u1` `caddr2` `u2` -- `bool` )  
+Return true if string `caddr1` `u1` starts with string `caddr2` `u2`; otherwise false.
 
 - - -
 ### strcmp
