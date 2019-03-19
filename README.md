@@ -484,7 +484,7 @@ Mark the start of `BEGIN ... AGAIN` or `BEGIN ... WHILE ... REPEAT` loops.
 
 - - -
 ### BL
-( -- `char` )  
+( -- `char` ) constant  
 `char` is the character value for a space, since Forth words are delimited by space.  A space can also be specified with `'\s'`.
 
 - - -
@@ -778,7 +778,7 @@ Return control from the currently executing word to its caller.  Before executin
 
 - - -
 ### FALSE
-( -- `false` )  
+( -- `false` ) constant  
 Return false value, equivalent to zero (0).
 
 - - -
@@ -1209,7 +1209,7 @@ See `VALUE` and `2VALUE`.
 
 - - -
 ### TRUE
-( -- `true` )  
+( -- `true` ) constant  
 Return a true flag, a single-cell value with all bits set.
 
 - - -
@@ -1379,27 +1379,27 @@ Dump the return stack.
 
 - - -
 ### /char
-( -- `u` )  
+( -- `u` ) constant  
 Size of an character in octets.
 
 - - -
 ### /cell
-( -- `u` )  
+( -- `u` ) constant  
 Size of a cell in octets.
 
 - - -
 ### /counted-string
-( -- `u` )  
+( -- `u` ) constant  
 Maximum size of a counted string in characters.  This is a deviation from `ENVIRONMENT?` queries.
 
 - - -
 ### /hold
-( -- `u` )  
+( -- `u` ) constant  
 Size of a numeric picture buffer in characters.  This is a deviation from `ENVIRONMENT?` queries.
 
 - - -
 ### /pad
-( -- `u` )  
+( -- `u` ) constant  
 Size of a pad buffer in characters.  This is a deviation from `ENVIRONMENT?` queries.
 
 - - -
@@ -1414,16 +1414,16 @@ Return the number of arguments on the command line `argc` and the NULL terminate
 
 - - -
 ### address-unit-bits
-( -- `u` )  
+( -- `u` ) constant  
 Size of one address unit in bits.  This is a deviation from `ENVIRONMENT?` queries.
 
 - - -
 ### blocks
 ( -- `u` )  
-Number of blocks `u` currently in the block file, one through to `u`.  The block file can be extended by writing to block `u`, the file will be extended with intervening blank blocks from the current end upto but not including block `u`, which the actual write will fill.
+Number of blocks `u` currently in the block file, one through to `u`.  The block file can be extended by writing to block `u'`, the file will be extended with intervening blank blocks from the current end upto but not including block `u'`, which the actual bock write of `u'` will fill.
 
 - - -
-### bye_code
+### bye-code
 ( exit_code -- )  
 Terminate and return to the host OS an exit code; zero (0) for normal/success, non-zero an error occurred.
 
@@ -1432,9 +1432,15 @@ Terminate and return to the host OS an exit code; zero (0) for normal/success, n
 ( `ccc<quote>` -- `caddr` )  
 When interpreting, copy the escaped string `ccc` to a transient buffer and return counted string `caddr`.  When compiling, append the escaped string `ccc` to the current word so when executed it leaves the counted string `caddr` on the stack.  See also `S\"`.
 
+- - -
 ### char-
 ( `caddr1` -- `caddr2` )  
 Subtract the size in address units of a character.
+
+- - -
+### cell-
+( `aaddr1` -- `aaddr2` )  
+Subtract the size in address units of a cell from `aaddr1` giving `aaddr2`.
 
 - - -
 ### cputs
@@ -1456,7 +1462,7 @@ Lookup the environment variable string `key` `k`.  Return string `value` `v`; if
 
 - - -
 ### floored
-( -- `false` )  
+( -- `false` ) constant  
 True if floored division is the default.  This is a deviation from `ENVIRONMENT?` queries.
 
 - - -
@@ -1471,17 +1477,17 @@ Right rotate the stack `u` cells; `ROLL` in the opposite direction.
 
 - - -
 ### max-char
-( -- `u` )  
+( -- `u` ) constant  
 Maximum value of any character.  Currently Post4 only supports ASCII and addressable units are octets.  This is a deviation from `ENVIRONMENT?` queries.
 
 - - -
 ### max-n
-( -- `u` )  
+( -- `u` ) constant  
 Largest usable signed integer.  This is a deviation from `ENVIRONMENT?` queries.
 
 - - -
 ### max-u
-( -- `u` )  
+( -- `u` ) constant  
 Largest usable unsigned integer.  This is a deviation from `ENVIRONMENT?` queries.
 
 - - -
@@ -1641,6 +1647,7 @@ This is a list of `THROW` codes used internally by Post4.
 * -5 return stack overflow  
 * -6 return stack underflow  
 * -9 invalid memory address (`SIGSEGV`)  
+* -10 division by zero  
 * -13 undefined word  
 * -14 interpreting a compile-only word  
 * -17 pictured numeric output string overflow  
@@ -1655,6 +1662,7 @@ This is a list of `THROW` codes used internally by Post4.
 * -35 invalid block number, such as zero (0)
 * -55 floating-point unidentified fault (`SIGFPE`)  
 * -56 `QUIT`  
+* -59 `ALLOCATE`
 * -61 `ALLOT` or `RESIZE`
 
 - - -
