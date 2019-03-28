@@ -511,7 +511,7 @@ p4StackDump(FILE *fp, P4_Cell *base, P4_Uint length)
 
 	for (count = 0, cell = base; 0 < length--; cell++) {
 		if ((count & 3) == 0) {
-			(void) fprintf(fp, "top-%.2u  ", (unsigned) length);
+			(void) fprintf(fp, "top-%.2u ", (unsigned) length);
 		}
 		(void) fprintf(fp, P4_HEX_FMT" ", cell->u);
 		if ((++count & 3) == 0) {
@@ -1669,7 +1669,7 @@ _resize:	w = P4_POP(ctx->ds);
 _drop:		P4_DROP(ctx->ds, 1);
 		NEXT;
 
-			// ( x -- x x )
+		// ( x -- x x )
 _dup:		w = P4_TOP(ctx->ds);
 		P4_PUSH(ctx->ds, w);
 		NEXT;

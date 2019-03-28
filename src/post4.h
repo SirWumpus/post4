@@ -149,7 +149,7 @@ typedef signed long P4_Int;
 typedef unsigned long P4_Uint;
 #define P4_UINT_FMT "%lu"
 #define P4_UINT_MAX ULONG_MAX
-#define P4_HEX_FMT "0x%.8lx"
+#define P4_HEX_FMT "$%.16lx"
 
 typedef size_t P4_Size;
 #define P4_SIZE_FMT "%zu"
