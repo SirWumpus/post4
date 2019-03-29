@@ -145,6 +145,12 @@ CREATE PAD /PAD CHARS ALLOT
 \
 : octal #8 BASE ! ;
 
+\ ... BINARY ...
+\
+\ (S: -- )
+\
+: binary #2 BASE ! ;
+
 \ ... NIP ...
 \
 \ (S: x1 x2 -- x2 )
@@ -896,18 +902,21 @@ VARIABLE catch_frame 0 catch_frame !
 	DROP
 ; IMMEDIATE
 
+: .. ( x -- )
+	BASE @ >R
+	DUP HEX [CHAR] $ EMIT . SPACE
+	DUP DECIMAL [CHAR] # EMIT . SPACE
+	DUP OCTAL [CHAR] 0 EMIT . SPACE
+	DUP BINARY [CHAR] % EMIT . SPACE
+	DUP $21 $7F WITHIN IF [CHAR] ' EMIT EMIT [CHAR] ' EMIT ELSE DROP THEN
+	CR R> BASE !
+;
+
 \ ... ? ...
 \
 \ (S: aaddr -- )
 \
-: ?
-	BASE @ >R HEX
-	DUP [CHAR] $ EMIT . SPACE @
-	DUP [CHAR] $ EMIT . SPACE
-	DUP DECIMAL [CHAR] # EMIT . SPACE
-	OCTAL [CHAR] 0 EMIT . CR
-	R> BASE !
-;
+: ? BASE @ SWAP HEX [CHAR] $ EMIT DUP . @ SPACE BASE ! .. ;
 
 \ ... N>R ...
 \

@@ -1373,6 +1373,11 @@ Enter compilation state.
 Post4 Specific Words
 --------------------
 
+### ..
+( `x` -- )  
+Display value `x` in several bases.
+
+- - -
 ### .rs
 ( -- )  
 Dump the return stack.
@@ -1416,6 +1421,11 @@ Return the number of arguments on the command line `argc` and the NULL terminate
 ### address-unit-bits
 ( -- `u` ) constant  
 Size of one address unit in bits.  This is a deviation from `ENVIRONMENT?` queries.
+
+- - -
+### binary
+( -- )  
+Set the numeric conversion radix to 2 (binary).
 
 - - -
 ### blocks
