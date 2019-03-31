@@ -41,7 +41,7 @@ MARKER rm_core_words
 : , 1 CELLS reserve ! ;
 
 \ ( char -- )
-: C, 1 CHARS reserve ! ;
+: C, 1 CHARS reserve C! ;
 
 \ ( xt -- )
 : COMPILE, , ;
@@ -752,7 +752,7 @@ VARIABLE catch_frame 0 catch_frame !
 : TYPE
 	BEGIN DUP 0> WHILE	\  S: caddr u
 	  1- SWAP		\  S: u' caddr
-	  DUP @ EMIT		\  S: u' caddr
+	  DUP C@ EMIT		\  S: u' caddr
 	  CHAR+ SWAP		\  S: caddr' u'
 	REPEAT 2DROP		\  S: --
 ;
