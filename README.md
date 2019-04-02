@@ -129,7 +129,7 @@ Example:
 Standard Words
 --------------
 
-### !
+### \!
 ( `x` `aaddr` -- )  
 Store `x` at `aaddr`.
 
@@ -139,12 +139,12 @@ Store `x` at `aaddr`.
 Divide `ud1` by the number in `BASE` giving the quotient `ud2` and the remainder `n`.  (`n` is the least significant digit of `ud1`.)  Convert `n` to external form and append the resulting character to the pictured numeric output string. 
 
 - - -
-### #>
+### \#\>
 ( `xd` -- `caddr` `u` )  
 Drop `xd`.  Make the pictured numeric output string available as a character string.  `caddr` and `u` specify the resulting character string.  A program may replace characters within the string.
 
 - - -
-### #S
+### \#S
 ( `ud1` -- `0` )  
 Convert one digit of `ud1` according to the rule for `#`.  Continue conversion until the quotient is zero (0).
 
@@ -213,7 +213,7 @@ Add `step` to the loop index.  If the loop index did not cross the boundary betw
 - - -
 ### ,
 ( `x` -- )  
-//Align// and reserve one cell of data-space and store `x` there.
+Align and reserve one cell of data-space and store `x` there.
 
 - - -
 ### -
@@ -346,7 +346,7 @@ End definition of word.
 `bool` is true if and only if `n1` is less than `n2`.
 
 - - -
-### <#
+### <\#
 ( -- )  
 Initialise the pictured numeric output conversion process.
 
