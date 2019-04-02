@@ -29,6 +29,8 @@ Post4 reads input from standard input and writes to standard output, which can b
 
         echo "123 69 + ." | post4
 
+Post4 cell size is equivalent to C's `intptr_t`, for current systems are either 32 or 64 bit values.  Therefore Post4 (currently) treats `d` and `ud` types same as `n` and `u`.
+
 
 Examples
 --------
@@ -920,6 +922,11 @@ Or
 Logical left shift of `x1` by `u` bits, putting `u` zeroes into the least significant bits.
 
 - - -
+### M*
+( `n1` `n2` -- `d` )  
+`d` (`lo` `hi` on the stack) is the signed product of `n1` times `n2`.
+
+- - -
 ### MARKER name
 ( `<spaces>name` -- )  
 Create `name` in the dictionary, which when executed will remove `name` and restore the dictionary to the state it had just prior to the `name` being added.
@@ -1238,6 +1245,11 @@ Display u in free field format.
 `bool` is true if and only if `n1` is greater than `n2`.
 
 - - -
+### UM*
+( `u1` `u2` -- `ud` )  
+`ud` (`lo` `hi` on the stack) is the unsigned product of `u1` times `u2`.
+
+- - -
 ### UM/MOD
 ( `dend` `dsor` -- `mod` `quot` )  
 Divide `dend` by `dsor`, giving the quotient `quot` and the remainder `mod`. All values and arithmetic are unsigned.
@@ -1491,6 +1503,11 @@ Right rotate the stack `u` cells; `ROLL` in the opposite direction.
 Maximum value of any character.  Currently Post4 only supports ASCII and addressable units are octets.  This is a deviation from `ENVIRONMENT?` queries.
 
 - - -
+### max-d
+( -- `d` ) constant  
+Largest usable signed double integer.  This is a deviation from `ENVIRONMENT?` queries.
+
+- - -
 ### max-n
 ( -- `u` ) constant  
 Largest usable signed integer.  This is a deviation from `ENVIRONMENT?` queries.
@@ -1499,6 +1516,11 @@ Largest usable signed integer.  This is a deviation from `ENVIRONMENT?` queries.
 ### max-u
 ( -- `u` ) constant  
 Largest usable unsigned integer.  This is a deviation from `ENVIRONMENT?` queries.
+
+- - -
+### max-ud
+( -- `ud` ) constant  
+Largest usable unsigned double integer.  This is a deviation from `ENVIRONMENT?` queries.
 
 - - -
 ### n!

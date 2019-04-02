@@ -532,7 +532,7 @@ p4MemDump(FILE *fp, P4_Char *addr, P4_Size length)
 	s = addr;
 	for (count = 0; count < length; addr++) {
 		if ((count & 0xF) == 0) {
-			(void) fprintf(fp, P4_PTR_FMT" ", addr);
+			(void) fprintf(fp, P4_PTR_FMT" ", (long)addr);
 			s = addr;
 		}
 		(void) fprintf(fp, " %.2x", (unsigned char) *addr);
@@ -562,6 +562,75 @@ p4MemDump(FILE *fp, P4_Char *addr, P4_Size length)
 		(void) fputc('\n', fp);
 	}
 }
+
+/***********************************************************************
+ *** Double Cell Math
+ ***********************************************************************/
+
+#ifdef HAS_DOUBLE_CELL
+// Affected core words:
+//
+//	constants: MAX-D MAX-UD
+//	intermediate results: */ */MOD
+//	explicit arguments: M* UM* UM/MOD SM/REM FM/MOD S>D <# # #S #> >NUMBER
+//
+
+/*
+ * https://stackoverflow.com/questions/22845801/32-bit-signed-integer-multiplication-without-using-64-bit-data-type
+ *
+ * 0x7fffffffffffffff 0x7fffffffffffffff UM*
+ * 0x0000000000000001 0x3fffffffffffffff
+ *
+ * 0xdeadbeefdeadbeef 0xbeefdeadbeefdead UM*
+ * 0x3a522ca1ca1e4983 0xa615999d16497cbb
+ */
+void
+p4Mulu(P4_Uint ah_al, P4_Uint bh_bl, P4_Uint *hi, P4_Uint *lo)
+{
+	int half_shift = CHAR_BIT * (sizeof (P4_Uint) >> 1);
+	P4_Uint lower_mask = ~0UL >> half_shift;
+
+	/* Unsigned partial products. */
+	P4_Uint al_bl = (ah_al & lower_mask)  * (bh_bl & lower_mask);
+	P4_Uint al_bh = (ah_al & lower_mask)  * (bh_bl >> half_shift);
+	P4_Uint ah_bl = (ah_al >> half_shift) * (bh_bl & lower_mask);
+	P4_Uint ah_bh = (ah_al >> half_shift) * (bh_bl >> half_shift);
+
+	/* Sum partial products. */
+	P4_Uint carry = ((al_bl >> half_shift) + (al_bh & lower_mask) + (ah_bl & lower_mask)) >> half_shift;
+	*hi = ah_bh + (ah_bl >> half_shift) + (al_bh >> half_shift) + carry;
+	*lo = (ah_bl << half_shift) + (al_bh << half_shift) + al_bl;
+}
+
+/*
+ * https://stackoverflow.com/questions/22845801/32-bit-signed-integer-multiplication-without-using-64-bit-data-type
+ *
+ * +ve * +ve = +ve
+ * 0x7fffffffffffffff 0x7fffffffffffffff M*
+ * 0x0000000000000001 0x3fffffffffffffff
+ *
+ * -ve * -ve = +ve
+ * 0x8000000000000000 0x8000000000000000 M*
+ * 0x0000000000000000 0x4000000000000000
+ *
+ * -ve * -ve = +ve
+ * 0xdeadbeefdeadbeef 0xbeefdeadbeefdead M*
+ * 0x3a522ca1ca1e4983 0x0877fbff78abdf1f
+ *
+ * -ve * +ve = -ve
+ * 0xdeadbeefdeadbeef 0x7fffffffffffffff M*
+ * 0xa152411021524111 0xef56df77ef56df77
+ */
+void
+p4Muls(P4_Int ah_al, P4_Int bh_bl, P4_Int *hi, P4_Int *lo)
+{
+	p4Mulu(ah_al, bh_bl, (P4_Uint *)hi, (P4_Uint *)lo);
+
+	/* Convert upper word from unsigned to signed result. */
+	*hi = *hi - (ah_al < 0 ? bh_bl : 0) - (bh_bl < 0 ? ah_al : 0);
+}
+
+#endif
 
 /***********************************************************************
  *** Input / Ouput
@@ -1042,6 +1111,8 @@ p4Repl(P4_Ctx *ctx)
 		P4_WORD("max-char",		&&_max_char,	0),	// p4
 		P4_WORD("max-n",		&&_max_n,	0),	// p4
 		P4_WORD("max-u",		&&_max_u,	0),	// p4
+		P4_WORD("max-d",		&&_max_d,	0),	// p4
+		P4_WORD("max-ud",		&&_max_ud,	0),	// p4
 
 		/* Internal support. */
 		P4_WORD("_bp",		&&_bp,		P4_BIT_IMM),	// p4
@@ -1127,10 +1198,12 @@ p4Repl(P4_Ctx *ctx)
 		P4_WORD("FM/MOD",	&&_fm_div_mod,	0),
 		P4_WORD("INVERT",	&&_not,		0),
 		P4_WORD("LSHIFT",	&&_lshift,	0),
+		P4_WORD("M*",		&&_mstar,	0),
 		P4_WORD("MOD",		&&_mod,		0),
 		P4_WORD("OR",		&&_or,		0),
 		P4_WORD("RSHIFT",	&&_rshift,	0),
 		P4_WORD("SM/REM",	&&_sm_div_rem,	0),
+		P4_WORD("UM*",		&&_umstar,	0),
 		P4_WORD("UM/MOD",	&&_um_div_mod,	0),
 		P4_WORD("XOR",		&&_xor,		0),
 
@@ -1341,10 +1414,12 @@ _max_char:	P4_PUSH(ctx->ds, (P4_Uint) P4_CHAR_MAX);
 		NEXT;
 
 		// ( -- u )
+_max_d:
 _max_n:		P4_PUSH(ctx->ds, (P4_Uint) P4_INT_MAX);
 		NEXT;
 
 		// ( -- u )
+_max_ud:
 _max_u:		P4_PUSH(ctx->ds, (P4_Uint) P4_UINT_MAX);
 		NEXT;
 
@@ -1743,6 +1818,10 @@ _sub:		w = P4_POP(ctx->ds);
 		P4_TOP(ctx->ds).n -= w.n;
 		NEXT;
 
+#ifndef HAS_DOUBLE_CELL
+		// ( n1 n2 -- d )
+_mstar:
+#endif
 		// ( n1 n2 -- n3 )
 _mul:		w = P4_POP(ctx->ds);
 		P4_TOP(ctx->ds).n *= w.n;
@@ -1756,7 +1835,31 @@ _div:		w = P4_POP(ctx->ds);
 		P4_TOP(ctx->ds).n /= w.n;
 		NEXT;
 
-	{	// ( dend dsor -- rem quot )
+#ifdef HAS_DOUBLE_CELL
+		// n1 n2 -- d (lo hi)
+		P4_Cell hi, lo;
+_mstar:		w = P4_POP(ctx->ds);
+		x = P4_TOP(ctx->ds);
+		p4Muls(w.n, x.n, &hi.n, &lo.n);
+		P4_TOP(ctx->ds) = lo;
+		P4_PUSH(ctx->ds, hi);
+		NEXT;
+
+		// n1 n2 -- ud (lo hi)
+_umstar:	w = P4_POP(ctx->ds);
+		x = P4_TOP(ctx->ds);
+		p4Mulu(w.n, x.n, &hi.u, &lo.u);
+		P4_TOP(ctx->ds) = lo;
+		P4_PUSH(ctx->ds, hi);
+		NEXT;
+#else
+		// ( n1 n2 -- ud )
+_umstar:	w = P4_POP(ctx->ds);
+		P4_TOP(ctx->ds).u *= w.u;
+		NEXT;
+#endif
+
+	{	// ( d dsor -- rem quot )
 		// C99+ specifies symmetric division.
 		// Dividend Divisor Remainder Quotient
 		//       10       7         3        1
@@ -1775,7 +1878,7 @@ _sm_div_rem:	w = P4_POP(ctx->ds);
 		P4_PUSH(ctx->ds, qr.quot);
 		NEXT;
 	}
-	{	// ( dend dsor -- mod quot )
+	{	// ( d dsor -- mod quot )
 		// Dividend Divisor Remainder Quotient
 		//       10       7         3        1
 		//      -10       7         4       -2
@@ -1798,7 +1901,7 @@ _fm_div_mod:	w = P4_POP(ctx->ds);
 		P4_PUSH(ctx->ds, q);
 		NEXT;
 	}
-	{	// ( dend dsor -- mod quot )
+	{	// ( ud dsor -- mod quot )
 		P4_Uint q, m;
 _um_div_mod:	w = P4_POP(ctx->ds);
 		x = P4_TOP(ctx->ds);

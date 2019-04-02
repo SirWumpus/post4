@@ -65,6 +65,7 @@ extern "C" {
 #include <limits.h>
 #include <stdio.h>
 #include <stddef.h>
+#include <stdint.h>
 #include <stdlib.h>
 #include <string.h>
 #include <setjmp.h>
@@ -133,23 +134,24 @@ typedef struct {
 
 typedef void *P4_Code;			/* Address of labels, eg. ptr = &&label; */
 typedef void *P4_Ptr;
-#define P4_PTR_FMT "%p"
+#define P4_PTR_FMT "%lx"
 
 typedef char P4_Char;
 #define P4_CHAR_FMT "0x%.2x"
 #define P4_CHAR_BIT CHAR_BIT
 #define P4_CHAR_MAX UCHAR_MAX
 
-typedef signed long P4_Int;
+typedef intptr_t P4_Int;
 #define P4_INT_FMT "%ld"
-#define P4_INT_MAX LONG_MAX
+#define P4_INT_MAX INTPTR_MAX
 #define DIV ldiv
 #define DIV_T ldiv_t
 
-typedef unsigned long P4_Uint;
+typedef uintptr_t P4_Uint;
 #define P4_UINT_FMT "%lu"
-#define P4_UINT_MAX ULONG_MAX
+#define P4_UINT_MAX UINTPTR_MAX
 #define P4_HEX_FMT "$%.16lx"
+#define P4_UINT_MSB (~((P4_Uint)~0 >> 1))
 
 typedef size_t P4_Size;
 #define P4_SIZE_FMT "%zu"

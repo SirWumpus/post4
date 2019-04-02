@@ -293,13 +293,13 @@ CREATE PAD /PAD CHARS ALLOT
 \
 \ (S: n1 n2 dsor -- quot )
 \
-: */ >R * R> / ;
+: */ >R M* R> SM/REM SWAP DROP ;
 
 \ ... */MOD ...
 \
 \ (S: n1 n2 dsor -- rem quot )
 \
-: */MOD >R * R> /MOD ;
+: */MOD >R M* R> SM/REM ;
 
 \ ... 0<> ...
 \
