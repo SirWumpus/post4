@@ -2,7 +2,7 @@ MARKER rm_core_words
 
 : \ '\n' PARSE DROP DROP ; IMMEDIATE
 
-\ Post4 Copyright 2007, 2019 by Anthony Howe.  All rights reserved.
+\ Post4 Copyright 2007, 2020 by Anthony Howe.  All rights reserved.
 
 \ ... .S ...
 \
@@ -1650,5 +1650,5 @@ VARIABLE SCR
 
 MARKER rm_user_words
 
-.( Post4 Copyright 2007, 2019 by Anthony Howe.  All rights reserved.
+.( Post4 Copyright 2007, 2020 by Anthony Howe.  All rights reserved.
 )

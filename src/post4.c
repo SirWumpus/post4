@@ -1,7 +1,7 @@
 /*
  * post4.c
  *
- * Copyright 2007, 2019 by Anthony Howe. All rights reserved.
+ * Copyright 2007, 2020 by Anthony Howe. All rights reserved.
  */
 
 #include "post4.h"
