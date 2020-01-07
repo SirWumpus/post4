@@ -958,6 +958,16 @@ AC_DEFUN(SNERT_OPTION_ENABLE_FCNTL_LOCKS,[
 	AC_SUBST(enable_alt_flock)
 ])
 
+AC_DEFUN(SNERT_FILE_LOCKS,[
+	AS_ECHO()
+	AS_ECHO("Check for file locking...")
+	AS_ECHO()
+	AC_CHECK_HEADERS([fcntl.h sys/file.h])
+	AC_CHECK_FUNCS(flock fcntl lockf locking)
+	SNERT_CHECK_DEFINE(O_BINARY, fcntl.h)
+	SNERT_CHECK_DEFINE(LOCK_SH, fcntl.h)
+])
+
 dnl
 dnl SNERT_POSIX_IO
 dnl

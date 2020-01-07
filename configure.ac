@@ -70,6 +70,7 @@ SNERT_OPTIONS
 SNERT_REGEX
 SNERT_SETJMP
 SNERT_POSIX_IO
+SNERT_FILE_LOCKS
 SNERT_TERMIOS
 
 #######################################################################

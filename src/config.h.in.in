@@ -239,6 +239,29 @@ extern "C" {
 #undef HAVE_GETDTABLESIZE
 
 /*
+ * File Locking
+ */
+#undef HAVE_SYS_FILE_H
+#undef HAVE_FCNTL
+#undef HAVE_FLOCK
+#undef HAVE_LOCKF
+#undef HAVE_LOCKING
+
+/*
+ * Define the flock() constants separately, since some systems
+ * have flock(), but fail to define the constants in a header.
+ * These values were taken from FreeBSD.
+ */
+#undef HAVE_LOCK_SH
+
+#ifndef HAVE_LOCK_SH
+# define LOCK_SH	0x01		/* shared file lock */
+# define LOCK_EX	0x02		/* exclusive file lock */
+# define LOCK_NB	0x04		/* don't block when locking */
+# define LOCK_UN	0x08		/* unlock file */
+#endif
+
+/*
  *
  */
 #undef HAVE_UNISTD_H
