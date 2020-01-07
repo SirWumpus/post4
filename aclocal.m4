@@ -1086,7 +1086,6 @@ AC_DEFUN(SNERT_SETJMP,[
 # include <setjmp.h>
 #endif
 		])
-		AC_CHECK_FUNCS([setjmp longjmp sigsetjmp siglongjmp])
 	])
 ])
 

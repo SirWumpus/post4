@@ -167,10 +167,6 @@ extern "C" {
 #undef HAVE_SETJMP_H
 #undef HAVE_JMP_BUF
 #undef HAVE_SIGJMP_BUF
-#undef HAVE_SETJMP
-#undef HAVE_LONGJMP
-#undef HAVE_SIGSETJMP
-#undef HAVE_SIGLONGJMP
 
 #ifdef HAVE_SIGJMP_BUF
 # define JMP_BUF		sigjmp_buf
