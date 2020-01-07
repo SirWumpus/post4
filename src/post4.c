@@ -146,8 +146,9 @@ static int sig_map[][2] = {
 static void
 sig_int(int signum)
 {
+	int i;
 	if (signal_ctx != NULL) {
-		for (int i = 0; sig_map[i][0] != 0; i++) {
+		for (i = 0; sig_map[i][0] != 0; i++) {
 			if (sig_map[i][0] == signum) {
 				signum = sig_map[i][1];
 				break;
