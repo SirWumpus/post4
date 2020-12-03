@@ -1,3 +1,4 @@
+*.p4 linguist-language=Forth
 *.blk binary
 *.docx binary
 *.gif binary
