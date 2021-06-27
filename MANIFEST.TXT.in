@@ -7,9 +7,9 @@ com/snert/src/@PACKAGE_NAME@/src/.gdbinit
 com/snert/src/@PACKAGE_NAME@/src/BUILD_ID.TXT
 com/snert/src/@PACKAGE_NAME@/src/config.h.in.in
 com/snert/src/@PACKAGE_NAME@/src/makefile.in
-com/snert/src/@PACKAGE_NAME@/src/p4.c
-com/snert/src/@PACKAGE_NAME@/src/p4.h
-com/snert/src/@PACKAGE_NAME@/src/p4.p4
+com/snert/src/@PACKAGE_NAME@/src/post4.c
+com/snert/src/@PACKAGE_NAME@/src/post4.h
+com/snert/src/@PACKAGE_NAME@/src/post4.p4
 com/snert/src/@PACKAGE_NAME@/examples/ed.p4
 com/snert/src/@PACKAGE_NAME@/examples/life.p4
 com/snert/src/@PACKAGE_NAME@/examples/lifo.p4
