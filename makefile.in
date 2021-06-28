@@ -6,9 +6,6 @@
 
 .POSIX :
 
-TARNAME 	= @PACKAGE_TARNAME@
-VERSION		= @PACKAGE_VERSION@
-
 ########################################################################
 ### No further configuration beyond this point.
 ########################################################################
@@ -23,29 +20,30 @@ platform	= @platform@
 prefix		= @prefix@
 exec_prefix	= @exec_prefix@
 
-#
-# Paths for supporting headers and libraries.
-#
-top_srcdir	= @top_srcdir@
-abs_top_srcdir 	= @top_srcdir@
-SNERT_TARDIR	= @rel_tardir@
-SNERT_INCDIR	= @rel_incdir@
-SNERT_LIBDIR	= @rel_libdir@
+VPATH		:= @srcdir@
+srcdir		:= @srcdir@
+top_srcdir	:= @top_srcdir@
+abs_srcdir	:= @abs_srcdir@
+rel_tardir	:= @rel_tardir@
 
-SRCDIR   	= @abs_srcdir@
-SBINDIR  	= @sbindir@
+builddir	:= @builddir@
+top_builddir	:= @top_builddir@
+abs_builddir	:= @abs_builddir@
+
+bindir		:= @bindir@
+libdir		:= @libdir@/post4
+datarootdir	:= @datarootdir@
+
 TOPDIR	 	= @abs_top_srcdir@
 TARDIR   	= ${TOPDIR}/../
 
-TARFILE		= ${TARNAME}-${VERSION}'.'${BUILD}.tar.gz
 TARNAME 	= @PACKAGE_TARNAME@
-MAJOR   	= @package_major@
-MINOR   	= @package_minor@
-BUILD		= `cat ${TOPDIR}/src/BUILD_ID.TXT`
-VERSION 	= ${MAJOR}.${MINOR}
 MD5SUM		= @MD5SUM@
 AUTOCONF	= @AUTOCONF@
 TAR_I		= @TAR_I@
+
+COMMIT		:= $$(git describe --tags)
+VERSION		:= $$(git tag --list | sed -n '/^v[0-9]/s/v//p' | tail -n1)
 
 ########################################################################
 ### No further configuration beyond this point.
@@ -84,7 +82,7 @@ test : build
 title :
 	@echo
 	@echo '***************************************************************'
-	@echo '==>' ${SRCDIR}
+	@echo '==>' ${abs_srcdir}
 	@echo '***************************************************************'
 	@echo
 
@@ -93,21 +91,21 @@ _clean :
 	find . \( -name 'tmp.*' -o -name '*.core' \) -exec rm -f \{\} \;
 
 _distclean : _clean
-	rm -f doc/manual.shtml
-	rm -f examples/startup.sh
-	rm -f config.log config.status install.sh makefile
+	rm -f *.log config.status configure.scan makefile MANIFEST.TXT
 
 _realclean : _distclean
-	-rm -f configure *.md5 MANIFEST.TXT VERSION.TXT FILE.TXT
+	rm -f configure *.md5
 
-next-id:
-	expr `cat ${TOPDIR}/src/BUILD_ID.TXT` + 1 >${TOPDIR}/src/BUILD_ID.TXT
-
-install: build install.sh
-	-@DESTDIR="${DESTDIR}" sh install.sh
-
-install.sh: install.sh.in config.status
-	./config.status install.sh
+install: build
+	install -p -o root -g 0 -d ${libdir}
+	install -p -o root -g 0 -d ${datarootdir}
+	install -p -o root -g 0 ./src/post4 ${bindir}
+	install -p -o root -g 0 ./src/post4.p4 ${libdir}
+	install -p -o root -g 0 ./README.md ${datarootdir}
+	install -p -o root -g 0 ./examples/ed.p4 ${libdir}
+	install -p -o root -g 0 ./examples/life.p4 ${libdir}
+	install -p -o root -g 0 ./examples/lifo.p4 ${libdir}
+	install -p -o root -g 0 ./examples/rand.p4 ${libdir}
 
 config.status : configure
 	./configure
@@ -119,21 +117,22 @@ makefile: makefile.in config.status
 	./config.status makefile
 
 list:
-	tar -zvtf ${SNERT_TARDIR}/${TARFILE}
+	git ls-tree --full-tree -r --name-only HEAD
 
-pack: next-id tar
+snapshot:
+	@echo
+	@echo '***************************************************************'
+	git archive --format=tar.gz --prefix=${TARNAME}-${COMMIT}/ ${COMMIT} >../${TARNAME}-${COMMIT}.tar.gz
+	@echo '***************************************************************'
+	@${MD5SUM} ../${TARNAME}-${COMMIT}.tar.gz | tee ../${TARNAME}-${COMMIT}.md5
+	@echo '***************************************************************'
+	@echo
 
 tar: MANIFEST.TXT
 	@echo
 	@echo '***************************************************************'
-	@echo
-	echo '${VERSION}.'`cat src/BUILD_ID.TXT` >VERSION.TXT
-	echo '${TARNAME}-${VERSION}.tar.gz' >FILE.TXT
-	tar -C ${SNERT_TARDIR} ${TAR_I} MANIFEST.TXT -zcf ${SNERT_TARDIR}/${TARFILE}
-	@echo
+	tar -C .. ${TAR_I} MANIFEST.TXT -zcf ../${TARNAME}-${VERSION}.tar.gz
 	@echo '***************************************************************'
-	@cd ${SNERT_TARDIR}; ${MD5SUM} ${TARFILE} | tee com/snert/src/${TARNAME}/${TARNAME}.md5
-	@echo '***************************************************************'
-	@cd $(SNERT_TARDIR); wc -c $(TARFILE)
+	@${MD5SUM} ../${TARNAME}-${VERSION}.tar.gz | tee ../${TARNAME}-${VERSION}.md5
 	@echo '***************************************************************'
 	@echo

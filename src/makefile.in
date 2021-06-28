@@ -17,23 +17,17 @@ E = @EXEEXT@
 #
 top_srcdir 	= @top_srcdir@
 abs_srcdir 	= @abs_srcdir@
-SNERT_TARDIR	= @snert_tardir@
-SNERT_INCDIR	= @snert_incdir@
-SNERT_LIBDIR	= @snert_libdir@
 
 prefix 		= @prefix@
 exec_prefix 	= @exec_prefix@
 bindir 		= @bindir@
-
-LIB		= $(SNERT_LIBDIR)/@PACKAGE_TARNAME@$A
-BAK		= $(SNERT_LIBDIR)/@PACKAGE_TARNAME@.bak
-TGZ		= $(SNERT_TARDIR)/@PACKAGE_TARNAME@-@PACKAGE_VERSION@.tgz
+libdir 		= @libdir@/post4
 
 CC		= @CC@
 CC_E		= @CC_E@
 CC_O		= @CC_O@
 CPPFLAGS	= @CPPFLAGS@
-CFLAGS		= @CFLAGS@ -Wno-unused-label -funsigned-char
+CFLAGS		= @CFLAGS@ -Wno-unused-label -funsigned-char -Wno-unused-const-variable
 LDFLAGS		= @LDFLAGS@
 LIBS		= @LIBS@
 
@@ -41,11 +35,6 @@ XARGSI		= @XARGSI@
 RANLIB		= @RANLIB@
 ARCHIVE		= @ARCHIVE@
 COMPILE		= @COMPILE@
-
-LIBSNERT	= @LIBSNERT@
-LIB_RT		= @HAVE_LIB_RT@
-LIB_WS2_32	= @HAVE_LIB_WS2_32@
-LIB_IPHLPAPI	= @HAVE_LIB_IPHLPAPI@
 
 BUILT		:= `date +'%a, %d %b %Y %H:%M:%S %z'`
 
@@ -60,11 +49,11 @@ BUILT		:= `date +'%a, %d %b %Y %H:%M:%S %z'`
 
 #%$E : %.c
 .c$E :
-	$(CC) $(CFLAGS) $(LDFLAGS) $(CC_E)$*$E $< $(LIBSNERT) $(LIBS)
+	$(CC) $(CFLAGS) $(LDFLAGS) $(CC_E)$*$E $< $(LIBS)
 
 #%$E : %$O
 $O$E :
-	$(LD) $(LDFLAGS) $(CC_E)$*$E $*$O $(LIBSNERT) $(LIBS)
+	$(LD) $(LDFLAGS) $(CC_E)$*$E $*$O $(LIBS)
 
 .c.i:
 	${CC} -E ${CFLAGS} $*.c >$*.i
@@ -94,10 +83,12 @@ title :
 	@echo
 
 install: build
-	-cp -p post4$E ${bindir}
+	install -p -o root -g 0 -d ${libdir}
+	install -p -o root -g 0 post4.p4 ${libdir}
+	install -p -o root -g 0 post4$E ${bindir}
 
 post4$O : config.h post4.h post4.c
-	${CC} ${CFLAGS} -Wno-unused-const-variable -DP4_BUILT="\"${BUILT}\"" -c post4.c
+	${CC} ${CFLAGS} -DP4_BUILT="\"${BUILT}\"" -c post4.c
 
 post4$E : config.h post4.h post4.c
 	${CC} ${CFLAGS} ${LDFLAGS} -DTEST -DP4_BUILT="\"${BUILT}\"" -o post4$E post4.c

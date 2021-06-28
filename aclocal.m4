@@ -2112,12 +2112,15 @@ dnl
 dnl SNERT_SUMMARY
 dnl
 AC_DEFUN(SNERT_SUMMARY,[
-	echo
-	echo $PACKAGE_NAME/$package_major.$package_minor.$package_build
-	echo $package_copyright
-	echo
+	AS_ECHO()
+	AS_ECHO("$PACKAGE_NAME/$package_major.$package_minor.$package_build")
+	AS_ECHO("$package_copyright")
+	AS_ECHO()
 	AC_MSG_RESULT([  Platform.......: $platform $CC])
+	AC_MSG_RESULT([  prefix.........: $prefix])
+	AC_MSG_RESULT([  exec_prefix....: $exec_prefix])
 	AC_MSG_RESULT([  CFLAGS.........: $CFLAGS])
+	AC_MSG_RESULT([  CPPFLAGS.......: $CPPFLAGS])
 	AC_MSG_RESULT([  LDFLAGS........: $LDFLAGS])
 	AC_MSG_RESULT([  LIBS...........: $LIBS])
 ])
