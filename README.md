@@ -253,7 +253,7 @@ Divide the dividend `dend` by the divisor `dsor` leaving the remainder `rem` and
 - - - 
 ### /STRING
 ( `caddr` `u` `n` -- `caddr'` `u'` )  
-Adjust the character string at `caddr u` by offset `n` characters, by adding `n` to `caddr` and subtracting `n` from length `u`.
+Adjust the character string at `caddr` `u` by offset `n` characters, by adding `n` to `caddr` and subtracting `n` from length `u`.
 
 - - -
 ### 0<
@@ -448,7 +448,7 @@ Jump ahead over a block of code.  A building block for several flow control word
 - - -
 ### ALIGN
 ( -- )  
-If the data-space pointer is not aligned, reserve enough space to align it.
+If the data-space pointer is not aligned, `reserve` enough space to align it.
 
 - - -
 ### ALIGNED
@@ -575,10 +575,12 @@ Add the size in address units of a character.
 - - -
 ### CMOVE
 ( `src` `dst` `u` -- )  
+Move `u` characters from character `src` address to `dst` address, proceeding from low to higher addresses.
 
 - - -
 ### CMOVE>
 ( `src` `dst` `u` -- )  
+Move `u` characters from character `src` address to `dst` address, proceeding from high to lower addresses.
 
 - - -
 ### COMPARE
@@ -587,7 +589,8 @@ Compare the two strings lexicographically.  Return `n` as 1, zero (0), or -1, ac
 
 - - -
 ### COMPILE,
-( -- )  
+( `xt` -- )  
+Append the execution semantics of the definition represented by `xt` to the execution semantics of the current definition.
 
 - - -
 ### CONSTANT name
@@ -936,6 +939,7 @@ Create `name` in the dictionary, which when executed will remove `name` and rest
 ( `n1` `n2` -- `n3` )  
 `n3` is the greater of `n1` and `n2`.
 
+- - -
 ### MIN
 ( `n1` `n2` -- `n3` )  
 `n3` is the lesser of `n1` and `n2`.
@@ -967,11 +971,13 @@ Drop the first item below the top of stack.
 
 - - -
 ### N>R
-( `i*x` `n` –– ) (R: –– `i*x` `n` )
+( `i*x` `u` -- ) (R: -- `i*x` `u` )  
+Move `u+1` items from the data stack to the return stack for later retrival using `NR>`.  Note the data will not be overwritten by a subsequent invocation of `N>R` and a program may not access data placed on the return stack before the invocation of `N>R`.
 
 - - -
 ### NR>
-( –– `i*x` `n` ) (R: `i*x` `n` –– )
+( -- `i*x` `u` ) (R: `i*x` `u` -- )  
+Move `u+1` items, previously stored with `N>R`, from the return stack to the data stack.  The behaviour is undefined if `NR>` is used with data not stored by `N>R`.
 
 - - -
 ### OF
@@ -1232,7 +1238,7 @@ If `u` is greater than zero (0), display the character string specified by `cadd
 - - -
 ### U.
 ( `u` -- )  
-Display u in free field format.
+Display `u` in free field format.
 
 - - -
 ### U<
@@ -1331,7 +1337,7 @@ Bit-wise exclusive-or of the top two stack values.
 
 - - -
 ### [
-( -- ) immediate
+( -- ) immediate  
 Enter interpretation state.
 
 - - -
@@ -1397,7 +1403,7 @@ Dump the return stack.
 - - -
 ### /char
 ( -- `u` ) constant  
-Size of an character in octets.
+Size of a character in octets.
 
 - - -
 ### /cell
@@ -1446,7 +1452,7 @@ Number of blocks `u` currently in the block file, one through to `u`.  The block
 
 - - -
 ### bye-code
-( exit_code -- )  
+( `exit_code` -- )  
 Terminate and return to the host OS an exit code; zero (0) for normal/success, non-zero an error occurred.
 
 - - -
@@ -1466,7 +1472,7 @@ Subtract the size in address units of a cell from `aaddr1` giving `aaddr2`.
 
 - - -
 ### cputs
-( caddr -- )  
+( `caddr` -- )  
 Print the counted string.  See also `puts`.
 
 - - -
@@ -1524,15 +1530,15 @@ Largest usable unsigned double integer.  This is a deviation from `ENVIRONMENT?`
 
 - - -
 ### n!
-( i*x aaddr -- )  
+( `i*x` `aaddr` -- )  
 
 - - -
 ### n,
-( i*x i -- )  
+( `i*x` `i` -- )  
 
 - - -
 ### n@
-( aaddr -- i*x )  
+( `aaddr` -- `i*x` )  
 
 - - -
 ### octal
@@ -1541,7 +1547,7 @@ Set the numeric conversion radix to eight (octal).
 
 - - -
 ### parse-escape
-( `char` `ccc<char>` -- caddr u )  
+( `char` `ccc<char>` -- `caddr` `u` )  
 Parse `ccc` delimited by the delimiter `char`.  `caddr` and `u` are the address and length within the input buffer of the parsed C-style escaped string.  If the parse area was empty, the resulting string has a zero (0) length.  Supported escapes:
 
         \?          delete
@@ -1561,7 +1567,7 @@ Backslash followed by any other character escapes that character, ie. `\\` is a 
 
 - - -
 ### puts
-( caddr -- )  
+( `caddr` -- )  
 Print a NUL terminated string.
 
         CREATE greet S\" Hello world.\n"
@@ -1571,7 +1577,7 @@ Print a NUL terminated string.
 ### reserve
 
 ( `n` -- `addr` )  
-Similar to `ALLOT`, reserve `n` address-units of data-space and return its start address.  While defining a word in C based implementations, like Post4, data-space regions may be relocated when they are enlarged, thus invalidating previous values of `HERE`.  Therefore:
+Similar to `ALLOT`, reserve `n` address-units of data-space and return its start address.  While defining a word in C based implementations, like Post4, data-space regions may be relocated when they are enlarged, thus invalidating previous values of `HERE`.  Therefore consider:
 
         HERE 100 CELLS ALLOT
 
@@ -1589,7 +1595,7 @@ Compare the two strings lexicographically.  Return `n` greater than, equal to, o
 
 - - -
 ### strlen
-( caddr -- u )  
+( `caddr` -- `u` )  
 String length of NUL terminated string.  
 
 - - -
@@ -1647,6 +1653,7 @@ Return to the context saved at the start of the REPL (`QUIT`) passing `n`.  Valu
 ( -- `aaddr` `n` )  
 Push the return stack base address and current depth.  This stack is a fixed size and grows upward.
 
+- - -
 ### _rs_size
 ( -- `n`)  
 Push the return stack's size.
