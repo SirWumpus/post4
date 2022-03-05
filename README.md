@@ -7,7 +7,7 @@ Copyright 2007, 2020 Anthony Howe.  All rights reserved.
 Overview
 --------
 
-Post4 is a hosted indirect threaded Forth dialect written in C, based on the ["Forth 200x Draft 18.1, 2018-08-27"](http://www.forth200x.org/documents/forth18-1.pdf).  Post4 aims to implement the fewest possible built-in words in C, those that are needed to interact with memory and I/O, leaving the remaining standard words to be implemented in Forth.
+Post4 is a hosted indirect threaded Forth dialect written in C, based on the ["Forth 200x Draft 19.1, 2019-09-30"](http://www.forth200x.org/documents/forth19-1.pdf).  Post4 aims to implement the fewest possible built-in words in C, those that are needed to interact with memory and I/O, leaving the remaining standard words to be implemented in Forth.
 
         usage: post4 [-V][-b file][-c file][-d size][-i file][-r size] [script [args ...]]
 
