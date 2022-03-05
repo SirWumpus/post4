@@ -2,6 +2,8 @@
 @PACKAGE_NAME@/aclocal.m4
 @PACKAGE_NAME@/configure
 @PACKAGE_NAME@/configure.ac
+@PACKAGE_NAME@/config.guess
+@PACKAGE_NAME@/config.sub
 @PACKAGE_NAME@/makefile.in
 @PACKAGE_NAME@/src/.gdbinit
 @PACKAGE_NAME@/src/BUILD_ID.TXT

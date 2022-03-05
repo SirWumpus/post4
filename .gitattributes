@@ -12,4 +12,5 @@
 *.ttf binary
 *.TTF binary
 *.wsa binary
-
+config.guess -diff -merge
+config.sub -diff -merge
