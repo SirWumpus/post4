@@ -1225,7 +1225,7 @@ p4Repl(P4_Ctx *ctx)
 		P4_WORD("EMIT",		&&_emit,	0),
 		P4_WORD("EMPTY-BUFFERS", &&_empty_buffers, 0),
 		P4_WORD("epoch-seconds", &&_epoch_seconds, 0),		// p4
-		P4_WORD("find-name",	&&_find_name,	0),		// p4
+		P4_WORD("FIND-NAME",	&&_find_name,	0),
 		P4_WORD("INCLUDED",	&&_included,	0),
 		P4_WORD("KEY",		&&_key,		0),
 		P4_WORD("KEY?",		&&_key_ready,	0),

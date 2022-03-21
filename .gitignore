@@ -1,4 +1,5 @@
 *.bak
+*.blk
 *.o
 *.obj
 *.exe

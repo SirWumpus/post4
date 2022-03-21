@@ -1204,7 +1204,7 @@ VARIABLE _str_buf_index
 \
 \ Print a NUL terminated string.
 \
-\	CREATE greet 0" Hello world.\n"
+\	CREATE greet S\" Hello world.\n"
 \	greet puts
 \
 : puts BEGIN DUP C@ ?DUP WHILE EMIT 1+ REPEAT DROP ;

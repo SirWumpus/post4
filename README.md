@@ -1,7 +1,7 @@
 Post4 (Post-Forth)
 ==================
 
-Copyright 2007, 2020 Anthony Howe.  All rights reserved.
+Copyright 2007, 2022 Anthony Howe.  All rights reserved.
 
 
 Overview
@@ -37,7 +37,7 @@ Examples
 
 ### dumpargs.p4
 
-Simple demostration on how to access the command line arguments.
+Simple demonstration on how to access the command line arguments.
 
         $ post4 dumpargs.p4 hello world, tell us more!
 
@@ -797,6 +797,11 @@ Define cell aligned structure field `name`, which when executed adds the field o
 Fill memory at address `caddr` with `u` consecutive characters `char`.
 
 - - -
+### FIND-NAME
+( `caddr` `u` -- `xt` | 0 )  
+Find the definition identified by the string `caddr` `u` in the current search order.  Return its execution token `xt` if found, otherwise 0.
+
+- - -
 ### FLUSH
 ( -- )  
 Save and free all dirty block buffers.
@@ -820,7 +825,7 @@ Floored division of the dividend `dend` by the divisor `dsor` leaving the modulu
 - - -
 ### HEX
 ( -- )  
-Set the numeric conversion radix to sixteen (hexdecimal).
+Set the numeric conversion radix to sixteen (hexadecimal).
 
 - - -
 ### HOLD
@@ -972,7 +977,7 @@ Drop the first item below the top of stack.
 - - -
 ### N>R
 ( `i*x` `u` -- ) (R: -- `i*x` `u` )  
-Move `u+1` items from the data stack to the return stack for later retrival using `NR>`.  Note the data will not be overwritten by a subsequent invocation of `N>R` and a program may not access data placed on the return stack before the invocation of `N>R`.
+Move `u+1` items from the data stack to the return stack for later retrieval using `NR>`.  Note the data will not be overwritten by a subsequent invocation of `N>R` and a program may not access data placed on the return stack before the invocation of `N>R`.
 
 - - -
 ### NR>
@@ -1428,7 +1433,7 @@ Size of a pad buffer in characters.  This is a deviation from `ENVIRONMENT?` que
 - - -
 ### >here
 ( -- `u` )  
-Offset into the current data-space for the word being compiled.  Similar to the word `HERE`, except expressed as an offset from the start of the data-space when the current word was created.  During the compiliation of a word in C based implementations, the data-space region may be relocated when its enlarged by `,`, `ALIGN`, `ALLOT`, `C,`, `COMPILE,` thus invalidating previous values of `HERE` on the stack.  Providing an offset into the current data-region allows for computing relative locations.
+Offset into the current data-space for the word being compiled.  Similar to the word `HERE`, except expressed as an offset from the start of the data-space when the current word was created.  During the compilation of a word in C based implementations, the data-space region may be relocated when its enlarged by `,`, `ALIGN`, `ALLOT`, `C,`, `COMPILE,` thus invalidating previous values of `HERE` on the stack.  Providing an offset into the current data-region allows for computing relative locations.
 
 - - -
 ### args
@@ -1448,7 +1453,7 @@ Set the numeric conversion radix to 2 (binary).
 - - -
 ### blocks
 ( -- `u` )  
-Number of blocks `u` currently in the block file, one through to `u`.  The block file can be extended by writing to block `u'`, the file will be extended with intervening blank blocks from the current end upto but not including block `u'`, which the actual bock write of `u'` will fill.
+Number of blocks `u` currently in the block file, one through to `u`.  The block file can be extended by writing to block `u'`, the file will be extended with intervening blank blocks from the current end up to but not including block `u'`, which the actual bock write of `u'` will fill.
 
 - - -
 ### bye-code
