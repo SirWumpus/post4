@@ -71,7 +71,7 @@ clean : title
 	-rm -f post4$E
 
 distclean: clean
-	-rm -f config.h config.h.in configure~ makefile
+	-rm -f config.h config.h.in makefile
 
 realclean: distclean
 

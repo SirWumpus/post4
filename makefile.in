@@ -91,7 +91,7 @@ _clean :
 	find . \( -name 'tmp.*' -o -name '*.core' \) -exec rm -f \{\} \;
 
 _distclean : _clean
-	rm -f *.log config.status configure.scan makefile MANIFEST.TXT
+	rm -f *.log config.status configure.scan configure~ makefile MANIFEST.TXT
 
 _realclean : _distclean
 	rm -f configure *.md5
