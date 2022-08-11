@@ -32,7 +32,7 @@ abs_builddir	:= @abs_builddir@
 
 bindir		:= @bindir@
 libdir		:= @libdir@/post4
-datarootdir	:= @datarootdir@
+datarootdir	:= @datarootdir@/post4
 
 TOPDIR	 	= @abs_top_srcdir@
 TARDIR   	= ${TOPDIR}/../
