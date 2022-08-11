@@ -7,7 +7,7 @@ AC_INIT(post4, 0.5, [Anthony Howe <achowe@snert.com>])
 dnl The autoconf version I learned to deal with.
 AC_PREREQ(2.59)
 
-SNERT_INIT([P4], [Copyright 2007, 2020 by Anthony Howe. All rights reserved.], [src/BUILD_ID.TXT])
+SNERT_INIT([P4], [Copyright 2007, 2022 by Anthony Howe. All rights reserved.], [src/BUILD_ID.TXT])
 AC_DEFINE_UNQUOTED(P4_PLATFORM, [["${platform}"]])
 
 #######################################################################

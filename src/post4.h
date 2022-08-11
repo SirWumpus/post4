@@ -1,7 +1,7 @@
 /*
  * post4.h
  *
- * Copyright 2007, 2020 by Anthony Howe. All rights reserved.
+ * Copyright 2007, 2022 by Anthony Howe. All rights reserved.
  */
 
 #ifndef __post4_h__
