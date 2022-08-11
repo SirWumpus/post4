@@ -84,6 +84,11 @@ FALSE INVERT CONSTANT TRUE
 _ds_size CONSTANT STACK-CELLS
 _rs_size CONSTANT RETURN-STACK-CELLS
 
+-1 CONSTANT throw_abort
+-2 CONSTANT throw_abort_msg
+-24 CONSTANT throw_bad_number
+-56 CONSTANT throw_quit
+
 \ ... PAD ...
 \
 \ ( -- )
@@ -731,13 +736,13 @@ VARIABLE catch_frame 0 catch_frame !
 \
 \  ( i*x -- ) ( R: j*x -- )
 \
-: ABORT -1 THROW ;
+: ABORT throw_abort THROW ;
 
 \ ... ABORT ...
 \
 \  ( -- ) ( R: i*x -- )
 \
-: QUIT -56 THROW ;
+: QUIT throw_quit THROW ;
 
 \ ... HOLDS ...
 \
@@ -1222,7 +1227,7 @@ MAX-CHAR CONSTANT /COUNTED-STRING
 \ (S: src dst u -- )
 : _copy_counted
 	DUP /COUNTED-STRING > IF
-	  -24 THROW
+	  throw_bad_number THROW
 	THEN			\ S: src dst u
 	DUP >R OVER 		\ S: src dst u dst R: u
 	C! CHAR+ R>		\ S: src dst' u R: --
@@ -1413,7 +1418,7 @@ MAX-CHAR CONSTANT /COUNTED-STRING
 	  catch_frame @ 0= IF
 	    TYPE CR
 	  THEN
-	  -2 THROW
+	  throw_abort_msg THROW
         ELSE
 	  2DROP
 	THEN
