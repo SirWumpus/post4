@@ -52,7 +52,7 @@ There are actually three block editor word sets:
 
 NOTE: that `EDIT` and `ED` are hard coded with ANSI terminal escape sequences.
 
-        $ p4
+        $ post4
         ok INCLUDE ed.p4
         ok ED
 
@@ -199,7 +199,7 @@ Define unaligned structure field `name`, which when executed adds the field offs
         Structure name defined first:
 
           BEGIN-STRUCTURE point     \ create the named structure
-            1 CELLS +FIELD p.x      \ A single cell filed named p.x
+            1 CELLS +FIELD p.x      \ A single cell field named p.x
             1 CELLS +FIELD p.y      \ A single cell field named p.y
           END-STRUCTURE
 
@@ -239,6 +239,11 @@ Display `ccc`.
 ### .( ccc)
 ( `ccc<paren>` -- ) immediate  
 Parse and display text until a closing parenthesis.
+
+- - -
+### .S
+( -- )  
+Dump the data stack.
 
 - - -
 ### /
@@ -305,7 +310,7 @@ Store the cell pair `lo hi` at `aaddr` as `hi lo`.
 - - -
 ### 2@
 ( `aaddr` -- `lo` `hi` )  
-Fetch the cell pair `hi lo` stored at `aaddr` and place on the stack as `lo hi`.lo hi.
+Fetch the cell pair `hi lo` stored at `aaddr` and place on the stack as `lo hi`.
 
 - - -
 ### 2DROP
@@ -363,7 +368,7 @@ Initialise the pictured numeric output conversion process.
 - - -
 ### >BODY
 ( `xt` -- `aaddr` )  
-`aaddr` is the data-field address corresponding to `xt`.  Will throw `-31` if `xt` is not a word defined by `CREATE`.
+`aaddr` is the data-field address corresponding to `xt`.  Will throw not created (-31) if `xt` is not a word defined by `CREATE`.
 
 - - -
 ### >IN
@@ -404,7 +409,7 @@ Fetch from `aaddr` the value `x` stored there.
 - - -
 ### ABORT
 ( `i*x` -- ) ( R: `j*x` -- )  
-Throw -1.  Clear the data stack and perform a `QUIT`, which clears the return stack too.
+Throw abort (-1).  Clear the data stack and perform a `QUIT`, which clears the return stack too.
 
 - - -
 ### ABORT" ccc"
@@ -468,7 +473,7 @@ Bit-wise and of the top two stack values.
 - - -
 ### AT-XY
 ( `col` `row` -- )  
-Position cursor on the terminal, `row` and `col` are 0 based.
+Position cursor on the terminal, `row` and `col` are zero (0) based.
 
 - - -
 ### BASE
@@ -688,7 +693,7 @@ Mark the start of `DO ... +LOOP` or `DO ... LOOP`.
 
 - - -
 ### DOES>
-Define the execution semantics for the most recently defined word by `CREATE`.  Throws -31 if `DOES>` is applied to a word not defined by `CREATE`.
+Define the execution semantics for the most recently defined word by `CREATE`.  Throws not created (-31) if `DOES>` is applied to a word not defined by `CREATE`.
 
         \ General structure:
         : word1 CREATE ( build data space of word2 ) DOES> ( actions applied to data of word2 ) ;
@@ -719,7 +724,7 @@ Duplicate `x`.
 
 - - -
 ### ELSE
-( -- )
+( -- )  
 
         test IF
             \ execute for true
@@ -769,7 +774,7 @@ Discard the case selector `x` and continue execution.
 - - -
 ### EVALUATE
 ( `i*x` `caddr` `u` -- `j*x` )  
-Save the current input source specification and make the string described by `caddr` and `u` both the input source and buffer, reset >IN to zero (0), and interpret.  When the parse area is empty, restore the prior input source specification.
+Save the current input source specification and make the string described by `caddr` and `u` both the input source and buffer, reset `>IN` to zero (0), and interpret.  When the parse area is empty, restore the prior input source specification.
 
 - - -
 ### EXECUTE
@@ -791,6 +796,11 @@ Return false value, equivalent to zero (0).
 ( `addr` -- `addr'` )  
 Define cell aligned structure field `name`, which when executed adds the field offset to `addr` giving `addr'`.
 
+          BEGIN-STRUCTURE point     \ create the named structure
+            FIELD: p.x              \ A single cell field named p.x
+            FIELD: p.y              \ A single cell field named p.y
+          END-STRUCTURE
+
 - - -
 ### FILL
 ( `caddr` `u` `char` -- )  
@@ -799,7 +809,7 @@ Fill memory at address `caddr` with `u` consecutive characters `char`.
 - - -
 ### FIND-NAME
 ( `caddr` `u` -- `xt` | 0 )  
-Find the definition identified by the string `caddr` `u` in the current search order.  Return its execution token `xt` if found, otherwise 0.
+Find the definition identified by the string `caddr` `u` in the current search order.  Return its execution token `xt` if found, otherwise zero (0).
 
 - - -
 ### FLUSH
@@ -834,7 +844,7 @@ Append `char` to the picture numeric output string.
 
 - - -
 ### HOLDS
-( `caddr` `u` -- )
+( `caddr` `u` -- )  
 Append string `caddr` `u` to the pictured numeric output string.
 
 - - -
@@ -900,7 +910,7 @@ Leave the current loop, resume execution following the `+LOOP` or `LOOP`.
 - - -
 ### LIST
 ( `blk_num` -- )  
-List the block given by `blk_num`, 1 based, and save `blk_num` in `SCR` on success.
+List the block given by `blk_num`, one (1) based, and save `blk_num` in `SCR` on success.
 
 - - -
 ### LITERAL
@@ -1008,7 +1018,7 @@ Copy the second value `x1` below the stack to the top.
 - - -
 ### PAD
 ( -- `aaddr` )  
-A character buffer space available to developers and //not// used by standard words.
+A character buffer space available to developers and *not* used by standard words.
 
 - - -
 ### PAGE
@@ -1081,7 +1091,7 @@ Loop back to matching `BEGIN`.
 - - -
 ### REFILL
 ( -- `bool` )  
-Attempt to fill the input buffer from the input source, returning a true if successful.
+Attempt to fill the input buffer from the input source, returning true if successful.
 
 When the input source is the user input device, attempt to receive input into the terminal input buffer.  If successful, make the result the input buffer, set `>IN` to zero (0), and return true.  Receipt of a line containing no characters is considered successful.  If there is no input available from the current input source, return false.
 
@@ -1192,7 +1202,7 @@ Time current local system time.  `sec` {0..59}, `min` {0..59}, `hour` {0..23}, `
 
 - - -
 ### THEN
-( -- )
+( -- )  
 See `IF`.
 
         AHEAD
@@ -1453,7 +1463,7 @@ Set the numeric conversion radix to 2 (binary).
 - - -
 ### blocks
 ( -- `u` )  
-Number of blocks `u` currently in the block file, one through to `u`.  The block file can be extended by writing to block `u'`, the file will be extended with intervening blank blocks from the current end up to but not including block `u'`, which the actual bock write of `u'` will fill.
+Number of blocks `u` currently in the block file, one (1) through to `u`.  The block file can be extended by writing to block `u'`, the file will be extended with intervening blank blocks from the current end up to but not including block `u'`, which the actual block write of `u'` will fill.
 
 - - -
 ### bye-code
