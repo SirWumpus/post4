@@ -66,7 +66,7 @@ AS_ECHO("Checking for common types...")
 AS_ECHO()
 
 AC_C_CONST
-AC_CHECK_TYPES([mode_t, off_t, pid_t, uid_t, gid_t, size_t, ssize_t, time_t])
+AC_CHECK_TYPES([mode_t, off_t, pid_t, uid_t, gid_t, size_t, ssize_t, time_t, intptr_t])
 
 #######################################################################
 #	Check for library, header, and function families.
