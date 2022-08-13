@@ -16,4 +16,4 @@ config.guess -diff -merge
 config.sub -diff -merge
 configure -diff -merge linguist-generated
 makefile linguist-generated
-reference/* linguist-documentation
+reference/** linguist-documentation
