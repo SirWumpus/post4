@@ -903,6 +903,11 @@ Set deferred word `name` to the execution token `xt`.  See `DEFER`.
 Receive one character `char`.  Characters received by `KEY` are not displayed.
 
 - - -
+### KEY?
+( -- `bool` )  
+If a character is available, return true.  Otherwise, return false.  The character shall be returned by the next execution of KEY.
+
+- - -
 ### LEAVE
 ( -- ) (R: `loop-sys` -- )  
 Leave the current loop, resume execution following the `+LOOP` or `LOOP`.
