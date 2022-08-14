@@ -488,6 +488,7 @@ Mark the start of `BEGIN ... AGAIN` or `BEGIN ... WHILE ... REPEAT` loops.
 - - -
 ### BEGIN-STRUCTURE name
 ( `<spaces>name` -- `addr` `0` )  
+Parse `name` delimited by a space and create a definition for `name`.  Return a struct-sys (zero or more implementation dependent items) that will be used by `END-STRUCTURE` and an initial offset of zero (0).  When `name` is executed the size of the structure in address units is pushed to the stack.
 
 - - -
 ### BL
@@ -878,9 +879,14 @@ Make the most recent definition an immediate word.
 ### INCLUDE filepath
 ( `<spaces>filepath` --  )  
 
+Skip leading white space and parse `filepath` delimited by a white space character.  Push the
+address and length of the `filepath` on the stack and perform the function of `INCLUDED`.
+
 - - -
 ### INCLUDED
 ( `caddr` `u` -- )  
+
+Save the current input source specification, including the current value of `SOURCE-ID`.  Open the file specified by `caddr` `u`, store the resulting fileid in `SOURCE-ID`, and make it the input source.  Store zero (0) in `BLK`.  Interpret the file line by line until end of file.  Other stack effects are due to the words included.  The input source specification is restored after the file is closed.
 
 - - -
 ### INVERT
@@ -1519,11 +1525,6 @@ True if floored division is the default.  This is a deviation from `ENVIRONMENT?
 Increment variable `SCR` and list next block.
 
 - - -
-### llor
-( `xu` `xu-1` ... `x0` `u` -- `x0` `xu` `xu-1` ... `x1` )  
-Right rotate the stack `u` cells; `ROLL` in the opposite direction.
-
-- - -
 ### max-char
 ( -- `u` ) constant  
 Maximum value of any character.  Currently Post4 only supports ASCII and addressable units are octets.  This is a deviation from `ENVIRONMENT?` queries.
@@ -1595,7 +1596,6 @@ Print a NUL terminated string.
 
 - - -
 ### reserve
-
 ( `n` -- `addr` )  
 Similar to `ALLOT`, reserve `n` address-units of data-space and return its start address.  While defining a word in C based implementations, like Post4, data-space regions may be relocated when they are enlarged, thus invalidating previous values of `HERE`.  Therefore consider:
 
