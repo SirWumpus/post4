@@ -16,6 +16,7 @@ static const char p4_build_info[] =
 	"LDFLAGS=\"" P4_LDFLAGS "\"\n"
 	"LIBS=\"" P4_LIBS "\"\n"
 	"POST4_PATH=\"" P4_CORE_PATH "\"\n"
+	"\n" P4_COPYRIGHT "\n"
 ;
 
 static P4_Options options = {

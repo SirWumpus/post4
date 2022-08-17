@@ -1654,6 +1654,3 @@ VARIABLE SCR
 : [THEN] ( -- ) ; IMMEDIATE
 
 MARKER rm_user_words
-
-.( Post4 Copyright 2007, 2022 by Anthony Howe.  All rights reserved.
-)
