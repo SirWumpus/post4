@@ -979,8 +979,8 @@ p4Create()
 		goto error0;
 	}
 	ctx->radix = 10;
-	ctx->unget = EOF;
 	ctx->input.fp = stdin;
+	ctx->input.unget = EOF;
 	ctx->state = P4_STATE_INTERPRET;
 
 	if ((ctx->rs.base = malloc(options.return_stack_size * sizeof (*ctx->rs.base))) == NULL) {
@@ -2023,9 +2023,9 @@ _refill:	w.u = p4Refill(ctx, &ctx->input);
 
 		// ( -- n )
 _key:		(void) fflush(stdout);
-		if (ctx->unget != EOF) {
-			P4_PUSH(ctx->ds, ctx->unget);
-			ctx->unget = EOF;
+		if (ctx->input.unget != EOF) {
+			P4_PUSH(ctx->ds, ctx->input.unget);
+			ctx->input.unget = EOF;
 			NEXT;
 		}
 #ifdef HAVE_TCSETATTR
@@ -2039,21 +2039,21 @@ _key:		(void) fflush(stdout);
 
 		// ( -- flag )
 _key_ready:	(void) fflush(stdout);
-		if (ctx->unget == EOF) {
+		if (ctx->input.unget == EOF) {
 #ifdef HAVE_TCSETATTR
 			if (is_tty && tty_mode != &tty_raw_nb) {
 				(void) tcsetattr(tty_fd, TCSANOW, &tty_raw_nb);
 				tty_mode = &tty_raw_nb;
 			}
-			ctx->unget = p4ReadByte(tty_fd);
+			ctx->input.unget = p4ReadByte(tty_fd);
 #else
 			if (p4SetNonBlocking(tty_fd, 1) == 0) {
-				ctx->unget = p4ReadByte(tty_fd);
+				ctx->input.unget = p4ReadByte(tty_fd);
 				(void) p4SetNonBlocking(tty_fd, 0);
 			}
 #endif
 		}
-		P4_PUSH(ctx->ds, (P4_Uint)(ctx->unget != EOF ? ~0 : 0));
+		P4_PUSH(ctx->ds, (P4_Uint)(ctx->input.unget != EOF ? ~0 : 0));
 		NEXT;
 
 		// ( c -- )
@@ -2304,6 +2304,7 @@ p4Eval(P4_Ctx *ctx)
 			ctx->state = P4_STATE_INTERPRET;
 			ctx->input.size = sizeof (ctx->tty);
 			ctx->input.buffer = ctx->tty;
+			ctx->input.unget = EOF;
 			ctx->input.length = 0;
 			ctx->input.offset = 0;
 			ctx->input.blk = 0;
@@ -2329,6 +2330,7 @@ p4EvalFile(P4_Ctx *ctx, const char *file)
 		ctx->state = P4_STATE_INTERPRET;
 		ctx->input.size = sizeof (ctx->tty);
 		ctx->input.buffer = ctx->tty;
+		ctx->input.unget = EOF;
 		ctx->input.length = 0;
 		ctx->input.offset = 0;
 		ctx->input.blk = 0;
