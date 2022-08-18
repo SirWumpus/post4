@@ -970,6 +970,24 @@ p4Free(P4_Ctx *ctx)
 	}
 }
 
+static void
+p4ResetInput(P4_Ctx *ctx)
+{
+	ctx->input.size = sizeof (ctx->tty);
+	ctx->input.buffer = ctx->tty;
+	ctx->input.unget = EOF;
+	ctx->input.length = 0;
+	ctx->input.offset = 0;
+	ctx->input.blk = 0;
+}
+
+static void
+p4SetInput(P4_Ctx *ctx, FILE *fp)
+{
+	ctx->input.fp = fp;
+	p4ResetInput(ctx);
+}
+
 P4_Ctx *
 p4Create()
 {
@@ -979,8 +997,7 @@ p4Create()
 		goto error0;
 	}
 	ctx->radix = 10;
-	ctx->input.fp = stdin;
-	ctx->input.unget = EOF;
+	p4SetInput(ctx, stdin);
 	ctx->state = P4_STATE_INTERPRET;
 
 	if ((ctx->rs.base = malloc(options.return_stack_size * sizeof (*ctx->rs.base))) == NULL) {
@@ -2302,12 +2319,7 @@ p4Eval(P4_Ctx *ctx)
 
 		case P4_THROW_OK:
 			ctx->state = P4_STATE_INTERPRET;
-			ctx->input.size = sizeof (ctx->tty);
-			ctx->input.buffer = ctx->tty;
-			ctx->input.unget = EOF;
-			ctx->input.length = 0;
-			ctx->input.offset = 0;
-			ctx->input.blk = 0;
+			p4ResetInput(ctx);
 		}
 	} while ((rc = p4Repl(ctx)) != P4_THROW_OK);
 
@@ -2327,13 +2339,8 @@ p4EvalFile(P4_Ctx *ctx, const char *file)
 	if ((ctx->input.fp = fopen(file, "r")) == NULL) {
 		rc = P4_THROW_EIO;
 	} else {
+		p4ResetInput(ctx);
 		ctx->state = P4_STATE_INTERPRET;
-		ctx->input.size = sizeof (ctx->tty);
-		ctx->input.buffer = ctx->tty;
-		ctx->input.unget = EOF;
-		ctx->input.length = 0;
-		ctx->input.offset = 0;
-		ctx->input.blk = 0;
 		if ((rc = p4Exception(ctx, p4Repl(ctx))) != 0) {
 			ctx->rs.top = rs;
 			ctx->ds.top = ds;
