@@ -35,6 +35,13 @@ Post4 cell size is equivalent to C's `intptr_t`, for current systems are either 
 Examples
 --------
 
+### cat.p4
+
+Example of implementing `cat(1)`.
+
+        $ post4 cat.p4 </etc/hosts
+
+
 ### dumpargs.p4
 
 Simple demonstration on how to access the command line arguments.
@@ -1692,6 +1699,11 @@ Fetch the return stack pointer.
 ### _stack_dump
 ( `aaddr` `u` -- )  
 Utility word used to define `.S` and `.rs`.
+
+- - -
+### _stdin
+( -- )
+Set source to standard input; see `cat.p4` example.
 
 - - -
 

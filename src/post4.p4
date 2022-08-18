@@ -882,7 +882,6 @@ VARIABLE catch_frame 0 catch_frame !
 : emit-more
 	BEGIN
 	  source-remaining 0= IF
-	    CR
 	    2DROP TRUE EXIT	\ empty input buffer
 	  THEN
 	  1 >IN +!
