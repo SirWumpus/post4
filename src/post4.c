@@ -1077,10 +1077,26 @@ p4Align(P4_Ctx *ctx)
 	ctx->words->ndata = P4_CELL_ALIGN(ctx->words->ndata);
 }
 
+/* Display exception message when there is no catch-frame.
+ *
+ * @param ctx
+ *	The Forth machine context.
+ *
+ * @param code
+ *	A THROW code.
+ *
+ * @See
+ *	3.4.4 Possible actions on an ambiguous condition.
+ */
 static int
 p4Exception(P4_Ctx *ctx, int code)
 {
-	if (code == P4_THROW_OK || code == P4_THROW_ABORT_MSG) {
+	switch (code) {
+	case P4_THROW_ABORT_MSG:
+		/* Displays its own message. */
+	case P4_THROW_QUIT:
+		/* Historically no message, simply return to REPL. */
+	case P4_THROW_OK:
 		return code;
 	}
 	(void) printf("%d thrown: %s", code, P4_THROW_future <= code && code < 0 ? p4_exceptions[-code] : "?");
@@ -2305,16 +2321,23 @@ p4Eval(P4_Ctx *ctx)
 
 	do {
 		switch (rc) {
-		default:
 		case P4_THROW_ABORT:
 		case P4_THROW_ABORT_MSG:
-			(void) p4Exception(ctx, rc);
 			P4_RESET(ctx->ds);
 			/*@fallthrough@*/
 
 		case P4_THROW_QUIT:
 			P4_RESET(ctx->rs);
 			ctx->input.fp = stdin;
+			/*@fallthrough@*/
+
+		/* See 3.4.4 Possible actions on an ambiguous condition
+		 *
+		 *	- display a message;
+		 *	- set interpretation state and begin text interpretation;
+		 */
+		default:
+			(void) p4Exception(ctx, rc);
 			/*@fallthrough@*/
 
 		case P4_THROW_OK:
