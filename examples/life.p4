@@ -147,18 +147,6 @@ screen1 VALUE screen_next
 ;
 
 ( n -- )
-: .generations
-	CR ." generation #0" CR
-	screen_curr .screen
-	1+ 1 DO
-		CR ." generation #" I . CR
-		generation
-		screen_swap
-		screen_curr .screen
-	LOOP
-;
-
-( n -- )
 : generations
 	PAGE
 	1+ 1 DO
@@ -346,4 +334,4 @@ screen1 VALUE screen_next
 .................................................
 .................................................
 
-300 generations
+175 generations
