@@ -77,9 +77,10 @@ FALSE INVERT CONSTANT TRUE
 \ ... /PAD ...
 \
 \ ( -- n )
-\ Size must be at least 84 characters.
+\ Size must be at least 84 characters.  Use P4_INPUT_SIZE so that
+\ PAD is the same as the console input buffer, see P4_Ctx.
 \
-128 CONSTANT /PAD
+256 CONSTANT /PAD
 
 _ds_size CONSTANT STACK-CELLS
 _rs_size CONSTANT RETURN-STACK-CELLS
@@ -695,7 +696,7 @@ CREATE PAD /PAD CHARS ALLOT
 	THEN
 ; IMMEDIATE
 
-VARIABLE catch_frame 0 catch_frame !
+VARIABLE catch_frame
 
 \ ... CATCH ...
 \
@@ -1096,6 +1097,52 @@ int_max INVERT CONSTANT int_min	\ 0x80...00
 	\  LEAVE branches to just after UNTIL and before UNLOOP.
 	POSTPONE UNLOOP
 ; IMMEDIATE
+
+CREATE _digits_lower
+	'0' C, '1' C, '2' C, '3' C, '4' C, '5' C, '6' C, '7' C, '8' C, '9' C,
+	'a' C, 'b' C, 'c' C, 'd' C, 'e' C, 'f' C, 'g' C, 'h' C, 'i' C, 'j' C,
+	'k' C, 'l' C, 'm' C, 'n' C, 'o' C, 'p' C, 'q' C, 'r' C, 's' C, 't' C,
+	'u' C, 'v' C, 'w' C, 'x' C, 'y' C, 'z' C, ALIGN
+
+\
+\ ( S: char -- value | -1 )
+\
+: _digit_value
+	\ Is upper case?
+	DUP 'A' 'Z' 1+ WITHIN		\ S: char bool
+	\ Convert to lower case.
+	IF $20 OR THEN			\ S: char'
+	\ Find index of digit.
+	_digits_lower	 		\ S: char caddr
+	BASE @ 0 DO			\ S: char caddr
+	  DUP C@ #2 PICK		\ S: char caddr digit char
+	  = IF				\ S: char caddr
+	    \ Found, return digit's index.
+	    2DROP I UNLOOP EXIT		\ S: value
+	  THEN
+	  CHAR+				\ S: char caddr'
+	LOOP				\ S: char caddr'
+	\ Not found.
+	2DROP #-1			\ S: -1
+;
+
+\ ... >NUMBER ...
+\
+\ ( S: acc caddr len -- acc' caddr' len' )
+\
+: >NUMBER
+	BEGIN
+	  DUP 0>			\ S: acc caddr len
+	WHILE
+	  OVER C@			\ S: acc caddr len char
+	  _digit_value			\ S: acc caddr len digit
+	  DUP #-1 = IF
+	    DROP EXIT			\ S: acc' caddr' len'
+          THEN				\ S: acc caddr len value
+	  3 ROLL BASE @ * +		\ S: caddr len acc'
+	  ROT CHAR+ ROT 1-		\ S: acc' caddr' len'
+	REPEAT
+;
 
 \ ... x CASE ... ENDCASE
 \

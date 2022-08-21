@@ -383,6 +383,12 @@ Initialise the pictured numeric output conversion process.
 `aaddr` is the address of a cell containing the offset in characters from the start of the
 input buffer to the start of the parse area.
 
+- - -
+### >NUMBER
+( `acc` `caddr` `len` -- `acc'` `caddr'` `len'` )  
+`acc'` is the unsigned result of converting the characters within the string specified by `caddr` `len` into digits according to the number in `BASE`, and adding each into `acc` after multiplying `acc` by the number in `BASE`.  Conversion continues left-to-right until a character that is not convertible, including any "+" or "-", is encountered or the string is entirely converted.  `caddr'` is the location of the first unconverted character or the first character past the end of the string if the string was entirely converted.  `len'` is the number of unconverted characters in the string.  An ambiguous condition exists if `acc'` overflows during the conversion.
+
+- - -
 ### >R
 ( `x` -- )(R: -- `x` )  
 Move top of the data stack to the return stack.
