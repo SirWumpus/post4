@@ -1828,6 +1828,7 @@ _rs_copy:	w = P4_TOP(ctx->rs);
 		NEXT;
 
 		// ( xu xu-1 ... x0 u –– xu-1 ... x0 xu )
+		// 1 ROLL == SWAP, 2 ROLL == ROT
 _roll:		w = P4_POP(ctx->ds);
 		x = P4_PICK(ctx->ds, w.n);
 		(void) memmove(ctx->ds.top - w.n, ctx->ds.top - w.n + 1, w.n * P4_CELL);
@@ -2328,6 +2329,10 @@ p4Eval(P4_Ctx *ctx)
 		switch (rc) {
 		case P4_THROW_ABORT:
 		case P4_THROW_ABORT_MSG:
+		case P4_THROW_DS_UNDER:
+		case P4_THROW_RS_UNDER:
+		case P4_THROW_SIGSEGV:
+		case P4_THROW_SIGBUS:
 			P4_RESET(ctx->ds);
 			/*@fallthrough@*/
 
