@@ -463,9 +463,9 @@ p4Parse(P4_Input *input, P4_Uint delim, P4_Uint escape)
 P4_String
 p4ParseName(P4_Input *input)
 {
-	/* Skip leading spaces */
+	/* Skip leading white space. */
 	for ( ; input->offset < input->length; input->offset++) {
-		if (isprint(input->buffer[input->offset]) && input->buffer[input->offset] != ' ') {
+		if (!isspace(input->buffer[input->offset])) {
 			break;
 		}
 	}
