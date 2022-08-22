@@ -1113,7 +1113,7 @@ p4Exception(P4_Ctx *ctx, int code)
 		ctx->words = word->prev;
 		p4WordFree(word);
 	}
-	(void) fputc('\n', stdout);
+	(void) printf("\r\n");
 	(void) fflush(stdout);
 	return code;
 }
@@ -1318,15 +1318,15 @@ _repl:
 				if (p4StrNum(str, ctx->radix, &x.n) != str.length) {
 					/* Not a word, not a number. */
 					(void) printf("\"%.*s\" ", (int)str.length, str.string);
-					/* Throwing while interactive is really annoying, since
-					 * it clears the stacks of the user's workspace; disagrees
-					 * with Forth 200x 18-1 3.4.d
+					/* An earlier version treated most exceptions like ABORT
+					 * which would empty the stack, which is annoying when
+					 * interactive as this could upset work in progress.
+					 *
+					 * An undefined word does not need to behave like ABORT,
+					 * so the stacks can remain untouched. See p4Eval() and
+					 * Forth 200x Draft 19.1 section 3.4 d.
 					 */
-					if (!P4_INTERACTIVE(ctx)) {
-						LONGJMP(ctx->on_throw, P4_THROW_UNDEFINED);
-					}
-					(void) printf("?\r\n");
-					continue;
+					LONGJMP(ctx->on_throw, P4_THROW_UNDEFINED);
 				}
 				if (ctx->state == P4_STATE_COMPILE) {
 					ctx->words = p4WordAppend(ctx, ctx->words, (P4_Cell) &w_lit);
@@ -2341,11 +2341,8 @@ p4Eval(P4_Ctx *ctx)
 		 *	- set interpretation state and begin text interpretation;
 		 */
 		default:
-			(void) p4Exception(ctx, rc);
-			/*@fallthrough@*/
-
-		case P4_THROW_OK:
 			ctx->state = P4_STATE_INTERPRET;
+			(void) p4Exception(ctx, rc);
 			p4ResetInput(ctx);
 		}
 	} while ((rc = p4Repl(ctx)) != P4_THROW_OK);
