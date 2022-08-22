@@ -136,24 +136,14 @@ static int p4Repl(P4_Ctx *ctx);
  *** Context
  ***********************************************************************/
 
-static int sig_map[][2] = {
-	{ SIGINT, P4_THROW_SIGINT },
-	{ SIGFPE, P4_THROW_SIGFPE },
-	{ SIGBUS, P4_THROW_SIGBUS },
-	{ SIGSEGV, P4_THROW_SIGSEGV },
-	{ 0, 0 }
-};
-
 static void
 sig_int(int signum)
 {
-	int i;
 	if (signal_ctx != NULL) {
-		for (i = 0; sig_map[i][0] != 0; i++) {
-			if (sig_map[i][0] == signum) {
-				signum = sig_map[i][1];
-				break;
-			}
+		switch (signum) {
+		case SIGINT: signum = P4_THROW_SIGINT; break;
+		case SIGFPE: signum = P4_THROW_SIGFPE; break;
+		case SIGSEGV: signum = P4_THROW_SIGSEGV; break;
 		}
 		LONGJMP(signal_ctx->on_throw, signum);
 	}
