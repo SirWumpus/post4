@@ -2036,14 +2036,17 @@ _save_input:	w.n = sizeof (P4_Input) / P4_CELL;
 			LONGJMP(ctx->on_throw, P4_THROW_DS_OVER);
 		}
 		(void) memcpy(ctx->ds.top + 1, &ctx->input, sizeof (ctx->input));
+		/* TODO save file position. */
 		P4_DROP(ctx->ds, -w.n);
 		P4_PUSH(ctx->ds, w.n);
 		NEXT;
 
-		// ( xn ... x1 n -- )
+		// ( xn ... x1 n -- bool )
 _restore_input:	w = P4_POP(ctx->ds);
 		P4_DROP(ctx->ds, w.n);
+		/* TODO restore file position if possible, true on failure. */
 		(void) memcpy(&ctx->input, ctx->ds.top + 1, sizeof (ctx->input));
+		P4_PUSH(ctx->ds, (P4_Int) 0);
 		NEXT;
 
 		// ( -- flag)

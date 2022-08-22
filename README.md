@@ -1101,6 +1101,17 @@ Call the current definition.  The behaviour of `RECURSE` following a `DOES>` is 
         ;
 
 - - -
+### REFILL
+( -- `bool` )  
+Attempt to fill the input buffer from the input source, returning true if successful.
+
+When the input source is the user input device, attempt to receive input into the terminal input buffer.  If successful, make the result the input buffer, set `>IN` to zero (0), and return true.  Receipt of a line containing no characters is considered successful.  If there is no input available from the current input source, return false.
+
+When the input source is a string from `EVALUATE`, return false and perform no other action.
+
+When the input source is a block, make the next block the input source and current input buffer by adding one to the value of `BLK` and setting `>IN` to zero (0).  Return true if the new value of `BLK` is a valid block number, otherwise false.
+
+- - -
 ### REPEAT
 ( -- )  
 Loop back to matching `BEGIN`.
@@ -1113,15 +1124,9 @@ Loop back to matching `BEGIN`.
         \ continue once test is false
 
 - - -
-### REFILL
-( -- `bool` )  
-Attempt to fill the input buffer from the input source, returning true if successful.
-
-When the input source is the user input device, attempt to receive input into the terminal input buffer.  If successful, make the result the input buffer, set `>IN` to zero (0), and return true.  Receipt of a line containing no characters is considered successful.  If there is no input available from the current input source, return false.
-
-When the input source is a string from `EVALUATE`, return false and perform no other action.
-
-When the input source is a block, make the next block the input source and current input buffer by adding one to the value of `BLK` and setting `>IN` to zero (0).  Return true if the new value of `BLK` is a valid block number, otherwise false.
+### RESTORE-INPUT
+( `xn`...`x1` `n` -- bool )  
+Restore the input source state described by `x1` through `xn`.  `bool` is true if the input source cannot be so restored (terminal, pipeline).
 
 - - -
 ### ROLL
@@ -1152,6 +1157,11 @@ When interpreting, copy the escaped string `ccc` to a transient buffer and retur
 ### SAVE-BUFFERS
 ( -- )  
 Save all the dirty block buffers to the block file.
+
+- - -
+### SAVE-INPUT
+( -- `xn`...`x1` `n` )  
+Save the current input source state for later use by `RESTORE-INPUT`.
 
 - - -
 ### SCR
