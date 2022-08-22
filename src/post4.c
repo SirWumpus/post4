@@ -1032,14 +1032,18 @@ error0:
 static void
 p4Bp(P4_Ctx *ctx)
 {
-	(void) printf(">> %.*s\r\n", (int)ctx->input.length, ctx->input.buffer);
-	(void) printf(">> %*c\r\n", (int)ctx->input.offset, '^');
+	int has_nl = ctx->input.buffer[ctx->input.length-1] == '\n';
+	(void) printf(
+		">> %.*s\r\n>> %*c\r\n",
+		(int)ctx->input.length - has_nl, ctx->input.buffer,
+		(int)ctx->input.offset, '^'
+	);
 }
 
 static void
 p4AaddrCheck(P4_Ctx *ctx, P4_Cell *p)
 {
-	// Below the program's dynamic memory region pr odd address?
+	// Below the program's dynamic memory region or odd address?
 	if ((void *)p < p4_program_end || ((intptr_t) p & 0x1)) {
 		p4Bp(ctx);
 		LONGJMP(ctx->on_throw, P4_THROW_SIGSEGV);
