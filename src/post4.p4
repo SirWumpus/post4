@@ -1098,32 +1098,21 @@ int_max INVERT CONSTANT int_min	\ 0x80...00
 	POSTPONE UNLOOP
 ; IMMEDIATE
 
-CREATE _digits_lower
-	'0' C, '1' C, '2' C, '3' C, '4' C, '5' C, '6' C, '7' C, '8' C, '9' C,
-	'a' C, 'b' C, 'c' C, 'd' C, 'e' C, 'f' C, 'g' C, 'h' C, 'i' C, 'j' C,
-	'k' C, 'l' C, 'm' C, 'n' C, 'o' C, 'p' C, 'q' C, 'r' C, 's' C, 't' C,
-	'u' C, 'v' C, 'w' C, 'x' C, 'y' C, 'z' C, ALIGN
-
 \
-\ ( S: char -- value | -1 )
+\ ( S: char -- value | 127 )
 \
 : _digit_value
 	\ Is upper case?
 	DUP 'A' 'Z' 1+ WITHIN		\ S: char bool
 	\ Convert to lower case.
 	IF $20 OR THEN			\ S: char'
-	\ Find index of digit.
-	_digits_lower	 		\ S: char caddr
-	BASE @ 0 DO			\ S: char caddr
-	  DUP C@ #2 PICK		\ S: char caddr digit char
-	  = IF				\ S: char caddr
-	    \ Found, return digit's index.
-	    2DROP I UNLOOP EXIT		\ S: value
-	  THEN
-	  CHAR+				\ S: char caddr'
-	LOOP				\ S: char caddr'
+	DUP '0' '9' 1+ WITHIN IF	\ S: char
+	  '0' - EXIT			\ S: value
+	ELSE DUP 'a' 'z' 1+ WITHIN IF	\ S: char
+	  'a' - #10 + EXIT		\ S: value
+	THEN THEN			\ S: char
 	\ Not found.
-	2DROP #-1			\ S: -1
+	DROP #127			\ S: 127
 ;
 
 \ ... >NUMBER ...
@@ -1136,7 +1125,7 @@ CREATE _digits_lower
 	WHILE
 	  OVER C@			\ S: acc caddr len char
 	  _digit_value			\ S: acc caddr len digit
-	  DUP #-1 = IF
+	  DUP BASE @ >= IF		\ S: acc caddr len digit
 	    DROP EXIT			\ S: acc' caddr' len'
           THEN				\ S: acc caddr len value
 	  3 ROLL BASE @ * +		\ S: caddr len acc'
