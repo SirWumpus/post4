@@ -1475,6 +1475,16 @@ Size of a numeric picture buffer in characters.  This is a deviation from `ENVIR
 Size of a pad buffer in characters.  This is a deviation from `ENVIRONMENT?` queries.
 
 - - -
+### <=
+( `n1` `n2` -- `bool` )  
+`bool` is true if and only if `n1` is less than or equal to `n2`.
+
+- - -
+### >=
+( `n1` `n2` -- `bool` )  
+`bool` is true if and only if `n1` is greater than or equal `n2`.
+
+- - -
 ### >here
 ( -- `u` )  
 Offset into the current data-space for the word being compiled.  Similar to the word `HERE`, except expressed as an offset from the start of the data-space when the current word was created.  During the compilation of a word in C based implementations, the data-space region may be relocated when its enlarged by `,`, `ALIGN`, `ALLOT`, `C,`, `COMPILE,` thus invalidating previous values of `HERE` on the stack.  Providing an offset into the current data-region allows for computing relative locations.
