@@ -2347,23 +2347,14 @@ p4Eval(P4_Ctx *ctx)
 int
 p4EvalFile(P4_Ctx *ctx, const char *file)
 {
-	int rc;
-	P4_Cell *ds, *rs;
+	int rc = P4_THROW_EIO;
 
-	ds = ctx->ds.top;
-	rs = ctx->rs.top;
 	P4_INPUT_PUSH(&ctx->input);
 
-	if ((ctx->input.fp = fopen(file, "r")) == NULL) {
-		rc = P4_THROW_EIO;
-	} else {
+	if ((ctx->input.fp = fopen(file, "r")) != NULL) {
 		p4ResetInput(ctx);
 		ctx->state = P4_STATE_INTERPRET;
-		if ((rc = p4Exception(ctx, p4Repl(ctx))) != 0) {
-			ctx->rs.top = rs;
-			ctx->ds.top = ds;
-			rc = 0;
-		}
+		rc = p4Exception(ctx, p4Repl(ctx));
 		(void) fclose(ctx->input.fp);
 	}
 
@@ -2376,10 +2367,7 @@ int
 p4EvalString(P4_Ctx *ctx, P4_Char *str, size_t len)
 {
 	int rc;
-	P4_Cell *ds, *rs;
 
-	ds = ctx->ds.top;
-	rs = ctx->rs.top;
 	P4_INPUT_PUSH(&ctx->input);
 
 	ctx->state = P4_STATE_INTERPRET;
@@ -2387,12 +2375,9 @@ p4EvalString(P4_Ctx *ctx, P4_Char *str, size_t len)
 	ctx->input.length = len;
 	ctx->input.buffer = str;
 	ctx->input.offset = 0;
+	ctx->input.blk = 0;
 
-	if ((rc = p4Exception(ctx, p4Repl(ctx))) != 0) {
-		ctx->rs.top = rs;
-		ctx->ds.top = ds;
-		rc = 0;
-	}
+	rc = p4Exception(ctx, p4Repl(ctx));
 
 	P4_INPUT_POP(&ctx->input);
 
