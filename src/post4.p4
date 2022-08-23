@@ -1258,51 +1258,37 @@ VARIABLE _str_buf_index
 \ Maximum for octet addressable units.
 MAX-CHAR CONSTANT /COUNTED-STRING
 
-\ (S: src dst u -- )
-: _copy_counted
-	DUP /COUNTED-STRING > IF
-	  throw_bad_number THROW
-	THEN			\ S: src dst u
-	DUP >R OVER 		\ S: src dst u dst R: u
-	C! CHAR+ R>		\ S: src dst' u R: --
-	CMOVE			\ S: --
-;
-
 \ ( S: -- caddr )
 : _clit 			\ S: -- R: ip
+	\ The IP points to counted string, get its length.
 	R> DUP DUP C@		\ S: ip ip u R: --
-	CHARS + ALIGNED >R	\ S: ip R: ip'
+	\ Update IP to point immediate after the counted string.
+	CHARS + ALIGNED >R	\ S: caddr R: ip'
 ;
 
-\ ( C: src u -- )
-: cliteral
-	POSTPONE _clit		\ C: src u
-	DUP CHAR+ reserve	\ C: src u dst
-	SWAP _copy_counted	\ C: --
-	ALIGN
-; IMMEDIATE
-
-\ (C: src u -- ) || (S: src u -- caddr )
-: _store_counted
-	STATE @ IF
-	  POSTPONE cliteral
-	ELSE
-	  _str_buf_next DUP >R	\ S: src u dst R: dst
-	  SWAP _copy_counted R>	\ S: dst R: --
-	THEN
+: _cstring_append
+	POSTPONE _clit		\ S: src u
+	\ Reserve space for the length and string.
+	DUP CHAR+ reserve	\ S: src u dst
+	2DUP 2>R		\ S: src u dst   R: u dst
+	\ Append the input string just after _clit in the data space.
+	CHAR+ SWAP		\ S: src dst' u  R: u dst
+	MOVE			\ S: --  R: u dst
+	\ Save the string length.
+	2R> C!			\ S: --  R: --
 ;
 
 \ ... C" ccc" ...
 \
 \ (C: ccc<quote>" -- ) || (S: ccc<quote>" -- caddr )
 \
-: C" [CHAR] " PARSE _store_counted ; IMMEDIATE
+: C" [CHAR] " PARSE _cstring_append ; IMMEDIATE
 
 \ ... c\" ccc" ...
 \
 \ (C: ccc<quote>" -- ) || (S: ccc<quote>" -- caddr u )
 \
-: c\" [CHAR] " parse-escape _store_counted ; IMMEDIATE
+: c\" [CHAR] " parse-escape _cstring_append ; IMMEDIATE
 
 \ ... cputs ...
 \

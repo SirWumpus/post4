@@ -530,8 +530,8 @@ Store `char` at `caddr`.
 
 - - -
 ### C" ccc"
-( `ccc<quote>` -- `caddr` )  
-When interpreting, copy the string `ccc` as-is to a transient buffer and return counted string `caddr`.  When compiling, append the string `ccc` as-is to the current word so when executed it leaves the counted string `caddr` on the stack.  See also `S"`.
+( `ccc<quote>` -- `caddr` ) immediate  
+Compile the string `ccc` as-is into the current word so when executed it leaves the counted string `caddr` on the stack.  See also `S"`.
 
 - - -
 ### C,
@@ -1516,8 +1516,8 @@ Terminate and return to the host OS an exit code; zero (0) for normal/success, n
 
 - - -
 ### c\\" ccc"
-( `ccc<quote>` -- `caddr` )  
-When interpreting, copy the escaped string `ccc` to a transient buffer and return counted string `caddr`.  When compiling, append the escaped string `ccc` to the current word so when executed it leaves the counted string `caddr` on the stack.  See also `S\"`.
+( `ccc<quote>` -- `caddr` ) immediate  
+Compile the escaped string `ccc` into the current word so when executed it leaves the counted string `caddr` on the stack.  See also `S\"`.
 
 - - -
 ### char-
