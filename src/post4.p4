@@ -1206,38 +1206,6 @@ int_max INVERT CONSTANT int_min	\ 0x80...00
 	ENDCASE			\ S: ascii
 ;
 
-\ Number of transitent string buffers, power of 2.
-\ Minimum 2 buffers for S" and S\".
-2 CONSTANT _str_buf_max
-
-\ Size of each string buffer, min 80 characters.
-/PAD CHARS CONSTANT _str_buf_size
-
-_str_buf_max 1- CONSTANT _str_buf_mask
-
-\ Transient string buffers.
-CREATE _str_bufs _str_buf_size _str_buf_max * ALLOT
-
-\ Offset of last used buffer.
-VARIABLE _str_buf_index
-
-\ Next string buffer address.
-\
-\ ( -- caddr )
-\
-: _str_buf_next
-	_str_buf_index @	\ S: u
-	1+ _str_buf_mask AND	\ S: u'
-	DUP _str_buf_index !	\ S: u'
-	_str_buf_size *		\ S: offset
-	_str_bufs +		\ S: caddr
-;
-
-\
-\ ( caddr u -- )
-\
-: _allot_cstring DUP >R reserve R> CMOVE 0 C, ;
-
 \
 \ ( caddr -- )
 \
@@ -1301,41 +1269,69 @@ MAX-CHAR CONSTANT /COUNTED-STRING
 \
 : cputs DUP C@ SWAP CHAR+ SWAP TYPE ;
 
+\ Number of transitent string buffers, power of 2.
+\ Minimum 2 buffers for S" and S\".
+\
+\ @see
+\	3.3.3.4 Text-literal regions
+\	A.6.1.2165 S"
+\
+2 CONSTANT _str_buf_max
+
+_str_buf_max 1- CONSTANT _str_buf_mask
+
+\ Transient string buffers of size /PAD.
+CREATE _str_bufs /PAD _str_buf_max * ALLOT
+
+\ Offset of last used buffer.
+VARIABLE _str_buf_index
+
+\ Next string buffer address.
+\
+\ ( -- caddr )
+\
+: _str_buf_next
+	_str_buf_index @	\ S: u
+	1+ _str_buf_mask AND	\ S: u'
+	DUP _str_buf_index !	\ S: u'
+	/PAD *			\ S: offset
+	_str_bufs +		\ S: caddr
+;
+
 \ ... _slit ...
 \
 \ (S: -- caddr u )
 \
 \ @note
-\	The caller's return address is used to find and compute the
+\	The current IP is used to find and compute the
 \	address and length of the string stored within the word.
 \	It is then modified to point to just after the string.
 \
 : _slit				\ S: -- R: ip
 	R@ @ R>			\ S: u ip R: --
 	CELL+ SWAP 2DUP		\ S: caddr u caddr u R: --
-	CHAR+			\ account for NUL from _allot_cstring
+	CHAR+			\ Account for terminating NUL byte.
 	CHARS + ALIGNED		\ S: caddr u ip' R: --
 	>R			\ S: caddr u R: ip'
 ;
 
-\
-\ (S: caddr u -- ; -- caddr u )
-\
-: SLITERAL
-	POSTPONE _slit DUP ,	\ S: caddr u
-	_allot_cstring ALIGN	\ S: --
-; IMMEDIATE
-
 \ (C: src u -- ) || (S: src u -- caddr u )
-: _store_str
+: _string0_store
 	STATE @ IF
-	  POSTPONE SLITERAL	\ S: --
+	  POSTPONE _slit	\ S: src u
+	  \ Append length.
+	  DUP ,			\ S: src u
+	  \ Append string and NUL terminate for C.
+	  DUP >R reserve R>	\ S: src dst u
+	  MOVE 0 C, ALIGN	\ S: --
 	ELSE
+	  \ Select next transient buffer.
 	  DUP >R _str_buf_next	\ S: src u dst R: u
+	  \ Copy string from input to transient buffer.
 	  DUP >R SWAP		\ S: src dst u R: u dst
-	  CMOVE			\ S: -- R: u dst
-	  R> R>			\ S: dst u R: --
+	  MOVE			\ S: -- R: u dst
 	  \ Add terminating NUL byte for convenience for C.
+	  R> R>			\ S: dst u R: --
 	  2DUP CHARS + 0	\ S: dst u end NUL
 	  SWAP C!		\ S: dst u
 	THEN
@@ -1345,13 +1341,13 @@ MAX-CHAR CONSTANT /COUNTED-STRING
 \
 \ (C: ccc<quote>" -- ) || (S: ccc<quote>" -- caddr u )
 \
-: S" [CHAR] " PARSE _store_str ; IMMEDIATE
+: S" [CHAR] " PARSE _string0_store ; IMMEDIATE
 
 \ ... S\" ccc" ...
 \
 \ (C: ccc<quote>" -- ) || (S: ccc<quote>" -- caddr u )
 \
-: S\" [CHAR] " parse-escape _store_str ; IMMEDIATE
+: S\" [CHAR] " parse-escape _string0_store ; IMMEDIATE
 
 \ ... ." ccc" ...
 \
