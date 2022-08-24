@@ -1423,6 +1423,7 @@ _longjmp:	w = P4_POP(ctx->ds);
 		LONGJMP(ctx->on_throw, (int) w.n);
 
 		// ( -- x )
+		// : lit r> dup cell+ >r @ ;
 _lit:		w = *ip++;
 		P4_PUSH(ctx->ds, w);
 		NEXT;
@@ -2446,8 +2447,8 @@ main(int argc, char **argv)
 
 	optind = 1;
 	while ((ch = getopt(argc, argv, "b:c:d:i:r:V")) != -1) {
-		if (ch == 'i' && (rc = p4EvalFile(ctx, argv[optind-1])) != P4_THROW_OK) {
-			err(EXIT_FAILURE, "%s", argv[optind-1]);
+		if (ch == 'i' && (rc = p4EvalFile(ctx, optarg)) != P4_THROW_OK) {
+			err(EXIT_FAILURE, "%s", optarg);
 		}
 	}
 
