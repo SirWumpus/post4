@@ -59,8 +59,8 @@ There are actually three block editor word sets:
 
 NOTE: that `EDIT` and `ED` are hard coded with ANSI terminal escape sequences.
 
-        $ post4
-        ok INCLUDE ed.p4
+        $ post4 -i ed.p4
+        Type ED to start editor.
         ok ED
 
 
@@ -121,7 +121,7 @@ Pseudo-random number generators.  One is the simple code example from the ISO C1
 Example:
 
         $ post4
-        ok incl rand.p4
+        ok include rand.p4
         ok 12345 srand !
         ok rand . rand . rand . CR
         21468 9988 22117

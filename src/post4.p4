@@ -1531,15 +1531,6 @@ VARIABLE SCR
 \
 : INCLUDE PARSE-NAME INCLUDED ;
 
-\ ... INCL filename ...
-\
-\ (S: <spaces>filename" -- )
-\
-\ @note
-\	Convenience that marks word boundary before the include.
-\
-: incl S" MARKER rm_incl" EVALUATE INCLUDE ;
-
 \ ... BUFFER: name
 \
 \ ( u "<spaces>name" -- ; -- aaddr )
