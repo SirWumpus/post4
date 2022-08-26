@@ -1540,6 +1540,11 @@ Print the counted string.  See also `puts`.
 System clock time in seconds from the epoch.
 
 - - -
+### dropall
+( i*x -- )  
+Empty the data stack.
+
+- - -
 ### env
 ( `key` `k` -- `value` `v` )  
 Lookup the environment variable string `key` `k`.  Return string `value` `v`; if length `v` is `-1`, then the environment variable `key` was not found and `value` is invalid.
@@ -1626,6 +1631,11 @@ Print a NUL terminated string.
 
         CREATE greet S\" Hello world.\n"
         greet drop puts
+
+- - -
+### rdropall
+( R: i*x -- )  
+Empty the return stack.
 
 - - -
 ### reserve

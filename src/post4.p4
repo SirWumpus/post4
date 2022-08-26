@@ -112,6 +112,13 @@ CREATE PAD /PAD CHARS ALLOT
 : CELL+ /CELL + ;
 : CELL- /CELL - ;
 
+\ ... DROPALL ...
+\
+\ ( i*x -- )
+\
+: dropall _ds DROP CELL- _dsp! ;
+: rdropall _rs DROP CELL- _rsp! ;
+
 \ ... NEGATE ...
 \
 \ (S: n1 -- n2 )
