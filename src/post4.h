@@ -316,7 +316,7 @@ struct p4_ctx {
 #define P4_THROW_NAME_TOO_LONG	(-19)	/* definition name too long */
 #define P4_THROW__20		(-20)	/* write to a read-only location */
 #define P4_THROW__21		(-21)	/* unsupported operation (e.g., AT-XY on a too-dumb terminal) */
-#define P4_THROW__22		(-22)	/* control structure mismatch */
+#define P4_THROW_BAD_CONTROL	(-22)	/* control structure mismatch */
 #define P4_THROW_SIGBUS		(-23)	/* address alignment exception */
 #define P4_THROW_BAD_NUMBER	(-24)	/* invalid numeric argument */
 #define P4_THROW__25		(-25)	/* return stack imbalance */

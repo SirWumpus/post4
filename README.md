@@ -1749,6 +1749,7 @@ This is a list of `THROW` codes used internally by Post4.
 * -14 interpreting a compile-only word  
 * -17 pictured numeric output string overflow  
 * -21 unsupported operation  
+* -22 control structure mismatch  
 * -23 address alignment exception (`SIGBUS`)  
 * -24 invalid numeric argument
 * -28 user interrupt (`SIGINT`)  

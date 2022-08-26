@@ -1094,7 +1094,11 @@ p4Exception(P4_Ctx *ctx, int code)
 		return code;
 	}
 	(void) printf("%d thrown: %s", code, P4_THROW_future <= code && code < 0 ? p4_exceptions[-code] : "?");
-	if (ctx->state == P4_STATE_COMPILE) {
+	/* Cannot not rely on ctx->state for compilation state, since
+	 * its possible to temporarily change states in the middle of
+	 * compiling a word, eg : word [ 123 ;
+	 */
+	if (P4_WORD_IS_HIDDEN(ctx->words)) {
 		/* A thrown error while compiling a word leaves the
 		 * definition in an incomplete state; discard it.
 		 */
@@ -1465,10 +1469,15 @@ _cells:		P4_TOP(ctx->ds).n *= P4_CELL;
 		/*
 		 * Defining words.
 		 */
+	{
+		P4_Cell *ds, *rs;
+
 		// (R: -- ip)
 _colon:		if (ctx->state == P4_STATE_COMPILE) {
 			LONGJMP(ctx->on_throw, P4_THROW_COMPILING);
 		}
+		ds = ctx->ds.top;
+		rs = ctx->rs.top;
 		ctx->state = P4_STATE_COMPILE;
 		str = p4ParseName(&ctx->input);
 		word = p4WordCreate(ctx, str.string, str.length, &&_enter);
@@ -1476,10 +1485,15 @@ _colon:		if (ctx->state == P4_STATE_COMPILE) {
 		NEXT;
 
 		// (C: colon -- )
-_semicolon:	ctx->state = P4_STATE_INTERPRET;
-		ctx->words = p4WordAppend(ctx, ctx->words, (P4_Cell) &w_exit);
+_semicolon:	ctx->words = p4WordAppend(ctx, ctx->words, (P4_Cell) &w_exit);
+		if (ds != ctx->ds.top || rs != ctx->rs.top) {
+			/* Control structure imbalance. */
+			LONGJMP(ctx->on_throw, P4_THROW_BAD_CONTROL);
+		}
 		P4_WORD_CLEAR_HIDDEN(ctx->words);
+		ctx->state = P4_STATE_INTERPRET;
 		NEXT;
+	}
 
 		// ( -- )
 _immediate:	P4_WORD_SET_IMM(ctx->words);
