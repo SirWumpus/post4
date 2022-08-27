@@ -133,6 +133,16 @@ Example:
         ok 
 
 
+### wumpus.p4
+
+"Hunt The Wumpus" game ported from the original BASIC source written by Gregory Yob.
+
+        $ port4 -i wumpus.p4
+        ... instructions ...
+        Type PLAY to start.
+        ok PLAY
+
+
 Standard Words
 --------------
 
