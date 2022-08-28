@@ -1,6 +1,6 @@
 MARKER rm_core_words
 
-: \ '\n' PARSE DROP DROP ; IMMEDIATE
+: \ '\n' 0 _parse DROP DROP ; IMMEDIATE
 
 \ Post4 Copyright 2007, 2022 by Anthony Howe.  All rights reserved.
 
@@ -15,6 +15,14 @@ MARKER rm_core_words
 \ ( -- )
 \
 : .RS 'r' EMIT 's' EMIT '\n' EMIT _rs 1 - _stack_dump ;
+
+\ ... PARSE ...
+\ ... parse-escape ...
+\
+\ ( char -- caddr u )
+\
+: PARSE 0 _parse ;
+: parse-escape 1 _parse ;
 
 \ ... reserve ...
 \

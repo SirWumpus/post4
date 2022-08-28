@@ -1722,6 +1722,11 @@ Return true if the execution token is for an immediate word.
 Return to the context saved at the start of the REPL (`QUIT`) passing `n`.  Values of `n` from -1 to -255 are the Forth 200x standard `THROW` codes.  Passing -256 is equivalent to `BYE`.
 
 - - -
+### _parse
+( `char` `bool` -- `caddr` `u` )  
+Parse `ccc` delimited by the delimiter `char`.  When `bool` is false, behaviour like `PARSE`, otherwise when true parse the escaped string like `PARSE-ESCAPE`.  `caddr` and `u` are the address and length within the input buffer of the parsed (escaped) string.  If the parse area was empty, the resulting string has a zero (0) length.
+
+- - -
 ### _rs
 ( -- `aaddr` `n` )  
 Push the return stack base address and current depth.  This stack is a fixed size and grows upward.

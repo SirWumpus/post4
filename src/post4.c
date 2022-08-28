@@ -1262,8 +1262,7 @@ p4Repl(P4_Ctx *ctx)
 		P4_WORD("KEY",		&&_key,		0),
 		P4_WORD("KEY?",		&&_key_ready,	0),
 		P4_WORD("MS",		&&_ms,		0),
-		P4_WORD("PARSE",	&&_parse,	0),
-		P4_WORD("parse-escape",	&&_parse_escape,0),		// p4
+		P4_WORD("_parse",	&&_parse,	0),		// p4
 		P4_WORD("PARSE-NAME",	&&_parse_name,	0),
 		P4_WORD("RESTORE-INPUT", &&_restore_input, 0),
 		P4_WORD("REFILL",	&&_refill,	0),
@@ -2158,17 +2157,11 @@ _update:	ctx->block.state = P4_BLOCK_DIRTY;
 
 		/*
 		 */
-		// ( char -- c-addr u )
-_parse:		w = P4_POP(ctx->ds);
-		str = p4Parse(&ctx->input, w.u, 0);
-		P4_PUSH(ctx->ds, str.string);
-		P4_PUSH(ctx->ds, str.length);
-		NEXT;
-
-		// ( char -- c-addr u )
-_parse_escape:	w = P4_POP(ctx->ds);
-		str = p4Parse(&ctx->input, w.u, 1);
-		P4_PUSH(ctx->ds, str.string);
+		// ( char bool -- c-addr u )
+_parse:		x = P4_POP(ctx->ds);
+		w = P4_TOP(ctx->ds);
+		str = p4Parse(&ctx->input, w.u, x.u);
+		P4_TOP(ctx->ds).s = str.string;
 		P4_PUSH(ctx->ds, str.length);
 		NEXT;
 
