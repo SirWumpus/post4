@@ -4,11 +4,11 @@ MARKER rm_core_words
 
 \ Post4 Copyright 2007, 2022 by Anthony Howe.  All rights reserved.
 
-\ ... .S ...
+\ ... BYE ...
 \
 \ ( -- )
 \
-: .S 'd' EMIT 's' EMIT '\n' EMIT _ds _stack_dump ;
+: BYE 0 bye-code ;
 
 \ ... .RS ...
 \

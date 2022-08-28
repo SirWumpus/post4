@@ -1275,7 +1275,6 @@ p4Repl(P4_Ctx *ctx)
 
 		/* Tools*/
 		P4_WORD("args",		&&_args,	0),		// p4
-		P4_WORD("BYE",		&&_bye,		0),
 		P4_WORD("bye-code",	&&_bye_code,	0),		// p4
 		P4_WORD("env",		&&_env,		0),		// p4
 		P4_WORD("SEE",		&&_see,		P4_BIT_IMM),
@@ -1372,9 +1371,6 @@ _enter:		P4_PUSH(ctx->rs, ip);
 		// ( i*x -- i*x )(R:ip -- )
 _exit:		ip = P4_POP(ctx->rs).p;
 		NEXT;
-
-		// ( -- )
-_bye:		exit(0);
 
 		// ( ex_code -- )
 _bye_code:	w = P4_TOP(ctx->ds);
