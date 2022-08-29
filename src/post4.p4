@@ -10,6 +10,12 @@ MARKER rm_core_words
 \
 : BYE 0 bye-code ;
 
+\ ... .S ...
+\
+\ ( -- )
+\
+: .S 'd' EMIT 's' EMIT '\n' EMIT _ds _stack_dump ;
+
 \ ... .RS ...
 \
 \ ( -- )
@@ -1065,7 +1071,7 @@ VARIABLE catch_frame
 \
 : J				\ S: --  R: l1 i1 l2 i2 ip
 	R> R> R> R@		\ S: ip i2 l2 i1  R: l1 i1
-	3 ROLL 3 ROLL 3 ROLL	\ S: i1 ip l2 i2  R: l1 i1
+	3 ROLL 3 ROLL 3 ROLL	\ S: i1 ip i2 l2  R: l1 i1
 	>R >R >R		\ S: i1  R: l1 i1 l2 i2 ip
 ;
 
