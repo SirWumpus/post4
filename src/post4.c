@@ -1319,7 +1319,8 @@ p4Repl(P4_Ctx *ctx)
 	signal_ctx = ctx;
 	SETJMP_PUSH(ctx->on_throw);
 	if ((rc = SETJMP(ctx->on_throw)) != 0) {
-		return rc;
+		/* Ensure we cleanup before return. */
+		goto setjmp_cleanup;
 	}
 _repl:
 	/* The input buffer might have been primed (EVALUATE, LOAD),
@@ -1372,6 +1373,7 @@ _repl:
 		(void) fputc('\n', stdout);
 	}
 
+setjmp_cleanup:
 	SETJMP_POP(ctx->on_throw);
 	return rc;
 
