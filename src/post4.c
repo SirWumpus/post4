@@ -41,6 +41,13 @@ static struct termios tty_saved;
 static struct termios *tty_mode;
 #endif
 
+#ifdef HAVE_TCGETWINSIZE
+struct winsize window = {
+	.ws_row = 24,
+	.ws_col = 80,
+};
+#endif
+
 #define P4_INTERACTIVE(ctx)	(ctx->state == P4_STATE_INTERPRET && is_tty && P4_INPUT_IS_TERM(ctx->input))
 
 /*
@@ -150,6 +157,16 @@ sig_int(int signum)
 	abort();
 }
 
+static void
+sig_winch(int signum)
+{
+#ifdef HAVE_TCGETWINSIZE
+	if (is_tty) {
+		(void) tcgetwinsize(0, &window);
+	}
+#endif
+}
+
 void
 p4Fini(void)
 {
@@ -171,7 +188,7 @@ p4Init(void)
 	signal(SIGINT, sig_int);
 	signal(SIGSEGV, sig_int);
 	signal(SIGFPE, sig_int);
-	signal(SIGBUS, sig_int);
+	signal(SIGWINCH, sig_winch);
 
 	is_tty = isatty(fileno(stdin));
 #ifdef ASSERT_LINE_BUFFERING
@@ -222,6 +239,11 @@ p4Init(void)
 //		(void) tcsetattr(tty_fd, TCSADRAIN, &tty_raw);
 	}
 #endif /* HAVE_TCGETATTR */
+#ifdef HAVE_TCGETWINSIZE
+	if (is_tty) {
+		(void) tcgetwinsize(0, &window);
+	}
+#endif /* HAVE_TCGETWINSIZE */
 }
 
 int
@@ -2294,14 +2316,10 @@ _see:		str = p4ParseName(&ctx->input);
 
 	{	// ( -- )
 		P4_Uint column;
-		unsigned short window[4] = { 24, 80 };
 _words:
-#ifdef TIOCGWINSZ
-		ioctl(0, TIOCGWINSZ, window);
-#endif
 		column = 0;
 		for (word = ctx->words; word != NULL; word = word->prev) {
-			if (window[1] <= column + word->name.length + 1) {
+			if (window.ws_col <= column + word->name.length + 1) {
 				(void) printf("\r\n");
 				column = 0;
 			}

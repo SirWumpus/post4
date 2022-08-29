@@ -1459,7 +1459,7 @@ AC_DEFUN(SNERT_TERMIOS,[
 	echo "Check for termios..."
 	echo
 	AC_CHECK_HEADERS([termios.h],[
-		AC_CHECK_FUNCS(tcgetattr tcsetattr ctermid)
+		AC_CHECK_FUNCS(tcgetattr tcsetattr tcgetwinsize tcsetwinsize ctermid)
 	])
 ])
 
