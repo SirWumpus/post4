@@ -1643,11 +1643,6 @@ Print a NUL terminated string.
         greet drop puts
 
 - - -
-### rdropall
-( R: i*x -- )  
-Empty the return stack.
-
-- - -
 ### reserve
 ( `n` -- `addr` )  
 Similar to `ALLOT`, reserve `n` address-units of data-space and return its start address.  While defining a word in C based implementations, like Post4, data-space regions may be relocated when they are enlarged, thus invalidating previous values of `HERE`.  Therefore consider:
