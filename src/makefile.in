@@ -68,7 +68,7 @@ build: title post4$E
 
 clean : title
 	-rm -f *.o *.obj *.i *.map *.tds *.TR2 *.stackdump core *.core core.* *.log
-	-rm -f post4$E
+	-rm -f post4$E post4_g$E
 
 distclean: clean
 	-rm -f config.h config.h.in makefile
@@ -93,3 +93,8 @@ post4$O : config.h post4.h post4.c
 post4$E : config.h post4.h post4.c
 	${CC} ${CFLAGS} ${LDFLAGS} -DTEST -DP4_BUILT="\"${BUILT}\"" -o post4$E post4.c
 
+post4_g$E : config.h post4.h post4.c
+	${CC} -g ${CFLAGS} ${LDFLAGS} -DTEST -DP4_BUILT="\"${BUILT}\"" -o post4_g$E post4.c
+
+post4.i : config.h post4.h post4.c
+	${CC} -E ${CFLAGS} -DTEST -DP4_BUILT="\"${BUILT}\"" post4.c >$*.i

@@ -45,9 +45,5 @@ package/Windows/installer.nsi
 
 
 # Compiled
-src/p4
 src/post4
-
-# Unimportant
-#examples/*
-#doc/*
+src/post4_g
