@@ -29,7 +29,6 @@ static P4_Options options = {
 static void *p4_program_end;
 static P4_Word *p4_builtin_words;
 static P4_Ctx * volatile signal_ctx;
-static unsigned char base36[256];
 
 static int is_tty;
 #ifdef HAVE_TCGETATTR
@@ -335,6 +334,19 @@ p4StrDup(const P4_Char *str, P4_Size length)
 }
 
 int
+p4Base36(int digit)
+{
+	if ('0' <= digit && digit <= '9') {
+		return digit - '0';
+	}
+	digit = toupper(digit);
+	if ('A' <= digit && digit <= 'Z') {
+		return digit - 'A' + 10;
+	}
+	return 127;
+}
+
+int
 p4StrNum(P4_String str, P4_Uint base, P4_Int *out)
 {
 	P4_Int value;
@@ -388,7 +400,7 @@ p4StrNum(P4_String str, P4_Uint base, P4_Int *out)
 	}
 
 	for (value = 0; offset < str.length; offset++) {
-		int digit = base36[str.string[offset]];
+		int digit = p4Base36(str.string[offset]);
 		if (base <= digit) {
 			break;
 		}
