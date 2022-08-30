@@ -101,6 +101,7 @@ _rs_size CONSTANT RETURN-STACK-CELLS
 
 -1 CONSTANT throw_abort
 -2 CONSTANT throw_abort_msg
+-11 CONSTANT throw_erange
 -24 CONSTANT throw_bad_number
 -56 CONSTANT throw_quit
 
@@ -765,12 +766,6 @@ VARIABLE catch_frame
 \
 : QUIT throw_quit THROW ;
 
-\ ... HOLDS ...
-\
-\ (S: caddr u -- )
-\
-: HOLDS BEGIN DUP WHILE 1- 2DUP + C@ HOLD REPEAT 2DROP ;
-
 \ ... TYPE ...
 \
 \ (S: caddr u -- )
@@ -876,6 +871,82 @@ VARIABLE catch_frame
 	REPEAT
 ;
 
+\
+\ ( S: char -- value | 127 )
+\
+: _digit_value
+	\ Is upper case?
+	DUP 'A' 'Z' 1+ WITHIN		\ S: char bool
+	\ Convert to lower case.
+	IF $20 OR THEN			\ S: char'
+	DUP '0' '9' 1+ WITHIN IF	\ S: char
+	  '0' - EXIT			\ S: value
+	ELSE DUP 'a' 'z' 1+ WITHIN IF	\ S: char
+	  'a' - #10 + EXIT		\ S: value
+	THEN THEN			\ S: char
+	\ Not found.
+	DROP #127			\ S: 127
+;
+
+\ ... >NUMBER ...
+\
+\ ( S: acc caddr len -- acc' caddr' len' )
+\
+: >NUMBER
+	BEGIN
+	  DUP 0>			\ S: acc caddr len
+	WHILE
+	  OVER C@			\ S: acc caddr len char
+	  _digit_value			\ S: acc caddr len digit
+	  DUP BASE @ >= IF		\ S: acc caddr len digit
+	    DROP EXIT			\ S: acc' caddr' len'
+          THEN				\ S: acc caddr len value
+	  3 ROLL BASE @ * +		\ S: caddr len acc'
+	  ROT CHAR+ ROT 1-		\ S: acc' caddr' len'
+	REPEAT
+;
+
+CREATE _pic /HOLD CHARS ALLOT
+
+VARIABLE _>pic
+
+: _dumppic _pic /HOLD dump ;
+
+\ ( u -- u' digit )
+: _value_digit
+	BASE @ UM/MOD SWAP		\ S: quot rem
+	DUP 0 #10 WITHIN		\ S: quot rem bool
+	IF				\ S: quot rem
+	  '0' +				\ S: quot digit
+	ELSE
+	  #10 - 'A' +			\ S: quot digit
+	THEN
+;
+
+\ ( char -- )
+: HOLD _pic _>pic @ + C! 1 _>pic +! ;
+
+\ ( caddr u -- )
+: HOLDS BEGIN DUP WHILE 1- 2DUP + C@ HOLD REPEAT 2DROP ;
+
+\ ( n -- )
+: SIGN 0< IF '-' HOLD THEN ;
+
+\ ( -- )
+: <# _pic /HOLD BLANK 0 _>pic ! ;
+
+\ ( x -- caddr u )
+: #> DROP _pic _>pic @ 2DUP strrev ;
+
+\ ( u1 -- u2 )
+: # _value_digit HOLD ;
+
+\ ( u -- 0 )
+: #S BEGIN # DUP 0= UNTIL ;
+
+\ ( n -- )
+: . DUP ABS <# #S SWAP SIGN #> TYPE SPACE ;
+
 \ ... char WORD ...
 \
 \ (S: char "<chars>ccc<char>" -- caddr )
@@ -893,12 +964,6 @@ VARIABLE catch_frame
 \ (S: u -- )
 \
 : U. <# #S #> TYPE SPACE ;
-
-\ ... . ...
-\
-\ (S: n -- )
-\
-: . DUP ABS <# #S SWAP SIGN #> TYPE SPACE ;
 
 \ ... U.R  ...
 \
@@ -951,7 +1016,7 @@ VARIABLE catch_frame
 	DUP DECIMAL [CHAR] # EMIT . SPACE
 	DUP OCTAL [CHAR] 0 EMIT . SPACE
 	DUP BINARY [CHAR] % EMIT . SPACE
-	DUP $21 $7F WITHIN IF [CHAR] ' EMIT EMIT [CHAR] ' EMIT ELSE DROP THEN
+	DUP $20 $7F WITHIN IF [CHAR] ' EMIT EMIT [CHAR] ' EMIT ELSE DROP THEN
 	CR R> BASE !
 ;
 
@@ -1135,41 +1200,6 @@ int_max INVERT CONSTANT int_min	\ 0x80...00
 	\  LEAVE branches to just after UNTIL and before UNLOOP.
 	POSTPONE UNLOOP
 ; IMMEDIATE
-
-\
-\ ( S: char -- value | 127 )
-\
-: _digit_value
-	\ Is upper case?
-	DUP 'A' 'Z' 1+ WITHIN		\ S: char bool
-	\ Convert to lower case.
-	IF $20 OR THEN			\ S: char'
-	DUP '0' '9' 1+ WITHIN IF	\ S: char
-	  '0' - EXIT			\ S: value
-	ELSE DUP 'a' 'z' 1+ WITHIN IF	\ S: char
-	  'a' - #10 + EXIT		\ S: value
-	THEN THEN			\ S: char
-	\ Not found.
-	DROP #127			\ S: 127
-;
-
-\ ... >NUMBER ...
-\
-\ ( S: acc caddr len -- acc' caddr' len' )
-\
-: >NUMBER
-	BEGIN
-	  DUP 0>			\ S: acc caddr len
-	WHILE
-	  OVER C@			\ S: acc caddr len char
-	  _digit_value			\ S: acc caddr len digit
-	  DUP BASE @ >= IF		\ S: acc caddr len digit
-	    DROP EXIT			\ S: acc' caddr' len'
-          THEN				\ S: acc caddr len value
-	  3 ROLL BASE @ * +		\ S: caddr len acc'
-	  ROT CHAR+ ROT 1-		\ S: acc' caddr' len'
-	REPEAT
-;
 
 \ ... x CASE ... ENDCASE
 \

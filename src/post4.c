@@ -1169,6 +1169,7 @@ p4Repl(P4_Ctx *ctx)
 		P4_WORD("max-u",		&&_max_u,	0),	// p4
 		P4_WORD("max-d",		&&_max_d,	0),	// p4
 		P4_WORD("max-ud",		&&_max_ud,	0),	// p4
+		P4_WORD("/hold",		&&_pic_size,	0),	// p4
 
 		/* Internal support. */
 		P4_WORD("_bp",		&&_bp,		P4_BIT_IMM),	// p4
@@ -1203,16 +1204,6 @@ p4Repl(P4_Ctx *ctx)
 		P4_WORD("POSTPONE",	&&_postpone,	P4_BIT_IMM),
 		P4_WORD("STATE",	&&_state,	0),
 
-		/* Numeric formatting. */
-		P4_WORD("<#",		&&_pic_start,	0),
-		P4_WORD("#",		&&_pic_digit,	0),
-		P4_WORD("#S",		&&_pic_rest,	0),
-		P4_WORD("#>",		&&_pic_end,	0),
-		P4_WORD("BASE",		&&_base,	0),
-		P4_WORD("HOLD",		&&_pic_hold,	0),
-		P4_WORD("SIGN",		&&_pic_sign,	0),
-		P4_WORD("/hold",	&&_pic_size,	0),		// p4
-
 		/* Data Space - Alignment */
 		P4_WORD("CELLS",	&&_cells,	0),
 		P4_WORD("CHARS",	&&_chars,	0),
@@ -1238,6 +1229,7 @@ p4Repl(P4_Ctx *ctx)
 		P4_WORD("R@",		&&_rs_copy,	0),
 		P4_WORD("ROLL",		&&_roll,	0),
 		P4_WORD("SWAP",		&&_swap,	0),
+		P4_WORD("BASE",         &&_base,        0),
 
 		/* Dynamic Memory */
 		P4_WORD("ALLOCATE",	&&_allocate,	0),
@@ -1245,6 +1237,7 @@ p4Repl(P4_Ctx *ctx)
 		P4_WORD("RESIZE",	&&_resize,	0),
 
 		/* Operators */
+		P4_WORD("BASE",         &&_base,        0),
 		P4_WORD("*",		&&_mul,		0),
 		P4_WORD("+",		&&_add,		0),
 		P4_WORD("-",		&&_sub,		0),
@@ -1674,58 +1667,8 @@ _state:		P4_PUSH(ctx->ds, (P4_Cell *) &ctx->state);
 _base:		P4_PUSH(ctx->ds, (P4_Cell *) &ctx->radix);
 		NEXT;
 
-		// ( -- )
-_pic_start:	ctx->picptr = memset(ctx->pic, ' ', sizeof (ctx->pic));
-		NEXT;
-
-		// ( x -- caddr u )
-_pic_end:	w.u = ctx->picptr - ctx->pic;
-		p4StrRev(ctx->pic, w.u);
-		P4_TOP(ctx->ds).s = ctx->pic;
-		P4_PUSH(ctx->ds, w);
-		NEXT;
-
-		// ( u1 -- u2 )
-_pic_digit:	if (ctx->pic + sizeof (ctx->pic) <= ctx->picptr) {
-			LONGJMP(ctx->on_throw, P4_THROW_PIC_OVER);
-		}
-		w = P4_TOP(ctx->ds);
-		*ctx->picptr++ = base36_digits[w.u % ctx->radix];
-		P4_TOP(ctx->ds).u /= ctx->radix;
-		NEXT;
-
-		// ( u -- 0 )
-_pic_rest:	w = P4_TOP(ctx->ds);
-		do {
-			if (ctx->pic + sizeof (ctx->pic) <= ctx->picptr) {
-				LONGJMP(ctx->on_throw, P4_THROW_PIC_OVER);
-			}
-			*ctx->picptr++ = base36_digits[w.u % ctx->radix];
-			w.u /= ctx->radix;
-		} while (0 < w.u);
-		P4_TOP(ctx->ds).u = 0;
-		NEXT;
-
-		// ( n -- )
-_pic_sign:	if (ctx->pic + sizeof (ctx->pic) <= ctx->picptr) {
-			LONGJMP(ctx->on_throw, P4_THROW_PIC_OVER);
-		}
-		w = P4_POP(ctx->ds);
-		if (w.n < 0) {
-			*ctx->picptr++ = '-';
-		}
-		NEXT;
-
-		// ( ch -- )
-_pic_hold:	if (ctx->pic + sizeof (ctx->pic) <= ctx->picptr) {
-			LONGJMP(ctx->on_throw, P4_THROW_PIC_OVER);
-		}
-		w = P4_POP(ctx->ds);
-		*ctx->picptr++ = (P4_Char) w.u;
-		NEXT;
-
 		// ( -- n )
-_pic_size:	P4_PUSH(ctx->ds, sizeof(ctx->pic));
+_pic_size:	P4_PUSH(ctx->ds, P4_PIC_SIZE);
 		NEXT;
 
 		/*
@@ -2343,12 +2286,12 @@ p4Eval(P4_Ctx *ctx)
 		case P4_THROW_ABORT_MSG:
 		case P4_THROW_DS_UNDER:
 		case P4_THROW_RS_UNDER:
-		case P4_THROW_SIGSEGV:
-		case P4_THROW_SIGBUS:
 			P4_RESET(ctx->ds);
 			/*@fallthrough@*/
 
 		case P4_THROW_QUIT:
+		case P4_THROW_SIGBUS:
+		case P4_THROW_SIGSEGV:
 			P4_RESET(ctx->rs);
 			ctx->input.fp = stdin;
 			/*@fallthrough@*/

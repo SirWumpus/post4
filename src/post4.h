@@ -53,6 +53,10 @@ extern "C" {
 #define P4_CORE_FILE			"post4.p4"
 #endif
 
+#ifndef P4_PIC_SIZE
+#define P4_PIC_SIZE			(2 * sizeof (P4_Cell) * CHAR_BIT + 2)
+#endif
+
 /***********************************************************************
  *** No configuration below this point.
  ***********************************************************************/
@@ -139,7 +143,7 @@ typedef void *P4_Code;			/* Address of labels, eg. ptr = &&label; */
 typedef void *P4_Ptr;
 #define P4_PTR_FMT "%lx"
 
-typedef char P4_Char;
+typedef unsigned char P4_Char;
 #define P4_CHAR_FMT "0x%.2x"
 #define P4_CHAR_BIT CHAR_BIT
 #define P4_CHAR_MAX UCHAR_MAX
@@ -282,8 +286,6 @@ struct p4_ctx {
 	P4_Block	block;
 	P4_Int		block_fd;
 	P4_Char		tty[P4_INPUT_SIZE];
-	P4_Char *	picptr;
-	P4_Char		pic[2 * sizeof (P4_Cell) * CHAR_BIT + 2];
 	JMP_BUF		on_throw;
 };
 
