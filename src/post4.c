@@ -30,7 +30,6 @@ static void *p4_program_end;
 static P4_Word *p4_builtin_words;
 static P4_Ctx * volatile signal_ctx;
 static unsigned char base36[256];
-static char base36_digits[] = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ";
 
 static int is_tty;
 #ifdef HAVE_TCGETATTR
@@ -202,12 +201,6 @@ p4Init(void)
 	 */
 	p4_program_end = sbrk(0);
 
-	/* Setup base 36 number conversion table. */
-	(void) memset(base36, 0xFF, sizeof (base36));
-	for (i = 0, p = base36_digits; *p != '\0'; p++, i++) {
-		base36[toupper(*p)] = i;
-		base36[tolower(*p)] = i;
-	}
 #ifdef HAVE_TCGETATTR
 # ifdef HAVE_CTERMID
 	tty_fd = open(ctermid(NULL), O_RDWR, S_IRWXU|S_IRWXG|S_IRWXO);
@@ -327,24 +320,6 @@ p4CharLiteral(int ch)
 	case '?': return '\177';	/* delete */
 	}
 	return ch;			/* identity */
-}
-
-/**
- * @param s
- *	A pointer to a C string to reverse in place.
- *
- * @param length
- *	The length of the C string.
- */
-void
-p4StrRev(P4_Char *s, P4_Size length)
-{
-	P4_Char ch, *x, *y;
-	for (x = s, y = s+length; x < --y; x++) {
-		ch = *y;
-		*y = *x;
-		*x = ch;
-	}
 }
 
 char *
