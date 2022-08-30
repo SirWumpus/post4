@@ -135,7 +135,7 @@ Example:
 
 ### wumpus.p4
 
-"Hunt The Wumpus" game ported from the original BASIC source written by Gregory Yob.
+[Hunt The Wumpus](https://en.wikipedia.org/wiki/Hunt_the_Wumpus) game ported from the original BASIC source written by Gregory Yob.
 
         $ port4 -i wumpus.p4
         ... instructions ...
@@ -1150,7 +1150,7 @@ Rotate the top three stack entries.
 
 - - -
 ### RSHIFT
-( `x1` `u` -- `x2`)  
+( `x1` `u` -- `x2` )  
 Logical right shift of `x1` by `u` bits, putting `u` zeroes into the most significant bits.
 
 - - -
@@ -1227,7 +1227,7 @@ If `n` is greater than zero (0), display `n` spaces.
 - - -
 ### STATE
 ( -- `aaddr` )  
-Return the `aaddr` address of the compilation state; true when compiling, otherwise false when interpreting.
+Return the `aaddr` address of the compilation state; true when compiling, otherwise false when interpreting.  See also words `[` and `]`.
 
 - - -
 ### SWAP
@@ -1438,7 +1438,7 @@ Return `FALSE` if `name` is word that can be found in the dictionary; otherwise 
 - - -
 ### \\ ccc<LF>
 ( `ccc<LF>` -- ) immediate  
-Parse and discard the remainder of the parse area.
+Parse and discard the remainder of the parse area, ie. comment line.
 
 - - -
 ### ]
@@ -1664,7 +1664,12 @@ Compare the two strings lexicographically.  Return `n` greater than, equal to, o
 - - -
 ### strlen
 ( `caddr` -- `u` )  
-String length of NUL terminated string.  
+String length of NUL terminated string.
+
+- - -
+### strrev
+( `caddr` `u` -- )  
+Reverse the string in place.
 
 - - -
 ### _bp
@@ -1748,7 +1753,7 @@ Utility word used to define `.S` and `.rs`.
 
 - - -
 ### _stdin
-( -- )
+( -- )  
 Set source to standard input; see `cat.p4` example.
 
 - - -
@@ -1795,3 +1800,5 @@ Forth 200x
 Forth Standard  
 <https://forth-standard.org/>
 
+Forth Discussions  
+<https://github.com/ForthHub/discussion/discussions>

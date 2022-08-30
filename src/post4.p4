@@ -844,6 +844,24 @@ VARIABLE catch_frame
 \
 : ERASE 0 FILL ;
 
+\ ... strrev ...
+\
+\ ( caddr u -- )
+\
+: strrev
+	CHARS OVER +		\ S: x y
+	BEGIN
+	  CHAR- 2DUP <		\ S: x y' bool
+	WHILE
+	  2DUP 2DUP		\ S: x y' x y' x y'
+	  C@ >R C@		\ S: x y' x y' cx R: cy
+	  SWAP C! R>		\ S: x y' x cy
+	  SWAP C!		\ S: x y'
+	  SWAP CHAR+ SWAP	\ S: x' y'
+	REPEAT
+	2DROP			\ S: --
+;
+
 \ ... -TRAILING ...
 \
 \ (S: caddr u -- caddr u' )
