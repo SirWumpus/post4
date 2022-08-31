@@ -1160,6 +1160,7 @@ p4Repl(P4_Ctx *ctx)
 		P4_WORD("_rs_size",	&&_rs_size,	0),		// p4
 		P4_WORD("_stack_dump",	&&_stack_dump,	0),		// p4
 		P4_WORD("_stdin",	&&_stdin,	0),		// p4
+		P4_WORD("_window",	&&_window,	0),		// p4
 
 		/* Compiling Words */
 		P4_WORD("'",		&&_tick,	0),
@@ -1644,8 +1645,13 @@ _state:		P4_PUSH(ctx->ds, (P4_Cell *) &ctx->state);
 _base:		P4_PUSH(ctx->ds, (P4_Cell *) &ctx->radix);
 		NEXT;
 
-		// ( -- n )
+		// ( -- u )
 _pic_size:	P4_PUSH(ctx->ds, P4_PIC_SIZE);
+		NEXT;
+
+		// ( -- rows cols )
+_window:	P4_PUSH(ctx->ds, (P4_Uint) window.ws_row);
+		P4_PUSH(ctx->ds, (P4_Uint) window.ws_col);
 		NEXT;
 
 		/*
