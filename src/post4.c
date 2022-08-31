@@ -899,11 +899,8 @@ p4WordAllot(P4_Ctx *ctx, P4_Word *word, P4_Int n)
 	size_t size = P4_CELL_ALIGN(word->ndata + n);
 
 	/* Check for size overflow. */
-	if (SIZE_MAX - word->mdata <= size) {
-		LONGJMP(ctx->on_throw, P4_THROW_RESIZE);
-	}
-
-	if ((word = realloc(word, sizeof (*word) + size)) == NULL) {
+	if (SIZE_MAX - word->mdata <= size
+	|| (word = realloc(word, sizeof (*word) + size)) == NULL) {
 		LONGJMP(ctx->on_throw, P4_THROW_RESIZE);
 	}
 
@@ -917,7 +914,7 @@ p4WordAllot(P4_Ctx *ctx, P4_Word *word, P4_Int n)
 P4_Word *
 p4WordAppend(P4_Ctx *ctx, P4_Word *word, P4_Cell data)
 {
-	P4_Size index = word->ndata = P4_CELL_ALIGN(word->ndata);
+	P4_Size index = P4_CELL_ALIGN(word->ndata);
 	word = p4WordAllot(ctx, word, sizeof (P4_Cell));
 	word->data[index / sizeof (P4_Cell)] = data;
 

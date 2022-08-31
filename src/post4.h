@@ -224,8 +224,6 @@ struct p4_word {
 	/* Header */
 	P4_Word *	prev;		/* Previous word definition. */
 	P4_String	name;
-	P4_Size		mdata;		/* Size of data[] in address units. */
-	P4_Size		ndata;		/* Length of data[] in address units. */
 	P4_Uint		bits;
 
 #define P4_BIT_IMM			0x0001
@@ -245,10 +243,12 @@ struct p4_word {
 
 	/* Body */
 	P4_Code		code;		/* Code field points primative. */
+	P4_Size		mdata;		/* Size of data[] in address units. */
+	P4_Size		ndata;		/* Length of data[] in address units. */
 	P4_Cell		data[1];	/* Word grows by data cells. */
 };
 
-#define P4_WORD(name, code, bits)	{ NULL, { STRLEN(name), name }, 0, 0, bits, code, {{ 0 }} }
+#define P4_WORD(name, code, bits)	{ NULL, { STRLEN(name), name }, bits, code, 0, 0, {{ 0 }} }
 
 typedef struct {
 	P4_Size		size;		/* Size of table in cells. */
@@ -278,8 +278,6 @@ struct p4_ctx {
 	P4_Stack	ds;		/* Data stack */
 	P4_Stack	rs;		/* Return stack */
 	P4_State	state;
-	P4_Size		mdata;		/* Newest word size of data[] in address units. */
-	P4_Size		ndata;		/* Newest word length of data[] in address units. */
 	P4_Word *	words;		/* Head of the dictionary word list. */
 	P4_Uint		radix;		/* Input/Output radix */
 	P4_Input	input;
