@@ -1423,7 +1423,7 @@ AC_DEFUN(SNERT_EXTRA_STRING,[
 	echo
 	echo "Check for supplemental string support..."
 	echo
-	AC_CHECK_FUNCS(strdup strtol strlcpy strlcat strcasecmp strncasecmp)
+	AC_CHECK_FUNCS(strdup strndup strtol strlcpy strlcat strcasecmp strncasecmp)
 	AC_CHECK_FUNCS(snprintf vsnprintf setproctitle)
 	AC_FUNC_VPRINTF
 ])

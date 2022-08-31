@@ -5914,6 +5914,12 @@ then :
   printf "%s\n" "#define HAVE_STRDUP 1" >>confdefs.h
 
 fi
+ac_fn_c_check_func "$LINENO" "strndup" "ac_cv_func_strndup"
+if test "x$ac_cv_func_strndup" = xyes
+then :
+  printf "%s\n" "#define HAVE_STRNDUP 1" >>confdefs.h
+
+fi
 ac_fn_c_check_func "$LINENO" "strtol" "ac_cv_func_strtol"
 if test "x$ac_cv_func_strtol" = xyes
 then :

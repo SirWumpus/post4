@@ -321,18 +321,6 @@ p4CharLiteral(int ch)
 	return ch;			/* identity */
 }
 
-char *
-p4StrDup(const P4_Char *str, P4_Size length)
-{
-	char *dup;
-
-	if ((dup = malloc(length + 1)) != NULL) {
-		strncpy(dup, str, length)[length] = '\0';
-	}
-
-	return dup;
-}
-
 int
 p4Base36(int digit)
 {
@@ -888,7 +876,7 @@ p4WordCreate(P4_Ctx *ctx, const char *name, size_t length, P4_Code code)
 	}
 	word->mdata = sizeof (*word->data);
 
-	if ((word->name.string = p4StrDup(name, length)) == NULL) {
+	if ((word->name.string = strndup(name, length)) == NULL) {
 		goto error1;
 	}
 	word->name.length = length;
@@ -2055,7 +2043,7 @@ _emit:		w = P4_POP(ctx->ds);
 		// ( caddr u -- )
 _included:	w = P4_POP(ctx->ds);
 		x = P4_POP(ctx->ds);
-		if ((cstr = p4StrDup(x.s, w.u)) == NULL) {
+		if ((cstr = strndup(x.s, w.u)) == NULL) {
 			LONGJMP(ctx->on_throw, P4_THROW_ALLOCATE);
 		}
 		(void) p4LoadFile(ctx, cstr);
