@@ -356,10 +356,12 @@ Create `name` with two cells of data assigned `hi` and `lo`.  When `name` is exe
 
 - - -
 ### : name ...
+(C: `<spaces>name` -- `colon-sys` )  
 Start definition of word `name`.  The current definition shall not be findable in the dictionary until it is ended (or until the execution of `DOES>`).
 
 - - -
 ### ;
+(C: `colon-sys` -- )  
 End definition of word.
 
 - - -

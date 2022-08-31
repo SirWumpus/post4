@@ -1675,6 +1675,14 @@ _store:		w = P4_POP(ctx->ds);
 		// ( src dst u -- )
 _move:		w = P4_POP(ctx->ds);
 		x = P4_POP(ctx->ds);
+		/* Using strncpy would allow for propagation, like CMOVE:
+		 *	char src[] = "A    ";
+		 *	strncpy(src+1, src, 4);
+		 *	strcmp(src, "AAAAA") == 0;
+		 * Not necessarily as efficent, plus the C standard says
+		 * that the behaviour of strncpy with overlapping strings
+		 * is undefined (which seems wrong when tested).
+		 */
 		(void) memmove(x.s, P4_POP(ctx->ds).s, w.z);
 		NEXT;
 
@@ -2260,13 +2268,13 @@ p4Eval(P4_Ctx *ctx)
 		case P4_THROW_ABORT:
 		case P4_THROW_ABORT_MSG:
 		case P4_THROW_DS_UNDER:
-		case P4_THROW_RS_UNDER:
 			P4_RESET(ctx->ds);
 			/*@fallthrough@*/
 
 		case P4_THROW_QUIT:
 		case P4_THROW_SIGBUS:
 		case P4_THROW_SIGSEGV:
+		case P4_THROW_RS_UNDER:
 			P4_RESET(ctx->rs);
 			ctx->input.fp = stdin;
 			/*@fallthrough@*/
