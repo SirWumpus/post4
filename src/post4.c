@@ -39,12 +39,10 @@ static struct termios tty_saved;
 static struct termios *tty_mode;
 #endif
 
-#ifdef HAVE_TCGETWINSIZE
 struct winsize window = {
 	.ws_row = 24,
 	.ws_col = 80,
 };
-#endif
 
 #define P4_INTERACTIVE(ctx)	(ctx->state == P4_STATE_INTERPRET && is_tty && P4_INPUT_IS_TERM(ctx->input))
 
