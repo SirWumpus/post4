@@ -1650,8 +1650,8 @@ VARIABLE SCR
 \ (C: <spaces>name -- aaddr 0 ) \ (S: -- size )
 \
 : BEGIN-STRUCTURE
-	CREATE HERE 0 0 , 	\ C: aaddr 0
-	DOES> @ 		\ S: -- size
+	CREATE 1 CELLS reserve 0 	\ C: aaddr 0
+	DOES> @ 		 	\ S: -- size
 ;
 
 \ ... END-STRUCTURE ...
@@ -1681,8 +1681,8 @@ VARIABLE SCR
 \	END-STRUCTURE
 \
 : +FIELD
-	CREATE OVER , +		\ C: save offset and advance
-	DOES> @ +		\ add offset to addr
+	CREATE OVER , +		\ C: aaddr offset size -- aaddr offset'
+	DOES> @ +		\ S: aaddr -- aaddr'
 ;
 
 \ ... CFIELD: name ...
