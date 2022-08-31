@@ -1728,4 +1728,61 @@ VARIABLE SCR
 
 : [THEN] ( -- ) ; IMMEDIATE
 
+BEGIN-STRUCTURE p4_string
+	FIELD: s.length
+	FIELD: s.name		\ pointer C string
+END-STRUCTURE
+
+BEGIN-STRUCTURE p4_word
+	FIELD: w.prev		\ pointer previous word
+	FIELD: w.word		\ p4_string
+	FIELD: w.bits
+	FIELD: w.code		\ pointer
+	FIELD: w.mdata		\ data size
+	FIELD: w.ndata		\ data length
+	0 +FIELD w.data
+END-STRUCTURE
+
+BEGIN-STRUCTURE p4_block
+	FIELD: b.state
+	FIELD: b.number
+	1024 +FIELD b.buffer	\ buffer
+END-STRUCTURE
+
+BEGIN-STRUCTURE p4_stack
+	FIELD: k.size
+	FIELD: k.top		\ pointer
+	FIELD: k.base		\ pointer
+END-STRUCTURE
+
+BEGIN-STRUCTURE p4_input
+	FIELD: i.fp		\ pointer
+	FIELD: i.blk
+	FIELD: i.size
+	FIELD: i.length
+	FIELD: i.offset
+	FIELD: i.buffer		\ pointer
+	FIELD: i.unget
+END-STRUCTURE
+
+\ Example
+\
+\	_ctx		 	\ Post4 machine context pointer
+\	ctx.words @		\ pointer to most recent word
+\	w.word s.name @		\ pointer to word name
+\	puts			\ write name
+\
+BEGIN-STRUCTURE p4_ctx
+	p4_stack +FIELD ctx.ds	\ see _ds, _ds_size
+	p4_stack +FIELD ctx.rs	\ see _rs, _rs_size
+	FIELD: ctx.state	\ see STATE
+	FIELD: ctx.words	\ p4_word pointer
+	FIELD: ctx.radix	\ see BASE
+	p4_input +FIELD ctx.input
+	p4_block +FIELD ctx.block
+	FIELD: ctx.block_fd
+	256 +FIELD ctx.tty	\ buffer, see SOURCE
+	\ ctx.on_throw		\ size varies by host OS
+END-STRUCTURE
+
 MARKER rm_user_words

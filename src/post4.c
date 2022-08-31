@@ -1186,6 +1186,7 @@ p4Repl(P4_Ctx *ctx)
 		P4_WORD("UNUSED",	&&_unused,	0),
 
 		/* Data Space - Access */
+		P4_WORD("_ctx",		&&_ctx,		0),
 		P4_WORD("!",		&&_store,	0),
 		P4_WORD(">R",		&&_to_rs,	0),
 		P4_WORD("@",		&&_fetch,	0),
@@ -1201,7 +1202,7 @@ p4Repl(P4_Ctx *ctx)
 		P4_WORD("R@",		&&_rs_copy,	0),
 		P4_WORD("ROLL",		&&_roll,	0),
 		P4_WORD("SWAP",		&&_swap,	0),
-		P4_WORD("BASE",         &&_base,        0),
+		P4_WORD("BASE",		&&_base,	0),
 
 		/* Dynamic Memory */
 		P4_WORD("ALLOCATE",	&&_allocate,	0),
@@ -1364,6 +1365,10 @@ _exit:		ip = P4_POP(ctx->rs).p;
 		// ( ex_code -- )
 _bye_code:	w = P4_TOP(ctx->ds);
 		exit((int) w.n);
+
+		// ( -- aaddr )
+_ctx:		P4_PUSH(ctx->ds, (P4_Cell *) ctx);
+		NEXT;
 
 		// ( -- )
 _bp:		p4Bp(ctx);
