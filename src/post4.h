@@ -421,18 +421,6 @@ extern int p4Eval(P4_Ctx *ctx);
  * @param ctx
  *	A pointer to an allocated P4_Ctx structure.
  *
- * @param fd
- *	A open file descriptor
- *
- * @return
- *	Zero on success, otherwise an exception code other than BYE.
- */
-extern int p4EvalFd(P4_Ctx *ctx, P4_Int fd);
-
-/**
- * @param ctx
- *	A pointer to an allocated P4_Ctx structure.
- *
  * @param filepath
  *	A C string of a file path name to interpret.
  *	If NULL, then standard input will be read.
