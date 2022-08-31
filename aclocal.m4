@@ -1461,6 +1461,9 @@ AC_DEFUN(SNERT_TERMIOS,[
 	AC_CHECK_HEADERS([termios.h],[
 		AC_CHECK_FUNCS(tcgetattr tcsetattr tcgetwinsize tcsetwinsize ctermid)
 	])
+	AC_CHECK_TYPES([struct winsize],[],[],[
+#include <termios.h>
+	])
 ])
 
 AC_DEFUN(SNERT_OPTION_WITH_LIBEV,[

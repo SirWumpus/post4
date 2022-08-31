@@ -194,8 +194,9 @@ extern "C" {
 #undef HAVE_TCGETWINSIZE
 #undef HAVE_TCSETWINSIZE
 #undef HAVE_CTERMID
+#undef HAVE_STRUCT_WINSIZE
 
-#ifndef HAVE_TCGETWINSIZE
+#ifndef HAVE_STRUCT_WINSIZE
 struct winsize {
 	unsigned short ws_row;
 	unsigned short ws_col;

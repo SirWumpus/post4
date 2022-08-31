@@ -7138,6 +7138,18 @@ fi
 fi
 
 done
+	ac_fn_c_check_type "$LINENO" "struct winsize" "ac_cv_type_struct_winsize" "
+#include <termios.h>
+
+"
+if test "x$ac_cv_type_struct_winsize" = xyes
+then :
+
+printf "%s\n" "#define HAVE_STRUCT_WINSIZE 1" >>confdefs.h
+
+
+fi
+
 
 
 ac_fn_c_check_header_compile "$LINENO" "ctype.h" "ac_cv_header_ctype_h" "$ac_includes_default"
