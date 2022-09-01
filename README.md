@@ -1696,7 +1696,7 @@ Call relative.  The integer that immediately follows is the relative distance in
 - - -
 ### _ds
 ( -- `aaddr` `n` )  
-Push the data stack base address and current depth.  This stack is a fixed size and grows upward.
+Push the data stack base `aaddr` address and current depth `n` (before excuting `_ds`).  This stack is a fixed size and grows upward.
 
 - - -
 ### _ds_size
@@ -1804,3 +1804,9 @@ Forth Standard
 
 Forth Discussions  
 <https://github.com/ForthHub/discussion/discussions>
+
+Forth  
+<https://en.wikipedia.org/wiki/Forth_(programming_language)>
+
+Starting Forth  
+<https://www.forth.com/starting-forth/>
