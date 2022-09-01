@@ -156,9 +156,13 @@ sig_int(int signum)
 static void
 sig_winch(int signum)
 {
-#ifdef HAVE_TCGETWINSIZE
+#if defined(HAVE_TCGETWINSIZE)
 	if (is_tty) {
 		(void) tcgetwinsize(0, &window);
+	}
+#elif defined(TIOCGWINSZ)
+	if (is_tty) {
+		(void) ioctl(0, TIOCGWINSZ, &window);
 	}
 #endif
 }
@@ -229,11 +233,8 @@ p4Init(void)
 //		(void) tcsetattr(tty_fd, TCSADRAIN, &tty_raw);
 	}
 #endif /* HAVE_TCGETATTR */
-#ifdef HAVE_TCGETWINSIZE
-	if (is_tty) {
-		(void) tcgetwinsize(0, &window);
-	}
-#endif /* HAVE_TCGETWINSIZE */
+
+	sig_winch(SIGWINCH);
 }
 
 int
