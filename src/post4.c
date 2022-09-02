@@ -1531,6 +1531,7 @@ _create:	str = p4ParseName(&ctx->input);
 		word = p4WordCreate(ctx, str.string, str.length, &&_data_field);
 		P4_WORD_SET_CREATED(word);
 		// Reserve the first cell for a code pointer for DOES>.
+		// Wasted cell if DOES> not applied to this word.
 		word->ndata += P4_CELL;
 		NEXT;
 
@@ -1541,16 +1542,23 @@ _does:		word = ctx->words;
 		}
 		word->code = &&_do_does;
 		// New word's code follows DOES> of the defining word.
+		//
+		//	: word CREATE ( store data) DOES> ( code words) ;
+		//	                                  ^--- IP
+		//
 		word->data[0].p = ip;
 		goto _exit;
 
-		// ( -- addr) and chain to defining word after DOES>.
+		// ( -- aaddr)
 _do_does:	P4_PUSH(ctx->ds, w.xt->data + 1);
+		// Remember who called us.
 		P4_PUSH(ctx->rs, ip);
+		// Continue execution just after DOES> of the defining word.
 		ip = w.xt->data[0].p;
 		NEXT;
 
 		// ( -- addr )
+		// w contains xt loaded by _next or _execute.;
 _data_field:	P4_PUSH(ctx->ds, w.xt->data + 1);
 		NEXT;
 
