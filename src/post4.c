@@ -1024,16 +1024,6 @@ p4Bp(P4_Ctx *ctx)
 }
 
 static void
-p4AaddrCheck(P4_Ctx *ctx, P4_Cell *p)
-{
-	// Below the program's dynamic memory region or odd address?
-	if ((void *)p < p4_program_end || ((intptr_t) p & 0x1)) {
-		p4Bp(ctx);
-		LONGJMP(ctx->on_throw, P4_THROW_SIGSEGV);
-	}
-}
-
-static void
 p4StackCheck(P4_Ctx *ctx)
 {
 	if (P4_IS_OVER(ctx->ds)) {
@@ -1266,7 +1256,6 @@ p4Repl(P4_Ctx *ctx)
 		P4_WORD("bye-code",	&&_bye_code,	0),		// p4
 		P4_WORD("env",		&&_env,		0),		// p4
 		P4_WORD("SEE",		&&_see,		P4_BIT_IMM),
-		P4_WORD("WORDS",	&&_words,	0),
 
 		P4_WORD(NULL,		NULL,		0),
 	};
@@ -1676,14 +1665,12 @@ _cstore:	w = P4_POP(ctx->ds);
 
 		// ( aaddr -- x )
 _fetch:		w = P4_TOP(ctx->ds);
-		p4AaddrCheck(ctx, w.p);
 		P4_TOP(ctx->ds) = *w.p;
 		NEXT;
 
 		// ( x aaddr -- )
 _store:		w = P4_POP(ctx->ds);
 		x = P4_POP(ctx->ds);
-		p4AaddrCheck(ctx, w.p);
 		*w.p = x;
 		NEXT;
 
@@ -2256,21 +2243,6 @@ _see:		str = p4ParseName(&ctx->input);
 			(void) printf("(unknown) 0x%p\r\n", word->code);
 		}
 		NEXT;
-
-	{	// ( -- )
-		P4_Uint column;
-_words:
-		column = 0;
-		for (word = ctx->words; word != NULL; word = word->prev) {
-			if (window.ws_col <= column + word->name.length + 1) {
-				(void) printf("\r\n");
-				column = 0;
-			}
-			column += fprintf(stdout, "%s ", word->name.string);
-		}
-		(void) printf("\r\n");
-		NEXT;
-	}
 }
 
 int

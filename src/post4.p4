@@ -1785,4 +1785,22 @@ BEGIN-STRUCTURE p4_ctx
 	\ ctx.on_throw		\ size varies by host OS
 END-STRUCTURE
 
+: WORDS
+	0 >R			\ S: --  R: col
+	_ctx ctx.words @	\ S: w
+	BEGIN
+	  DUP w.word 		\ S: w word  R: col
+	  DUP s.name @		\ S: w word name  R: col
+	  SWAP s.length @	\ S: w name length  R: col
+	  DUP R> + 1+		\ S: w name length col'  R: --
+	  \ Does current column exceed terminal width?
+	  DUP _window NIP >= IF	\ S: w name length col'  R: --
+	    CR DROP DUP 1+	\ S: w name length col"  R: --
+	  THEN			\ S: w name length col  R: --
+	  >R TYPE SPACE		\ S: w  R: col
+	  w.prev @ DUP		\ S: w' w'  R: col
+	0= UNTIL		\ S: w'  R: col
+	R> 2DROP CR		\ S: --  R: --
+;
+
 MARKER rm_user_words
