@@ -121,14 +121,14 @@ Pseudo-random number generators.  One is the simple code example from the ISO C1
 Example:
 
         $ post4
-        ok include rand.p4
-        ok 12345 srand !
-        ok rand . rand . rand . CR
+        ok INCLUDE rand.p4
+        ok 12345 SRAND !
+        ok RAND . RAND . RAND . CR
         21468 9988 22117
-        ok 12345 randa ! 54321 randb ! $deadbeef randc !
-        ok 16 randomxor U. 16 randomxor U. 16 randomxor U. CR
+        ok 12345 RANDA ! 54321 RANDB ! $deadbeef RANDC !
+        ok 16 RANDOMXOR U. 16 RANDOMXOR U. 16 RANDOMXOR U. CR
         52917 27383 64651
-        ok 16 randommaj U. 16 randommaj U. 16 randommaj U. CR
+        ok 16 RANDOMMAJ U. 16 RANDOMMAJ U. 16 RANDOMMAJ U. CR
         7 9885 36906
         ok 
 
@@ -141,6 +141,23 @@ Example:
         ... instructions ...
         Type PLAY to start.
         ok PLAY
+        
+        BATS NEARBY
+        YOU ARE IN ROOM 8
+        TUNNELS LEAD TO    1   7   9
+        (S)HOOT OR (M)OVE? M
+        WHERE TO? 7
+        ZAP--SUPER BAT SNATCH! ELSEWHEREVILLE FOR YOU!
+        
+        YOU ARE IN ROOM 13
+        TUNNELS LEAD TO   12  14  20
+        (S)HOOT OR (M)OVE? M
+        WHERE TO? 14
+        
+        I SMELL A WUMPUS!
+        YOU ARE IN ROOM 14
+        TUNNELS LEAD TO    4  13  15
+        (S)HOOT OR (M)OVE? 
 
 
 Standard Words
