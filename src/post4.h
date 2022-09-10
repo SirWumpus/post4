@@ -271,7 +271,7 @@ typedef struct {
 
 typedef enum {
 	P4_STATE_INTERPRET,
-	P4_STATE_COMPILE,
+	P4_STATE_COMPILE = (-1),	/* Match Forth value for TRUE. */
 } P4_State;
 
 struct p4_ctx {
