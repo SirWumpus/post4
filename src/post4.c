@@ -1153,6 +1153,7 @@ p4Repl(P4_Ctx *ctx)
 
 		/* Compiling Words */
 		P4_WORD("'",		&&_tick,	0),
+		P4_WORD(":NONAME",	&&_noname,	0),
 		P4_WORD(":",		&&_colon,	0),
 		P4_WORD(";",		&&_semicolon,	P4_BIT_IMM),
 		P4_WORD(">BODY",	&&_body,	0),
@@ -1447,31 +1448,42 @@ _cells:		P4_TOP(ctx->ds).n *= P4_CELL;
 		/*
 		 * Defining words.
 		 */
-	{
-		P4_Cell *ds, *rs;
+_noname:	str.string = "";
+		str.length = 0;
+		goto _do_colon;
 
-		// (R: -- ip)
 _colon:		if (ctx->state == P4_STATE_COMPILE) {
 			LONGJMP(ctx->on_throw, P4_THROW_COMPILING);
 		}
-		ds = ctx->ds.top;
-		rs = ctx->rs.top;
-		ctx->state = P4_STATE_COMPILE;
 		str = p4ParseName(&ctx->input);
+		goto _do_colon;
+
+_do_colon:	// (C: -- colon) (R: -- ip)
+		// Save the current tops so we can check for imbalance.
+		w.p = ctx->ds.top;
+		P4_PUSH(ctx->ds, w);
+		x.p = ctx->rs.top;
+		P4_PUSH(ctx->ds, x);
+		ctx->state = P4_STATE_COMPILE;
 		word = p4WordCreate(ctx, str.string, str.length, &&_enter);
 		P4_WORD_SET_HIDDEN(word);
 		NEXT;
 
-		// (C: colon -- )
-_semicolon:	ctx->words = p4WordAppend(ctx, ctx->words, (P4_Cell) &w_exit);
-		if (ds != ctx->ds.top || rs != ctx->rs.top) {
+_semicolon:	// (C: colon -- ) (R: ip -- )
+		ctx->words = p4WordAppend(ctx, ctx->words, (P4_Cell) &w_exit);
+		x = P4_POP(ctx->ds);
+		w = P4_POP(ctx->ds);
+		if (w.p != ctx->ds.top || x.p != ctx->rs.top) {
 			/* Control structure imbalance. */
 			LONGJMP(ctx->on_throw, P4_THROW_BAD_CONTROL);
 		}
 		P4_WORD_CLEAR_HIDDEN(ctx->words);
 		ctx->state = P4_STATE_INTERPRET;
+		if (ctx->words->name.length == 0) {
+			/* :NONAME leaves xt on stack. */
+			P4_PUSH(ctx->ds, ctx->words);
+		}
 		NEXT;
-	}
 
 		// ( -- )
 _immediate:	P4_WORD_SET_IMM(ctx->words);
