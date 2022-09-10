@@ -1256,7 +1256,7 @@ p4Repl(P4_Ctx *ctx)
 		P4_WORD("args",		&&_args,	0),		// p4
 		P4_WORD("bye-code",	&&_bye_code,	0),		// p4
 		P4_WORD("env",		&&_env,		0),		// p4
-		P4_WORD("SEE",		&&_see,		P4_BIT_IMM),
+		P4_WORD("_SEEXT",	&&_seext,	0),
 
 		P4_WORD(NULL,		NULL,		0),
 	};
@@ -2194,9 +2194,8 @@ _dump:		x = P4_POP(ctx->ds);
 		p4MemDump(stdout, w.s, x.u);
 		NEXT;
 
-		// ( -- )
-_see:		str = p4ParseName(&ctx->input);
-		word = p4FindName(ctx, str.string, str.length);
+_seext:		// ( xt -- )
+		word = P4_POP(ctx->ds).xt;
 		if (word == NULL) {
 			(void) printf("\"%.*s\" ", (int)str.length, str.string);
 			LONGJMP(ctx->on_throw, P4_THROW_UNDEFINED);
@@ -2207,7 +2206,7 @@ _see:		str = p4ParseName(&ctx->input);
 		}
 		if (word->code == &&_enter) {
 			(void) printf(
-				word->name.length == 0 ? ":NONAME" : ": %.*s ",
+				word->name.length == 0 ? ":NONAME " : ": %.*s ",
 				(int) word->name.length, word->name.string
 			);
 			for (w.p = word->data; w.p->xt != &w_exit; w.p++) {

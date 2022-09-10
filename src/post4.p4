@@ -30,6 +30,11 @@ MARKER rm_core_words
 : PARSE 0 _parse ;
 : parse-escape 1 _parse ;
 
+
+\ ( spaces>name -- )
+\
+: SEE ' _seext ;
+
 \ ... reserve ...
 \
 \ (S: u -- addr )
