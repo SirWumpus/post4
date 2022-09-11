@@ -1790,6 +1790,10 @@ BEGIN-STRUCTURE p4_ctx
 	\ ctx.on_throw		\ size varies by host OS
 END-STRUCTURE
 
+\ ... WORDS ...
+\
+\ ( -- )
+\
 : WORDS
 	0 >R			\ S: --  R: col
 	_ctx ctx.words @	\ S: w
@@ -1807,5 +1811,34 @@ END-STRUCTURE
 	0= UNTIL		\ S: w'  R: col
 	R> 2DROP CR		\ S: --  R: --
 ;
+
+\ : newword ... [: nested words ;] ... ;
+\
+\ (C: -- quotation-sys colon-sys )
+\
+: [:
+	\ Pop enclosing defintion being compiled.
+	_ctx ctx.words @	\ C: q-sys
+	DUP w.prev @		\ C: q-sys word
+	_ctx ctx.words !	\ C: q-sys
+	\ Start nested definition.
+	:NONAME			\ C: q-sys c-sys
+; IMMEDIATE
+
+\ : newword ... [: nested words ;] ... ;
+\
+\ (C: quotation-sys colon-sys -- )(S: -- xt )
+\
+: ;]				\ C: q-sys c-sys
+	\ End current nested definition.
+	POSTPONE ; ]		\ C: q-sys xt
+	>R			\ C: q-sys  R: xt
+	\ Push previous enclosing defintion being compiled.
+	DUP w.prev		\ C: q-sys prev  R: xt
+	_ctx ctx.words @	\ C: q-sys prev word  R: xt
+	SWAP ! 			\ C: q-sys  R: xt
+	_ctx ctx.words !	\ C: --  R: xt
+	R> POSTPONE LITERAL	\ C: --  R: --
+; IMMEDIATE
 
 MARKER rm_user_words
