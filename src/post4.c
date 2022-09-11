@@ -432,8 +432,10 @@ p4Parse(P4_Input *input, P4_Uint delim, P4_Uint escape)
 			continue;
 		}
 
-		/* Treat a space as indicating any white space. */
-		if (ch == delim || (delim == ' ' && isspace(ch))) {
+		/* Treat a space as indicating a space or any control character.
+		 * See 3.4.1.1 Delimiters
+		 */
+		if (ch == delim || (delim == ' ' && iscntrl(ch))) {
 			/* Do NOT terminate the parsed string, since the
 			 * source might be a block buffer or some read-only
 			 * string, which cannot be modified.

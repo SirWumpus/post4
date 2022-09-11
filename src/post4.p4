@@ -968,12 +968,13 @@ VARIABLE _>pic
 \
 \ (S: char "<chars>ccc<char>" -- caddr )
 \
+\ See 3.3.3.6 Other transient regions paragraph 2.
+\
 : WORD				\ S: char
 	PARSE 			\ S: caddr u
-	>R R@ OVER		\ S: caddr u caddr R: u
-	DUP DUP CHAR+ R>	\ S: caddr u caddr caddr caddr' u
-	CMOVE>			\ S: caddr u caddr
-	C!			\ S: caddr
+	DUP _pic C!		\ S: caddr u
+	_pic CHAR+ SWAP		\ S: caddr pic' u
+	MOVE _pic		\ S: caddr
 ;
 
 \ ...  U.  ...
