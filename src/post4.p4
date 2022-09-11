@@ -380,7 +380,7 @@ CREATE PAD /PAD CHARS ALLOT
 \
 \ (S: n1 n2 -- flag )
 \
-: <= - DUP 0= SWAP 0< OR ;
+: <= > 0= ;
 
 \ ... >= ...
 \
