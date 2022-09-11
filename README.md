@@ -223,19 +223,19 @@ Add `n|u` to the cell at `aaddr`.
 ( `addr` -- `addr'` )  
 Define unaligned structure field `name`, which when executed adds the field offset to `addr` giving `addr'`.
 
-        Structure name defined last:
+Structure name defined last:
 
-          0                         \ initial total byte count
-            1 CELLS +FIELD p.x      \ single cell field named p.x
-            1 CELLS +FIELD p.y      \ single cell field named p.y
-          CONSTANT point            \ save structure size
+        0                         \ initial total byte count
+          1 CELLS +FIELD p.x      \ single cell field named p.x
+          1 CELLS +FIELD p.y      \ single cell field named p.y
+        CONSTANT point            \ save structure size
 
-        Structure name defined first:
+Structure name defined first:
 
-          BEGIN-STRUCTURE point     \ create the named structure
-            1 CELLS +FIELD p.x      \ A single cell field named p.x
-            1 CELLS +FIELD p.y      \ A single cell field named p.y
-          END-STRUCTURE
+        BEGIN-STRUCTURE point     \ create the named structure
+          1 CELLS +FIELD p.x      \ A single cell field named p.x
+          1 CELLS +FIELD p.y      \ A single cell field named p.y
+        END-STRUCTURE
 
 - - -
 ### +LOOP
@@ -861,15 +861,22 @@ Return false value, equivalent to zero (0).
 ( `addr` -- `addr'` )  
 Define cell aligned structure field `name`, which when executed adds the field offset to `addr` giving `addr'`.
 
-          BEGIN-STRUCTURE point     \ create the named structure
-            FIELD: p.x              \ A single cell field named p.x
-            FIELD: p.y              \ A single cell field named p.y
-          END-STRUCTURE
+        BEGIN-STRUCTURE point     \ create the named structure
+          FIELD: p.x              \ A single cell field named p.x
+          FIELD: p.y              \ A single cell field named p.y
+        END-STRUCTURE
 
 - - -
 ### FILL
 ( `caddr` `u` `char` -- )  
 Fill memory at address `caddr` with `u` consecutive characters `char`.
+
+- - -
+### FIND
+( `caddr` -- `caddr` 0 | `xt` 1 | `xt` -1 )  
+Given the counted string `caddr`, find its execution token `xt`.  If found and `xt` is an immediate, return `xt 1`; if not immediate, return `xt -1`; otherwise not found, return `caddr 0`.  See `FIND-NAME`.
+
+        ... BL WORD FIND DUP 0= -13 AND THROW ...
 
 - - -
 ### FIND-NAME
@@ -1433,7 +1440,9 @@ If `x` equals zero (0), continue execution following `REPEAT`.
 - - -
 ### WORD
 ( `char` `<chars>ccc<char>` -- `caddr` )  
-Skip leading delimiters.  Parse characters `ccc` delimited by `char`.
+Skip leading delimiters.  Parse characters `ccc` delimited by `char` and return `caddr` of the counted string.  See `PARSE-NAME`.
+
+        ... BL WORD FIND DUP 0= -13 AND THROW ...
 
 - - -
 ### XOR
@@ -1618,6 +1627,11 @@ Lookup the environment variable string `key` `k`.  Return string `value` `v`; if
 ### floored
 ( -- `false` ) constant  
 True if floored division is the default.  This is a deviation from `ENVIRONMENT?` queries.
+
+- - -
+### immediate?
+( `xt` -- `bool` )  
+Return `TRUE` if `xt` references an immediate word; otherwise `FALSE`.
 
 - - -
 ### list+
