@@ -11,12 +11,12 @@
  ***********************************************************************/
 
 static const char p4_build_info[] =
+	P4_NAME "/" P4_VERSION "  " P4_COPYRIGHT "\n\n"
 	"BUILT=\"" P4_BUILT "\"\n"
 	"CFLAGS=\"" P4_CFLAGS "\"\n"
 	"LDFLAGS=\"" P4_LDFLAGS "\"\n"
 	"LIBS=\"" P4_LIBS "\"\n"
 	"POST4_PATH=\"" P4_CORE_PATH "\"\n"
-	"\n" P4_COPYRIGHT "\n"
 ;
 
 static P4_Options options = {
@@ -186,10 +186,14 @@ p4Init(void)
 	unsigned i;
 
 	signal(SIGINT, sig_int);
-	signal(SIGSEGV, sig_int);
 	signal(SIGFPE, sig_int);
 	signal(SIGWINCH, sig_winch);
-
+#ifdef NDEBUG
+/* When debugging with gdb can be helpful to see actual error
+ * location; otherwise catch it.
+ */
+	signal(SIGSEGV, sig_int);
+#endif
 	is_tty = isatty(fileno(stdin));
 #ifdef ASSERT_LINE_BUFFERING
 	setvbuf(stdout, NULL, _IOLBF, 0);

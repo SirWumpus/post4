@@ -6,7 +6,6 @@
 @PACKAGE_NAME@/config.sub
 @PACKAGE_NAME@/makefile.in
 @PACKAGE_NAME@/src/.gdbinit
-@PACKAGE_NAME@/src/BUILD_ID.TXT
 @PACKAGE_NAME@/src/config.h.in.in
 @PACKAGE_NAME@/src/makefile.in
 @PACKAGE_NAME@/src/post4.c
