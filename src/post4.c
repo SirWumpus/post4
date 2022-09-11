@@ -2211,15 +2211,17 @@ _seext:		// ( xt -- )
 			);
 			for (w.p = word->data; w.p->xt != &w_exit; w.p++) {
 				x = *w.p;
-				(void) printf(
-					"%.*s ",
-					(int) x.w->name.length, x.w->name.string
-				);
-				if (x.w->code == &&_lit) {
-					(void) printf("[ "P4_INT_FMT" , ] ", (*++w.p).n);
-				} else if (x.w->code == &&_branch || x.w->code == &&_branchz || x.w->code == &&_call) {
+				if (strncmp(x.w->name.string, "_slit", STRLEN("_slit")) == 0) {
+					(void) printf("S\" %s\" ", &w.p[2]);
+					w.u += P4_CELL + P4_CELL_ALIGN(w.p[1].u + 1);
+				} else {
+					(void) printf("%.*s ", (int) x.w->name.length, x.w->name.string);
+					if (x.w->code == &&_lit) {
+						(void) printf("[ "P4_INT_FMT" , ] ", (*++w.p).n);
+					} else if (x.w->code == &&_branch || x.w->code == &&_branchz || x.w->code == &&_call) {
 // when the word after branch is actually an XT, like >here, shouldn't hit here.
-					(void) printf("[ "P4_INT_FMT" CELLS , ] ", (*++w.p).n / P4_CELL);
+						(void) printf("[ "P4_INT_FMT" CELLS , ] ", (*++w.p).n / P4_CELL);
+					}
 				}
 			}
 			(void) printf("; %s\r\n", P4_WORD_IS_IMM(word) ? "IMMEDIATE" : "");
