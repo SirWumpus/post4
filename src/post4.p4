@@ -419,7 +419,7 @@ CREATE PAD /PAD CHARS ALLOT
 \
 \ (S: caddr1 -- caddr2 u )
 \
-: COUNT DUP C@ SWAP CHAR+ SWAP ;
+: COUNT DUP CHAR+ SWAP C@ ;
 
 \ ...  CHAR  ...
 \
@@ -975,6 +975,18 @@ VARIABLE _>pic
 	DUP _pic C!		\ S: caddr u
 	_pic CHAR+ SWAP		\ S: caddr pic' u
 	MOVE _pic		\ S: caddr
+;
+
+\ ( caddr -- caddr 0 | xt 1 | xt -1 )
+: FIND
+	DUP COUNT FIND-NAME	\ S: caddr 0 | caddr xt
+	DUP IF
+	  NIP DUP immediate? IF	\ S: xt
+	    1			\ S: xt 1
+	  ELSE
+	    -1			\ S: xt -1
+	  THEN
+	THEN
 ;
 
 \ ...  U.  ...

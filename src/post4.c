@@ -1169,6 +1169,7 @@ p4Repl(P4_Ctx *ctx)
 		P4_WORD("EXECUTE",	&&_execute,	0),
 		P4_WORD("EXIT",		&&_exit,	0),
 		P4_WORD("IMMEDIATE",	&&_immediate,	P4_BIT_IMM),
+		P4_WORD("IMMEDIATE?",	&&_is_immediate, 0),		// p4
 		P4_WORD("MARKER",	&&_marker,	0),
 		P4_WORD("POSTPONE",	&&_postpone,	P4_BIT_IMM),
 		P4_WORD("STATE",	&&_state,	0),
@@ -1493,6 +1494,11 @@ _semicolon:	// (C: colon -- ) (R: ip -- )
 
 		// ( -- )
 _immediate:	P4_WORD_SET_IMM(ctx->words);
+		NEXT;
+
+_is_immediate:	// ( xt -- bool )
+		w = P4_TOP(ctx->ds);
+		P4_TOP(ctx->ds).n = P4_WORD_IS_IMM(w.xt);
 		NEXT;
 
 _marker:	str = p4ParseName(&ctx->input);
