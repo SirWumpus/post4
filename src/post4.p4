@@ -964,6 +964,19 @@ VARIABLE _>pic
 \ ( n -- )
 : . DUP ABS <# #S SWAP SIGN #> TYPE SPACE ;
 
+\ (S: char "<chars>ccc" -- "ccc" )
+: skip_chars
+	BEGIN
+	  SOURCE >IN @		\ S: char caddr u off
+	  <= SWAP >IN @ + C@	\ S: char len_ge_off input
+	  2 PICK <>		\ S: char len_ge_off char_neq
+	  OR DUP 0= IF		\ S: char bool
+	    1 >IN +!		\ S: char bool
+	  THEN
+	UNTIL			\ S: char
+	DROP			\ S: --
+;
+
 \ ... char WORD ...
 \
 \ (S: char "<chars>ccc<char>" -- caddr )
@@ -971,6 +984,7 @@ VARIABLE _>pic
 \ See 3.3.3.6 Other transient regions paragraph 2.
 \
 : WORD				\ S: char
+	DUP skip_chars		\ S: char
 	PARSE 			\ S: caddr u
 	DUP _pic C!		\ S: caddr u
 	_pic CHAR+ SWAP		\ S: caddr pic' u
