@@ -763,13 +763,25 @@ VARIABLE catch_frame
 \
 \  ( i*x -- ) ( R: j*x -- )
 \
-: ABORT throw_abort THROW ;
+: ABORT throw_abort _longjmp ;
 
-\ ... ABORT ...
+\ ... QUIT ...
 \
 \  ( -- ) ( R: i*x -- )
 \
-: QUIT throw_quit THROW ;
+\ See https://github.com/ForthHub/discussion/discussions/116#discussioncomment-3541822
+\
+\ Expected standard behaviour:
+\
+\ 1.	ok :noname 123 [: 456 -56 throw ;] catch . . ;  execute
+\	-56 123 ok
+\
+\ 2.	ok : foo [: 123 quit ;] catch 456 . throw ;  foo
+\	ok .s
+\	123
+\	ok
+\
+: QUIT throw_quit _longjmp ;
 
 \ ... TYPE ...
 \
