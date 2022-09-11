@@ -377,9 +377,31 @@ Create `name` with two cells of data assigned `hi` and `lo`.  When `name` is exe
 Start definition of word `name`.  The current definition shall not be findable in the dictionary until it is ended (or until the execution of `DOES>`).
 
 - - -
+### :NONAME ...
+(C: -- `colon-sys` )(S: -- `xt` )  
+Create a nameless word defintion, which when terminated by `;` leaves `xt` on the data stack.  The nameless word cannot be found with `'` nor `FIND-NAME`.  See also `[:` and `;]`.
+
+        \ Create forward refeerence.
+        DEFER print
+        
+        \ Define the implementation.
+        :NONAME ( n -- ) . ; IS print
+        
+        \ Alternative to : temp_word some words ;
+        :NONAME some words ; CONSTANT temp_word
+        : foo ... temp_word ... ;
+
+- - -
 ### ;
 (C: `colon-sys` -- )  
 End definition of word.
+
+- - -
+### ;]
+(C: `quotation-sys` `colon-sys` -- )(S: -- `xt`)  
+Ends the current nested definition started by `[:`, leaving `xt` on the data stack, and resumes compilation of the previous enclosing definition.
+
+        : foo 123 [: ." wave " ;] execute . ;
 
 - - -
 ### <
@@ -451,12 +473,12 @@ Fetch from `aaddr` the value `x` stored there.
 - - -
 ### ABORT
 ( `i*x` -- ) ( R: `j*x` -- )  
-Throw abort (-1).  Clear the data stack and perform a `QUIT`, which clears the return stack too.
+Throw abort (-1).  Clear the data stack and perform a `QUIT`, which clears the return stack too.  Never returns to caller.
 
 - - -
 ### ABORT" ccc"
 ( `i*x` `x1` -- | `i*x` ) ( R: `j*x` -- | `j*x` )  
-If `x1` is not equal to zero (0), display the message that follows up to the closing double-quote and perform an `ABORT`.
+If `x1` is not equal to zero (0), display the message that follows up to the closing double-quote and perform an `ABORT`.  Never returns to caller.
 
 - - -
 ### ABS
@@ -1105,7 +1127,7 @@ An example:
 - - -
 ### QUIT
 ( -- )(R: `i*x` -- )  
-Empty the return stack, reset `SOURCE-ID` to zero (0), set the console as the input source, enter interpretation state, and start REPL:
+Empty the return stack (never returns to caller), reset `SOURCE-ID` to zero (0), set the console as the input source, enter interpretation state, and start REPL:
 
   * Accept a line from the input source into the input buffer, set `>IN` to zero (0), and interpret.
   * Display the prompt if in interpretation state, all processing has been completed, and no ambiguous condition exists.
@@ -1201,6 +1223,11 @@ Save the current input source state for later use by `RESTORE-INPUT`.
 ### SEARCH
 ( `caddr1` `u1` `caddr2` `u2` -- `caddr3` `u3` `bool` )  
 Search the string `caddr1` `u1` for the string `caddr2` `u2`.  If `bool` is true, a match was found at `caddr3` with `u3` characters remaining.  If `bool` is false there was no match and `caddr3` `u3` are just `caddr1` `u1`.
+
+- - -
+### SEE
+( `<spaces>name` -- )  
+Display an implementation-defined human-readable representation of the word `name`.
 
 - - -
 ### SIGN
@@ -1422,6 +1449,12 @@ Enter interpretation state.
 ### ['] name
 ( `<spaces>name` -- `xt` )  
 Place name's execution token xt on the stack.
+
+### [:
+(C: -- `quotation-sys` `colon-sys` )  
+Suspends compilation of the current (enclosing) definition, continues compilation with this nested definition until terminated by `;]` that leaves `xt` on the data stack for the enclosing definition.
+
+        : foo 123 [: ." wave " ;] execute . ;
 
 - - -
 ### [CHAR] ccc
@@ -1764,6 +1797,11 @@ Store `addr` into the return stack pointer.
 ### _rsp@
 ( -- `aaddr` )  
 Fetch the return stack pointer.
+
+- - -
+### _seext
+( `xt` -- )  
+Display an implementation-defined human-readable representation referenced by `xt`.
 
 - - -
 ### _stack_dump
