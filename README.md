@@ -1459,6 +1459,7 @@ Enter interpretation state.
 ( `<spaces>name` -- `xt` )  
 Place name's execution token xt on the stack.
 
+- - -
 ### [:
 (C: -- `quotation-sys` `colon-sys` )  
 Suspends compilation of the current (enclosing) definition, continues compilation with this nested definition until terminated by `;]` that leaves `xt` on the data stack for the enclosing definition.
@@ -1778,11 +1779,6 @@ Store `addr` into the data stack pointer.
 Fetch the data stack pointer.
 
 - - -
-### _is_immediate
-( `xt` -- `bool` )  
-Return true if the execution token is for an immediate word.
-
-- - -
 ### _longjmp
 ( `n` -- )  
 Return to the context saved at the start of the REPL (`QUIT`) passing `n`.  Values of `n` from -1 to -255 are the Forth 200x standard `THROW` codes.  Passing -256 is equivalent to `BYE`.
@@ -1846,7 +1842,6 @@ This is a list of `THROW` codes used internally by Post4.
 * -17 pictured numeric output string overflow  
 * -21 unsupported operation  
 * -22 control structure mismatch  
-* -23 address alignment exception (`SIGBUS`)  
 * -24 invalid numeric argument
 * -28 user interrupt (`SIGINT`)  
 * -29 compiler nesting  
