@@ -2215,15 +2215,19 @@ _seext:		// ( xt -- )
 			);
 			for (w.p = word->data; w.p->xt != &w_exit; w.p++) {
 				x = *w.p;
-				if (strncmp(x.w->name.string, "_slit", STRLEN("_slit")) == 0) {
+				if (x.w->code == &&_lit) {
+					(void) printf("[ "P4_INT_FMT" ] LITERAL ", (*++w.p).n);
+				} else if (strncmp(x.w->name.string, "_slit", STRLEN("_slit")) == 0) {
 					(void) printf("S\" %s\" ", &w.p[2]);
 					w.u += P4_CELL + P4_CELL_ALIGN(w.p[1].u + 1);
 				} else {
 					(void) printf("%.*s ", (int) x.w->name.length, x.w->name.string);
-					if (x.w->code == &&_lit) {
-						(void) printf("[ "P4_INT_FMT" , ] ", (*++w.p).n);
-					} else if (x.w->code == &&_branch || x.w->code == &&_branchz || x.w->code == &&_call) {
-// when the word after branch is actually an XT, like >here, shouldn't hit here.
+					if (w.p[-1].xt != &w_post
+					&& (x.w->code == &&_branch || x.w->code == &&_branchz || x.w->code == &&_call)) {
+						/* If a branch/call is postponed then it is a control
+						 * structure definition so what follows is an xt, not
+						 * a relative distance.
+						 */
 						(void) printf("[ "P4_INT_FMT" CELLS , ] ", (*++w.p).n / P4_CELL);
 					}
 				}
