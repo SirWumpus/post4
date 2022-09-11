@@ -1077,6 +1077,7 @@ p4Exception(P4_Ctx *ctx, int code)
 	switch (code) {
 	case P4_THROW_ABORT_MSG:
 		/* Displays its own message. */
+	case P4_THROW_ABORT:
 	case P4_THROW_QUIT:
 		/* Historically no message, simply return to REPL. */
 	case P4_THROW_OK:
