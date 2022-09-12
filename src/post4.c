@@ -1127,6 +1127,8 @@ p4Repl(P4_Ctx *ctx)
 
 	static P4_Word words[] = {
 		/* Constants. */
+		P4_WORD("/hold",		&&_pic_size,	0),	// p4
+		P4_WORD("/pad",			&&_pad_size,	0),	// p4
 		P4_WORD("address-unit-bits",	&&_char_bit,	0),	// p4
 		P4_WORD("floored",		&&_floored,	0),	// p4
 		P4_WORD("max-char",		&&_max_char,	0),	// p4
@@ -1134,7 +1136,8 @@ p4Repl(P4_Ctx *ctx)
 		P4_WORD("max-u",		&&_max_u,	0),	// p4
 		P4_WORD("max-d",		&&_max_d,	0),	// p4
 		P4_WORD("max-ud",		&&_max_ud,	0),	// p4
-		P4_WORD("/hold",		&&_pic_size,	0),	// p4
+		P4_WORD("return-stack-cells",	&&_rs_size,	0),	// p4
+		P4_WORD("stack-cells",		&&_ds_size,	0),	// p4
 
 		/* Internal support. */
 		P4_WORD("_bp",		&&_bp,		P4_BIT_IMM),	// p4
@@ -1144,13 +1147,11 @@ p4Repl(P4_Ctx *ctx)
 		P4_WORD("_ds",		&&_ds,		0),		// p4
 		P4_WORD("_dsp@",	&&_dsp_get,	0),		// p4
 		P4_WORD("_dsp!",	&&_dsp_put,	0),		// p4
-		P4_WORD("_ds_size",	&&_ds_size,	0),		// p4
 		P4_WORD("_lit",		&&_lit,		0),		// p4
 		P4_WORD("_longjmp",	&&_longjmp,	0),		// p4
 		P4_WORD("_rs",		&&_rs,		0),		// p4
 		P4_WORD("_rsp@",	&&_rsp_get,	0),		// p4
 		P4_WORD("_rsp!",	&&_rsp_put,	0),		// p4
-		P4_WORD("_rs_size",	&&_rs_size,	0),		// p4
 		P4_WORD("_stack_dump",	&&_stack_dump,	0),		// p4
 		P4_WORD("_stdin",	&&_stdin,	0),		// p4
 		P4_WORD("_window",	&&_window,	0),		// p4
@@ -1668,6 +1669,10 @@ _state:		P4_PUSH(ctx->ds, (P4_Cell *) &ctx->state);
 		 */
 		// ( -- addr )
 _base:		P4_PUSH(ctx->ds, (P4_Cell *) &ctx->radix);
+		NEXT;
+
+_pad_size:	// ( -- u )
+		P4_PUSH(ctx->ds, (P4_Uint) P4_PAD_SIZE);
 		NEXT;
 
 		// ( -- u )

@@ -1765,6 +1765,16 @@ Similar to `ALLOT`, reserve `n` address-units of data-space and return its start
 Should `ALLOT` enlarge and relocate the data-space, the address saved by `HERE` on the stack will now point into invalid memory.  With `reserve` the address of the region just reserved is on top of the stack insuring that the address is valid until the next enlargement of the data-space by `reserve`,`,`, `ALIGN`, `ALLOT`, `C,`, or `COMPILE,`.
 
 - - -
+### return-stack-cells
+( -- `u`) constant  
+Push the return stack's size.
+
+- - -
+### stack-cells
+( -- `u`) constant  
+Push the data stack's size.
+
+- - -
 ### starts-with
 ( `caddr1` `u1` `caddr2` `u2` -- `bool` )  
 Return true if string `caddr1` `u1` starts with string `caddr2` `u2`; otherwise false.
@@ -1810,11 +1820,6 @@ Call relative.  The integer that immediately follows is the relative distance in
 Push the data stack base `aaddr` address and current depth `n` (before executing `_ds`).  This stack is a fixed size and grows upward.
 
 - - -
-### _ds_size
-( -- `n`)  
-Push the data stack's size.
-
-- - -
 ### _dsp!
 ( `aaddr` -- )  
 Store `addr` into the data stack pointer.
@@ -1838,11 +1843,6 @@ Parse `ccc` delimited by the delimiter `char`.  When `bool` is false, behaviour 
 ### _rs
 ( -- `aaddr` `n` )  
 Push the return stack base address and current depth.  This stack is a fixed size and grows upward.
-
-- - -
-### _rs_size
-( -- `n`)  
-Push the return stack's size.
 
 - - -
 ### _rsp!

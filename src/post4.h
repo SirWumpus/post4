@@ -53,6 +53,10 @@ extern "C" {
 #define P4_CORE_FILE			"post4.p4"
 #endif
 
+#ifndef P4_PAD_SIZE
+#define P4_PAD_SIZE			(P4_INPUT_SIZE)
+#endif
+
 #ifndef P4_PIC_SIZE
 #define P4_PIC_SIZE			(2 * sizeof (P4_Cell) * CHAR_BIT + 2)
 #endif

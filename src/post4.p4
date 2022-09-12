@@ -117,17 +117,6 @@ FALSE INVERT CONSTANT TRUE
 \
 '\s' CONSTANT BL
 
-\ ... /PAD ...
-\
-\ ( -- n )
-\ Size must be at least 84 characters.  Use P4_INPUT_SIZE so that
-\ PAD is the same as the console input buffer, see P4_Ctx.
-\
-256 CONSTANT /PAD
-
-_ds_size CONSTANT STACK-CELLS
-_rs_size CONSTANT RETURN-STACK-CELLS
-
 \ ... PAD ...
 \
 \ ( -- )
