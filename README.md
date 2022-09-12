@@ -37,7 +37,45 @@ Interactive Usage
 
 When Post4 is invoked without a script file argument or redirected input, then the user is presented with an `ok` prompt.  The user can enter Post4 numbers and words.  Pressing the terminal `Enter` (`Return`) key ends the input line, which will be interpreted.  All Post4 words are treated as case-insensitive.
 
-To leave Post4 either type the `EOF` terminal character, `BYE`, or `code BYE-CODE` (where `code` is number to return to the user's shell).  For those not familiar with Forth, there is a `QUIT` command, but it only terminates a running program; it does not return the host OS.
+To leave Post4 either type the `EOF` terminal character, `BYE`, or `code BYE-CODE` (where `code` is number to return to the user's shell).  For those not familiar with Forth, there is a `QUIT` command, but it only terminates a running program; it does not return to the host OS.
+
+### Numeric I/O
+
+The default numeric input/output base is decimal (base 10).  Setting variable `BASE` will change the default radix used for numeric I/O, which can be between between 2 and 36, eg. `16 BASE !` sets hexadecimal.  There are four shorthand words `BINARY`, `OCTAL`, `DECIMAL`, and `HEX` that set `BASE` to 2, 8, 10, or 16 repectively.
+
+Regardless of the current value of `BASE`, it is possible to input numbers in one of the four common bases without having to change the value of `BASE`.  Prefixing a number with `%`, `0` (zero), `#`, `$` or `0x` can set a binary, octal, decimal, or hex value; an optional minus sign given after the prefix to indicate a negative number.  For example:
+
+        %1111111 = #127 = 0177 = $7f = 0x7f = $000000000000007f
+        %-1111111 = #-127 = 0-177 = $-7f = 0x-7f = $ffffffffffffff81
+
+It is also possible to input a character constant or backslash escape character.  Simple use single-quotes around the character or backslash-escape string.  For example:
+
+        'A'     ASCII upper case A.
+        'b'     ASCII lower case B.
+        '9'     ASCII digit 9.
+        '_'     ASCII underscore.
+        '\n'    ASCII linefeed.
+
+The following C-style backslash escapes are supported:
+
+        \?      delete
+        \\      backslash
+        \a      bell
+        \b      backspace
+        \e      escape
+        \f      formfeed
+        \n      linefeed
+        \r      carriage-return
+        \s      space
+        \t      tab
+        \v      vertical tab
+        \0      nul
+
+Because Forth uses whitespace for input delimiters, in particular space (ASCII 32), the only way to input a literal space character on is with:
+
+        32      ASCII numeric value.
+        '\s'    Backslash escape.
+        BL      Forth word, short for blank.
 
 
 Examples
