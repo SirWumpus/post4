@@ -159,6 +159,7 @@ typedef uintptr_t P4_Uint;
 #define P4_UINT_MAX UINTPTR_MAX
 #define P4_HEX_FMT "$%.16lx"
 #define P4_UINT_MSB (~((P4_Uint)~0 >> 1))
+#define P4_SENTINEL (0xdeadbeefcafebabeL)
 
 typedef size_t P4_Size;
 #define P4_SIZE_FMT "%zu"
@@ -264,10 +265,6 @@ typedef struct {
 # define P4_LENGTH(stack)		((stack).top + 1 - (stack).base)
 # define P4_DROP(stack, n)		((stack).top -= (n))
 # define P4_PUSH_CSTR(stack, s)		(P4_PUSH(stack, s), P4_PUSH(stack, strlen(s)))
-# define P4_IS_OVER(stack)		((stack).base + (stack).size <= (stack).top)
-# define P4_IS_UNDER(stack)		((stack).top + 1 < (stack).base)
-# define P4_CAN_PUSH(stack, n)		(P4_LENGTH(stack) + (n) <= (stack).size)
-# define P4_CAN_POP(stack, n)		((n) <= P4_LENGTH(stack))
 
 typedef enum {
 	P4_STATE_INTERPRET,

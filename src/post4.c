@@ -995,10 +995,11 @@ p4Create()
 	ctx->rs.size = options.return_stack_size;
 	P4_RESET(ctx->rs);
 
-	if ((ctx->ds.base = malloc(options.data_stack_size * sizeof (*ctx->ds.base))) == NULL) {
+	if ((ctx->ds.base = malloc((options.data_stack_size + 1) * sizeof (*ctx->ds.base))) == NULL) {
 		goto error0;
 	}
 	ctx->ds.size = options.data_stack_size;
+	ctx->ds.base[ctx->ds.size].u = P4_SENTINEL;
 	P4_RESET(ctx->ds);
 
 	ctx->block_fd = p4BlockOpen(options.block_file);
@@ -1030,23 +1031,19 @@ p4Bp(P4_Ctx *ctx)
 }
 
 static void
-p4StackCheck(P4_Ctx *ctx)
+p4StackCanPopPush(P4_Ctx *ctx, P4_Stack *stack, int pop, int push)
 {
-	if (P4_IS_OVER(ctx->ds)) {
+	int length = (stack->top + 1 - stack->base);
+
+	/* Stack has enough data to pop? */
+	if (length < pop) {
 		p4Bp(ctx);
-		LONGJMP(ctx->on_throw, P4_THROW_DS_OVER);
+		LONGJMP(ctx->on_throw, stack == &ctx->ds ? P4_THROW_DS_UNDER : P4_THROW_RS_UNDER);
 	}
-	if (P4_IS_UNDER(ctx->ds)) {
+	/* Stack has enough space to push data? */
+	if (stack->size < length + push - pop) {
 		p4Bp(ctx);
-		LONGJMP(ctx->on_throw, P4_THROW_DS_UNDER);
-	}
-	if (P4_IS_OVER(ctx->rs)) {
-		p4Bp(ctx);
-		LONGJMP(ctx->on_throw, P4_THROW_RS_OVER);
-	}
-	if (P4_IS_UNDER(ctx->rs)) {
-		p4Bp(ctx);
-		LONGJMP(ctx->on_throw, P4_THROW_RS_UNDER);
+		LONGJMP(ctx->on_throw, stack == &ctx->ds ? P4_THROW_DS_OVER : P4_THROW_RS_OVER);
 	}
 }
 
@@ -1315,8 +1312,8 @@ _repl:
 					ctx->words = p4WordAppend(ctx, ctx->words, (P4_Cell) &w_lit);
 					ctx->words = p4WordAppend(ctx, ctx->words, x);
 				} else {
+					p4StackCanPopPush(ctx, &ctx->ds, 0, 1);
 					P4_PUSH(ctx->ds, x);
-					p4StackCheck(ctx);
 				}
 			} else if (ctx->state == P4_STATE_COMPILE && !P4_WORD_IS_IMM(word)) {
 				ctx->words = p4WordAppend(ctx, ctx->words, (P4_Cell) word);
@@ -1342,7 +1339,8 @@ setjmp_cleanup:
 	return rc;
 
 		// Indirect threading.
-_next:		p4StackCheck(ctx);
+_next:		/* Check data stack bounds. */
+		p4StackCanPopPush(ctx, &ctx->ds, 0, 0);
 		w = *ip++;
 		goto *w.xt->code;
 
@@ -1351,13 +1349,15 @@ _execute:	w = P4_POP(ctx->ds);
 		goto *w.xt->code;
 
 		// ( i*x -- j*y )(R: -- ip)
-_enter:		P4_PUSH(ctx->rs, ip);
+_enter:		p4StackCanPopPush(ctx, &ctx->rs, 0, 1);
+		P4_PUSH(ctx->rs, ip);
 		// w contains xt loaded by _next or _execute.
 		ip = w.xt->data;
 		NEXT;
 
 		// ( i*x -- i*x )(R:ip -- )
-_exit:		ip = P4_POP(ctx->rs).p;
+_exit:		p4StackCanPopPush(ctx, &ctx->rs, 1, 0);
+		ip = P4_POP(ctx->rs).p;
 		NEXT;
 
 		// ( ex_code -- )
@@ -1374,6 +1374,7 @@ _bp:		p4Bp(ctx);
 
 		// ( -- )
 _call:		w = *ip;
+		p4StackCanPopPush(ctx, &ctx->rs, 0, 1);
 		P4_PUSH(ctx->rs, ip + 1);
 		ip = (P4_Cell *)((P4_Char *) ip + w.n);
 		NEXT;
@@ -1482,7 +1483,9 @@ _semicolon:	// (C: colon -- ) (R: ip -- )
 		x = P4_POP(ctx->ds);
 		w = P4_POP(ctx->ds);
 		if (w.p != ctx->ds.top || x.p != ctx->rs.top) {
-			/* Control structure imbalance. */
+			/* Control structure imbalance.  Did we match
+			 * all the IF-THEN, BEGIN-REPEAT, etc.
+			 */
 			LONGJMP(ctx->on_throw, P4_THROW_BAD_CONTROL);
 		}
 		P4_WORD_CLEAR_HIDDEN(ctx->words);
@@ -1566,6 +1569,7 @@ _does:		word = ctx->words;
 		// ( -- aaddr)
 _do_does:	P4_PUSH(ctx->ds, w.xt->data + 1);
 		// Remember who called us.
+		p4StackCanPopPush(ctx, &ctx->rs, 0, 1);
 		P4_PUSH(ctx->rs, ip);
 		// Continue execution just after DOES> of the defining word.
 		ip = w.xt->data[0].p;
@@ -1781,11 +1785,14 @@ _dup:		w = P4_TOP(ctx->ds);
 		// ( xu ... x1 x0 u -- xu ... x1 x0 xu )
 		// 0 PICK == DUP, 1 PICK == OVER
 _pick:		w = P4_POP(ctx->ds);
+		/* Check stack depth. */
+		p4StackCanPopPush(ctx, &ctx->ds, w.n+1, w.n+2);
 		x = P4_PICK(ctx->ds, w.n);
 		P4_PUSH(ctx->ds, x);
 		NEXT;
 
-		// ( x y -- y x ) aka 1 ROLL
+		// ( x y -- y x )
+		// 1 ROLL == SWAP
 _swap:		w = P4_POP(ctx->ds);
 		x = P4_TOP(ctx->ds);
 		P4_TOP(ctx->ds) = w;
@@ -1794,22 +1801,27 @@ _swap:		w = P4_POP(ctx->ds);
 
 		// (x -- )(R: -- x )
 _to_rs:		w = P4_POP(ctx->ds);
+		p4StackCanPopPush(ctx, &ctx->rs, 0, 1);
 		P4_PUSH(ctx->rs, w);
 		NEXT;
 
 		// (R: x -- )
-_from_rs:	w = P4_POP(ctx->rs);
+_from_rs:	p4StackCanPopPush(ctx, &ctx->rs, 1, 0);
+		w = P4_POP(ctx->rs);
 		P4_PUSH(ctx->ds, w);
 		NEXT;
 
-		// (R: x -- x)
-_rs_copy:	w = P4_TOP(ctx->rs);
+		// ( -- x )(R: x -- x)
+_rs_copy:	p4StackCanPopPush(ctx, &ctx->rs, 1, 1);
+		w = P4_TOP(ctx->rs);
 		P4_PUSH(ctx->ds, w);
 		NEXT;
 
 		// ( xu xu-1 ... x0 u –– xu-1 ... x0 xu )
-		// 1 ROLL == SWAP, 2 ROLL == ROT
+		// 0 ROLL == noop, 1 ROLL == SWAP, 2 ROLL == ROT
 _roll:		w = P4_POP(ctx->ds);
+		/* Check stack depth. */
+		p4StackCanPopPush(ctx, &ctx->ds, w.n+1, 0);
 		x = P4_PICK(ctx->ds, w.n);
 		(void) memmove(ctx->ds.top - w.n, ctx->ds.top - w.n + 1, w.n * P4_CELL);
 		P4_TOP(ctx->ds) = x;
@@ -2013,9 +2025,7 @@ _accept:	w = P4_POP(ctx->ds);
 
 		// ( -- xn ... x1 n )
 _save_input:	w.n = sizeof (P4_Input) / P4_CELL;
-		if (!P4_CAN_PUSH(ctx->ds, w.n)) {
-			LONGJMP(ctx->on_throw, P4_THROW_DS_OVER);
-		}
+		p4StackCanPopPush(ctx, &ctx->rs, 0, w.n);
 		(void) memcpy(ctx->ds.top + 1, &ctx->input, sizeof (ctx->input));
 		/* TODO save file position. */
 		P4_DROP(ctx->ds, -w.n);
@@ -2159,6 +2169,7 @@ _ms:		w = P4_POP(ctx->ds);
 		struct tm *now;
 _time_date:	(void) time(&w.t);
 		now = localtime(&w.t);
+		p4StackCanPopPush(ctx, &ctx->rs, 0, 6);
 		P4_PUSH(ctx->ds, (P4_Int) now->tm_sec);
 		P4_PUSH(ctx->ds, (P4_Int) now->tm_min);
 		P4_PUSH(ctx->ds, (P4_Int) now->tm_hour);
