@@ -10,6 +10,30 @@ MARKER rm_core_words
 \
 : BYE 0 bye-code ;
 
+\ ... ABORT ...
+\
+\  ( i*x -- ) ( R: j*x -- )
+\
+: ABORT -1 _longjmp ;
+
+\ ... QUIT ...
+\
+\  ( -- ) ( R: i*x -- )
+\
+\ See https://github.com/ForthHub/discussion/discussions/116#discussioncomment-3541822
+\
+\ Expected standard behaviour:
+\
+\ 1.	ok :noname 123 [: 456 -56 throw ;] catch . . ;  execute
+\	-56 123 ok
+\
+\ 2.	ok : foo [: 123 quit ;] catch 456 . throw ;  foo
+\	ok .s
+\	123
+\	ok
+\
+: QUIT -56 _longjmp ;
+
 \ ... .S ...
 \
 \ ( -- )
@@ -103,12 +127,6 @@ FALSE INVERT CONSTANT TRUE
 
 _ds_size CONSTANT STACK-CELLS
 _rs_size CONSTANT RETURN-STACK-CELLS
-
--1 CONSTANT throw_abort
--2 CONSTANT throw_abort_msg
--11 CONSTANT throw_erange
--24 CONSTANT throw_bad_number
--56 CONSTANT throw_quit
 
 \ ... PAD ...
 \
@@ -758,30 +776,6 @@ VARIABLE catch_frame
 	  DROP R>		\ S: n    R: ip
 	THEN
 ;				\ S: 0 | n  R: --
-
-\ ... ABORT ...
-\
-\  ( i*x -- ) ( R: j*x -- )
-\
-: ABORT throw_abort _longjmp ;
-
-\ ... QUIT ...
-\
-\  ( -- ) ( R: i*x -- )
-\
-\ See https://github.com/ForthHub/discussion/discussions/116#discussioncomment-3541822
-\
-\ Expected standard behaviour:
-\
-\ 1.	ok :noname 123 [: 456 -56 throw ;] catch . . ;  execute
-\	-56 123 ok
-\
-\ 2.	ok : foo [: 123 quit ;] catch 456 . throw ;  foo
-\	ok .s
-\	123
-\	ok
-\
-: QUIT throw_quit _longjmp ;
 
 \ ... TYPE ...
 \
@@ -1546,7 +1540,7 @@ VARIABLE _str_buf_index
 	  catch_frame @ 0= IF
 	    TYPE CR
 	  THEN
-	  throw_abort_msg THROW
+	  -2 THROW
         ELSE
 	  2DROP
 	THEN
