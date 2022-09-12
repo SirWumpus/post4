@@ -32,6 +32,14 @@ Post4 reads input from standard input and writes to standard output, which can b
 Post4 cell size is equivalent to C's `intptr_t`, for current systems are either 32 or 64 bit values.  Therefore Post4 (currently) treats `d` and `ud` types same as `n` and `u`.
 
 
+Interactive Usage
+-----------------
+
+When Post4 is invoked without a script file argument or redirected input, then the user is presented with an `ok` prompt.  The user can enter Post4 numbers and words.  Pressing the terminal `Enter` (`Return`) key ends the input line, which will be interpreted.  All Post4 words are treated as case-insensitive.
+
+To leave Post4 either type the `EOF` terminal character, `BYE`, or `code BYE-CODE` (where `code` is number to return to the user's shell).  For those not familiar with Forth, there is a `QUIT` command, but it only terminates a running program; it does not return the host OS.
+
+
 Examples
 --------
 
@@ -379,9 +387,9 @@ Start definition of word `name`.  The current definition shall not be findable i
 - - -
 ### :NONAME ...
 (C: -- `colon-sys` )(S: -- `xt` )  
-Create a nameless word defintion, which when terminated by `;` leaves `xt` on the data stack.  The nameless word cannot be found with `'` nor `FIND-NAME`.  See also `[:` and `;]`.
+Create a nameless word definition, which when terminated by `;` leaves `xt` on the data stack.  The nameless word cannot be found with `'` nor `FIND-NAME`.  See also `[:` and `;]`.
 
-        \ Create forward refeerence.
+        \ Create forward reference.
         DEFER print
         
         \ Define the implementation.
@@ -957,7 +965,7 @@ address and length of the `filepath` on the stack and perform the function of `I
 ### INCLUDED
 ( `caddr` `u` -- )  
 
-Save the current input source specification, including the current value of `SOURCE-ID`.  Open the file specified by `caddr` `u`, store the resulting fileid in `SOURCE-ID`, and make it the input source.  Store zero (0) in `BLK`.  Interpret the file line by line until end of file.  Other stack effects are due to the words included.  The input source specification is restored after the file is closed.
+Save the current input source specification, including the current value of `SOURCE-ID`.  Open the file specified by `caddr` `u`, store the resulting file-id in `SOURCE-ID`, and make it the input source.  Store zero (0) in `BLK`.  Interpret the file line by line until end of file.  Other stack effects are due to the words included.  The input source specification is restored after the file is closed.
 
 - - -
 ### INVERT
@@ -1761,7 +1769,7 @@ Call relative.  The integer that immediately follows is the relative distance in
 - - -
 ### _ds
 ( -- `aaddr` `n` )  
-Push the data stack base `aaddr` address and current depth `n` (before excuting `_ds`).  This stack is a fixed size and grows upward.
+Push the data stack base `aaddr` address and current depth `n` (before executing `_ds`).  This stack is a fixed size and grows upward.
 
 - - -
 ### _ds_size
