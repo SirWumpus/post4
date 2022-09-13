@@ -231,7 +231,7 @@ Drop `xd`.  Make the pictured numeric output string available as a character str
 Convert one digit of `ud1` according to the rule for `#`.  Continue conversion until the quotient is zero (0).
 
 - - -
-#### ' name
+#### '
 ( `<spaces>name` -- `xt` )  
 Find `name` and place its execution token on the stack.  Throw undefined word (-13) if not found.
 
@@ -267,8 +267,8 @@ Add the top two stack values.
 Add `n|u` to the cell at `aaddr`.
 
 - - -
-#### +FIELD name
-( `addr` -- `addr'` )  
+#### +FIELD
+( `addr` `<spaces>name` -- `addr'` )  
 Define unaligned structure field `name`, which when executed adds the field offset to `addr` giving `addr'`.
 
 Structure name defined last:
@@ -415,14 +415,16 @@ Copy cell pair `x1 x2` to the top of the stack.
 Exchange the top two cell pairs.
 
 - - -
-#### 2VALUE name
+#### 2VALUE
 ( `lo` `hi` `<spaces>name` -- )  
 Create `name` with two cells of data assigned `hi` and `lo`.  When `name` is executed, the values `lo` `hi` are pushed to the stack.  See `TO`.
 
 - - -
-#### : name ...
+#### :
 (C: `<spaces>name` -- `colon-sys` )  
-Start definition of word `name`.  The current definition shall not be findable in the dictionary until it is ended (or until the execution of `DOES>`).
+Start definition of word `name`.  The current definition shall not be findable in the dictionary until it is ended (or until the execution of `DOES>`).  See also `;`, `CREATE`, `DOES>`, `:NONAME`, `[:` and `;]`.
+
+        : SOMENAME words that do stuff ;
 
 - - -
 #### :NONAME ...
@@ -534,7 +536,7 @@ If `x1` is not equal to zero (0), display the message that follows up to the clo
 Return the absolute value of `n`.
 
 - - -
-#### ACTION-OF name
+#### ACTION-OF
 ( `<spaces>name` -- `xt` ) immediate  
 Return the execution token `xt` of a deferred `name`.  See `DEFER`.
 
@@ -598,9 +600,9 @@ Position cursor on the terminal, `row` and `col` are zero (0) based.
 Mark the start of `BEGIN ... AGAIN` or `BEGIN ... WHILE ... REPEAT` loops.
 
 - - -
-#### BEGIN-STRUCTURE name
+#### BEGIN-STRUCTURE
 ( `<spaces>name` -- `addr` `0` )  
-Parse `name` delimited by a space and create a definition for `name`.  Return a struct-sys (zero or more implementation dependent items) that will be used by `END-STRUCTURE` and an initial offset of zero (0).  When `name` is executed the size of the structure in address units is pushed to the stack.
+Parse `name` delimited by a space and create a definition for `name`.  Return a struct-sys (zero or more implementation dependent items) that will be used by `END-STRUCTURE` and an initial offset of zero (0).  When `name` is executed the size of the structure in address units is pushed to the stack.  See also `+FIELD`, `CFIELD:`, and `FIELD:`.
 
 - - -
 #### BL
@@ -671,8 +673,8 @@ Add the size in address units of a cell to `aaddr1` giving `aaddr2`.
 `n2` is the size in address units of `n1` cells.
 
 - - -
-#### CFIELD: name
-( `addr` -- `addr'` )  
+#### CFIELD:
+( `addr` `<spaces>name` -- `addr'` )  
 Define character structure field `name`, which when executed adds the field offset to `addr` giving `addr'`.
 
 - - -
@@ -711,9 +713,12 @@ Compare the two strings lexicographically.  Return `n` as 1, zero (0), or -1, ac
 Append the execution semantics of the definition represented by `xt` to the execution semantics of the current definition.
 
 - - -
-#### CONSTANT name
+#### CONSTANT
 ( `x` `<spaces>name` -- )  
 Define the word `name` to represent the constant value `x`.  When `name` is executed, the value `x` is pushed on to the stack.
+
+
+        377 CONSTANT monaco
 
 - - -
 #### COUNT
@@ -726,7 +731,7 @@ Return the character string `caddr2 u` specification for the counted string `cad
 Write a newline to standard output.
 
 - - -
-#### CREATE name
+#### CREATE
 ( `<spaces>name` -- )  
 Create a new word definition.  When `name` is executed, the `aaddr` of its data space is pushed onto the stack.  `CREATE` can be used to define new data structure, eg.
 
@@ -769,7 +774,7 @@ Left rotate the control-stack `u` cells.
 Set the numeric conversion radix to ten (decimal).
 
 - - -
-#### DEFER name
+#### DEFER
 ( `<spaces>name` -- )  
 Create a definition for `name`, which when executed will execute the saved execution token; default `ABORT`.  (Think indirect word execution.)
 
@@ -905,8 +910,8 @@ Return control from the currently executing word to its caller.  Before executin
 Return false value, equivalent to zero (0).
 
 - - -
-#### FIELD: name
-( `addr` -- `addr'` )  
+#### FIELD:
+( `addr` `<spaces>name` -- `addr'` )  
 Define cell aligned structure field `name`, which when executed adds the field offset to `addr` giving `addr'`.
 
         BEGIN-STRUCTURE point     \ create the named structure
@@ -995,16 +1000,16 @@ If `bool` is zero (0) (`FALSE`), continue execution following the matching `ELSE
 Make the most recent definition an immediate word.
 
 - - -
-#### INCLUDE filepath
+#### INCLUDE
 ( `<spaces>filepath` --  )  
-
 Skip leading white space and parse `filepath` delimited by a white space character.  Push the
 address and length of the `filepath` on the stack and perform the function of `INCLUDED`.
+
+        ok INCLUDE ../examples/wumpus.p4
 
 - - -
 #### INCLUDED
 ( `caddr` `u` -- )  
-
 Save the current input source specification, including the current value of `SOURCE-ID`.  Open the file specified by `caddr` `u`, store the resulting file-id in `SOURCE-ID`, and make it the input source.  Store zero (0) in `BLK`.  Interpret the file line by line until end of file.  Other stack effects are due to the words included.  The input source specification is restored after the file is closed.
 
 - - -
@@ -1013,7 +1018,7 @@ Save the current input source specification, including the current value of `SOU
 Take the one's complement of `x1`.
 
 - - -
-#### IS name
+#### IS
 ( `xt` `<spaces>name` -- ) immediate  
 Set deferred word `name` to the execution token `xt`.  See `DEFER`.
 
@@ -1076,9 +1081,19 @@ Logical left shift of `x1` by `u` bits, putting `u` zeroes into the least signif
 `d` (`lo` `hi` on the stack) is the signed product of `n1` times `n2`.
 
 - - -
-#### MARKER name
+#### MARKER
 ( `<spaces>name` -- )  
-Create `name` in the dictionary, which when executed will remove `name` and restore the dictionary to the state it had just prior to the `name` being added.
+Create `name` in the dictionary, which when executed will remove all the words down to and including `name`, restoring the dictionary to the state it had just prior to the `name` being added.  See `WORDS`.
+
+        ok INCLUDE ../examples/wumpus.p4
+        ... instructions ...
+        ok WORDS
+        ... list of words ...
+        ok PLAY
+        ok rm_wumpus
+        ok PLAY
+        "PLAY" -13 thrown: undefined word
+        ok
 
 - - -
 #### MAX
@@ -1162,7 +1177,7 @@ Clear the terminal (advance next page).
 Parse `ccc` delimited by the delimiter `char`.  `caddr` and `u` are the address and length within the input buffer of the parsed string.  If the parse area was empty, the resulting string has a zero (0) length.
 
 - - -
-#### PARSE-NAME name
+#### PARSE-NAME
 ( `<spaces>name<space>` -- `caddr` `u` )  
 Skip leading space delimiters. Parse name delimited by a space.
 
@@ -1172,7 +1187,7 @@ Skip leading space delimiters. Parse name delimited by a space.
 Remove `u`.  Copy the `xu` to the top of the stack.  `0 PICK` equivalent to `DUP`, `1 PICK` equivalent to `OVER`.
 
 - - -
-#### POSTPONE name
+#### POSTPONE
 ( `<spaces>name` --  ) immediate  
 Parse and find `name` appending the compilation semantics of `name` to the current definition.  For an immediate word, it is compiled into the definition, instead of executed.  Otherwise compile the word during the definition of another word.
 
@@ -1458,15 +1473,19 @@ Loop back to `BEGIN` until `x` equals zero (0).
 Mark the current block as dirty.
 
 - - -
-#### VALUE name
+#### VALUE
 ( `x` `<spaces>name` -- )  
 Create `name` with one cell of data assigned `x`.  When `name` is executed, the value `x` is pushed to the stack.  See `TO`.
 
-        69 VALUE position
-        : change ( new -- old ) position SWAP TO position ;
+        ok 69 VALUE position
+        ok postion .
+        69 ok
+        ok 66 TO position
+        ok postion .
+        66 ok
 
 - - -
-#### VARIABLE name
+#### VARIABLE
 ( `<spaces>name` -- )  
 Create `name` with one cell of data.  When `name` is executed push the `aaddr` of the data cell.
 
@@ -1504,7 +1523,7 @@ Bit-wise exclusive-or of the top two stack values.
 Enter interpretation state.
 
 - - -
-#### ['] name
+#### [']
 ( `<spaces>name` -- `xt` ) immediate  
 Place name's execution token xt on the stack.
 
@@ -1516,7 +1535,7 @@ Suspends compilation of the current (enclosing) definition, continues compilatio
         : foo 123 [: ." wave " ;] execute . ;
 
 - - -
-#### [CHAR] ccc
+#### [CHAR]
 ( `<spaces>ccc` -- `char` ) immediate  
 Place char, the value of the first character of name, on the stack.
 
@@ -1547,7 +1566,7 @@ End conditional source block.
 Return `FALSE` if `name` is word that can be found in the dictionary; otherwise `TRUE`.
 
 - - -
-#### \\ ccc<LF>
+#### \\
 ( `ccc<LF>` -- ) immediate  
 Parse and discard the remainder of the parse area, ie. comment line.
 
