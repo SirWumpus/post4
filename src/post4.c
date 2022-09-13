@@ -806,12 +806,19 @@ p4BlockOpen(const char *file)
 	if ((cwd = open(".", O_RDONLY)) < 0) {
 		goto error0;
 	}
-	if ((fd = open(file, O_CREAT|O_RDWR, S_IRWXU|S_IRWXG|S_IRWXO)) < 0 || flock(fd, LOCK_EX)) {
+	if ((fd = open(file, O_CREAT|O_RDWR, S_IRWXU|S_IRWXG|S_IRWXO)) < 0 || flock(fd, LOCK_EX|LOCK_NB)) {
+		if (errno == EAGAIN) {
+			warn("%s already in use", file);
+			goto error1;
+		}
 		const char *home = getenv("HOME");
 		if (home == NULL || chdir(home)) {
 			goto error1;
 		}
-		if ((fd = open(file, O_CREAT|O_RDWR, S_IRWXU|S_IRWXG|S_IRWXO)) < 0 || flock(fd, LOCK_EX)) {
+		if ((fd = open(file, O_CREAT|O_RDWR, S_IRWXU|S_IRWXG|S_IRWXO)) < 0 || flock(fd, LOCK_EX|LOCK_NB)) {
+			if (errno == EAGAIN) {
+				warn("%s already in use", file);
+			}
 			goto error1;
 		}
 	}
