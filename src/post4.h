@@ -137,10 +137,10 @@ extern "C" {
 typedef struct {
 	int argc;
 	char **argv;
+	long ds_size;
+	long rs_size;
 	const char *core_file;
 	const char *block_file;
-	long data_stack_size;
-	long return_stack_size;
 } P4_Options;
 
 typedef void *P4_Code;			/* Address of labels, eg. ptr = &&label; */
@@ -282,6 +282,8 @@ struct p4_ctx {
 	P4_State	state;
 	P4_Word *	words;		/* Head of the dictionary word list. */
 	P4_Uint		radix;		/* Input/Output radix */
+	P4_Int		argc;
+	char **		argv;
 	P4_Input	input;
 	P4_Block	block;
 	P4_Int		block_fd;
@@ -397,10 +399,13 @@ extern void p4Fini(void);
 /**
  * Create a new interpreter context.
  *
+ * @param opts
+ *	Pointer to P4_Options.
+ *
  * @return
  *	A pointer to an allocated P4_Ctx structure.
  */
-extern P4_Ctx *p4Create(void);
+extern P4_Ctx *p4Create(P4_Options *opts);
 
 /**
  * @param ctx

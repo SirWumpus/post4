@@ -20,10 +20,10 @@ static const char p4_build_info[] =
 ;
 
 static P4_Options options = {
+	.ds_size = P4_STACK_SIZE,
+	.rs_size = P4_STACK_SIZE,
 	.core_file = P4_CORE_FILE,
 	.block_file = P4_BLOCK_FILE,
-	.data_stack_size = P4_STACK_SIZE,
-	.return_stack_size = P4_STACK_SIZE,
 };
 
 static void *p4_program_end;
@@ -985,7 +985,7 @@ p4SetInput(P4_Ctx *ctx, FILE *fp)
 }
 
 P4_Ctx *
-p4Create()
+p4Create(P4_Options *opts)
 {
 	P4_Ctx *ctx;
 
@@ -994,31 +994,32 @@ p4Create()
 	}
 	ctx->radix = 10;
 	p4SetInput(ctx, stdin);
+	ctx->argc = opts->argc;
+	ctx->argv = opts->argv;
 	ctx->state = P4_STATE_INTERPRET;
 
-	if ((ctx->rs.base = malloc(options.return_stack_size * sizeof (*ctx->rs.base))) == NULL) {
+	if ((ctx->rs.base = malloc((opts->rs_size + 1) * sizeof (*ctx->rs.base))) == NULL) {
 		goto error0;
 	}
-	ctx->rs.size = options.return_stack_size;
+	ctx->rs.base[opts->rs_size].u = P4_SENTINEL;
+	ctx->rs.size = opts->rs_size;
 	P4_RESET(ctx->rs);
 
-	if ((ctx->ds.base = malloc((options.data_stack_size + 1) * sizeof (*ctx->ds.base))) == NULL) {
+	if ((ctx->ds.base = malloc((opts->ds_size + 1) * sizeof (*ctx->ds.base))) == NULL) {
 		goto error0;
 	}
-	ctx->ds.size = options.data_stack_size;
-	ctx->ds.base[ctx->ds.size].u = P4_SENTINEL;
+	ctx->ds.base[opts->ds_size].u = P4_SENTINEL;
+	ctx->ds.size = opts->ds_size;
 	P4_RESET(ctx->ds);
 
-	ctx->block_fd = p4BlockOpen(options.block_file);
+	ctx->block_fd = p4BlockOpen(opts->block_file);
 
 	if (p4_builtin_words == NULL) {
 		/* Link up the base dictionary. */
 		(void) p4EvalString(ctx, "", 0);
 	}
 
-	if (*options.core_file != '\0' && p4LoadFile(ctx, options.core_file)) {
-		goto error0;
-	}
+	(void) p4LoadFile(ctx, opts->core_file);
 
 	return ctx;
 error0:
@@ -1655,8 +1656,8 @@ _post:		w = *ip++;
 		 * Context variables
 		 */
 		// ( -- argv argc )
-_args:		P4_PUSH(ctx->ds, (P4_Cell *) options.argv);
-		P4_PUSH(ctx->ds, (P4_Int) options.argc);
+_args:		P4_PUSH(ctx->ds, (P4_Cell *) ctx->argv);
+		P4_PUSH(ctx->ds, (P4_Int) ctx->argc);
 		NEXT;
 
 		// ( key k -- value v )
@@ -2410,13 +2411,13 @@ main(int argc, char **argv)
 			options.core_file = optarg;
 			break;
 		case 'd':
-			options.data_stack_size = strtol(optarg, NULL, 10);
+			options.ds_size = strtol(optarg, NULL, 10);
 			break;
 		case 'i':
 			// Ignore for now.
 			break;
 		case 'r':
-			options.return_stack_size = strtol(optarg, NULL, 10);
+			options.rs_size = strtol(optarg, NULL, 10);
 			break;
 		case 'V':
 			(void) printf("%s", p4_build_info);
@@ -2430,7 +2431,7 @@ main(int argc, char **argv)
 	options.argc = argc - optind;
 	options.argv = argv + optind;
 
-	if ((ctx = p4Create()) == NULL) {
+	if ((ctx = p4Create(&options)) == NULL) {
 		err(EXIT_FAILURE, NULL);
 	}
 

@@ -1805,6 +1805,8 @@ BEGIN-STRUCTURE p4_ctx
 	FIELD: ctx.state	\ see STATE
 	FIELD: ctx.words	\ p4_word pointer
 	FIELD: ctx.radix	\ see BASE
+	FIELD: ctx.argc
+	FIELD: ctx.argv
 	p4_input +FIELD ctx.input
 	p4_block +FIELD ctx.block
 	FIELD: ctx.block_fd
