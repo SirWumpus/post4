@@ -279,7 +279,7 @@ typedef enum {
 struct p4_ctx {
 	P4_Stack	ds;		/* Data stack */
 	P4_Stack	rs;		/* Return stack */
-	P4_State	state;
+	P4_Int		state;
 	P4_Word *	words;		/* Head of the dictionary word list. */
 	P4_Uint		radix;		/* Input/Output radix */
 	P4_Int		argc;
