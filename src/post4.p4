@@ -1756,8 +1756,8 @@ VARIABLE SCR
 : [THEN] ( -- ) ; IMMEDIATE
 
 BEGIN-STRUCTURE p4_string
-	FIELD: s.length
-	FIELD: s.name		\ pointer C string
+	FIELD: str.length
+	FIELD: str.name		\ pointer C string
 END-STRUCTURE
 
 BEGIN-STRUCTURE p4_word
@@ -1771,25 +1771,25 @@ BEGIN-STRUCTURE p4_word
 END-STRUCTURE
 
 BEGIN-STRUCTURE p4_block
-	FIELD: b.state
-	FIELD: b.number
-	1024 +FIELD b.buffer	\ buffer
+	FIELD: blk.state
+	FIELD: blk.number
+	1024 +FIELD blk.buffer	\ buffer
 END-STRUCTURE
 
 BEGIN-STRUCTURE p4_stack
-	FIELD: k.size
-	FIELD: k.top		\ pointer
-	FIELD: k.base		\ pointer
+	FIELD: stk.size
+	FIELD: stk.top		\ pointer
+	FIELD: stk.base		\ pointer
 END-STRUCTURE
 
 BEGIN-STRUCTURE p4_input
-	FIELD: i.fp		\ pointer
-	FIELD: i.blk
-	FIELD: i.size
-	FIELD: i.length
-	FIELD: i.offset
-	FIELD: i.buffer		\ pointer
-	FIELD: i.unget
+	FIELD: in.fp		\ pointer
+	FIELD: in.blk
+	FIELD: in.size
+	FIELD: in.length
+	FIELD: in.offset
+	FIELD: in.buffer	\ pointer
+	FIELD: in.unget
 END-STRUCTURE
 
 \ Example
@@ -1823,8 +1823,8 @@ END-STRUCTURE
 	_ctx ctx.words @	\ S: w
 	BEGIN
 	  DUP w.word 		\ S: w word  R: col
-	  DUP s.name @		\ S: w word name  R: col
-	  SWAP s.length @	\ S: w name length  R: col
+	  DUP str.name @	\ S: w word name  R: col
+	  SWAP str.length @	\ S: w name length  R: col
 	  DUP R> + 1+		\ S: w name length col'  R: --
 	  \ Does current column exceed terminal width?
 	  DUP _window NIP >= IF	\ S: w name length col'  R: --
