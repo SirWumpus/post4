@@ -1105,10 +1105,10 @@ p4Repl(P4_Ctx *ctx)
 	P4_Cell w, x, *ip;
 
 	/* Wrap code pointers for Indirect Threading. */
-	static P4_Word w_lit = P4_WORD("_lit", &&_lit, 0);
-	static P4_Word w_exit = P4_WORD("_exit", &&_exit, 0);
+	static P4_Word w_lit = P4_WORD("LIT", &&_lit, 0);
+	static P4_Word w_exit = P4_WORD("EXIT", &&_exit, 0);
 	static P4_Word w_repl = P4_WORD("_repl", &&_repl, 0);
-	static P4_Word w_post = P4_WORD("POSTPONE", &&_post, 0);
+	static P4_Word w_post = P4_WORD("POSTPONE", &&_post, P4_BIT_IMM);
 
 	/* When the REPL executes a word, it puts the XT of the word here
 	 * and starts the machine with the IP pointed to exec[].  When the
@@ -1139,7 +1139,7 @@ p4Repl(P4_Ctx *ctx)
 		P4_WORD("_ds",		&&_ds,		0),		// p4
 		P4_WORD("_dsp@",	&&_dsp_get,	0),		// p4
 		P4_WORD("_dsp!",	&&_dsp_put,	0),		// p4
-		P4_WORD("_lit",		&&_lit,		0),		// p4
+		P4_WORD("LIT",		&&_lit,		0),		// historic
 		P4_WORD("_longjmp",	&&_longjmp,	0),		// p4
 		P4_WORD("_rs",		&&_rs,		0),		// p4
 		P4_WORD("_rsp@",	&&_rsp_get,	0),		// p4
@@ -1160,7 +1160,7 @@ p4Repl(P4_Ctx *ctx)
 		P4_WORD("EXECUTE",	&&_execute,	0),
 		P4_WORD("EXIT",		&&_exit,	0),
 		P4_WORD("IMMEDIATE",	&&_immediate,	P4_BIT_IMM),
-		P4_WORD("IMMEDIATE?",	&&_is_immediate, 0),		// p4
+		P4_WORD("immediate?",	&&_is_immediate, 0),		// p4
 		P4_WORD("MARKER",	&&_marker,	0),
 		P4_WORD("POSTPONE",	&&_postpone,	P4_BIT_IMM),
 		P4_WORD("STATE",	&&_state,	0),
@@ -1254,7 +1254,7 @@ p4Repl(P4_Ctx *ctx)
 		P4_WORD("args",		&&_args,	0),		// p4
 		P4_WORD("bye-code",	&&_bye_code,	0),		// p4
 		P4_WORD("env",		&&_env,		0),		// p4
-		P4_WORD("_SEEXT",	&&_seext,	0),
+		P4_WORD("_SEEXT",	&&_seext,	0),		// p4
 
 		P4_WORD(NULL,		NULL,		0),
 	};
