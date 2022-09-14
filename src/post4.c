@@ -1273,6 +1273,40 @@ p4Repl(P4_Ctx *ctx)
 	signal_ctx = ctx;
 	SETJMP_PUSH(ctx->on_throw);
 	if ((rc = SETJMP(ctx->on_throw)) != 0) {
+		switch (rc) {
+		case P4_THROW_ABORT:
+		case P4_THROW_ABORT_MSG:
+		case P4_THROW_DS_OVER:
+		case P4_THROW_DS_UNDER:
+			P4_RESET(ctx->ds);
+			/*@fallthrough@*/
+
+		case P4_THROW_QUIT:
+		case P4_THROW_SIGSEGV:
+		case P4_THROW_RS_OVER:
+		case P4_THROW_RS_UNDER:
+		case P4_THROW_UNDEFINED:	/* Retain data stack. */
+		case P4_THROW_LOOP_DEPTH:
+			P4_RESET(ctx->rs);
+			/* Normally at this point one would reset input
+			 * to the console, but that has problems.  Wait
+			 * for the caller to resolve this by closing
+			 * their files and popping the previous input
+			 * context and/or re-asserting stdin.
+			 *
+			 * ctx->input.fp = stdin;
+			 */
+			/*@fallthrough@*/
+
+		/* See 3.4.4 Possible actions on an ambiguous condition
+		 *
+		 * - display a message;
+		 * - set interpretation state and begin text interpretation;
+		 */
+		default:
+			ctx->state = P4_STATE_INTERPRET;
+		}
+
 		/* Ensure we cleanup before return. */
 		goto setjmp_cleanup;
 	}
@@ -1296,8 +1330,8 @@ _repl:
 					 * interactive as this could upset work in progress.
 					 *
 					 * An undefined word does not need to behave like ABORT,
-					 * so the stacks can remain untouched. See p4Eval() and
-					 * Forth 200x Draft 19.1 section 3.4 d.
+					 * so the stacks can remain untouched. See Forth 200x
+					 * Draft 19.1 section 3.4 d.
 					 */
 					LONGJMP(ctx->on_throw, P4_THROW_UNDEFINED);
 				}
@@ -2286,35 +2320,12 @@ _seext:		// ( xt -- )
 int
 p4Eval(P4_Ctx *ctx)
 {
-	int rc = P4_THROW_OK;
+	int rc;
 
-	do {
-		switch (rc) {
-		case P4_THROW_ABORT:
-		case P4_THROW_ABORT_MSG:
-		case P4_THROW_DS_UNDER:
-			P4_RESET(ctx->ds);
-			/*@fallthrough@*/
-
-		case P4_THROW_QUIT:
-		case P4_THROW_SIGBUS:
-		case P4_THROW_SIGSEGV:
-		case P4_THROW_RS_UNDER:
-			P4_RESET(ctx->rs);
-			ctx->input.fp = stdin;
-			/*@fallthrough@*/
-
-		/* See 3.4.4 Possible actions on an ambiguous condition
-		 *
-		 *	- display a message;
-		 *	- set interpretation state and begin text interpretation;
-		 */
-		default:
-			ctx->state = P4_STATE_INTERPRET;
-			(void) p4Exception(ctx, rc);
-			p4ResetInput(ctx);
-		}
-	} while ((rc = p4Repl(ctx)) != P4_THROW_OK);
+	while ((rc = p4Repl(ctx)) != P4_THROW_OK) {
+		(void) p4Exception(ctx, rc);
+		p4SetInput(ctx, stdin);
+	}
 
 	return rc;
 }

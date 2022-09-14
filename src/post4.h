@@ -323,7 +323,7 @@ struct p4_ctx {
 #define P4_THROW_BAD_CONTROL	(-22)	/* control structure mismatch */
 #define P4_THROW_SIGBUS		(-23)	/* address alignment exception */
 #define P4_THROW_BAD_NUMBER	(-24)	/* invalid numeric argument */
-#define P4_THROW__25		(-25)	/* return stack imbalance */
+#define P4_THROW_RS_IMBALANCE	(-25)	/* return stack imbalance */
 #define P4_THROW__26		(-26)	/* loop parameters unavailable */
 #define P4_THROW__27		(-27)	/* invalid recursion */
 #define P4_THROW_SIGINT		(-28)	/* user interrupt */
