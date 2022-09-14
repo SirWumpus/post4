@@ -10,22 +10,6 @@
  *** Globals
  ***********************************************************************/
 
-static const char p4_build_info[] =
-	P4_NAME "/" P4_VERSION "  " P4_COPYRIGHT "\n\n"
-	"BUILT=\"" P4_BUILT "\"\n"
-	"CFLAGS=\"" P4_CFLAGS "\"\n"
-	"LDFLAGS=\"" P4_LDFLAGS "\"\n"
-	"LIBS=\"" P4_LIBS "\"\n"
-	"POST4_PATH=\"" P4_CORE_PATH "\"\n"
-;
-
-static P4_Options options = {
-	.ds_size = P4_STACK_SIZE,
-	.rs_size = P4_STACK_SIZE,
-	.core_file = P4_CORE_FILE,
-	.block_file = P4_BLOCK_FILE,
-};
-
 static void *p4_program_end;
 static P4_Word *p4_builtin_words;
 static P4_Ctx * volatile signal_ctx;
@@ -248,7 +232,7 @@ p4LoadFile(P4_Ctx *ctx, const char *file)
 	int rc = -1, cwd;
 	char *path_copy, *path, *next;
 
-	if ((cwd = open(".", O_RDONLY)) < 0) {
+	if (file == NULL || *file == '\0' || (cwd = open(".", O_RDONLY)) < 0) {
 		goto error0;
 	}
 	if ((path_copy = getenv("POST4_PATH")) == NULL || *path_copy == '\0') {
@@ -2238,7 +2222,7 @@ _seext:		// ( xt -- )
 			LONGJMP(ctx->on_throw, P4_THROW_UNDEFINED);
 		}
 		if ((void *) word < p4_program_end) {
-			(void) printf(": %.*s ( _builtin ) ;\r\n", (int)word->name.length, word->name.string);
+			(void) printf(": %.*s ( builtin ) ;\r\n", (int)word->name.length, word->name.string);
 			NEXT;
 		}
 		if (word->code == &&_enter) {
@@ -2391,6 +2375,22 @@ static const char usage[] =
 "-V\t\tbuild and version information\n\n"
 "If script is \"-\", read it from standard input."
 "\n"
+;
+
+static P4_Options options = {
+	.ds_size = P4_STACK_SIZE,
+	.rs_size = P4_STACK_SIZE,
+	.core_file = P4_CORE_FILE,
+	.block_file = P4_BLOCK_FILE,
+};
+
+static const char p4_build_info[] =
+	P4_NAME "/" P4_VERSION "  " P4_COPYRIGHT "\n\n"
+	"BUILT=\"" P4_BUILT "\"\n"
+	"CFLAGS=\"" P4_CFLAGS "\"\n"
+	"LDFLAGS=\"" P4_LDFLAGS "\"\n"
+	"LIBS=\"" P4_LIBS "\"\n"
+	"POST4_PATH=\"" P4_CORE_PATH "\"\n"
 ;
 
 int
