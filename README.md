@@ -37,7 +37,7 @@ Interactive Usage
 
 When Post4 is invoked without a script file argument or redirected input, then the user is presented with an `ok` prompt.  The user can enter Post4 numbers and words.  Pressing the terminal `Enter` (`Return`) key ends the input line, which will be interpreted.  All Post4 words are treated as case-insensitive.
 
-To leave Post4 either type the `EOF` terminal character, `BYE`, or `code BYE-CODE` (where `code` is number to return to the user's shell).  For those not familiar with Forth, there is a `QUIT` command, but it only terminates a running program; it does not return to the host OS.
+To leave Post4 either type the `EOF` terminal character, `BYE`, or `code BYE-CODE` (where `code` is number to return to the user's shell).  For those not familiar with Forth, there is a `QUIT` word, but it only terminates a running program; it does not return to the host OS.
 
 ### Numeric I/O
 
@@ -48,7 +48,7 @@ Regardless of the current value of `BASE`, it is possible to input numbers in on
         %1111111 = #127 = 0177 = $7f = 0x7f = $000000000000007f
         %-1111111 = #-127 = 0-177 = $-7f = 0x-7f = $ffffffffffffff81
 
-It is also possible to input a character constant or backslash escape character.  Simple use single-quotes around the character or backslash-escape string.  For example:
+It is also possible to input a character constant or backslash escape character.  Simple use single-quotes around the character or backslash-escape string (see also `CHAR` and `[CHAR]`).  For example:
 
         'A'     ASCII upper case A.
         'b'     ASCII lower case B.
@@ -71,7 +71,7 @@ The following C-style backslash escapes are supported:
         \v      vertical tab
         \0      nul
 
-Because Forth uses whitespace for input delimiters, in particular space (ASCII 32), the only way to input a literal space character on is with:
+Because Forth uses whitespace for input delimiters, in particular space (ASCII 32), the only way to input a literal space character is with:
 
         32      ASCII numeric value.
         '\s'    Backslash escape.
@@ -680,7 +680,7 @@ Define character structure field `name`, which when executed adds the field offs
 - - -
 #### CHAR ccc
 ( `<spaces>ccc` -- `char` )  
-Parse `text` placing the first character of text on the stack.
+Parse `ccc` placing the first character of text on the stack.
 
 - - -
 #### CHAR+
@@ -1535,9 +1535,9 @@ Suspends compilation of the current (enclosing) definition, continues compilatio
         : foo 123 [: ." wave " ;] execute . ;
 
 - - -
-#### [CHAR]
+#### [CHAR] ccc
 ( `<spaces>ccc` -- `char` ) immediate  
-Place char, the value of the first character of name, on the stack.
+Place char, the value of the first character of `ccc`, on the stack.
 
 - - -
 #### [DEFINED]
