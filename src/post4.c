@@ -2022,7 +2022,7 @@ _lt0:		w = P4_TOP(ctx->ds);
 		// ( u1 u2 -- )
 _u_lt:		w = P4_POP(ctx->ds);
 		x = P4_TOP(ctx->ds);
-		P4_TOP(ctx->ds).u = x.u < w.u;
+		P4_TOP(ctx->ds).u = x.u < w.u ? ~0 : 0;
 		NEXT;
 
 
