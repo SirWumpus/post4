@@ -28,4 +28,7 @@ commands
 finish
 end
 
+b p4Repl:_repl
+disable 2
+
 show user
