@@ -434,23 +434,119 @@ CREATE PAD /PAD CHARS ALLOT
 \
 : CHAR PARSE-NAME DROP C@ ;
 
+\ Compile a literal cell into the current word definition.
+\
+\  (C: x -- ) (S: x -- )
+\
+: LIT, LIT [ ' LIT COMPILE, ] COMPILE, , ;
+
+\ ... ['] name ...
+\
+\  (C: <spaces>name -- ) \ (S: -- xt )
+\
+: ['] ' LIT, ; IMMEDIATE
+
 \ ... : name ... [ x ] LITERAL ... ;
 \
-\ (S: x -- )
+\  (C: x -- ) (S: x -- )
 \
-: LITERAL POSTPONE _lit , ; IMMEDIATE
+: LITERAL LIT, ; IMMEDIATE
+
+\ ... test IF ... THEN ...
+\ ... test IF ... ELSE ... THEN ...
+\
+\  (C: -- forw ) (S: flag -- )
+\
+\ @see
+\	A.3.2.3.2 Control-flow stack
+\
+: IF ['] _branchz COMPILE, >HERE 0 , ; IMMEDIATE
+
+\ ... AHEAD ... THEN ...
+\ ... test IF ... THEN ...
+\ ... test IF ... ELSE ... THEN ...
+\
+\  (C: forw -- )
+\
+\ @see
+\	A.3.2.3.2 Control-flow stack
+\
+: THEN				\  C: forw_off
+	>HERE SWAP -		\  C: dist
+	DUP			\  C: dist dist
+	HERE SWAP -		\  C: dist forw_addr
+	!			\  C: --
+; IMMEDIATE
+
+\ ... ?DUP ...
+\
+\ (S: x -- 0 | x x )
+\
+: ?DUP DUP IF DUP THEN ;
+
+VARIABLE catch_frame
+
+\ ... CATCH ...
+\
+\ ( i*x xt -- j*x 0 | i*x n )
+\
+: CATCH				\ S: xt   R: ip
+	_dsp@ >R		\ S: xt   R: ip ds
+	catch_frame @ >R	\ S: xt   R: ip ds cf
+	_rsp@ catch_frame !	\ S: xt   R: ip ds cf
+	EXECUTE			\ S: --   R: ip ds cf
+	R> catch_frame !	\ S: --   R: ip ds
+	R> DROP			\ S: --   R: ip
+	0			\ S: 0    R: ip
+;				\ S: 0    R: --
+
+\ ... THROW ...
+\
+\ ( k*x n -- k*x | i*x n )
+\
+: THROW				\ S: n    R:
+	\ 0 THROW is a no-op.
+	?DUP IF			\ S: n    R:
+	  \ When no catch frame, throw to C.
+	  catch_frame @ 0= IF	\ S: n    R:
+	    _longjmp		\ S: --   R: --
+	  THEN
+	  \ Restore return stack of CATCH at EXECUTE.
+	  catch_frame @ _rsp!	\ S: n    R: ip ds cf
+	  R> catch_frame !	\ S: n    R: ip ds
+	  R> SWAP >R		\ S: ds   R: ip n
+	  \ Restore data stack at start of CATCH
+	  _dsp!			\ S: xt   R: ip n
+	  DROP R>		\ S: n    R: ip
+	THEN
+;				\ S: 0 | n  R: --
+
+\ ( xt -- )
+: execute-compiling
+	STATE @ IF EXECUTE EXIT THEN
+	1 STATE ! EXECUTE 0 STATE !
+;
+
+\ (S: <spaces>name -- )
+\
+\ See https://github.com/ForthHub/discussion/discussions/105
+\
+: POSTPONE
+	PARSE-NAME FIND-NAME	\ S: xt | 0
+	DUP 0= -13 AND THROW	\ S: xt
+	DUP LIT, immediate?	\ S: bool
+	IF			\ S: --
+	  ['] execute-compiling
+	  COMPILE, EXIT
+	THEN
+	['] COMPILE, COMPILE,
+; IMMEDIATE
 
 \ ...  [CHAR]  ...
 \
 \  (C: <spaces>name -- ) \ (S: -- char )
 \
 : [CHAR] CHAR POSTPONE LITERAL ; IMMEDIATE
-
-\ ... ['] name ...
-\
-\  (C: <spaces>name -- ) \ (S: -- xt )
-\
-: ['] ' POSTPONE LITERAL ; IMMEDIATE
 
 \ ... BEGIN ... AGAIN
 \ ... BEGIN ... test UNTIL ...
@@ -489,46 +585,6 @@ CREATE PAD /PAD CHARS ALLOT
 \	A.3.2.3.2 Control-flow stack
 \
 : AHEAD POSTPONE _branch >HERE 0 , ; IMMEDIATE
-
-\ ... test IF ... THEN ...
-\ ... test IF ... ELSE ... THEN ...
-\
-\  (C: -- forw ) \ (S: flag -- )
-\
-\ @see
-\	A.3.2.3.2 Control-flow stack
-\
-\ @note
-\	It's possible to put an IF...THEN (or IF...ELSE...THEN) statement
-\	inside another IF...THEN statement, so long as every IF has one THEN.
-\
-\	DUP test1 IF
-\	  ...
-\	ELSE
-\	  DUP test2 IF
-\	    ...
-\	  ELSE
-\	    ...
-\	  THEN
-\	THEN DROP
-\
-: IF POSTPONE _branchz >HERE 0 , ; IMMEDIATE
-
-\ ... AHEAD ... THEN ...
-\ ... test IF ... THEN ...
-\ ... test IF ... ELSE ... THEN ...
-\
-\  (C: forw -- )
-\
-\ @see
-\	A.3.2.3.2 Control-flow stack
-\
-: THEN				\  C: forw_off
-	>HERE SWAP -		\  C: dist
-	DUP			\  C: dist dist
-	HERE SWAP -		\  C: dist forw_addr
-	!			\  C: --
-; IMMEDIATE
 
 \ ... test IF ... ELSE ... THEN ...
 \
@@ -598,12 +654,6 @@ CREATE PAD /PAD CHARS ALLOT
 \ (S: n1 n2 -- n3 )
 \
 : MIN 2DUP > IF SWAP THEN DROP ;
-
-\ ... ?DUP ...
-\
-\ (S: x -- 0 | x x )
-\
-: ?DUP DUP IF DUP THEN ;
 
 \ (S: i*x i -- )
 : n,
@@ -728,43 +778,6 @@ CREATE PAD /PAD CHARS ALLOT
 	  '\n' PARSE 2DROP	(   Skip up to and including newline. )
 	THEN
 ; IMMEDIATE
-
-VARIABLE catch_frame
-
-\ ... CATCH ...
-\
-\ ( i*x xt -- j*x 0 | i*x n )
-\
-: CATCH				\ S: xt   R: ip
-	_dsp@ >R		\ S: xt   R: ip ds
-	catch_frame @ >R	\ S: xt   R: ip ds cf
-	_rsp@ catch_frame !	\ S: xt   R: ip ds cf
-	EXECUTE			\ S: --   R: ip ds cf
-	R> catch_frame !	\ S: --   R: ip ds
-	R> DROP			\ S: --   R: ip
-	0			\ S: 0    R: ip
-;				\ S: 0    R: --
-
-\ ... THROW ...
-\
-\ ( k*x n -- k*x | i*x n )
-\
-: THROW				\ S: n    R:
-	\ 0 THROW is a no-op.
-	?DUP IF			\ S: n    R:
-	  \ When no catch frame, throw to C.
-	  catch_frame @ 0= IF	\ S: n    R:
-	    _longjmp		\ S: --   R: --
-	  THEN
-	  \ Restore return stack of CATCH at EXECUTE.
-	  catch_frame @ _rsp!	\ S: n    R: ip ds cf
-	  R> catch_frame !	\ S: n    R: ip ds
-	  R> SWAP >R		\ S: ds   R: ip n
-	  \ Restore data stack at start of CATCH
-	  _dsp!			\ S: xt   R: ip n
-	  DROP R>		\ S: n    R: ip
-	THEN
-;				\ S: 0 | n  R: --
 
 \ ... TYPE ...
 \

@@ -1108,7 +1108,6 @@ p4Repl(P4_Ctx *ctx)
 	static P4_Word w_lit = P4_WORD("LIT", &&_lit, 0);
 	static P4_Word w_exit = P4_WORD("EXIT", &&_exit, 0);
 	static P4_Word w_repl = P4_WORD("_repl", &&_repl, 0);
-	static P4_Word w_post = P4_WORD("POSTPONE", &&_post, P4_BIT_IMM);
 
 	/* When the REPL executes a word, it puts the XT of the word here
 	 * and starts the machine with the IP pointed to exec[].  When the
@@ -1162,7 +1161,6 @@ p4Repl(P4_Ctx *ctx)
 		P4_WORD("IMMEDIATE",	&&_immediate,	P4_BIT_IMM),
 		P4_WORD("immediate?",	&&_is_immediate, 0),		// p4
 		P4_WORD("MARKER",	&&_marker,	0),
-		P4_WORD("POSTPONE",	&&_postpone,	P4_BIT_IMM),
 		P4_WORD("STATE",	&&_state,	0),
 
 		/* Data Space - Alignment */
@@ -1175,7 +1173,7 @@ p4Repl(P4_Ctx *ctx)
 		P4_WORD("UNUSED",	&&_unused,	0),
 
 		/* Data Space - Access */
-		P4_WORD("_ctx",		&&_ctx,		0),
+		P4_WORD("_ctx",		&&_ctx,		0),		// p4
 		P4_WORD("!",		&&_store,	0),
 		P4_WORD(">R",		&&_to_rs,	0),
 		P4_WORD("@",		&&_fetch,	0),
@@ -1637,38 +1635,6 @@ _allot:		w = P4_POP(ctx->ds);
 
 		// ( -- )
 _align:		p4Align(ctx);
-		NEXT;
-
-
-		/* POSTPONE <spaces>name
-		 *
-		 * <Arnie>
-		 * "Compile now or compile later! Execute now or execute later!"
-		 * </Arnie>
-		 *
-		 * For immediate words, simply compile the word into the current
-		 * definition for execution when the current definition is later
-		 * executed (during definition of another word).  Otherwise compile
-		 * the word during the definition of another word.
-		 *
-		 * Ideally we don't need _post for an immediate word, but it makes
-		 * SEE easier to implement.
-		 */
-_postpone:	str = p4ParseName(&ctx->input);
-		word = p4FindName(ctx, str.string, str.length);
-		if (word == NULL) {
-			p4Bp(ctx);
-			LONGJMP(ctx->on_throw, P4_THROW_UNDEFINED);
-		}
-		ctx->words = p4WordAppend(ctx, ctx->words, (P4_Cell) &w_post);
-		ctx->words = p4WordAppend(ctx, ctx->words, (P4_Cell) word);
-		NEXT;
-
-_post:		w = *ip++;
-		if (P4_WORD_IS_IMM(w.w)) {
-			goto *w.xt->code;
-		}
-		ctx->words = p4WordAppend(ctx, ctx->words, w);
 		NEXT;
 
 		/*
@@ -2280,8 +2246,7 @@ _seext:		// ( xt -- )
 					w.u += P4_CELL + P4_CELL_ALIGN(w.p[1].u + 1);
 				} else {
 					(void) printf("%.*s ", (int) x.w->name.length, x.w->name.string);
-					if (w.p[-1].xt != &w_post
-					&& (x.w->code == &&_branch || x.w->code == &&_branchz || x.w->code == &&_call)) {
+					if ((x.w->code == &&_branch || x.w->code == &&_branchz || x.w->code == &&_call)) {
 						/* If a branch/call is postponed then it is a control
 						 * structure definition so what follows is an xt, not
 						 * a relative distance.
