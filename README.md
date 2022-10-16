@@ -1841,6 +1841,11 @@ Branch relative if zero (0).  The integer that immediately follows is the relati
 Call relative.  The integer that immediately follows is the relative distance in address units from the integer's address.  Used in the definition of flow control words, like `RECURSE`.
 
 - - -
+#### _ctx
+( -- `aaddr` )  
+The base address of the Post4 current machine context.
+
+- - -
 #### _ds
 ( -- `aaddr` `n` )  
 Push the data stack base `aaddr` address and current depth `n` (before executing `_ds`).  This stack is a fixed size and grows upward.
@@ -1848,7 +1853,7 @@ Push the data stack base `aaddr` address and current depth `n` (before executing
 - - -
 #### _dsp!
 ( `aaddr` -- )  
-Store `addr` into the data stack pointer.
+Store `aaddr` into the data stack pointer.
 
 - - -
 #### _dsp@
@@ -1873,7 +1878,7 @@ Push the return stack base address and current depth.  This stack is a fixed siz
 - - -
 #### _rsp!
 ( `aaddr` -- )  
-Store `addr` into the return stack pointer.
+Store `aaddr` into the return stack pointer.
 
 - - -
 #### _rsp@
@@ -1894,6 +1899,11 @@ Utility word used to define `.S` and `.rs`.
 #### _stdin
 ( -- )  
 Set source to standard input; see `cat.p4` example.
+
+- - -
+#### _window
+( -- `rows` `cols` )  
+Return the terminal window dimensions.
 
 - - -
 
