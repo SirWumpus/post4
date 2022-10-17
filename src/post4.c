@@ -1226,7 +1226,6 @@ p4Repl(P4_Ctx *ctx)
 		P4_WORD("bye-code",	&&_bye_code,	0),		// p4
 		P4_WORD("env",		&&_env,		0),		// p4
 		P4_WORD("_SEEXT",	&&_seext,	0),		// p4
-		P4_WORD("NAME>STRING",	&&_name_string,	0),
 
 		/* I/O */
 		P4_WORD(">IN",		&&_input_offset,0),
@@ -2156,12 +2155,6 @@ _parse_name:	str = p4ParseName(&ctx->input);
 _find_name:	w = P4_POP(ctx->ds);
 		x = P4_TOP(ctx->ds);
 		P4_TOP(ctx->ds).w = p4FindName(ctx, x.s, w.z);
-		NEXT;
-
-_name_string:	// ( xt -- caddr u )
-		w = P4_TOP(ctx->ds);
-		P4_TOP(ctx->ds).s = w.w->name.string;
-		P4_PUSH(ctx->ds, (P4_Size)w.w->name.length);
 		NEXT;
 
 		// ( ms -- )

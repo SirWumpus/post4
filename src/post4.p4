@@ -1788,12 +1788,12 @@ VARIABLE SCR
 
 BEGIN-STRUCTURE p4_string
 	FIELD: str.length
-	FIELD: str.name		\ pointer C string
+	FIELD: str.string	\ pointer C string
 END-STRUCTURE
 
 BEGIN-STRUCTURE p4_word
 	FIELD: w.prev		\ pointer previous word
-	FIELD: w.word		\ p4_string
+	FIELD: w.name		\ p4_string
 	FIELD: w.bits
 	FIELD: w.code		\ pointer
 	FIELD: w.mdata		\ data size
@@ -1827,7 +1827,7 @@ END-STRUCTURE
 \
 \	_ctx		 	\ Post4 machine context pointer
 \	ctx.words @		\ pointer to most recent word
-\	w.word s.name @		\ pointer to word name
+\	w.name str.string @	\ pointer to word name
 \	puts			\ write name
 \
 BEGIN-STRUCTURE p4_ctx
@@ -1845,6 +1845,16 @@ BEGIN-STRUCTURE p4_ctx
 	\ ctx.on_throw		\ size varies by host OS
 END-STRUCTURE
 
+\ ... NAME>STRING ...
+\
+\ ( nt -- caddr u )
+\
+: NAME>STRING
+	  w.name 		\ S: nt
+	  DUP str.string @	\ S: nt name
+	  SWAP str.length @	\ S: name length
+;
+
 \ ... WORDS ...
 \
 \ ( -- )
@@ -1853,9 +1863,7 @@ END-STRUCTURE
 	0 >R			\ S: --  R: col
 	_ctx ctx.words @	\ S: w
 	BEGIN
-	  DUP w.word 		\ S: w word  R: col
-	  DUP str.name @	\ S: w word name  R: col
-	  SWAP str.length @	\ S: w name length  R: col
+	  DUP NAME>STRING	\ S: w word  R: col
 	  DUP R> + 1+		\ S: w name length col'  R: --
 	  \ Does current column exceed terminal width?
 	  DUP _window NIP >= IF	\ S: w name length col'  R: --
