@@ -206,7 +206,7 @@ typedef enum {
 } P4_Block_State;
 
 typedef struct {
-	P4_Block_State	state;
+	P4_Int		state;
 	P4_Uint		number;
 	P4_Char		buffer[P4_BLOCK_SIZE];
 } P4_Block;
