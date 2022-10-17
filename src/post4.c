@@ -678,13 +678,13 @@ p4Accept(P4_Input *input, P4_Char *buf, P4_Size size)
 	return ptr - buf;
 }
 
-P4_Uint
+P4_Int
 p4Refill(P4_Ctx *ctx, P4_Input *input)
 {
 	P4_Int n;
 
 	if (P4_INPUT_IS_STR(ctx->input)) {
-		return 0;
+		return P4_FALSE;
 	}
 #ifdef HAVE_TCSETATTR
 	/* For a terminal restore original line input and echo settings. */
@@ -694,12 +694,12 @@ p4Refill(P4_Ctx *ctx, P4_Input *input)
 	}
 #endif
 	if ((n = p4Accept(&ctx->input, ctx->input.buffer, ctx->input.size)) < 0) {
-		return 0;
+		return P4_FALSE;
 	}
 	input->length = n;
 	input->offset = 0;
 
-	return 1;
+	return P4_TRUE;
 }
 
 /***********************************************************************
@@ -1528,7 +1528,7 @@ _immediate:	P4_WORD_SET_IMM(ctx->words);
 
 _is_immediate:	// ( xt -- bool )
 		w = P4_TOP(ctx->ds);
-		P4_TOP(ctx->ds).n = P4_WORD_IS_IMM(w.xt);
+		P4_TOP(ctx->ds).n = P4_BOOL(P4_WORD_IS_IMM(w.xt));
 		NEXT;
 
 _marker:	str = p4ParseName(&ctx->input);
@@ -1978,18 +1978,18 @@ _rshift:	w = P4_POP(ctx->ds);
 		 */
 		// ( x -- flag )
 _eq0:		w = P4_TOP(ctx->ds);
-		P4_TOP(ctx->ds).u = w.u == 0 ? ~0 : 0;
+		P4_TOP(ctx->ds).u = P4_BOOL(w.u == 0);
 		NEXT;
 
 		// ( x -- flag )
 _lt0:		w = P4_TOP(ctx->ds);
-		P4_TOP(ctx->ds).u = w.n < 0 ? ~0 : 0;
+		P4_TOP(ctx->ds).u = P4_BOOL(w.n < 0);
 		NEXT;
 
 		// ( u1 u2 -- )
 _u_lt:		w = P4_POP(ctx->ds);
 		x = P4_TOP(ctx->ds);
-		P4_TOP(ctx->ds).u = x.u < w.u ? ~0 : 0;
+		P4_TOP(ctx->ds).u = P4_BOOL(x.u < w.u);
 		NEXT;
 
 
@@ -2035,11 +2035,11 @@ _restore_input:	w = P4_POP(ctx->ds);
 		P4_DROP(ctx->ds, w.n);
 		/* TODO restore file position if possible, true on failure. */
 		(void) memcpy(&ctx->input, ctx->ds.top + 1, sizeof (ctx->input));
-		P4_PUSH(ctx->ds, (P4_Int) 0);
+		P4_PUSH(ctx->ds, (P4_Int) P4_FALSE);
 		NEXT;
 
 		// ( -- flag)
-_refill:	w.u = p4Refill(ctx, &ctx->input);
+_refill:	w.n = p4Refill(ctx, &ctx->input);
 		P4_PUSH(ctx->ds, w);
 		NEXT;
 
@@ -2075,7 +2075,7 @@ _key_ready:	(void) fflush(stdout);
 			}
 #endif
 		}
-		P4_PUSH(ctx->ds, (P4_Uint)(ctx->input.unget != EOF ? ~0 : 0));
+		P4_PUSH(ctx->ds, (P4_Uint) P4_BOOL(ctx->input.unget != EOF));
 		NEXT;
 
 		// ( c -- )

@@ -134,6 +134,10 @@ extern "C" {
  *** Types
  ***********************************************************************/
 
+#define P4_FALSE	( 0)
+#define P4_TRUE		(~0)
+#define P4_BOOL(x)	(-(x))		/* negate 2's complement C boolean */
+
 typedef struct {
 	int argc;
 	char **argv;
