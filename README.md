@@ -1121,6 +1121,11 @@ If `u` is greater than zero (0), copy from `src` the contents of `u` consecutive
 Wait at least `u` milliseconds.
 
 - - -
+#### NAME>COMPILE
+( `nt` -- `xt` `xt-compile` )  
+Given a name token `nt` (aka `xt` in Post4) return the word's `xt` and the action `xt-compile` to perform when compiling.
+
+- - -
 #### NAME>STRING
 ( `nt` -- `caddr` `u` )  
 Given a name token `nt` (aka `xt` in Post4) return the word's read-only name string.

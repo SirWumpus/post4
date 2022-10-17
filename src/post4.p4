@@ -484,6 +484,24 @@ CREATE PAD /PAD CHARS ALLOT
 \
 : ?DUP DUP IF DUP THEN ;
 
+\ ... NAME>COMPILE ...
+\
+\ ( nt -- xt xt-compile )
+\
+\ @note
+\	In Post4 an name token `nt` is the same as an execution token `xt`.
+\
+\ @see
+\	A.15.6.2.1909.10 NAME>COMPILE
+\
+: NAME>COMPILE
+	DUP immediate?
+	IF
+	  ['] EXECUTE EXIT
+	THEN
+	['] COMPILE,
+;
+
 VARIABLE catch_frame
 
 \ ... CATCH ...
