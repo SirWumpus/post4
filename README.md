@@ -135,6 +135,13 @@ repeatedly to create further generations.
         $ post4 life.p4
 
 
+### life1d.p4 - [One Dimensional Cellular Atomata](https://en.wikipedia.org/wiki/Cellular_automaton)
+
+This example demostrates five  Wolfram rules 30, 90, 110, 184, and 104 using the same initial state.
+
+        $ post4 life1d.p4
+
+
 ### rand.p4
 
 Pseudo-random number generators.  One is the simple code example from the ISO C11 draft April 12, 2011,
