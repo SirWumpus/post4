@@ -1186,7 +1186,6 @@ p4Repl(P4_Ctx *ctx)
 		P4_WORD("MOVE",		&&_move,	0),
 		P4_WORD("PICK",		&&_pick,	0),
 		P4_WORD("R>",		&&_from_rs,	0),
-		P4_WORD("R@",		&&_rs_copy,	0),
 		P4_WORD("ROLL",		&&_roll,	0),
 		P4_WORD("SWAP",		&&_swap,	0),
 		P4_WORD("BASE",		&&_base,	0),
@@ -1805,12 +1804,6 @@ _to_rs:		w = P4_POP(ctx->ds);
 		// (R: x -- )
 _from_rs:	p4StackCanPopPush(ctx, &ctx->rs, 1, 0);
 		w = P4_POP(ctx->rs);
-		P4_PUSH(ctx->ds, w);
-		NEXT;
-
-		// ( -- x )(R: x -- x)
-_rs_copy:	p4StackCanPopPush(ctx, &ctx->rs, 1, 1);
-		w = P4_TOP(ctx->rs);
 		P4_PUSH(ctx->ds, w);
 		NEXT;
 

@@ -139,6 +139,12 @@ CREATE PAD /PAD CHARS ALLOT
 : CELL+ /CELL + ;
 : CELL- /CELL - ;
 
+\ ... R@ ...
+\
+\ ( -- x )(R: x -- x)
+\
+: R@ R> R> DUP >R SWAP >R ;
+
 \ ... DROPALL ...
 \
 \ ( i*x -- )
