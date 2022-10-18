@@ -2015,7 +2015,7 @@ _accept:	w = P4_POP(ctx->ds);
 
 		// ( -- xn ... x1 n )
 _save_input:	w.n = sizeof (P4_Input) / P4_CELL;
-		p4StackCanPopPush(ctx, &ctx->rs, 0, w.n);
+		p4StackCanPopPush(ctx, &ctx->ds, 0, w.n);
 		(void) memcpy(ctx->ds.top + 1, &ctx->input, sizeof (ctx->input));
 		/* TODO save file position. */
 		P4_DROP(ctx->ds, -w.n);
