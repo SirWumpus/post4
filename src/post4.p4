@@ -679,38 +679,38 @@ VARIABLE catch_frame
 \
 : MIN 2DUP > IF SWAP THEN DROP ;
 
-\ (S: i*x i -- )
+\ (S: x*i i -- )
 : n,
-	DUP ,
-	BEGIN ?DUP WHILE
-	  1- SWAP ,
+	DUP ,			\ S: x1 .. xi i
+	BEGIN ?DUP WHILE	\ S: x1 .. xi i
+	  1- SWAP ,		\ S: x1 .. xi' i'
 	REPEAT
 ;
 
-\ (S: aaddr -- i*x )
+\ (S: aaddr -- x*i )
 : n@
-	DUP @ SWAP		\ S: n aaddr
-	OVER CELLS + SWAP	\ S: aaddr' n
-	BEGIN ?DUP WHILE
-	  1- >R
-	  DUP @ SWAP CELL-
-	  R>
-	REPEAT DROP
+	DUP @ SWAP		\ S: i addr
+	OVER CELLS + SWAP	\ S: addr' i
+	BEGIN ?DUP WHILE	\ S: ... addr' i
+	  1- >R			\ S: addr'  R: i'
+	  DUP @ SWAP CELL-	\ S: xi ... addr" R: i'
+	  R>			\ S: xi ... addr" i'
+	REPEAT DROP		\ S: x*i
 ;
 
-\ (S: i*x aaddr -- )
+\ (S: x*i aaddr -- )
 : n!
-	DUP @
-	BEGIN ?DUP WHILE
-	  1- >R
-	  CELL+ TUCK !
-	  R>
-	REPEAT DROP
+	DUP @			\ S: x1 .. xi addr i
+	BEGIN ?DUP WHILE	\ S: x1 .. xi addr i
+	  1- >R			\ S: x1 .. xi addr R: i'
+	  CELL+ TUCK !		\ S: x1 .. xi' addr' R: i'
+	  R>			\ S: x1 .. xi' i'
+	REPEAT DROP		\ S: --
 ;
 
 \  value VALUE name
 \
-\  (C: x <spaces>name -- ) \ (S: -- x )
+\  (C: x <spaces>name -- ) (S: -- x )
 \
 \ @note
 \	Similar definition to CONSTANT.  Essentially VALUE when defined does:
@@ -724,8 +724,16 @@ VARIABLE catch_frame
 \ @see
 \	TO
 \
-: VALUE CREATE 1 n, DOES> n@ ;	\ CELL+ @
-: 2VALUE CREATE 2 n, DOES> n@ ;	\ CELL+ 2@
+: VALUE CREATE 1 n, DOES> n@ ;
+
+\  lo hi 2VALUE name
+\
+\  (C: lo hi <spaces>name -- ) (S: -- lo hi )
+\
+\ @see
+\	TO
+\
+: 2VALUE CREATE 2 n, DOES> n@ ;
 
 \ ... x TO name ...
 \
