@@ -1409,6 +1409,15 @@ MAX-CHAR CONSTANT /COUNTED-STRING
 \
 : cputs DUP C@ SWAP CHAR+ SWAP TYPE ;
 
+\ ( -- caddr u )
+: SLIT R> DUP CELL+ CELL+ >R 2@ ;
+
+\ ... SLITERAL ...
+\
+\ (C: caddr u -- )(S: -- caddr u )
+\
+: SLITERAL POSTPONE SLIT , , ;
+
 \ Number of transitent string buffers, power of 2.
 \ Minimum 2 buffers for S" and S\".
 \
