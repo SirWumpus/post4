@@ -520,17 +520,16 @@ p4MemDump(FILE *fp, P4_Char *addr, P4_Size length)
 		}
 		if ((count & 0xF) == 0) {
 			fputc(' ', fp);
-			for ( ; s < addr; s++) {
+			for ( ; s <= addr; s++) {
 				(void) fputc(isprint(*s) ? *s : '.', fp);
 			}
-			(void) fputc('\n', fp);
+			(void) fprintf(fp, "\r\n");
 		}
 	}
 	if ((count & 0xF) != 0) {
 		do {
 			(void) fputs("   ", fp);
-			count++;
-			if ((count & 0x3) == 0) {
+			if ((++count & 0x3) == 0) {
 				(void) fputc(' ', fp);
 			}
 		} while ((count & 0xF) != 0);
@@ -538,7 +537,7 @@ p4MemDump(FILE *fp, P4_Char *addr, P4_Size length)
 		for ( ; s < addr; s++) {
 			(void) fputc(isprint(*s) ? *s : '.', fp);
 		}
-		(void) fputc('\n', fp);
+		(void) fprintf(fp, "\r\n");
 	}
 }
 
@@ -867,10 +866,12 @@ p4WordCreate(P4_Ctx *ctx, const char *name, size_t length, P4_Code code)
 {
 	P4_Word *word;
 
-	if ((word = calloc(1, sizeof (*word))) == NULL) {
+	if ((word = malloc(sizeof (*word))) == NULL) {
 		goto error0;
 	}
 	word->mdata = sizeof (*word->data);
+	word->ndata = 0;
+	word->bits = 0;
 
 	if ((word->name.string = strndup(name, length)) == NULL) {
 		goto error1;
@@ -895,13 +896,14 @@ p4WordAllot(P4_Ctx *ctx, P4_Word *word, P4_Int n)
 	size_t size = P4_CELL_ALIGN(word->ndata + n);
 
 	/* Check for size overflow. */
-	if (SIZE_MAX - word->mdata <= size
-	|| (word = realloc(word, sizeof (*word) + size)) == NULL) {
-		LONGJMP(ctx->on_throw, P4_THROW_RESIZE);
+	if (word->mdata <= size) {
+		if ((word = realloc(word, sizeof (*word) + size)) == NULL) {
+			LONGJMP(ctx->on_throw, P4_THROW_RESIZE);
+		}
+		word->mdata = size;
 	}
 
 	/* ... but house keeping done in address units. */
-	word->mdata = size;
 	word->ndata += n;
 
 	return word;
@@ -1491,9 +1493,9 @@ _colon:		if (ctx->state == P4_STATE_COMPILE) {
 		str = p4ParseName(&ctx->input);
 		goto _do_colon;
 
-_do_colon:	// (C: -- colon) (R: -- ip)
+		// (C: -- colon) (R: -- ip)
 		// Save the current tops so we can check for imbalance.
-		w.p = ctx->ds.top;
+_do_colon:	w.p = ctx->ds.top;
 		P4_PUSH(ctx->ds, w);
 		x.p = ctx->rs.top;
 		P4_PUSH(ctx->ds, x);
@@ -1502,8 +1504,8 @@ _do_colon:	// (C: -- colon) (R: -- ip)
 		P4_WORD_SET_HIDDEN(word);
 		NEXT;
 
-_semicolon:	// (C: colon -- ) (R: ip -- )
-		ctx->words = p4WordAppend(ctx, ctx->words, (P4_Cell) &w_exit);
+		// (C: colon -- ) (R: ip -- )
+_semicolon:	ctx->words = p4WordAppend(ctx, ctx->words, (P4_Cell) &w_exit);
 		x = P4_POP(ctx->ds);
 		w = P4_POP(ctx->ds);
 		if (w.p != ctx->ds.top || x.p != ctx->rs.top) {
@@ -1524,8 +1526,8 @@ _semicolon:	// (C: colon -- ) (R: ip -- )
 _immediate:	P4_WORD_SET_IMM(ctx->words);
 		NEXT;
 
-_is_immediate:	// ( xt -- bool )
-		w = P4_TOP(ctx->ds);
+		// ( xt -- bool )
+_is_immediate:	w = P4_TOP(ctx->ds);
 		P4_TOP(ctx->ds).n = P4_BOOL(P4_WORD_IS_IMM(w.xt));
 		NEXT;
 
@@ -1566,14 +1568,17 @@ _evaluate:	w = P4_POP(ctx->ds);
 		 *      ;
 		 *
 		 * This page http://forth.org/svfig/Len/definwds.htm explains it well.
+		 *
+		 * CREATE can also be used on its own to assign buffers or initialised
+		 * data.
+		 *
+		 *	CREATE PAD /PAD CHARS ALLOT
+		 *	CREATE stuff 1 , 2 , 3 , 4 ,
 		 */
 		// ( -- addr )
 _create:	str = p4ParseName(&ctx->input);
 		word = p4WordCreate(ctx, str.string, str.length, &&_data_field);
 		P4_WORD_SET_CREATED(word);
-		// Reserve the first cell for a code pointer for DOES>.
-		// Wasted cell if DOES> not applied to this word.
-		word->ndata += P4_CELL;
 		NEXT;
 
 		// DOES>
@@ -1582,26 +1587,26 @@ _does:		word = ctx->words;
 			LONGJMP(ctx->on_throw, P4_THROW_NOT_CREATED);
 		}
 		word->code = &&_do_does;
-		// New word's code follows DOES> of the defining word.
+		// Append the IP of the words following DOES> of the defining
+		// word after the data of the current word being defined.
 		//
 		//	: word CREATE ( store data) DOES> ( code words) ;
 		//	                                  ^--- IP
-		//
-		word->data[0].p = ip;
+		ctx->words = p4WordAppend(ctx, ctx->words, (P4_Cell) ip);
 		goto _exit;
 
 		// ( -- aaddr)
-_do_does:	P4_PUSH(ctx->ds, w.xt->data + 1);
+_do_does:	P4_PUSH(ctx->ds, w.xt->data);
 		// Remember who called us.
 		p4StackCanPopPush(ctx, &ctx->rs, 0, 1);
 		P4_PUSH(ctx->rs, ip);
 		// Continue execution just after DOES> of the defining word.
-		ip = w.xt->data[0].p;
+		ip = w.xt->data[(w.w->ndata / P4_CELL) - 1].p;
 		NEXT;
 
 		// ( -- addr )
 		// w contains xt loaded by _next or _execute.;
-_data_field:	P4_PUSH(ctx->ds, w.xt->data + 1);
+_data_field:	P4_PUSH(ctx->ds, w.xt->data);
 		NEXT;
 
 		// ( xt -- addr )
@@ -1609,7 +1614,7 @@ _body:		w = P4_TOP(ctx->ds);
 		if (!P4_WORD_WAS_CREATED(w.w)) {
 			LONGJMP(ctx->on_throw, P4_THROW_NOT_CREATED);
 		}
-		P4_TOP(ctx->ds).p = w.xt->data + 1;
+		P4_TOP(ctx->ds).p = w.xt->data;
 		NEXT;
 
 
@@ -1662,8 +1667,8 @@ _state:		P4_PUSH(ctx->ds, (P4_Cell *) &ctx->state);
 _base:		P4_PUSH(ctx->ds, (P4_Cell *) &ctx->radix);
 		NEXT;
 
-_pad_size:	// ( -- u )
-		P4_PUSH(ctx->ds, (P4_Uint) P4_PAD_SIZE);
+		// ( -- u )
+_pad_size:	P4_PUSH(ctx->ds, (P4_Uint) P4_PAD_SIZE);
 		NEXT;
 
 		// ( -- u )
@@ -2208,8 +2213,8 @@ _dump:		x = P4_POP(ctx->ds);
 		p4MemDump(stdout, w.s, x.u);
 		NEXT;
 
-_seext:		// ( xt -- )
-		word = P4_POP(ctx->ds).xt;
+		// ( xt -- )
+_seext:		word = P4_POP(ctx->ds).xt;
 		if (word == NULL) {
 			(void) printf("\"%.*s\" ", (int)str.length, str.string);
 			LONGJMP(ctx->on_throw, P4_THROW_UNDEFINED);
@@ -2244,11 +2249,11 @@ _seext:		// ( xt -- )
 			(void) printf("; %s\r\n", P4_WORD_IS_IMM(word) ? "IMMEDIATE" : "");
 		} else if (word->code == &&_do_does) {
 			// Dump word's data.
-			for (w.u = 1, x.u = P4_CELL; x.u < word->ndata; x.u += P4_CELL, w.u++) {
+			for (w.u = 0, x.u = 0; x.u < word->ndata - P4_CELL; x.u += P4_CELL, w.u++) {
 				(void) printf(P4_HEX_FMT" ", word->data[w.u].u);
 			}
 			// Search back for code field with _enter.
-			for (w.p = word->data[0].p; w.p->xt != &&_enter; w.p--) {
+			for (w.p = word->data[(word->ndata / P4_CELL) - 1].p; w.p->xt != &&_enter; w.p--) {
 				;
 			}
 			// Find defining word.
@@ -2260,17 +2265,16 @@ _seext:		// ( xt -- )
 			);
 		} else if (word->code == &&_data_field) {
 			P4_Uint stop;
-			(void) printf("CREATE %.*s ", (int) word->name.length, word->name.string);
-			for (stop = word->ndata / P4_CELL, x.u = 1; x.u < stop; x.u++) {
-				(void) printf(P4_HEX_FMT" , ", word->data[x.u].u);
-			}
-			for (x.u *= P4_CELL; x.u < word->ndata; x.u++) {
-				(void) printf(P4_CHAR_FMT" C, ", ((P4_Char *) word->data)[x.u]);
-			}
-			(void) printf("\r\n");
-			p4MemDump(stdout, (P4_Char *)(word->data + 1), word->ndata - P4_CELL);
+			(void) printf(
+				"CREATE %.*s ( size %zu )\r\n",
+				(int) word->name.length, word->name.string, word->ndata
+			);
+			p4MemDump(stdout, (P4_Char *)(word->data), word->ndata);
 		} else {
-			(void) printf("(unknown) 0x%p\r\n", word->code);
+			(void) printf(
+				": %.*s ( unknown code ) 0x%p\r\n",
+				(int)word->name.length, word->name.string, word->code
+			);
 		}
 		NEXT;
 }
