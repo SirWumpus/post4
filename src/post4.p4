@@ -1596,23 +1596,21 @@ VARIABLE _str_buf_index
 ;
 
 \ (S: bool caddr u -- )
-: _abort
+: _abort_msg?
 	ROT IF
-	  \ Only write the exception message if nobody to CATCH.
 	  catch_frame @ 0= IF
 	    TYPE CR
 	  THEN
 	  -2 THROW
-        ELSE
-	  2DROP
 	THEN
-; IMMEDIATE
+	2DROP
+;
 
 \ : X ... test ABORT" message" ...
 \
-\ (C: ccc<quote>" -- ) \ (S: i*x x1 --  | i*x ) ( R: j*x --  | j*x )
+\ (C: ccc<quote>" -- ) (S: i*x x1 --  | i*x ) ( R: j*x --  | j*x )
 \
-: ABORT" POSTPONE S" POSTPONE _abort ; IMMEDIATE compile-only
+: ABORT" POSTPONE S" POSTPONE _abort_msg? ; IMMEDIATE compile-only
 
 \ ... SCR ...
 \
