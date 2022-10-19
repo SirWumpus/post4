@@ -88,6 +88,15 @@ Example of implementing `cat(1)`.
         $ post4 cat.p4 </etc/hosts
 
 
+### catch_throw.p4
+
+A demonstration of using CATCH and THROW.
+
+        $ post4 -i catch_throw.p4
+        Enter TRY-IT or RETRY-IT words to test CATCH / THROW.
+        ok 
+
+
 ### dumpargs.p4
 
 Simple demonstration on how to access the command line arguments.
