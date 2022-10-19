@@ -87,7 +87,7 @@ MARKER rm_core_words
 : C, 1 CHARS reserve C! ;
 
 \ ( xt -- )
-: COMPILE, , ;
+: COMPILE, , ; compile-only
 
 \ value CONSTANT name
 \
@@ -129,8 +129,8 @@ CREATE PAD /PAD CHARS ALLOT
 \
 : VARIABLE CREATE 0 , ;
 
-: [ FALSE STATE ! ; IMMEDIATE
-: ] TRUE STATE ! ;
+: [ FALSE STATE ! ; IMMEDIATE \ allow interpret
+: ] TRUE STATE ! ; \ allow interpret
 
 \ ... CELL+ ...
 \
@@ -143,7 +143,7 @@ CREATE PAD /PAD CHARS ALLOT
 \
 \ ( -- x )(R: x -- x)
 \
-: R@ R> R> DUP >R SWAP >R ;
+: R@ R> R> DUP >R SWAP >R ; \ allow interpret
 
 \ ... DROPALL ...
 \
@@ -312,7 +312,7 @@ CREATE PAD /PAD CHARS ALLOT
 	R> ROT 			\ S: x2 ip x1  R: --
 	>R SWAP			\ S: ip x2  R: x1
 	>R >R			\ S: --  R: x1 x2 ip
-;
+; \ allow interpret
 
 \ ... 2R> ...
 \
@@ -322,7 +322,7 @@ CREATE PAD /PAD CHARS ALLOT
 	R> R> R>		\ S: ip x2 x1  R: --
 	ROT			\ S: x2 x1 ip  R: --
 	>R SWAP			\ S: x1 x2  R: ip
-;
+; \ allow interpret
 
 \ ... 2R@ ...
 \
@@ -332,7 +332,7 @@ CREATE PAD /PAD CHARS ALLOT
 	R> 2R>			\ S: ip x1 x2  R: --
 	2DUP 2>R		\ S: ip x1 x2  R: x1 x2
 	ROT >R			\ S: x1 x2  R: x1 x2 ip
-;
+; \ allow interpret
 
 \ ... */ ...
 \
@@ -456,7 +456,7 @@ CREATE PAD /PAD CHARS ALLOT
 \
 \  (C: x -- ) (S: x -- )
 \
-: LITERAL LIT, ; IMMEDIATE
+: LITERAL LIT, ; IMMEDIATE compile-only
 
 \ ... test IF ... THEN ...
 \ ... test IF ... ELSE ... THEN ...
@@ -466,7 +466,7 @@ CREATE PAD /PAD CHARS ALLOT
 \ @see
 \	A.3.2.3.2 Control-flow stack
 \
-: IF ['] _branchz COMPILE, >HERE 0 , ; IMMEDIATE
+: IF ['] _branchz COMPILE, >HERE 0 , ; IMMEDIATE compile-only
 
 \ ... AHEAD ... THEN ...
 \ ... test IF ... THEN ...
@@ -482,7 +482,7 @@ CREATE PAD /PAD CHARS ALLOT
 	DUP			\  C: dist dist
 	HERE SWAP -		\  C: dist forw_addr
 	!			\  C: --
-; IMMEDIATE
+; IMMEDIATE compile-only
 
 \ ... ?DUP ...
 \
@@ -508,6 +508,20 @@ CREATE PAD /PAD CHARS ALLOT
 	['] COMPILE,
 ;
 
+\ ... NAME>INTERPRET ...
+\
+\ ( nt -- xt | 0 )
+\
+\ @note
+\	In Post4 an name token `nt` is the same as an execution token `xt`.
+\
+: NAME>INTERPRET
+	DUP compile-only?
+	IF
+	  DROP 0 EXIT
+	THEN
+;
+
 VARIABLE catch_frame
 
 \ ... CATCH ...
@@ -522,7 +536,7 @@ VARIABLE catch_frame
 	R> catch_frame !	\ S: --   R: ip ds
 	R> DROP			\ S: --   R: ip
 	0			\ S: 0    R: ip
-;				\ S: 0    R: --
+; compile-only
 
 \ ... THROW ...
 \
@@ -543,7 +557,7 @@ VARIABLE catch_frame
 	  _dsp!			\ S: xt   R: ip n
 	  DROP R>		\ S: n    R: ip
 	THEN
-;				\ S: 0 | n  R: --
+; compile-only
 
 \ ( xt -- )
 : execute-compiling
@@ -569,13 +583,13 @@ VARIABLE catch_frame
 	  COMPILE, EXIT
 	THEN
 	['] COMPILE, COMPILE,
-; IMMEDIATE
+; IMMEDIATE compile-only
 
 \ ...  [CHAR]  ...
 \
 \  (C: <spaces>name -- ) \ (S: -- char )
 \
-: [CHAR] CHAR POSTPONE LITERAL ; IMMEDIATE
+: [CHAR] CHAR POSTPONE LITERAL ; IMMEDIATE compile-only
 
 \ ... BEGIN ... AGAIN
 \ ... BEGIN ... test UNTIL ...
@@ -586,7 +600,7 @@ VARIABLE catch_frame
 \ @see
 \	A.3.2.3.2 Control-flow stack
 \
-: BEGIN >HERE ; IMMEDIATE
+: BEGIN >HERE ; IMMEDIATE compile-only
 
 \ ... BEGIN ... AGAIN
 \
@@ -595,7 +609,7 @@ VARIABLE catch_frame
 \ @see
 \	A.3.2.3.2 Control-flow stack
 \
-: AGAIN POSTPONE _branch >HERE - , ; IMMEDIATE
+: AGAIN POSTPONE _branch >HERE - , ; IMMEDIATE compile-only
 
 \ ... BEGIN ... test UNTIL ...
 \
@@ -604,7 +618,7 @@ VARIABLE catch_frame
 \ @see
 \	A.3.2.3.2 Control-flow stack
 \
-: UNTIL POSTPONE _branchz >HERE - , ; IMMEDIATE
+: UNTIL POSTPONE _branchz >HERE - , ; IMMEDIATE compile-only
 
 \ ... AHEAD ... THEN ...
 \
@@ -613,7 +627,7 @@ VARIABLE catch_frame
 \ @see
 \	A.3.2.3.2 Control-flow stack
 \
-: AHEAD POSTPONE _branch >HERE 0 , ; IMMEDIATE
+: AHEAD POSTPONE _branch >HERE 0 , ; IMMEDIATE compile-only
 
 \ ... test IF ... ELSE ... THEN ...
 \
@@ -626,7 +640,7 @@ VARIABLE catch_frame
 	POSTPONE AHEAD		\  C: forw1 forw2
 	1 CS-ROLL		\  C: forw2 forw1
 	POSTPONE THEN		\  C: forw2
-; IMMEDIATE
+; IMMEDIATE compile-only
 
 \ ... BEGIN ... test WHILE ... REPEAT ...
 \
@@ -644,7 +658,7 @@ VARIABLE catch_frame
 : WHILE				\  C: dest
 	POSTPONE IF		\  C: dest forw
 	1 CS-ROLL		\  C: forw dest
-; IMMEDIATE
+; IMMEDIATE compile-only
 
 \ ... BEGIN ... test WHILE ... REPEAT ...
 \
@@ -656,7 +670,7 @@ VARIABLE catch_frame
 : REPEAT			\  C: forw dest
 	POSTPONE AGAIN		\  C: forw
 	POSTPONE THEN		\  C: --
-; IMMEDIATE
+; IMMEDIATE compile-only
 
 \
 \ (R: -- ip )
@@ -664,7 +678,7 @@ VARIABLE catch_frame
 : RECURSE
 	POSTPONE _call
 	>HERE NEGATE ,
-; IMMEDIATE
+; IMMEDIATE compile-only
 
 \ ... ABS ...
 \
@@ -1114,7 +1128,7 @@ VARIABLE _>pic
 	  >R 1-			\  S: j*x ip n j' R: j*x
 	REPEAT
 	DROP >R >R		\  S: -- R: j*x +n ip (j*x reverse of start i*x)
-;				\  S: -- R: j*x +n
+; \ allow interpret
 
 \ ... NR> ...
 \
@@ -1131,7 +1145,7 @@ VARIABLE _>pic
 	  1-			\  S: ip j*x n i' R: i'*x
 	REPEAT
 	DROP DUP 1+ ROLL >R	\  S: ip j*x n R: ip
-;				\  S: ip j*x n R:
+; \ allow interpret
 
 \ ... limit first DO ... LOOP ...
 \
@@ -1141,7 +1155,7 @@ VARIABLE _>pic
 	POSTPONE 2>R		\ S: --  R: limit first
 	R> 0 >R	>R		\ C: --  R: 0 ip
 	POSTPONE BEGIN		\ C: dest R: 0 ip
-; IMMEDIATE
+; IMMEDIATE compile-only
 
 \ ... limit first ?DO ... LOOP ...
 \
@@ -1155,7 +1169,7 @@ VARIABLE _>pic
 	POSTPONE IF >R 1 >R	\ C: ip  R: forw 1
 	>R			\ C: --  R: forw 1 ip
 	POSTPONE BEGIN		\ C: dest  R: forw 1 ip
-; IMMEDIATE
+; IMMEDIATE compile-only
 
 \ ... limit first DO ... IF ... LEAVE THEN ... LOOP ...
 \
@@ -1165,7 +1179,7 @@ VARIABLE _>pic
 	R> R> 1+		\ C: dest ip n'  R: n*forw
 	POSTPONE AHEAD		\ C: dest ip n' forw  R: n*forw
 	>R >R >R		\ C: dest  R: n'*forw n' ip
-; IMMEDIATE
+; IMMEDIATE compile-only
 
 \ ... limit first DO ... test ?LEAVE ... LOOP ...
 \
@@ -1175,13 +1189,13 @@ VARIABLE _>pic
 	POSTPONE IF		\ C: dest  R: n*forw n ip
 	POSTPONE LEAVE		\ C: dest  R: n'*forw n' ip
 	POSTPONE THEN		\ C: --  R: n'*forw n' ip
-;
+; compile-only
 
 \ : X ... limit first DO ... test IF ... UNLOOP EXIT THEN ... LOOP ... ;
 \
 \ (S: --  ) (R: limit index ip -- ip )
 \
-: UNLOOP R> 2R> 2DROP >R ;
+: UNLOOP R> 2R> 2DROP >R ; compile-only
 
 \ ... limit first DO ... LOOP ...
 \
@@ -1217,13 +1231,13 @@ VARIABLE _>pic
 
 	\  LEAVE branches to just after UNTIL and before UNLOOP.
 	POSTPONE UNLOOP
-; IMMEDIATE
+; IMMEDIATE compile-only
 
 \ ... limit first DO ... LOOP ...
 \
 \ (S: -- index ) (R: limit index ip -- limit index ip )
 \
-: I R> R@ SWAP >R ;
+: I R> R@ SWAP >R ; compile-only
 
 \ ... limit first DO ... LOOP ...
 \
@@ -1233,7 +1247,7 @@ VARIABLE _>pic
 	R> R> R> R@		\ S: ip i2 l2 i1  R: l1 i1
 	3 ROLL 3 ROLL 3 ROLL	\ S: i1 ip i2 l2  R: l1 i1
 	>R >R >R		\ S: i1  R: l1 i1 l2 i2 ip
-;
+; compile-only
 
 -1 1 RSHIFT CONSTANT int_max	\ 0x7F...FF
 int_max INVERT CONSTANT int_min	\ 0x80...00
@@ -1276,7 +1290,7 @@ int_max INVERT CONSTANT int_min	\ 0x80...00
 
 	\  LEAVE branches to just after UNTIL and before UNLOOP.
 	POSTPONE UNLOOP
-; IMMEDIATE
+; IMMEDIATE compile-only
 
 \ ... x CASE ... ENDCASE
 \
@@ -1289,7 +1303,7 @@ int_max INVERT CONSTANT int_min	\ 0x80...00
 \	  default action
 \	ENDCASE
 \
-0 CONSTANT CASE IMMEDIATE
+0 CONSTANT CASE IMMEDIATE compile-only
 
 \ ... test OF ... ENDOF ...
 \
@@ -1302,7 +1316,7 @@ int_max INVERT CONSTANT int_min	\ 0x80...00
 	POSTPONE IF		\ S: x1
 	POSTPONE DROP		\ S: --
 	R>			\ C: #of'
-; IMMEDIATE
+; IMMEDIATE compile-only
 
 \ ... ENDOF ...
 \
@@ -1312,7 +1326,7 @@ int_max INVERT CONSTANT int_min	\ 0x80...00
 	>R			\ C: forw1 R: #of
 	POSTPONE ELSE		\ C: forw2 R: #of
 	R>			\ C: forw2 #of R: --
-; IMMEDIATE
+; IMMEDIATE compile-only
 
 \ ... CASE ... ENDCASE ...
 \
@@ -1323,7 +1337,7 @@ int_max INVERT CONSTANT int_min	\ 0x80...00
 	0 ?DO			\ C: i*forw
 	  POSTPONE THEN		\ C: i'*forw
 	LOOP
-; IMMEDIATE
+; IMMEDIATE compile-only
 
 \
 \ ( char -- ascii )
@@ -1395,13 +1409,13 @@ MAX-CHAR CONSTANT /COUNTED-STRING
 \
 \ (C: ccc<quote>" -- ) || (S: ccc<quote>" -- caddr )
 \
-: C" [CHAR] " PARSE _cstring_append ; IMMEDIATE
+: C" [CHAR] " PARSE _cstring_append ; IMMEDIATE compile-only
 
 \ ... c\" ccc" ...
 \
 \ (C: ccc<quote>" -- ) || (S: ccc<quote>" -- caddr u )
 \
-: c\" [CHAR] " parse-escape _cstring_append ; IMMEDIATE
+: c\" [CHAR] " parse-escape _cstring_append ; IMMEDIATE compile-only
 
 \ ... cputs ...
 \
@@ -1421,7 +1435,7 @@ MAX-CHAR CONSTANT /COUNTED-STRING
 \
 \ (C: caddr u -- )(S: -- caddr u )
 \
-: SLITERAL POSTPONE SLIT , , ;
+: SLITERAL POSTPONE SLIT , , ; IMMEDIATE compile-only
 
 \ Number of transitent string buffers, power of 2.
 \ Minimum 2 buffers for S" and S\".
@@ -1507,7 +1521,7 @@ VARIABLE _str_buf_index
 \
 \ (S: ccc<quote>" -- )
 \
-: ." POSTPONE S" POSTPONE TYPE ; IMMEDIATE
+: ." POSTPONE S" POSTPONE TYPE ; IMMEDIATE compile-only
 
 \ (S: caddr1 caddr2 u -- n )
 : _strcmp
@@ -1598,7 +1612,7 @@ VARIABLE _str_buf_index
 \
 \ (C: ccc<quote>" -- ) \ (S: i*x x1 --  | i*x ) ( R: j*x --  | j*x )
 \
-: ABORT" POSTPONE S" POSTPONE _abort ; IMMEDIATE
+: ABORT" POSTPONE S" POSTPONE _abort ; IMMEDIATE compile-only
 
 \ ... SCR ...
 \
@@ -1914,7 +1928,7 @@ END-STRUCTURE
 	_ctx ctx.words !	\ C: q-sys
 	\ Start nested definition.
 	:NONAME			\ C: q-sys c-sys
-; IMMEDIATE
+; IMMEDIATE compile-only
 
 \ : newword ... [: nested words ;] ... ;
 \
@@ -1930,6 +1944,6 @@ END-STRUCTURE
 	SWAP ! 			\ C: q-sys  R: xt
 	_ctx ctx.words !	\ C: --  R: xt
 	R> POSTPONE LITERAL	\ C: --  R: --
-; IMMEDIATE
+; IMMEDIATE compile-only
 
 MARKER rm_user_words

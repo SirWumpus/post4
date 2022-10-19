@@ -1142,6 +1142,11 @@ Wait at least `u` milliseconds.
 Given a name token `nt` (aka `xt` in Post4) return the word's `xt` and the action `xt-compile` to perform when compiling.
 
 - - -
+#### NAME>INTERPRET
+( `nt` -- `xt` | 0 )  
+Given a name token `nt` (aka `xt` in Post4) return the word's `xt` for the interpretation semantics.  Otherwise if there are  no interpretation semantics, return 0.
+
+- - -
 #### NAME>STRING
 ( `nt` -- `caddr` `u` )  
 Given a name token `nt` (aka `xt` in Post4) return the word's read-only name string.
@@ -1693,6 +1698,16 @@ Subtract the size in address units of a character.
 #### cell-
 ( `aaddr1` -- `aaddr2` )  
 Subtract the size in address units of a cell from `aaddr1` giving `aaddr2`.
+
+- - -
+#### compile-only
+( -- ) immediate  
+Make the most recent definition as compile-only.  See `NAME>INTERPRET`.
+
+- - -
+#### compile-only?
+( `xt` -- `bool` )  
+Return `TRUE` if `xt` references a compile-only word; otherwise `FALSE`.
 
 - - -
 #### cputs

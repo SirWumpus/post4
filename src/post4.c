@@ -1134,9 +1134,9 @@ p4Repl(P4_Ctx *ctx)
 
 		/* Internal support. */
 		P4_WORD("_bp",		&&_bp,		P4_BIT_IMM),	// p4
-		P4_WORD("_branch",	&&_branch,	0),		// p4
-		P4_WORD("_branchz",	&&_branchz,	0),		// p4
-		P4_WORD("_call",	&&_call,	0),		// p4
+		P4_WORD("_branch",	&&_branch,	P4_BIT_COMPILE), // p4
+		P4_WORD("_branchz",	&&_branchz,	P4_BIT_COMPILE), // p4
+		P4_WORD("_call",	&&_call,	P4_BIT_COMPILE), // p4
 		P4_WORD("_ds",		&&_ds,		0),		// p4
 		P4_WORD("_dsp@",	&&_dsp_get,	0),		// p4
 		P4_WORD("_dsp!",	&&_dsp_put,	0),		// p4
@@ -1150,16 +1150,18 @@ p4Repl(P4_Ctx *ctx)
 		P4_WORD("_window",	&&_window,	0),		// p4
 
 		/* Compiling Words */
+		P4_WORD("compile-only",		&&_compile_only,	P4_BIT_IMM),	// p4
+		P4_WORD("compile-only?",	&&_is_compile,		P4_BIT_COMPILE),// p4
 		P4_WORD("'",		&&_tick,	0),
 		P4_WORD(":NONAME",	&&_noname,	0),
 		P4_WORD(":",		&&_colon,	0),
-		P4_WORD(";",		&&_semicolon,	P4_BIT_IMM),
+		P4_WORD(";",		&&_semicolon,	P4_BIT_IMM|P4_BIT_COMPILE),
 		P4_WORD(">BODY",	&&_body,	0),
 		P4_WORD("CREATE",	&&_create,	0),
-		P4_WORD("DOES>",	&&_does,	0),
+		P4_WORD("DOES>",	&&_does,	P4_BIT_COMPILE),
 		P4_WORD("EVALUATE",	&&_evaluate,	0),
 		P4_WORD("EXECUTE",	&&_execute,	0),
-		P4_WORD("EXIT",		&&_exit,	0),
+		P4_WORD("EXIT",		&&_exit,	P4_BIT_COMPILE),
 		P4_WORD("IMMEDIATE",	&&_immediate,	P4_BIT_IMM),
 		P4_WORD("immediate?",	&&_is_immediate, 0),		// p4
 		P4_WORD("MARKER",	&&_marker,	0),
@@ -1177,17 +1179,17 @@ p4Repl(P4_Ctx *ctx)
 		/* Data Space - Access */
 		P4_WORD("_ctx",		&&_ctx,		0),		// p4
 		P4_WORD("!",		&&_store,	0),
-		P4_WORD(">R",		&&_to_rs,	0),
+		P4_WORD(">R",		&&_to_rs,	0),		// allow interpret
 		P4_WORD("@",		&&_fetch,	0),
 		P4_WORD("C!",		&&_cstore,	0),
 		P4_WORD("C@",		&&_cfetch,	0),
-		P4_WORD("CS-PICK",	&&_pick,	0),		// C: on data stack
-		P4_WORD("CS-ROLL",	&&_roll,	0),		// C: on data stack
+		P4_WORD("CS-PICK",	&&_pick,	P4_BIT_COMPILE), // C: on data stack
+		P4_WORD("CS-ROLL",	&&_roll,	P4_BIT_COMPILE), // C: on data stack
 		P4_WORD("DROP",		&&_drop,	0),
 		P4_WORD("DUP",		&&_dup,		0),
 		P4_WORD("MOVE",		&&_move,	0),
 		P4_WORD("PICK",		&&_pick,	0),
-		P4_WORD("R>",		&&_from_rs,	0),
+		P4_WORD("R>",		&&_from_rs,	0),		// allow interpret
 		P4_WORD("ROLL",		&&_roll,	0),
 		P4_WORD("SWAP",		&&_swap,	0),
 		P4_WORD("BASE",		&&_base,	0),
@@ -1520,6 +1522,15 @@ _semicolon:	ctx->words = p4WordAppend(ctx, ctx->words, (P4_Cell) &w_exit);
 			/* :NONAME leaves xt on stack. */
 			P4_PUSH(ctx->ds, ctx->words);
 		}
+		NEXT;
+
+		// ( -- )
+_compile_only:	P4_WORD_SET_COMPILE(ctx->words);
+		NEXT;
+
+		// ( xt -- bool )
+_is_compile:	w = P4_TOP(ctx->ds);
+		P4_TOP(ctx->ds).n = P4_BOOL(P4_WORD_IS_COMPILE(w.xt));
 		NEXT;
 
 		// ( -- )
@@ -2246,7 +2257,9 @@ _seext:		word = P4_POP(ctx->ds).xt;
 					}
 				}
 			}
-			(void) printf("; %s\r\n", P4_WORD_IS_IMM(word) ? "IMMEDIATE" : "");
+			(void) printf(";%s", P4_WORD_IS_IMM(word) ? " IMMEDIATE" : "");
+			(void) printf("%s", P4_WORD_IS_COMPILE(word) ? " compile-only" : "");
+			(void) printf("\r\n");
 		} else if (word->code == &&_do_does) {
 			// Dump word's data.
 			for (w.u = 0, x.u = 0; x.u < word->ndata - P4_CELL; x.u += P4_CELL, w.u++) {
