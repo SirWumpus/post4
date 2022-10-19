@@ -553,7 +553,12 @@ VARIABLE catch_frame
 
 \ (S: <spaces>name -- )
 \
-\ See https://github.com/ForthHub/discussion/discussions/105
+\ @note
+\	: bar state @ 0<> . ; immediate  : foo postpone bar ;  foo
+\	Standard system should print -1.
+\
+\ @see
+\	https://github.com/ForthHub/discussion/discussions/105
 \
 : POSTPONE
 	PARSE-NAME FIND-NAME	\ S: xt | 0
