@@ -1338,13 +1338,8 @@ If `n` is negative, add a minus sign to the beginning of the pictured numeric ou
 
 - - -
 #### SLITERAL
-( `caddr` `u` -- )  
-Compile the string `caddr` and length `u` into the definition so that it is later pushed onto the stack during execution of the definition.
-
-        \ Simplistic version of S"
-        : S"
-            [CHAR] " PARSE POSTPONE SLITERAL
-        ; IMMEDIATE
+( `caddr` `u` -- ) immediate  
+Compile the string given by `caddr` and `u` into the definition so that it is later pushed onto the stack during execution of the definition.  See `S"` and `S\"`.
 
 - - -
 #### SM/REM

@@ -562,7 +562,7 @@ VARIABLE catch_frame
 \ ( xt -- )
 : execute-compiling
 	STATE @ IF EXECUTE EXIT THEN
-	1 STATE ! EXECUTE 0 STATE !
+	TRUE STATE ! EXECUTE FALSE STATE !
 ;
 
 \ (S: <spaces>name -- )
@@ -1428,15 +1428,6 @@ MAX-CHAR CONSTANT /COUNTED-STRING
 \
 : cputs DUP C@ SWAP CHAR+ SWAP TYPE ;
 
-\ ( -- caddr u )
-: SLIT R> DUP CELL+ CELL+ >R 2@ ;
-
-\ ... SLITERAL ...
-\
-\ (C: caddr u -- )(S: -- caddr u )
-\
-: SLITERAL POSTPONE SLIT , , ; IMMEDIATE compile-only
-
 \ Number of transitent string buffers, power of 2.
 \ Minimum 2 buffers for S" and S\".
 \
@@ -1449,7 +1440,7 @@ MAX-CHAR CONSTANT /COUNTED-STRING
 _str_buf_max 1- CONSTANT _str_buf_mask
 
 \ Transient string buffers of size /PAD.
-CREATE _str_bufs /PAD _str_buf_max * ALLOT
+CREATE _str_bufs /PAD CHARS _str_buf_max * ALLOT
 
 \ Offset of last used buffer.
 VARIABLE _str_buf_index
@@ -1462,7 +1453,7 @@ VARIABLE _str_buf_index
 	_str_buf_index @	\ S: u
 	1+ _str_buf_mask AND	\ S: u'
 	DUP _str_buf_index !	\ S: u'
-	/PAD *			\ S: offset
+	/PAD CHARS *		\ S: offset
 	_str_bufs +		\ S: caddr
 ;
 
@@ -1475,31 +1466,35 @@ VARIABLE _str_buf_index
 \	address and length of the string stored within the word.
 \	It is then modified to point to just after the string.
 \
-: _slit				\ S: -- R: ip
-	R@ @ R>			\ S: u ip R: --
-	CELL+ SWAP 2DUP		\ S: caddr u caddr u R: --
+: _slit				\ S: -- 		R: ip
+	R@ @ R>			\ S: u ip 		R: --
+	CELL+ SWAP 2DUP		\ S: caddr u caddr u 	R: --
 	CHAR+			\ Account for terminating NUL byte.
-	CHARS + ALIGNED		\ S: caddr u ip' R: --
-	>R			\ S: caddr u R: ip'
+	CHARS + ALIGNED		\ S: caddr u ip' 	R: --
+	>R			\ S: caddr u 		R: ip'
 ;
 
-\ (C: src u -- ) || (S: src u -- caddr u )
-: _string0_store
-	STATE @ IF
+\ (C: src u -- ) (S: src u -- caddr u )
+: SLITERAL
 	  POSTPONE _slit	\ S: src u
 	  \ Append length.
 	  DUP ,			\ S: src u
 	  \ Append string and NUL terminate for C.
 	  DUP >R reserve R>	\ S: src dst u
 	  MOVE 0 C, ALIGN	\ S: --
+; IMMEDIATE compile-only
+
+: _string0_store
+	STATE @ IF
+	  POSTPONE SLITERAL
 	ELSE
 	  \ Select next transient buffer.
-	  DUP >R _str_buf_next	\ S: src u dst R: u
-	  \ Copy string from input to transient buffer.
-	  DUP >R SWAP		\ S: src dst u R: u dst
-	  MOVE			\ S: -- R: u dst
+	  DUP >R _str_buf_next	\ S: src u dst		R: u
+	  \ Copy string from source to transient buffer.
+	  DUP >R SWAP		\ S: src dst u		R: u dst
+	  MOVE			\ S: -- 		R: u dst
 	  \ Add terminating NUL byte for convenience for C.
-	  R> R>			\ S: dst u R: --
+	  R> R>			\ S: dst u 		R: --
 	  2DUP CHARS + 0	\ S: dst u end NUL
 	  SWAP C!		\ S: dst u
 	THEN
