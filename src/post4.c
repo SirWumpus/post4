@@ -1041,16 +1041,6 @@ p4StackCanPopPush(P4_Ctx *ctx, P4_Stack *stack, int pop, int push)
 	}
 }
 
-static void
-p4Align(P4_Ctx *ctx)
-{
-	if (ctx->words->mdata < ctx->words->ndata) {
-		p4Bp(ctx);
-		LONGJMP(ctx->on_throw, P4_THROW_RESIZE);
-	}
-	ctx->words->ndata = P4_CELL_ALIGN(ctx->words->ndata);
-}
-
 /* Display exception message when there is no catch-frame.
  *
  * @param ctx
@@ -1648,7 +1638,7 @@ _allot:		w = P4_POP(ctx->ds);
 		NEXT;
 
 		// ( -- )
-_align:		p4Align(ctx);
+_align:		ctx->words->ndata = P4_CELL_ALIGN(ctx->words->ndata);
 		NEXT;
 
 		/*
