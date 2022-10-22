@@ -785,13 +785,13 @@ VARIABLE catch_frame
 \ returning false.
 \
 : parse-more
-	BEGIN
-	  source-remaining 0= IF
-	    2DROP TRUE EXIT	\ empty input buffer
+	BEGIN				\ S: delim
+	  source-remaining 0= IF	\ S: delim caddr
+	    2DROP TRUE EXIT		\ empty input buffer
 	  THEN
-	  1 >IN +!
-	  C@ OVER = IF
-	    DROP FALSE EXIT	\ input char matches delim
+	  1 >IN +!			\ S: delim caddr
+	  C@ OVER = IF			\ S: delim
+	    DROP FALSE EXIT		\ input char matches delim
 	  THEN
 	AGAIN
 ;
@@ -1075,15 +1075,19 @@ VARIABLE _>pic
 \ returning false.
 \
 : emit-more
-	BEGIN
-	  source-remaining 0= IF
-	    2DROP TRUE EXIT	\ empty input buffer
+	BEGIN				\ S: delim
+	  source-remaining 0= IF	\ S: delim caddr
+	    2DROP TRUE EXIT		\ empty input buffer
 	  THEN
-	  1 >IN +!
-	  C@ 2DUP = IF
-	    2DROP FALSE EXIT	\ input char matches delim
+	  1 >IN +!			\ S: delim caddr
+	  DUP C@ [CHAR] \ = IF		\ escape next char?
+	    1 >IN +! CHAR+ C@		\ S: delim ch
+	  ELSE
+	    C@ 2DUP = IF		\ S: delim ch
+	      2DROP FALSE EXIT		\ input char matches delim
+	    THEN
 	  THEN
-	  EMIT
+	  EMIT				\ S: delim
 	AGAIN
 ;
 

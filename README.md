@@ -336,7 +336,7 @@ Display `ccc`.
 - - -
 #### .( ccc)
 ( `ccc<paren>` -- ) immediate  
-Parse and display text until a closing parenthesis.
+Parse and display text until an unescaped closing parenthesis.  Backslash followed by any other character escapes that character, ie. `\\` is a literal backslash, `\)` is a literal closing parenthesis.
 
 - - -
 #### .S
