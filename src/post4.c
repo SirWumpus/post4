@@ -984,6 +984,15 @@ p4Create(P4_Options *opts)
 	ctx->argv = opts->argv;
 	ctx->state = P4_STATE_INTERPRET;
 
+#ifdef HAVE_MATH_H
+	if ((ctx->fs.base = malloc((opts->fs_size + 1) * sizeof (*ctx->fs.base))) == NULL) {
+		goto error0;
+	}
+	ctx->fs.base[opts->fs_size].u = P4_SENTINEL;
+	ctx->fs.size = opts->fs_size;
+	P4_RESET(ctx->fs);
+#endif
+
 	if ((ctx->rs.base = malloc((opts->rs_size + 1) * sizeof (*ctx->rs.base))) == NULL) {
 		goto error0;
 	}
@@ -2356,6 +2365,7 @@ static const char usage[] =
 static P4_Options options = {
 	.ds_size = P4_STACK_SIZE,
 	.rs_size = P4_STACK_SIZE,
+	.fs_size = P4_FLOAT_STACK_SIZE,
 	.core_file = P4_CORE_FILE,
 	.block_file = P4_BLOCK_FILE,
 };

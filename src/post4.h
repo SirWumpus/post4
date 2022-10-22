@@ -29,6 +29,10 @@ extern "C" {
 #define P4_STACK_SIZE			64		/* in CELLS */
 #endif
 
+#ifndef P4_FLOAT_STACK_SIZE
+#define P4_FLOAT_STACK_SIZE		6		/* in CELLS */
+#endif
+
 #ifndef P4_STRING_SIZE
 #define P4_STRING_SIZE			256		/* in bytes */
 #endif
@@ -78,7 +82,6 @@ extern "C" {
 #include <string.h>
 #include <setjmp.h>
 #include <signal.h>
-#include <unistd.h>
 
 #ifdef HAVE_SYS_TYPES_H
 # include <sys/types.h>
@@ -106,6 +109,9 @@ extern "C" {
 # endif
 #endif
 
+#ifdef HAVE_MATH_H
+# include <math.h>
+#endif
 #ifdef HAVE_TERMIOS_H
 # include <termios.h>
 #endif
@@ -141,8 +147,9 @@ extern "C" {
 typedef struct {
 	int argc;
 	char **argv;
-	long ds_size;
-	long rs_size;
+	unsigned ds_size;
+	unsigned rs_size;
+	unsigned fs_size;
 	const char *core_file;
 	const char *block_file;
 } P4_Options;
@@ -288,6 +295,9 @@ typedef enum {
 struct p4_ctx {
 	P4_Stack	ds;		/* Data stack */
 	P4_Stack	rs;		/* Return stack */
+#ifdef HAVE_MATH_H
+	P4_Stack	fs;		/* Float stack */
+#endif
 	P4_Int		state;
 	P4_Word *	words;		/* Head of the dictionary word list. */
 	P4_Uint		radix;		/* Input/Output radix */

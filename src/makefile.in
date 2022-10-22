@@ -91,7 +91,7 @@ post4$O : config.h post4.h post4.c
 	${CC} ${CFLAGS} -DP4_BUILT="\"${BUILT}\"" -c post4.c
 
 post4$E : config.h post4.h post4.c
-	${CC} ${CFLAGS} ${LDFLAGS} -DTEST -DP4_BUILT="\"${BUILT}\"" -o post4$E post4.c
+	${CC} ${CFLAGS} ${LDFLAGS} -DTEST -DP4_BUILT="\"${BUILT}\"" -o post4$E post4.c ${LIBS}
 
 post4.i : config.h post4.h post4.c
 	${CC} -E ${CFLAGS} -DTEST -DP4_BUILT="\"${BUILT}\"" post4.c >$*.i

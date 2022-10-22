@@ -50,6 +50,7 @@ extern "C" {
 #undef HAVE_ERRNO_H
 #undef HAVE_STDIO_H
 #undef HAVE_LIMITS_H
+#undef HAVE_MATH_H
 
 /*
  * ANSI int types

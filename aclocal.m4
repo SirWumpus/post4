@@ -686,6 +686,20 @@ AC_DEFUN(SNERT_OPTION_ENABLE_64BIT,[
 ])
 
 dnl
+dnl SNERT_OPTION_ENABLE_MATH
+dnl
+AC_DEFUN(SNERT_OPTION_ENABLE_MATH,[
+	AC_ARG_ENABLE(math,
+		[AS_HELP_STRING([--enable-math ],[enable libm support])],
+		[
+			enable_math='yes'
+			LIBS="${LIBS} -lm"
+			AC_CHECK_HEADERS([math.h])
+		]
+	)
+])
+
+dnl
 dnl SNERT_OPTION_ENABLE_WIN32
 dnl
 AC_DEFUN(SNERT_OPTION_ENABLE_MINGW,[
