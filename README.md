@@ -29,7 +29,7 @@ Post4 reads input from standard input and writes to standard output, which can b
 
         echo "123 69 + ." | post4
 
-Post4 cell size is equivalent to C's `intptr_t`, for current systems are either 32 or 64 bit values.  Therefore Post4 (currently) treats `d` and `ud` types same as `n` and `u`.
+Post4 cell size is equivalent to C's `intptr_t`, for current systems are either 32 or 64 bit values.
 
 
 Interactive Usage
@@ -346,12 +346,12 @@ Dump the data stack.
 - - -
 #### /
 ( `dend` `dsor` -- `quot` )  
-Divide the dividend `dend` by the divisor `dsor` leaving the symmetric quotient `quot` on top of the stack.  This is the same as the `SM/REM` quotient.
+Divide the dividend `dend` by the divisor `dsor` leaving the symmetric quotient `quot` on top of the stack..
 
 - - -
 #### /MOD
 ( `dend` `dsor` -- `rem` `quot` )  
-Divide the dividend `dend` by the divisor `dsor` leaving the remainder `rem` and quotient `quot` on top the stack.  This is the same as the `SM/REM` remainder.
+Divide the dividend `dend` by the divisor `dsor` leaving the remainder `rem` and quotient `quot` on top the stack.
 
 - - - 
 #### /STRING
@@ -959,8 +959,8 @@ Save and free all dirty block buffers.
 
 - - -
 #### FM/MOD
-( `dend` `dsor` -- `mod` `quot` )  
-Floored division of the dividend `dend` by the divisor `dsor` leaving the modulus `mod` and quotient `quot`.  In floored division the modulus `mod` carries the sign of the divisor `dsor`.
+( `d` `dsor` -- `mod` `quot` )  
+Floored division of the dividend `d` (`lo` `hi`) by the divisor `dsor` leaving the modulus `mod` and quotient `quot`.  In floored division the modulus `mod` carries the sign of the divisor `dsor`.
 
         Dividend Divisor Remainder Quotient
             10       7         3        1
@@ -1302,6 +1302,11 @@ Logical right shift of `x1` by `u` bits, putting `u` zeroes into the most signif
 When interpreting, copy the string `ccc` as-is to a transient buffer and return `caddr u`.  When compiling, append the string `ccc` as-is to the current word so when executed it leaves `caddr u` of the string on the stack.  Note as an extension strings are also `NUL` terminated to facilitate use of host environment functions.
 
 - - -
+#### S>D
+( `n` -- `d` )  
+Convert the number `n` to the double-cell number `d` (`lo` `hi`) with the same numerical value.
+
+- - -
 #### S\\" ccc"
 ( `ccc<quote>` -- `caddr` `u` ) immediate  
 When interpreting, copy the escaped string `ccc` to a transient buffer and return `caddr u`.  When compiling, append the escaped string `ccc` to the current word so when executed it leaves `caddr u` of the string on the stack. Note as an extension strings are also `NUL` terminated to facilitate use of host environment functions.
@@ -1343,8 +1348,8 @@ Compile the string given by `caddr` and `u` into the definition so that it is la
 
 - - -
 #### SM/REM
-( `dend` `dsor` -- `rem` `quot` )  
-Symmetric division of the dividend `dend` by the divisor `dsor` leaving the remainder `rem` and quotient `quot`.  In symmetric division the remainder `rem` carries the sign of the dividend `dend`.
+( `d` `dsor` -- `rem` `quot` )  
+Symmetric division of the dividend `d` (`lo` `hi`) by the divisor `dsor` leaving the remainder `rem` and quotient `quot`.  In symmetric division the remainder `rem` carries the sign of the dividend `d`.
 
         Dividend Divisor Remainder Quotient
             10       7         3        1
@@ -1459,8 +1464,8 @@ Display `u` in free field format.
 
 - - -
 #### UM/MOD
-( `dend` `dsor` -- `mod` `quot` )  
-Divide `dend` by `dsor`, giving the quotient `quot` and the remainder `mod`. All values and arithmetic are unsigned.
+( `d` `dsor` -- `mod` `quot` )  
+Divide dividend `d` (`lo` `hi`) by `dsor`, giving the quotient `quot` and the remainder `mod`. All values and arithmetic are unsigned.
 
 - - -
 #### UNLOOP

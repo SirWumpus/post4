@@ -545,7 +545,6 @@ p4MemDump(FILE *fp, P4_Char *addr, P4_Size length)
  *** Double Cell Math
  ***********************************************************************/
 
-#ifdef HAS_DOUBLE_CELL
 // Affected core words:
 //
 //	constants: MAX-D MAX-UD
@@ -556,59 +555,236 @@ p4MemDump(FILE *fp, P4_Char *addr, P4_Size length)
 /*
  * https://stackoverflow.com/questions/22845801/32-bit-signed-integer-multiplication-without-using-64-bit-data-type
  *
- * 0x7fffffffffffffff 0x7fffffffffffffff UM*
- * 0x0000000000000001 0x3fffffffffffffff
+ * 0x7fffffffffffffff 0x7fffffffffffffff UM*	u1 u2
+ * 0x0000000000000001 0x3fffffffffffffff	lo hi
  *
- * 0xdeadbeefdeadbeef 0xbeefdeadbeefdead UM*
- * 0x3a522ca1ca1e4983 0xa615999d16497cbb
+ * 0xffffffffffffffff 0xffffffffffffffff UM*	u1 u2
+ * 0x0000000000000001 0xfffffffffffffffe	lo hi
+ *
+ * 0xdeadbeefdeadbeef 0xbeefdeadbeefdead UM*	u1 u2
+ * 0x3a522ca1ca1e4983 0xa615999d16497cbb	lo hi
  */
 void
-p4Mulu(P4_Uint ah_al, P4_Uint bh_bl, P4_Uint *hi, P4_Uint *lo)
+p4Mulu(P4_Uint a, P4_Uint b, P4_Uint *c0, P4_Uint *c1)
 {
-	int half_shift = CHAR_BIT * (sizeof (P4_Uint) >> 1);
-	P4_Uint lower_mask = ~0UL >> half_shift;
+	/* Word halves */
+	P4_Uint al = (P4_Uint_Half) a;
+	P4_Uint ah = a >> P4_HALF_SHIFT;
+	P4_Uint bl = (P4_Uint_Half) b;
+	P4_Uint bh = b >> P4_HALF_SHIFT;
 
-	/* Unsigned partial products. */
-	P4_Uint al_bl = (ah_al & lower_mask)  * (bh_bl & lower_mask);
-	P4_Uint al_bh = (ah_al & lower_mask)  * (bh_bl >> half_shift);
-	P4_Uint ah_bl = (ah_al >> half_shift) * (bh_bl & lower_mask);
-	P4_Uint ah_bh = (ah_al >> half_shift) * (bh_bl >> half_shift);
+	/* Partial products. */
+	P4_Uint al_bl = al * bl;
+	P4_Uint al_bh = al * bh;
+	P4_Uint ah_bl = ah * bl;
+	P4_Uint ah_bh = ah * bh;
 
 	/* Sum partial products. */
-	P4_Uint carry = ((al_bl >> half_shift) + (al_bh & lower_mask) + (ah_bl & lower_mask)) >> half_shift;
-	*hi = ah_bh + (ah_bl >> half_shift) + (al_bh >> half_shift) + carry;
-	*lo = (ah_bl << half_shift) + (al_bh << half_shift) + al_bl;
+	P4_Uint carry = ((al_bl >> P4_HALF_SHIFT) + (P4_Uint_Half) al_bh + (P4_Uint_Half) ah_bl) >> P4_HALF_SHIFT;
+	*c1 = ah_bh + (ah_bl >> P4_HALF_SHIFT) + (al_bh >> P4_HALF_SHIFT) + carry;
+	*c0 = (ah_bl << P4_HALF_SHIFT) + (al_bh << P4_HALF_SHIFT) + al_bl;
 }
 
 /*
  * https://stackoverflow.com/questions/22845801/32-bit-signed-integer-multiplication-without-using-64-bit-data-type
  *
  * +ve * +ve = +ve
- * 0x7fffffffffffffff 0x7fffffffffffffff M*
- * 0x0000000000000001 0x3fffffffffffffff
+ * 0x7fffffffffffffff 0x7fffffffffffffff M*	n1 n2
+ * 0x0000000000000001 0x3fffffffffffffff	lo hi
  *
  * -ve * -ve = +ve
- * 0x8000000000000000 0x8000000000000000 M*
- * 0x0000000000000000 0x4000000000000000
+ * 0x8000000000000000 0x8000000000000000 M*	n1 n2
+ * 0x0000000000000000 0x4000000000000000	lo hi
  *
  * -ve * -ve = +ve
- * 0xdeadbeefdeadbeef 0xbeefdeadbeefdead M*
- * 0x3a522ca1ca1e4983 0x0877fbff78abdf1f
+ * 0xffffffffffffffff 0xffffffffffffffff M*	n1 n2
+ * 0x0000000000000001 0x0000000000000000	lo hi
+ *
+ * -ve * -ve = +ve
+ * 0xdeadbeefdeadbeef 0xbeefdeadbeefdead M*	n1 n2
+ * 0x3a522ca1ca1e4983 0x0877fbff78abdf1f	lo hi
+ *
+ * -ve * -ve = +ve
+ * 0xdeadbeefcafebabe 0xbabecafebeefdead M*	n1 n2
+ * 0x6ea0c1026f76f666 0x0903a85214a96506	lo hi
  *
  * -ve * +ve = -ve
- * 0xdeadbeefdeadbeef 0x7fffffffffffffff M*
- * 0xa152411021524111 0xef56df77ef56df77
+ * 0xdeadbeefdeadbeef 0x7fffffffffffffff M*	n1 n2
+ * 0xa152411021524111 0xef56df77ef56df77	lo hi
+ *
+ * -ve * +ve = -ve
+ * 0xdeadbeefcafebabe 0x7fffffffffffffff M*	n1 n2
+ * 0x2152411035014542 0xef56df77e57f5d5f	lo hi
+ *
+ * -ve * +ve = -ve
+ * 0xdeadbeefcafebabe 0x7ee3cafebeefdead M*	n1 n2
+ * 0xe416c1026f76f666 0xef7bdd9e44bcc2d0	lo hi
+ *
+ * (I love my HP 16C!)
  */
 void
-p4Muls(P4_Int ah_al, P4_Int bh_bl, P4_Int *hi, P4_Int *lo)
+p4Muls(P4_Int a, P4_Int b, P4_Int *c0, P4_Int *c1)
 {
-	p4Mulu(ah_al, bh_bl, (P4_Uint *)hi, (P4_Uint *)lo);
-
-	/* Convert upper word from unsigned to signed result. */
-	*hi = *hi - (ah_al < 0 ? bh_bl : 0) - (bh_bl < 0 ? ah_al : 0);
+	int sign = ((a < 0) ^ (b < 0)) ? -1 : 1;
+	p4Mulu(a < 0 ? -a : a, b < 0 ? -b : b, c0, c1);
+	if (sign < 0) {
+		P4_Int cc0 = ~*c0;
+		*c0 = cc0 + 1;
+		*c1 = ~*c1 + (*c0 < cc0);
+	}
 }
 
-#endif
+/*
+ * https://andrewlock.net/counting-the-leading-zeroes-in-a-binary-number/
+ */
+unsigned
+p4LeadZeroBits(P4_Uint x)
+{
+	/* Smear */
+	x |= x >> 1;
+	x |= x >> 2;
+	x |= x >> 4;
+	x |= x >> 8;
+# if P4_UINT_BITS >= 32
+	x |= x >> 16;
+#  if P4_UINT_BITS >= 64
+	x |= x >> 32;
+#  endif
+# endif
+	/* Count the ones */
+	x -= x >> 1 & (P4_Uint)0x5555555555555555L;
+	x = (x >> 2 & (P4_Uint)0x3333333333333333L) + (x & (P4_Uint)0x3333333333333333L);
+	x = (x >> 4) + x & (P4_Uint)0x0f0f0f0f0f0f0f0fL;
+	x += x >> 8;
+# if P4_UINT_BITS >= 32
+	x += x >> 16;
+#  if P4_UINT_BITS >= 64
+	x += x >> 32;
+#  endif
+# endif
+	return P4_UINT_BITS - (x & 0x7f);
+}
+
+/**
+ * https://skanthak.homepage.t-online.de/division.html#ansi_c
+ *
+ * Based on Donald Knuth’s Algorithm D.  This is a 2/1 digit division,
+ * eg. 128b/64b or 64b/32b depending on P4_Uint definition.
+ *
+ * > This further simplified and optimised implementation of "Algorithm D"
+ * > for unsigned 128/64-bit division on 32-bit machines is based on a
+ * > 64/32-bit division returning a 64-bit quotient and a 32-bit remainder,
+ * > trivially implemented per "long" (alias "schoolbook") division using
+ * > a "narrowing" 64/32-bit division returning a 32-bit quotient and a
+ * > 32-bit remainder.
+ *
+ * @param dend0, dend1
+ * 	Dividend as a pair low and high words.
+ *
+ * @param dsor
+ *	Divisor as a single P4_Uint.
+ *
+ * @param rem
+ *	Pointer in which to pass back the remainder.  Can be NULL
+ *	to ignore.
+ *
+ * @return
+ *	Return the quotient.
+ */
+P4_Uint
+p4Divu(P4_Uint dend0, P4_Uint dend1, P4_Uint dsor, P4_Uint *rem)
+{
+	size_t shift;			// Shift amount for norm.
+	P4_Uint qhat;			// A quotient.
+	P4_Uint rhat;			// A remainder.
+	P4_Uint uhat;			// A dividend digit pair.
+	P4_Uint_Half q0, q1;		// Quotient digits.
+
+	if (dsor == 0) {
+		(void) raise(SIGFPE);
+	}
+	if (dend1 >= dsor) {		// If overflow, set rem.
+		if (rem != NULL) {	// to an impossible value,
+			*rem = ~0;	// and return the largest
+		}
+		return ~0;		// possible quotient.
+	}
+
+	shift = p4LeadZeroBits(dsor);	// 0 <= shift <= 63.
+	if (shift > 0) {
+		dsor <<= shift;		// Normalize divisor.
+		dend1 <<= shift;	// Shift dividend left.
+		dend1 |= dend0 >> (P4_UINT_BITS - shift);
+		dend0 <<= shift;
+	}
+
+	// Compute high quotient digit.
+	qhat = dend1 / (dsor >> P4_HALF_SHIFT);
+	rhat = dend1 % (dsor >> P4_HALF_SHIFT);
+
+	while (
+		(qhat >> P4_HALF_SHIFT) != 0 ||
+		// Both qhat and rhat are less 2**P4_HALF_SHIFT here!
+		(qhat & P4_LOWER_MASK) * (dsor & P4_LOWER_MASK) >
+		((rhat << P4_HALF_SHIFT) | (dend0 >> P4_HALF_SHIFT))
+	) {
+		qhat -= 1;
+		rhat += (dsor >> P4_HALF_SHIFT);
+		if ((rhat >> P4_HALF_SHIFT) != 0) {
+			break;
+		}
+	}
+
+	// Multiply and subtract.
+	q1 = (qhat & P4_LOWER_MASK);
+	uhat = ((dend1 << P4_HALF_SHIFT) | (dend0 >> P4_HALF_SHIFT)) - q1 * dsor;
+
+	// Compute low quotient digit.
+	qhat = uhat / (dsor >> P4_HALF_SHIFT);
+	rhat = uhat % (dsor >> P4_HALF_SHIFT);
+
+	while (
+		(qhat >> P4_HALF_SHIFT) != 0 ||
+		// Both qhat and rhat are less 2**P4_HALF_SHIFT here!
+		(qhat & P4_LOWER_MASK) * (dsor & P4_LOWER_MASK) >
+		((rhat << P4_HALF_SHIFT) | (dend0 >> P4_HALF_SHIFT))
+	) {
+		qhat -= 1;
+		rhat += (dsor >> P4_HALF_SHIFT);
+		if ((rhat >> P4_HALF_SHIFT) != 0) {
+			break;
+		}
+	}
+
+	q0 = (qhat & P4_LOWER_MASK);
+
+	if (rem != NULL) {
+		*rem =  (((uhat << P4_HALF_SHIFT) | (dend0 & P4_LOWER_MASK)) - q0 * dsor) >> shift;
+	}
+
+	return ((P4_Uint) q1 << P4_HALF_SHIFT) | q0;
+}
+
+P4_Int
+p4Divs(P4_Int dend0, P4_Int dend1, P4_Int dsor, P4_Int *rem)
+{
+	P4_Int quot;
+	int neg_rem = (dend1 < 0);
+	int sign = (neg_rem ^ (dsor < 0)) ? -1 : 1;
+	if (dend1 < 0) {
+		P4_Int d0 = ~dend0;
+		dend0 = d0 + 1;
+		dend1 = ~dend1 + (dend0 < d0);
+	}
+	quot = (P4_Int) p4Divu(dend0, dend1, dsor < 0 ? -dsor : dsor, rem);
+	if (sign < 0) {
+		quot = -quot;
+	}
+	if (neg_rem) {
+		*rem = -*rem;
+	}
+	return quot;
+}
 
 /***********************************************************************
  *** Input / Ouput
@@ -1204,7 +1380,6 @@ p4Repl(P4_Ctx *ctx)
 		P4_WORD("+",		&&_add,		0),
 		P4_WORD("-",		&&_sub,		0),
 		P4_WORD("/",		&&_div,		0),
-		P4_WORD("/MOD",		&&_sm_div_rem,	0),
 		P4_WORD("AND",		&&_and,		0),
 		P4_WORD("FM/MOD",	&&_fm_div_mod,	0),
 		P4_WORD("INVERT",	&&_not,		0),
@@ -1456,7 +1631,7 @@ _char_bit:	P4_PUSH(ctx->ds, (P4_Uint) P4_CHAR_BIT);
 
 		// ( -- flag )
 		// C11 defines symmetric division, not floored.
-_floored:	P4_PUSH(ctx->ds, (P4_Int) 0);
+_floored:	P4_PUSH(ctx->ds, (P4_Int) P4_FALSE);
 		NEXT;
 
 		// ( -- u )
@@ -1845,10 +2020,6 @@ _sub:		w = P4_POP(ctx->ds);
 		P4_TOP(ctx->ds).n -= w.n;
 		NEXT;
 
-#ifndef HAS_DOUBLE_CELL
-		// ( n1 n2 -- d )
-_mstar:
-#endif
 		// ( n1 n2 -- n3 )
 _mul:		w = P4_POP(ctx->ds);
 		P4_TOP(ctx->ds).n *= w.n;
@@ -1862,29 +2033,22 @@ _div:		w = P4_POP(ctx->ds);
 		P4_TOP(ctx->ds).n /= w.n;
 		NEXT;
 
-#ifdef HAS_DOUBLE_CELL
 		// n1 n2 -- d (lo hi)
-		P4_Cell hi, lo;
+		P4_Cell c0, c1;
 _mstar:		w = P4_POP(ctx->ds);
 		x = P4_TOP(ctx->ds);
-		p4Muls(w.n, x.n, &hi.n, &lo.n);
-		P4_TOP(ctx->ds) = lo;
-		P4_PUSH(ctx->ds, hi);
+		p4Muls(w.n, x.n, &c0.n, &c1.n);
+		P4_TOP(ctx->ds).u = c0.n;
+		P4_PUSH(ctx->ds, c1.n);
 		NEXT;
 
 		// n1 n2 -- ud (lo hi)
 _umstar:	w = P4_POP(ctx->ds);
 		x = P4_TOP(ctx->ds);
-		p4Mulu(w.n, x.n, &hi.u, &lo.u);
-		P4_TOP(ctx->ds) = lo;
-		P4_PUSH(ctx->ds, hi);
+		p4Mulu(w.u, x.u, &c0.u, &c1.u);
+		P4_TOP(ctx->ds).u = c0.u;
+		P4_PUSH(ctx->ds, c1.u);
 		NEXT;
-#else
-		// ( n1 n2 -- ud )
-_umstar:	w = P4_POP(ctx->ds);
-		P4_TOP(ctx->ds).u *= w.u;
-		NEXT;
-#endif
 
 	{	// ( d dsor -- rem quot )
 		// C99+ specifies symmetric division.
@@ -1894,51 +2058,50 @@ _umstar:	w = P4_POP(ctx->ds);
 		//       10      -7         3       -1
 		//      -10      -7        -3        1
 		//
-		DIV_T qr;
-_sm_div_rem:	w = P4_POP(ctx->ds);
+		P4_Cell d;
+_sm_div_rem:	d = P4_POP(ctx->ds);
+		w = P4_POP(ctx->ds);
 		x = P4_TOP(ctx->ds);
-		if (w.n == 0) {
+		if (d.n == 0) {
 			LONGJMP(ctx->on_throw, P4_THROW_DIV_ZERO);
 		}
-		qr = DIV(x.n, w.n);
-		P4_TOP(ctx->ds).n = qr.rem;
-		P4_PUSH(ctx->ds, qr.quot);
+		w.n = p4Divs(x.n, w.n, d.n, &x.n);
+		P4_TOP(ctx->ds).n = x.n;
+		P4_PUSH(ctx->ds, w.n);
 		NEXT;
-	}
-	{	// ( d dsor -- mod quot )
+
+		// ( d dsor -- mod quot )
 		// Dividend Divisor Remainder Quotient
 		//       10       7         3        1
 		//      -10       7         4       -2
 		//       10      -7        -4       -2
 		//      -10      -7        -3        1
 		//
-		P4_Int q, m;
-_fm_div_mod:	w = P4_POP(ctx->ds);
+_fm_div_mod:	d = P4_POP(ctx->ds);
+		w = P4_POP(ctx->ds);
 		x = P4_TOP(ctx->ds);
-		if (w.n == 0) {
+		if (d.n == 0) {
 			LONGJMP(ctx->on_throw, P4_THROW_DIV_ZERO);
 		}
-		q = x.n / w.n;
-		m = x.n % w.n;
-		if (m != 0 && (w.n ^ x.n) < 0) {
-			q -= 1;
-			m += w.n;
+		w.n = p4Divs(x.n, w.n, d.n, &x.n);
+		if (w.n < 0 && x.n != 0) {
+			x.n = -x.n + (d.n < 0 ? -1 : 1);
+			w.n -= 1;
 		}
-		P4_TOP(ctx->ds).n = m;
-		P4_PUSH(ctx->ds, q);
+		P4_TOP(ctx->ds).n = x.n;
+		P4_PUSH(ctx->ds, w.n);
 		NEXT;
-	}
-	{	// ( ud dsor -- mod quot )
-		P4_Uint q, m;
-_um_div_mod:	w = P4_POP(ctx->ds);
+
+		// ( ud dsor -- mod quot )
+_um_div_mod:	d = P4_POP(ctx->ds);
+		w = P4_POP(ctx->ds);
 		x = P4_TOP(ctx->ds);
-		if (w.n == 0) {
+		if (d.n == 0) {
 			LONGJMP(ctx->on_throw, P4_THROW_DIV_ZERO);
 		}
-		q = x.u / w.u;
-		m = x.u % w.u;
-		P4_TOP(ctx->ds).u = m;
-		P4_PUSH(ctx->ds, q);
+		w.u = p4Divu(x.u, w.u, d.u, &x.u);
+		P4_TOP(ctx->ds).u = x.u;
+		P4_PUSH(ctx->ds, w.u);
 		NEXT;
 	}
 		// ( n1 n2 -- n3 )

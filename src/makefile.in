@@ -68,7 +68,7 @@ build: title post4$E
 
 clean : title
 	-rm -f *.o *.obj *.i *.map *.tds *.TR2 *.stackdump core *.core core.* *.log
-	-rm -f post4$E
+	-rm -f a.out$E post4$E
 
 distclean: clean
 	-rm -f config.h config.h.in makefile

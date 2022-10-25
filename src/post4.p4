@@ -334,6 +334,12 @@ CREATE PAD /PAD CHARS ALLOT
 	ROT >R			\ S: x1 x2  R: x1 x2 ip
 ; \ allow interpret
 
+\ ... /MOD ...
+\
+\ (S: n1 n2 -- rem quot )
+\
+: /MOD 2DUP / >R MOD R> ;
+
 \ ... */ ...
 \
 \ (S: n1 n2 dsor -- quot )
@@ -978,7 +984,7 @@ VARIABLE _>pic
 
 \ ( u -- u' digit )
 : _value_digit
-	BASE @ UM/MOD SWAP		\ S: quot rem
+	BASE @ /MOD SWAP		\ S: quot rem
 	DUP 0 #10 WITHIN		\ S: quot rem bool
 	IF				\ S: quot rem
 	  '0' +				\ S: quot digit
@@ -1007,6 +1013,15 @@ VARIABLE _>pic
 
 \ ( u -- 0 )
 : #S BEGIN # DUP 0= UNTIL ;
+
+\ ( n -- d )
+: S>D
+	DUP 0< IF			\ n
+	  #-1				\ -n -1
+	  EXIT
+	THEN				\ n
+	0				\ n 0
+;
 
 \ ( n -- )
 : . DUP ABS <# #S SWAP SIGN #> TYPE SPACE ;
