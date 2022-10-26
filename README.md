@@ -403,7 +403,7 @@ Store the cell pair `lo hi` at `aaddr` as `hi lo`.
 - - -
 #### 2/
 ( `x1` -- `x2` )  
-`x2` is the result of shifting `x1` one bit toward the least-significant bit, leaving the most-significant bit unchanged.
+`x2` is the result of shifting `x1` one bit toward the least-significant bit, leaving the most-significant bit unchanged, .ie arithmetic right shift.
 
 - - -
 #### 2@

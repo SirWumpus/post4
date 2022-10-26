@@ -287,7 +287,15 @@ CREATE PAD /PAD CHARS ALLOT
 \
 \ (S: x1 -- x2 )
 \
-: 2/ 1 RSHIFT ;
+\	int s = -((unsigned) x >> LONG_BIT-1);
+\	int sar = (s^x) >> n ^ s;
+\
+: 2/
+	DUP					\ S: x x
+	1 CELLS address-unit-bits * 1 -		\ S: x x bits
+	RSHIFT NEGATE				\ S: x s
+	DUP >R XOR 1 RSHIFT R> XOR		\ S: x'
+;
 
 \ x y  2CONSTANT name
 \
