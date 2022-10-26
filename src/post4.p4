@@ -231,7 +231,7 @@ CREATE PAD /PAD CHARS ALLOT
 \	This assumes that 0< returns a proper flag (all bits 1) for true
 \	as oppose simply any non-zero value for true.
 \
-: S>D DUP 0< SWAP ;		\ Sign extend into high word.
+: S>D DUP 0< ;		\ Sign extend into high word.
 
 \ ... TUCK ...
 \
@@ -1114,14 +1114,14 @@ VARIABLE _>pic
 
 : _dumppic _pic /HOLD dump ;
 
-\ ( u -- u' digit )
+\ ( ud -- ud' digit )
 : _value_digit
-	BASE @ /MOD SWAP		\ S: quot rem
-	DUP 0 #10 WITHIN		\ S: quot rem bool
-	IF				\ S: quot rem
-	  '0' +				\ S: quot digit
+	BASE @ UM/MOD 0 ROT		\ S: quot 0 rem
+	DUP 0 #10 WITHIN		\ S: quot 0 rem bool
+	IF				\ S: quot 0 rem
+	  '0' +				\ S: quot 0 digit
 	ELSE
-	  #10 - 'A' +			\ S: quot digit
+	  #10 - 'A' +			\ S: quot 0 digit
 	THEN
 ;
 
@@ -1137,29 +1137,20 @@ VARIABLE _>pic
 \ ( -- )
 : <# _pic /HOLD BLANK 0 _>pic ! ;
 
-\ ( x -- caddr u )
-: #> DROP _pic _>pic @ 2DUP strrev ;
+\ ( xd -- caddr u )
+: #> 2DROP _pic _>pic @ 2DUP strrev ;
 
-\ ( u1 -- u2 )
+\ ( ud1 -- ud2 )
 : # _value_digit HOLD ;
 
-\ ( u -- 0 )
-: #S BEGIN # DUP 0= UNTIL ;
+\ ( ud -- 0 0 )
+: #S BEGIN # 2DUP D0= UNTIL ;
 
-\ ( n -- dl dh ) assume twos complement
-: S>D
-	DUP 0< IF			\ n
-	  #-1				\ -n -1
-	  EXIT
-	THEN				\ n
-	0				\ n 0
-;
-
-\ (S: dl dh -- n ) assume twos complement
+\ (S: dl dh -- n ) assume twos complement`
 : D>S DROP ;
 
 \ ( n -- )
-: . DUP ABS <# #S SWAP SIGN #> TYPE SPACE ;
+: . DUP >R ABS S>D <# #S R> SIGN #> TYPE SPACE ;
 
 \ (S: char "<chars>ccc" -- "ccc" )
 : skip_chars
@@ -1204,19 +1195,19 @@ VARIABLE _>pic
 \
 \ (S: u -- )
 \
-: U. <# #S #> TYPE SPACE ;
+: U. 0 <# #S #> TYPE SPACE ;
 
 \ ... U.R  ...
 \
-\ (S: u n -- )
+\ (S: u w -- )
 \
-: U.R >R <# #S #> R> OVER - SPACES TYPE ;
+: U.R >R 0 <# #S #> R> OVER - SPACES TYPE ;
 
 \ ... .R  ...
 \
-\ (S: n n -- )
+\ (S: n w -- )
 \
-: .R >R DUP ABS <# #S SWAP SIGN #> R> OVER - SPACES TYPE ;
+: .R >R DUP >R ABS S>D <# #S R> SIGN #> R> OVER - SPACES TYPE ;
 
 \ ( delim -- bool )
 \
