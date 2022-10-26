@@ -443,7 +443,7 @@ CREATE PAD /PAD CHARS ALLOT
 : D0= OR 0= ;
 
 \ (S: xl xh -- bool )
-: D0< 0< SWAP DROP ;
+: D0< NIP 0< ;
 
 \ (S: xl xh yl yh -- bool )
 : D=
@@ -460,6 +460,15 @@ CREATE PAD /PAD CHARS ALLOT
 	<			\ S: x1 boolh	R: yl
 	SWAP R>			\ S: bh x1 yl	R: --
 	<			\ S: bh bl
+	OR			\ S: bool
+;
+
+\ (S: xl xh yl yh -- bool )
+: DU<
+	2>R R>			\ S: xl xh yh	R: yl
+	U<			\ S: x1 boolh	R: yl
+	SWAP R>			\ S: bh x1 yl	R: --
+	U<			\ S: bh bl
 	OR			\ S: bool
 ;
 
@@ -767,6 +776,35 @@ VARIABLE catch_frame
 
 \ (S: dl dh -- ul uh )
 : DABS DUP 0< IF DNEGATE THEN ;
+
+\ (S: xl xh yl yh -- zl zh )
+: D+
+	2>R R>			\ S: xl xh yh	R: yl
+	+ SWAP			\ S: zh xl	R: yl
+	DUP R> +		\ S: zh xl zl	R: yl
+	TUCK			\ S: zh zl x1 zl
+	U> >R SWAP R> IF	\ S: zl zh
+	  1 +			\ S: zl zh'
+	THEN
+;
+
+\ (S: xl xh yl yh -- zl zh )
+: D- DNEGATE D+ ;
+
+\ (S: xl xh -- yl yh )
+: D2* 2DUP D+ ;
+
+\ (S: xl xh -- yl yh )
+: D2/
+	DUP 1 AND			\ S: xl xh lsb
+	1 CELLS address-unit-bits * 1 -	\ S: xl xh lsb bits
+	LSHIFT SWAP 2/ >R		\ S: xl msb	R: xh'
+	SWAP 1 RSHIFT			\ S: msb x1'	R: xh'
+	OR R>				\ S: xl' xh'
+;
+
+\ (S: xl xh n -- yl yh
+: M+ S>D D+ ;
 
 \ ... : name ... [ x1 x2 ] 2LITERAL ... ;
 \

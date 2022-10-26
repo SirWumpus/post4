@@ -812,19 +812,28 @@ Remove `u`.  Copy the `xu` to the top of the control-stack.  `0 CS-PICK` equival
 Left rotate the control-stack `u` cells.
 
 - - -
+#### D+
+( `d1|ud1` `d2|ud2` -- `d3|ud3` )  
+Add the double-cells `d2|ud2` to `d1|ud1`, giving the sum `d3|ud3`.
+
+#### D-
+( `d1|ud1` `d2|ud2` -- `d3|ud3` )  
+Subtract the double-cells `d2|ud2` from `d1|ud1`, giving the difference `d3|ud3`.
+
+- - -
 #### D0<
-( `dl` `dh` -- `bool` )  
-`bool` is true if and only if the double-cell `dl` `dh` is less than to zero (0).
+( `d` -- `bool` )  
+`bool` is true if and only if the double-cell `d` (`lo` `hi`) is less than to zero (0).
 
 - - -
 #### D0=
-( `dl` `dh` -- `bool` )  
-`bool` is true if and only if the double-cell `dl` `dh` is equal to zero (0).
+( `d` -- `bool` )  
+`bool` is true if and only if the double-cell `d` (`lo` `hi`) is equal to zero (0).
 
 - - -
 #### D<
 ( `d1` `d2` -- `bool` )  
-`bool` is true if and only if the double-cells `d1` is less then `d2`.
+`bool` is true if and only if the double-cell `d1` is less then `d2`.
 
 - - -
 #### D=
@@ -835,6 +844,16 @@ Left rotate the control-stack `u` cells.
 #### D>S
 ( `d` -- `n` )  
 Convert the double-cell number `d` (`lo` `hi`) to the single-cell number `n` with the same numerical value.
+
+- - -
+#### D2*
+( `xd` -- `yd` )  
+The double-cell `yd` is the result of shifting `xd` one bit toward the most-significant bit, filling the vacated least-significant bit with zero.
+
+- - -
+#### D2/
+( `xd` -- `yd` )  
+The double-cell `yd` is the result of shifting `xd` one bit toward the least-significant bit leaving the most-significant bit unchanged, .ie arithmetic right shift.
 
 - - -
 #### DABS
@@ -917,6 +936,11 @@ Define the execution semantics for the most recently defined word by `CREATE`.  
 #### DROP
 ( `x` -- )  
 Remove the top of the stack.
+
+- - -
+#### DU<
+( `ud1` `ud2` -- `bool` )  
+`bool` is true if and only if the unsigned double-cell `ud1` is less then `ud2`.
 
 - - -
 #### DUMP
@@ -1166,7 +1190,12 @@ Logical left shift of `x1` by `u` bits, putting `u` zeroes into the least signif
 - - -
 #### M*
 ( `n1` `n2` -- `d` )  
-`d` (`lo` `hi` on the stack) is the signed product of `n1` times `n2`.
+The double-cell `d` (`lo` `hi`) is the signed product of `n1` times `n2`.
+
+- - -
+#### M+
+( `d1|ud1` `n` -- `d2|ud2` )  
+Add single-cell `n` to the double-cell `d1|ud1` (`lo` `hi`) giving the sum `d2|ud2`.
 
 - - -
 #### MARKER
