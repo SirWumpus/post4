@@ -117,6 +117,8 @@ FALSE INVERT CONSTANT TRUE
 \
 '\s' CONSTANT BL
 
+1 CELLS address-unit-bits * CONSTANT cell-bits
+
 \ ... PAD ...
 \
 \ ( -- )
@@ -291,10 +293,9 @@ CREATE PAD /PAD CHARS ALLOT
 \	int sar = (s^x) >> n ^ s;
 \
 : 2/
-	DUP					\ S: x x
-	1 CELLS address-unit-bits * 1 -		\ S: x x bits
-	RSHIFT NEGATE				\ S: x s
-	DUP >R XOR 1 RSHIFT R> XOR		\ S: x'
+	DUP cell-bits 1 -		\ S: x x bits
+	RSHIFT NEGATE			\ S: x s
+	DUP >R XOR 1 RSHIFT R> XOR	\ S: x'
 ;
 
 \ x y  2CONSTANT name
@@ -796,11 +797,11 @@ VARIABLE catch_frame
 
 \ (S: xl xh -- yl yh )
 : D2/
-	DUP 1 AND			\ S: xl xh lsb
-	1 CELLS address-unit-bits * 1 -	\ S: xl xh lsb bits
-	LSHIFT SWAP 2/ >R		\ S: xl msb	R: xh'
-	SWAP 1 RSHIFT			\ S: msb x1'	R: xh'
-	OR R>				\ S: xl' xh'
+	DUP 1 AND		\ S: xl xh lsb
+	cell-bits 1 -		\ S: xl xh lsb bits
+	LSHIFT SWAP 2/ >R	\ S: xl msb	R: xh'
+	SWAP 1 RSHIFT		\ S: msb x1'	R: xh'
+	OR R>			\ S: xl' xh'
 ;
 
 \ (S: xl xh n -- yl yh )
@@ -1248,6 +1249,7 @@ VARIABLE _>pic
 
 : .. ( x -- )
 	BASE @ >R
+	DUP HEX [CHAR] 0 EMIT [CHAR] x EMIT U. SPACE
 	DUP HEX [CHAR] $ EMIT . SPACE
 	DUP DECIMAL [CHAR] # EMIT . SPACE
 	DUP OCTAL [CHAR] 0 EMIT . SPACE

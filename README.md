@@ -1801,6 +1801,11 @@ Subtract the size in address units of a character.
 Subtract the size in address units of a cell from `aaddr1` giving `aaddr2`.
 
 - - -
+#### cell-bits
+( -- u )  
+Size of a cell in bits.
+
+- - -
 #### compile-only
 ( -- ) immediate  
 Make the most recent definition as compile-only.  See `NAME>INTERPRET`.
