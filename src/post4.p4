@@ -803,8 +803,32 @@ VARIABLE catch_frame
 	OR R>				\ S: xl' xh'
 ;
 
-\ (S: xl xh n -- yl yh
+\ (S: xl xh n -- yl yh )
 : M+ S>D D+ ;
+
+\ (S: d0 d1 u -- t0 t1 t2 )
+\ See Wil Baden http://computer-programming-forum.com/22-forth/4e2ea55a1dc706b2.htm
+\
+: T*
+	TUCK			\ S: d0 u d1 u
+	UM* 2SWAP		\ S: a0 a1 d0 u
+	UM* SWAP		\ S: a0 a1 b1 b0
+	>R 0			\ S: a0 a1 b1 0		R: b0
+	D+ R>			\ S: c0 c1 b0
+	ROT ROT			\ S: b0 c0 c1
+;
+
+\ (S: t0 t1 t2 u -- ud )
+: T/
+	DUP >R			\ S: t0 t1 t2 u		R: u
+	UM/MOD			\ S: t0 r q		R: u
+	ROT ROT R>		\ S: q t0 r u
+	UM/MOD			\ S: q rr qq
+	NIP SWAP		\ S: qq q
+;
+
+\ ( d1 n1 n2 -- d2 )
+: M*/ >R T* R> T/ ;
 
 \ ... : name ... [ x1 x2 ] 2LITERAL ... ;
 \
