@@ -214,6 +214,9 @@ CREATE PAD /PAD CHARS ALLOT
 \
 : ROT 2 ROLL ;
 
+\ (S: x1 x2 x3 x4 x5 x6 -- x3 x4 x5 x6 x1 x2 )
+: 2ROT 5 ROLL 5 ROLL ;
+
 \ ... S>D ...
 \
 \ ( n -- d )
@@ -415,6 +418,30 @@ CREATE PAD /PAD CHARS ALLOT
 \	True if nu2 <= nu1 < nu3, otherwise false.
 \
 : WITHIN OVER - >R - R> U< ;
+
+\ (S: xl xh -- bool )
+: D0= OR 0= ;
+
+\ (S: xl xh -- bool )
+: D0< 0< SWAP DROP ;
+
+\ (S: xl xh yl yh -- bool )
+: D=
+	2>R R>			\ S: xl xh yh	R: yl
+	=			\ S: x1 boolh	R: yl
+	SWAP R>			\ S: bh x1 yl	R: --
+	=			\ S: bh bl
+	OR			\ S: bool
+;
+
+\ (S: xl xh yl yh -- bool )
+: D<
+	2>R R>			\ S: xl xh yh	R: yl
+	<			\ S: x1 boolh	R: yl
+	SWAP R>			\ S: bh x1 yl	R: --
+	<			\ S: bh bl
+	OR			\ S: bool
+;
 
 \ ... CR ...
 \
@@ -703,6 +730,23 @@ VARIABLE catch_frame
 \ (S: n1 n2 -- n3 )
 \
 : MIN 2DUP > IF SWAP THEN DROP ;
+
+\ (S: d1 d2 -- d3 )
+: DMAX 2OVER 2OVER D< IF 2SWAP THEN 2DROP ;
+: DMIN 2OVER 2OVER D< INVERT IF 2SWAP THEN 2DROP ;
+
+\ (S: dl dh -- dl' dh' )
+: DNEGATE
+	>R DUP
+	IF
+	  NEGATE R> INVERT
+	ELSE
+	  R> NEGATE
+	THEN
+;
+
+\ (S: dl dh -- ul uh )
+: DABS DUP 0< IF DNEGATE THEN ;
 
 \ (S: x*i i -- )
 : n,
@@ -1014,7 +1058,7 @@ VARIABLE _>pic
 \ ( u -- 0 )
 : #S BEGIN # DUP 0= UNTIL ;
 
-\ ( n -- d )
+\ ( n -- dl dh ) assume twos complement
 : S>D
 	DUP 0< IF			\ n
 	  #-1				\ -n -1
@@ -1022,6 +1066,9 @@ VARIABLE _>pic
 	THEN				\ n
 	0				\ n 0
 ;
+
+\ (S: dl dh -- n ) assume twos complement
+: D>S DROP ;
 
 \ ( n -- )
 : . DUP ABS <# #S SWAP SIGN #> TYPE SPACE ;

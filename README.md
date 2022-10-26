@@ -426,6 +426,11 @@ Duplicate cell pair `x1 x2`.
 Copy cell pair `x1 x2` to the top of the stack.
 
 - - -
+#### 2ROT
+( `x1` `x2` `x3` `x4` `x5` `x6` -- `x3` `x4` `x4` `x5` `x1` `x2` )  
+Rotate the top three cell pairs on the stack bringing cell pair `x1` `x2` to the top of the stack.
+
+- - -
 #### 2SWAP
 ( `x1` `x2` `x3` `x4` -- `x3` `x4` `x1` `x2` )  
 Exchange the top two cell pairs.
@@ -785,6 +790,36 @@ Remove `u`.  Copy the `xu` to the top of the control-stack.  `0 CS-PICK` equival
 Left rotate the control-stack `u` cells.
 
 - - -
+#### D0<
+( `dl` `dh` -- `bool` )  
+`bool` is true if and only if the double-cell `dl` `dh` is less than to zero (0).
+
+- - -
+#### D0=
+( `dl` `dh` -- `bool` )  
+`bool` is true if and only if the double-cell `dl` `dh` is equal to zero (0).
+
+- - -
+#### D<
+( `d1` `d2` -- `bool` )  
+`bool` is true if and only if the double-cells `d1` is less then `d2`.
+
+- - -
+#### D=
+( `d1` `d2` -- `bool` )  
+`bool` is true if and only if the double-cell `d1` is equal to `d2`.
+
+- - -
+#### D>S
+( `d` -- `n` )  
+Convert the double-cell number `d` (`lo` `hi`) to the single-cell number `n` with the same numerical value.
+
+- - -
+#### DABS
+( `d` -- `ud` )  
+Double-cell `ud` is the absolute value of `d`.
+
+- - -
 #### DECIMAL
 ( -- )  
 Set the numeric conversion radix to ten (decimal).
@@ -819,6 +854,21 @@ Get the execute token `xt2` stored by deferred word `xt1`.
 #### DEPTH
 ( -- `u` )  
 Number of cells on the data stack before `u` was placed there.
+
+- - -
+#### DMAX
+(S: `d1` `d2` -- `d3` )  
+Double-cell `d3` is the greater of `d1` and `d2`.
+
+- - -
+#### DMIN
+(S: `d1` `d2` -- `d3` )  
+Double-cell `d3` is the lesser of `d1` and `d2`.
+
+- - -
+#### DNEGATE
+( `d1` -- `d2` )  
+Negate the double-cell `d1`, giving its arithmetic inverse `d2`.
 
 - - -
 #### DO
@@ -960,7 +1010,7 @@ Save and free all dirty block buffers.
 - - -
 #### FM/MOD
 ( `d` `dsor` -- `mod` `quot` )  
-Floored division of the dividend `d` (`lo` `hi`) by the divisor `dsor` leaving the modulus `mod` and quotient `quot`.  In floored division the modulus `mod` carries the sign of the divisor `dsor`.
+Floored division of the double-cell dividend `d` (`lo` `hi`) by the divisor `dsor` leaving the modulus `mod` and quotient `quot`.  In floored division the modulus `mod` carries the sign of the divisor `dsor`.
 
         Dividend Divisor Remainder Quotient
             10       7         3        1
@@ -1349,7 +1399,7 @@ Compile the string given by `caddr` and `u` into the definition so that it is la
 - - -
 #### SM/REM
 ( `d` `dsor` -- `rem` `quot` )  
-Symmetric division of the dividend `d` (`lo` `hi`) by the divisor `dsor` leaving the remainder `rem` and quotient `quot`.  In symmetric division the remainder `rem` carries the sign of the dividend `d`.
+Symmetric division of the double-cell dividend `d` (`lo` `hi`) by the divisor `dsor` leaving the remainder `rem` and quotient `quot`.  In symmetric division the remainder `rem` carries the sign of the dividend `d`.
 
         Dividend Divisor Remainder Quotient
             10       7         3        1
@@ -1465,7 +1515,7 @@ Display `u` in free field format.
 - - -
 #### UM/MOD
 ( `d` `dsor` -- `mod` `quot` )  
-Divide dividend `d` (`lo` `hi`) by `dsor`, giving the quotient `quot` and the remainder `mod`. All values and arithmetic are unsigned.
+Divide the double-cell dividend `d` (`lo` `hi`) by divisor `dsor`, giving the quotient `quot` and the remainder `mod`.  All values and arithmetic are unsigned.
 
 - - -
 #### UNLOOP
