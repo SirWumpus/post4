@@ -91,7 +91,7 @@ MARKER rm_core_words
 
 \ value CONSTANT name
 \
-\ (C: x <spaces>name -- ) \ (S: -- x )
+\ (C: x <spaces>name -- ) (S: -- x )
 \
 : CONSTANT CREATE , DOES> @ ;
 
@@ -128,6 +128,12 @@ CREATE PAD /PAD CHARS ALLOT
 \ (C: <spaces>name -- ) \ (S: -- aaddr )
 \
 : VARIABLE CREATE 0 , ;
+
+\ 2VARIABLE name
+\
+\ (C: <spaces>name -- ) \ (S: -- aaddr )
+\
+: 2VARIABLE CREATE 0 , 0 , ;
 
 : [ FALSE STATE ! ; IMMEDIATE \ allow interpret
 : ] TRUE STATE ! ; \ allow interpret
@@ -282,6 +288,12 @@ CREATE PAD /PAD CHARS ALLOT
 \ (S: x1 -- x2 )
 \
 : 2/ 1 RSHIFT ;
+
+\ x y  2CONSTANT name
+\
+\ (C: x y <spaces>name -- ) (S: -- x y )
+\
+: 2CONSTANT CREATE , , DOES> 2@ ;
 
 \ ... 2DROP ...
 \
@@ -487,7 +499,7 @@ CREATE PAD /PAD CHARS ALLOT
 
 \ ... : name ... [ x ] LITERAL ... ;
 \
-\  (C: x -- ) (S: x -- )
+\  (C: x -- ) (S: -- x )
 \
 : LITERAL LIT, ; IMMEDIATE compile-only
 
@@ -747,6 +759,12 @@ VARIABLE catch_frame
 
 \ (S: dl dh -- ul uh )
 : DABS DUP 0< IF DNEGATE THEN ;
+
+\ ... : name ... [ x1 x2 ] 2LITERAL ... ;
+\
+\  (C: x1 x2 -- ) (S: -- x1 x2 )
+\
+: 2LITERAL SWAP POSTPONE LITERAL POSTPONE LITERAL ; IMMEDIATE compile-only
 
 \ (S: x*i i -- )
 : n,

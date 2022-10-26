@@ -411,6 +411,13 @@ Store the cell pair `lo hi` at `aaddr` as `hi lo`.
 Fetch the cell pair `hi lo` stored at `aaddr` and place on the stack as `lo hi`.
 
 - - -
+#### 2CONSTANT
+( `x` `y` `<spaces>name` -- )  
+Define the word `name` to represent the constant values `x` and `y`.  When `name` is executed, the values `x` and `y` are pushed on to the stack.
+
+        $dead $beef 2CONSTANT steak
+
+- - -
 #### 2DROP
 ( `x1` `x2` -- )  
 Drop cell pair `x1 x2` from the stack.
@@ -419,6 +426,13 @@ Drop cell pair `x1 x2` from the stack.
 #### 2DUP
 ( `x1` `x2` -- `x1` `x2` `x1` `x2` )  
 Duplicate cell pair `x1 x2`.
+
+- - -
+#### 2LITERAL
+( `x` `y`  -- ) immediate  
+Compile `x` and `y` into the definition so that they are later pushed onto the stack during execution of the definition.
+
+         : SOMEWORD ... [ x y ] 2LITERAL ... ;
 
 - - -
 #### 2OVER
@@ -439,6 +453,15 @@ Exchange the top two cell pairs.
 #### 2VALUE
 ( `lo` `hi` `<spaces>name` -- )  
 Create `name` with two cells of data assigned `hi` and `lo`.  When `name` is executed, the values `lo` `hi` are pushed to the stack.  See `TO`.
+
+- - -
+#### 2VARIABLE
+( `<spaces>name` -- )  
+Create `name` with two cells of data.  When `name` is executed push the `aaddr` of the data cells.
+
+        2VARIABLE name          \ define name
+        123 987 name 2!         \ store values to variable
+        name 2@                 \ fetch value from variable
 
 - - -
 #### :
@@ -737,7 +760,6 @@ Append the execution semantics of the definition represented by `xt` to the exec
 #### CONSTANT
 ( `x` `<spaces>name` -- )  
 Define the word `name` to represent the constant value `x`.  When `name` is executed, the value `x` is pushed on to the stack.
-
 
         377 CONSTANT monaco
 
