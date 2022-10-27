@@ -1299,11 +1299,6 @@ p4Repl(P4_Ctx *ctx)
 		P4_WORD("/pad",			&&_pad_size,	0),	// p4
 		P4_WORD("address-unit-bits",	&&_char_bit,	0),	// p4
 		P4_WORD("floored",		&&_floored,	0),	// p4
-		P4_WORD("max-char",		&&_max_char,	0),	// p4
-		P4_WORD("max-n",		&&_max_n,	0),	// p4
-		P4_WORD("max-u",		&&_max_u,	0),	// p4
-		P4_WORD("max-d",		&&_max_d,	0),	// p4
-		P4_WORD("max-ud",		&&_max_ud,	0),	// p4
 		P4_WORD("return-stack-cells",	&&_rs_size,	0),	// p4
 		P4_WORD("stack-cells",		&&_ds_size,	0),	// p4
 
@@ -1632,20 +1627,6 @@ _char_bit:	P4_PUSH(ctx->ds, (P4_Uint) P4_CHAR_BIT);
 		// ( -- flag )
 		// C11 defines symmetric division, not floored.
 _floored:	P4_PUSH(ctx->ds, (P4_Int) P4_FALSE);
-		NEXT;
-
-		// ( -- u )
-_max_char:	P4_PUSH(ctx->ds, (P4_Uint) P4_CHAR_MAX);
-		NEXT;
-
-		// ( -- u )
-_max_d:
-_max_n:		P4_PUSH(ctx->ds, (P4_Uint) P4_INT_MAX);
-		NEXT;
-
-		// ( -- u )
-_max_ud:
-_max_u:		P4_PUSH(ctx->ds, (P4_Uint) P4_UINT_MAX);
 		NEXT;
 
 		// ( n1 -- n2 )

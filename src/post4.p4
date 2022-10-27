@@ -117,7 +117,11 @@ FALSE INVERT CONSTANT TRUE
 \
 '\s' CONSTANT BL
 
+\ ( -- u )
 1 CELLS address-unit-bits * CONSTANT cell-bits
+1 address-unit-bits LSHIFT 1 - CONSTANT MAX-CHAR
+-1 1 RSHIFT CONSTANT MAX-N
+-1 CONSTANT MAX-U
 
 \ ... PAD ...
 \
@@ -303,6 +307,9 @@ CREATE PAD /PAD CHARS ALLOT
 \ (C: x y <spaces>name -- ) (S: -- x y )
 \
 : 2CONSTANT CREATE , , DOES> 2@ ;
+
+MAX-U MAX-U 2CONSTANT MAX-UD
+MAX-U MAX-N 2CONSTANT MAX-D
 
 \ ... 2DROP ...
 \
