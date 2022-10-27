@@ -520,7 +520,7 @@ extern int p4CharLiteral(int ch);
  */
 extern void p4StrRev(P4_Char *s, P4_Size length);
 
-extern int p4StrNum(P4_String str, P4_Uint base, P4_Int *out);
+extern int p4StrNum(P4_String str, P4_Uint base, P4_Cell *out);
 
 extern P4_Int p4GetC(P4_Input *source);
 

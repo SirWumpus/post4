@@ -322,13 +322,13 @@ p4Base36(int digit)
 }
 
 int
-p4StrNum(P4_String str, P4_Uint base, P4_Int *out)
+p4StrNum(P4_String str, P4_Uint base, P4_Cell *out)
 {
-	P4_Int value;
+	P4_Cell num;
 	int negate = 0;
 	int offset = 0;
 
-	*out = 0;
+	out->n = 0;
 
 	if (str.length == 0) {
 		return 0;
@@ -357,12 +357,12 @@ p4StrNum(P4_String str, P4_Uint base, P4_Int *out)
 		break;
 	case '\'':	/* 'c' and '\x' escaped characters */
 		if (str.length == 3 && str.string[2] == '\'') {
-			*out = (P4_Int) str.string[1];
+			out->n = (P4_Int) str.string[1];
 			return str.length;
 		}
 		/* Extension C style backslash literals */
 		if (str.length == 4 && str.string[1] == '\\' && str.string[3] == '\'') {
-			*out = (P4_Int) p4CharLiteral(str.string[2]);
+			out->n = (P4_Int) p4CharLiteral(str.string[2]);
 			return str.length;
 		}
 		/* Nothing parsed. */
@@ -374,18 +374,18 @@ p4StrNum(P4_String str, P4_Uint base, P4_Int *out)
 		offset++;
 	}
 
-	for (value = 0; offset < str.length; offset++) {
+	for (num.n = 0; offset < str.length; offset++) {
 		int digit = p4Base36(str.string[offset]);
 		if (base <= digit) {
 			break;
 		}
-		value = value * base + digit;
+		num.n = num.n * base + digit;
 	}
 	if (negate) {
-		value = -value;
+		num.n = -num.n;
 	}
 
-	*out = value;
+	out->n = num.n;
 	return offset;
 }
 
@@ -1490,7 +1490,7 @@ _repl:
 			}
 			word = p4FindName(ctx, str.string, str.length);
 			if (word == NULL) {
-				if (p4StrNum(str, ctx->radix, &x.n) != str.length) {
+				if (p4StrNum(str, ctx->radix, &x) != str.length) {
 					/* Not a word, not a number. */
 					(void) printf("\"%.*s\" ", (int)str.length, str.string);
 					/* An earlier version treated most exceptions like ABORT
