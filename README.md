@@ -2024,8 +2024,8 @@ The base address of the Post4 current machine context.
 
 - - -
 #### _ds
-( -- `aaddr` `n` )  
-Push the data stack base `aaddr` address and current depth `n` (before executing `_ds`).  This stack is a fixed size and grows upward.
+( -- `aaddr` `n` `s` )  
+Push the data stack base `aaddr` address, depth, and size (before executing `_ds`).  This stack is a fixed size and grows upward.
 
 - - -
 #### _dsp!
@@ -2049,8 +2049,8 @@ Parse `ccc` delimited by the delimiter `char`.  When `bool` is false, behaviour 
 
 - - -
 #### _rs
-( -- `aaddr` `n` )  
-Push the return stack base address and current depth.  This stack is a fixed size and grows upward.
+( -- `aaddr` `n` `s` )  
+Push the return stack base address, depth, and size.  This stack is a fixed size and grows upward.
 
 - - -
 #### _rsp!

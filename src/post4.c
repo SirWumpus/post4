@@ -1299,8 +1299,6 @@ p4Repl(P4_Ctx *ctx)
 		P4_WORD("/pad",			&&_pad_size,	0),	// p4
 		P4_WORD("address-unit-bits",	&&_char_bit,	0),	// p4
 		P4_WORD("floored",		&&_floored,	0),	// p4
-		P4_WORD("return-stack-cells",	&&_rs_size,	0),	// p4
-		P4_WORD("stack-cells",		&&_ds_size,	0),	// p4
 
 		/* Internal support. */
 		P4_WORD("_bp",		&&_bp,		P4_BIT_IMM),	// p4
@@ -2335,24 +2333,18 @@ _epoch_seconds:	(void) time(&w.t);
 		/*
 		 * Tools
 		 */
-		// ( -- aaddr n )
+		// ( -- aaddr n s )
 _ds:		w.n = P4_LENGTH(ctx->ds);
 		P4_PUSH(ctx->ds, ctx->ds.base);
 		P4_PUSH(ctx->ds, w);
+		P4_PUSH(ctx->ds, ctx->ds.size);
 		NEXT;
 
-		// ( -- u )
-_ds_size:	P4_PUSH(ctx->ds, (P4_Size) ctx->ds.size);
-		NEXT;
-
-		// ( -- aaddr n )
+		// ( -- aaddr n s )
 _rs:		w.n = P4_LENGTH(ctx->rs);
 		P4_PUSH(ctx->ds, ctx->rs.base);
 		P4_PUSH(ctx->ds, w);
-		NEXT;
-
-		// ( -- u )
-_rs_size:	P4_PUSH(ctx->ds, (P4_Size) ctx->rs.size);
+		P4_PUSH(ctx->ds, ctx->rs.size);
 		NEXT;
 
 		// ( addr u -- )

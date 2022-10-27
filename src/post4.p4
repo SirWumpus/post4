@@ -38,13 +38,13 @@ MARKER rm_core_words
 \
 \ ( -- )
 \
-: .S 'd' EMIT 's' EMIT '\n' EMIT _ds _stack_dump ;
+: .S 'd' EMIT 's' EMIT '\n' EMIT _ds DROP _stack_dump ;
 
 \ ... .RS ...
 \
 \ ( -- )
 \
-: .RS 'r' EMIT 's' EMIT '\n' EMIT _rs 1 - _stack_dump ;
+: .RS 'r' EMIT 's' EMIT '\n' EMIT _rs DROP 1 - _stack_dump ;
 
 \ ... PARSE ...
 \ ... parse-escape ...
@@ -123,6 +123,9 @@ FALSE INVERT CONSTANT TRUE
 -1 1 RSHIFT CONSTANT MAX-N
 -1 CONSTANT MAX-U
 
+_rs CONSTANT return-stack-cells DROP DROP
+_ds CONSTANT stack-cells DROP DROP
+
 \ ... PAD ...
 \
 \ ( -- )
@@ -161,7 +164,7 @@ CREATE PAD /PAD CHARS ALLOT
 \
 \ ( i*x -- )
 \
-: dropall _ds DROP CELL- _dsp! ;
+: dropall _ds DROP DROP CELL- _dsp! ;
 
 \ ... NEGATE ...
 \
@@ -490,7 +493,7 @@ MAX-U MAX-N 2CONSTANT MAX-D
 \
 \  ( -- u )
 \
-: DEPTH _ds NIP ;
+: DEPTH _ds DROP NIP ;
 
 \ ... SPACE ...
 \
@@ -2043,8 +2046,8 @@ END-STRUCTURE
 \	puts			\ write name
 \
 BEGIN-STRUCTURE p4_ctx
-	p4_stack +FIELD ctx.ds	\ see _ds, _ds_size
-	p4_stack +FIELD ctx.rs	\ see _rs, _rs_size
+	p4_stack +FIELD ctx.ds	\ see _ds
+	p4_stack +FIELD ctx.rs	\ see _rs
 	FIELD: ctx.state	\ see STATE
 	FIELD: ctx.words	\ p4_word pointer
 	FIELD: ctx.radix	\ see BASE
