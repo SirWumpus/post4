@@ -329,6 +329,12 @@ Trim trailing spaces from end of string `caddr` `u`.
 Display `n` in free field format.
 
 - - -
+#### .R
+( `n1` `n2` -- )  
+Display `n1` right aligned in a field `n2` characters wide.  If the number of characters required to display `n1` is
+greater than `n2`, all digits are displayed with no leading spaces in a field as wide as necessary.
+
+- - -
 #### ." ccc"
 ( `ccc<quote>` -- ) immediate  
 Display `ccc`.
@@ -819,6 +825,17 @@ Add the double-cells `d2|ud2` to `d1|ud1`, giving the sum `d3|ud3`.
 #### D-
 ( `d1|ud1` `d2|ud2` -- `d3|ud3` )  
 Subtract the double-cells `d2|ud2` from `d1|ud1`, giving the difference `d3|ud3`.
+
+- - -
+#### D.
+( `d` -- )  
+Display double-cell `d` in free field format.
+
+- - -
+#### D.R
+( `d` `n` -- )  
+Display double-cell `d` right aligned in a field `n` characters wide.  If the number of characters required to display `d` is
+greater than `n`, all digits are displayed with no leading spaces in a field as wide as necessary.
 
 - - -
 #### D0<
@@ -1547,6 +1564,12 @@ If `u` is greater than zero (0), display the character string specified by `cadd
 #### U.
 ( `u` -- )  
 Display `u` in free field format.
+
+- - -
+#### U.R
+( `u` `n` -- )  
+Display `u` right aligned in a field `n` characters wide.  If the number of characters required to display `u` is
+greater than `n`, all digits are displayed with no leading spaces in a field as wide as necessary.
 
 - - -
 #### U<

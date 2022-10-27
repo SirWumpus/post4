@@ -1115,17 +1115,6 @@ VARIABLE _>pic
 
 : _dumppic _pic /HOLD dump ;
 
-\ ( ud -- ud' digit )
-: _value_digit
-	BASE @ UM/MOD 0 ROT		\ S: quot 0 rem
-	DUP 0 #10 WITHIN		\ S: quot 0 rem bool
-	IF				\ S: quot 0 rem
-	  '0' +				\ S: quot 0 digit
-	ELSE
-	  #10 - 'A' +			\ S: quot 0 digit
-	THEN
-;
-
 \ ( char -- )
 : HOLD _pic _>pic @ + C! 1 _>pic +! ;
 
@@ -1141,8 +1130,29 @@ VARIABLE _>pic
 \ ( xd -- caddr u )
 : #> 2DROP _pic _>pic @ 2DUP strrev ;
 
+\ ( d# n -- rem d#quot )
+\
+\ Thanks to Mitch Bradley
+\ https://github.com/ForthHub/discussion/discussions/129#discussioncomment-3973896
+\
+: mu/mod
+	>R 0 R@			\ S: ud0 ud1 0 n    R: n
+	UM/MOD R>		\ S: ud0 r q n
+	SWAP >R			\ S: ud0 r n	    R: q
+	UM/MOD R>		\ S: r' q' q
+;
+
 \ ( ud1 -- ud2 )
-: # _value_digit HOLD ;
+: #
+	BASE @ mu/mod ROT	\ S: q0 q1 rem
+	DUP 0 #10 WITHIN	\ S: q0 q1 rem bool
+	IF			\ S: q0 q1 rem
+	  '0' +			\ S: q0 q1 digit
+	ELSE
+	  #10 - 'A' +		\ S: q0 q1 digit
+	THEN
+	HOLD			\ S: q0 q1
+;
 
 \ ( ud -- 0 0 )
 : #S BEGIN # 2DUP D0= UNTIL ;
@@ -1209,6 +1219,19 @@ VARIABLE _>pic
 \ (S: n w -- )
 \
 : .R >R DUP >R ABS S>D <# #S R> SIGN #> R> OVER - SPACES TYPE ;
+
+\ (S: d -- )
+\
+\ $dead $beef DECIMAL D.
+\ 901658403578849173495469
+\
+\ $ffffffffffffffff $7fffffffffffffff DECIMAL D.
+\ 170141183460469231731687303715884105727
+\
+: D. TUCK DABS <# #S ROT SIGN #> TYPE SPACE ;
+
+\ (S: d# w -- )
+: D.R >R TUCK DABS <# #S ROT SIGN #> R> OVER - SPACES TYPE ;
 
 \ ( delim -- bool )
 \
