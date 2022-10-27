@@ -105,6 +105,7 @@ install: build
 	install -p -o root -g 0 ./examples/ed.p4 ${libdir}
 	install -p -o root -g 0 ./examples/cat.p4 ${libdir}
 	install -p -o root -g 0 ./examples/life.p4 ${libdir}
+	install -p -o root -g 0 ./examples/life1d.p4 ${libdir}
 	install -p -o root -g 0 ./examples/lifo.p4 ${libdir}
 	install -p -o root -g 0 ./examples/rand.p4 ${libdir}
 	install -p -o root -g 0 ./examples/wumpus.p4 ${libdir}

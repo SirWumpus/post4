@@ -32,6 +32,18 @@ Post4 reads input from standard input and writes to standard output, which can b
 Post4 cell size is equivalent to C's `intptr_t`, for current systems are either 32 or 64 bit values.
 
 
+Building
+---------
+
+Post4 is written in ISO C11 using only one extension, `Labels As Values`, which is supported by `gcc` and `clang` compilers.
+
+        $ ./configure --help
+        $ ./configure
+        $ make
+        $ sudo make install
+        $ post4
+
+
 Interactive Usage
 -----------------
 
