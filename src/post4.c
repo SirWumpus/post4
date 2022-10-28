@@ -30,11 +30,19 @@ struct winsize window = {
 
 #define P4_INTERACTIVE(ctx)	(ctx->state == P4_STATE_INTERPRET && is_tty && P4_INPUT_IS_TERM(ctx->input))
 
+#ifdef USE_EXCEPTION_STRINGS
 /*
- * See P4_THROW_*
+ * See P4_THROW_*.
+ *
+ * Wastes a lot of space with too many (unused) errors.  The Forth
+ * standard goes too far in granularity of errors compared to C and
+ * POSIX.  If you really want pretty descriptive error reporting:
+ *
+ *	CFLAGS="-DUSE_EXCEPTION_STRINGS" ./configure
+ *	make clean build
  */
 static const char *p4_exceptions[] = {
-	"zero",
+	"",
 	"ABORT",
 	"ABORT\"",
 	"stack overflow",
@@ -116,6 +124,7 @@ static const char *p4_exceptions[] = {
 	"REPLACES",
 	NULL
 };
+#endif
 
 static int p4Repl(P4_Ctx *ctx);
 
@@ -1249,7 +1258,11 @@ p4Exception(P4_Ctx *ctx, int code)
 	case P4_THROW_OK:
 		return code;
 	}
+#ifdef USE_EXCEPTION_STRINGS
 	(void) printf("%d thrown: %s", code, P4_THROW_future <= code && code < 0 ? p4_exceptions[-code] : "?");
+#else
+	(void) printf("%d thrown", code);
+#endif
 	/* Cannot not rely on ctx->state for compilation state, since
 	 * its possible to temporarily change states in the middle of
 	 * compiling a word, eg : word [ 123 ;
