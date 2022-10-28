@@ -331,13 +331,14 @@ p4Base36(int digit)
 }
 
 int
-p4StrNum(P4_String str, P4_Uint base, P4_Cell *out)
+p4StrNum(P4_String str, P4_Uint base, P4_Cell *out, int *is_float)
 {
 	P4_Cell num;
 	int negate = 0;
 	int offset = 0;
 
 	out->n = 0;
+	*is_float = 0;
 
 	if (str.length == 0) {
 		return 0;
@@ -383,10 +384,23 @@ p4StrNum(P4_String str, P4_Uint base, P4_Cell *out)
 		negate = 1;
 		offset++;
 	}
-
 	for (num.n = 0; offset < str.length; offset++) {
 		int digit = p4Base36(str.string[offset]);
 		if (base <= digit) {
+#ifdef HAVE_MATH_H
+			if (str.string[offset] == '.' || toupper(str.string[offset]) == 'E') {
+				if (base != 10) {
+					raise(SIGFPE);
+				}
+				*is_float = 1;
+				unsigned char *stop;
+				/* Note that 1E 0E 123E not accepted.  strtod expects a
+				 * number after 'E'.  0.0, .0, 0E0, 123., 123.456 work fine.
+				 */
+				out->f = strtod(str.string, (char **)&stop);
+				return stop - str.string;
+			}
+#endif
 			break;
 		}
 		num.n = num.n * base + digit;
@@ -1170,7 +1184,7 @@ p4Create(P4_Options *opts)
 	ctx->argv = opts->argv;
 	ctx->state = P4_STATE_INTERPRET;
 
-#ifdef HAVE_MATH_H
+#ifdef USE_FLOAT_STACK
 	if ((ctx->fs.base = malloc((opts->fs_size + 1) * sizeof (*ctx->fs.base))) == NULL) {
 		goto error0;
 	}
@@ -1308,6 +1322,35 @@ p4Repl(P4_Ctx *ctx)
 	static P4_Cell exec[] = { { 0 }, { .w = &w_repl } };
 
 	static P4_Word words[] = {
+#ifdef HAVE_MATH_H
+		P4_WORD("_fs",		&&_fs,		0),		// p4
+		P4_WORD(">FLOAT",	&&_to_float,	0),
+		P4_WORD("FROUND",	&&_f_round,	0),
+		P4_WORD("FLOOR",	&&_f_floor,	0),
+		P4_WORD("FSQRT",	&&_f_sqr,	0),
+		P4_WORD("FCOS",		&&_f_cos,	0),
+		P4_WORD("FSIN",		&&_f_sin,	0),
+		P4_WORD("FTAN",		&&_f_tan,	0),
+		P4_WORD("FLN",		&&_f_ln,	0),
+		P4_WORD("FLOG",		&&_f_log,	0),
+		P4_WORD("FEXP",		&&_f_exp,	0),
+		P4_WORD("FMAX",		&&_f_max,	0),
+		P4_WORD("FMIN",		&&_f_min,	0),
+		P4_WORD("F**",		&&_f_pow,	0),
+		P4_WORD("F!",		&&_f_store,	0),
+		P4_WORD("F@",		&&_f_fetch,	0),
+		P4_WORD("F+",		&&_f_add,	0),
+		P4_WORD("F-",		&&_f_sub,	0),
+		P4_WORD("F*",		&&_f_mul,	0),
+		P4_WORD("F/",		&&_f_div,	0),
+		P4_WORD("F0<",		&&_f_lt0,	0),
+		P4_WORD("F0=",		&&_f_eq0,	0),
+		P4_WORD("F<",		&&_f_lt,	0),
+		P4_WORD("FE.",		&&_f_edot,	0),
+		P4_WORD("F.",		&&_f_dot,	0),
+		P4_WORD("f>r",		&&_fs_to_rs,	0),		// p4
+		P4_WORD("r>f",		&&_rs_to_fs,	0),		// p4
+#endif
 		/* Constants. */
 		P4_WORD("/hold",		&&_pic_size,	0),	// p4
 		P4_WORD("/pad",			&&_pad_size,	0),	// p4
@@ -1460,6 +1503,9 @@ p4Repl(P4_Ctx *ctx)
 		case P4_THROW_ABORT_MSG:
 		case P4_THROW_DS_OVER:
 		case P4_THROW_DS_UNDER:
+#ifdef USE_FLOAT_STACK
+			P4_RESET(ctx->fs);
+#endif
 			P4_RESET(ctx->ds);
 			/*@fallthrough@*/
 
@@ -1504,7 +1550,8 @@ _repl:
 			}
 			word = p4FindName(ctx, str.string, str.length);
 			if (word == NULL) {
-				if (p4StrNum(str, ctx->radix, &x) != str.length) {
+				int is_float;
+				if (p4StrNum(str, ctx->radix, &x, &is_float) != str.length) {
 					/* Not a word, not a number. */
 					(void) printf("\"%.*s\" ", (int)str.length, str.string);
 					/* An earlier version treated most exceptions like ABORT
@@ -1520,6 +1567,11 @@ _repl:
 				if (ctx->state == P4_STATE_COMPILE) {
 					ctx->words = p4WordAppend(ctx, ctx->words, (P4_Cell) &w_lit);
 					ctx->words = p4WordAppend(ctx, ctx->words, x);
+#ifdef HAVE_MATH_H
+				} else if (is_float) {
+//					p4StackCanPopPush(ctx, &ctx->P4_FLOAT_STACK, 0, 1);
+					P4_PUSH(ctx->P4_FLOAT_STACK, x);
+#endif
 				} else {
 					p4StackCanPopPush(ctx, &ctx->ds, 0, 1);
 					P4_PUSH(ctx->ds, x);
@@ -1548,8 +1600,8 @@ setjmp_cleanup:
 	return rc;
 
 		// Indirect threading.
-_next:		/* Check data stack bounds. */
-		p4StackCanPopPush(ctx, &ctx->ds, 0, 0);
+		/* Check data stack bounds. */
+_next:		p4StackCanPopPush(ctx, &ctx->ds, 0, 0);
 		w = *ip++;
 		goto *w.xt->code;
 
@@ -2439,6 +2491,178 @@ _seext:		word = P4_POP(ctx->ds).xt;
 			);
 		}
 		NEXT;
+
+#ifdef HAVE_MATH_H
+# ifdef USE_FLOAT_STACK
+		// ( -- aaddr n s )
+_fs:		w.n = P4_LENGTH(ctx->fs);
+		P4_PUSH(ctx->ds, ctx->fs.base);
+		P4_PUSH(ctx->ds, w);
+		P4_PUSH(ctx->ds, ctx->fs.size);
+		NEXT;
+
+		// ( aaddr -- x )
+_f_fetch:	w = P4_TOP(ctx->ds);
+		P4_TOP(ctx->P4_FLOAT_STACK) = *w.p;
+		NEXT;
+
+		// ( x aaddr -- )
+_f_store:	w = P4_POP(ctx->ds);
+		x = P4_POP(ctx->P4_FLOAT_STACK);
+		*w.p = x;
+		NEXT;
+# else
+_fs:		P4_PUSH(ctx->ds, (P4_Int)0);
+		P4_PUSH(ctx->ds, (P4_Int)0);
+		P4_PUSH(ctx->ds, (P4_Int)0);
+		NEXT;
+
+_f_fetch:	goto _fetch;
+_f_store:	goto _store;
+# endif
+		// (x -- )(R: -- x )
+_fs_to_rs:	w = P4_POP(ctx->P4_FLOAT_STACK);
+		p4StackCanPopPush(ctx, &ctx->rs, 0, 1);
+		P4_PUSH(ctx->rs, w);
+		NEXT;
+
+		// (R: x -- )
+_rs_to_fs:	p4StackCanPopPush(ctx, &ctx->rs, 1, 0);
+		w = P4_POP(ctx->rs);
+		P4_PUSH(ctx->P4_FLOAT_STACK, w);
+		NEXT;
+	{
+		// ( caddr u -- F:f bool )
+		P4_Cell f;
+		unsigned char *stop;
+_to_float:	errno = 0;
+		w = P4_POP(ctx->ds);
+		x = P4_TOP(ctx->ds);
+		f.f = strtod(x.s, (char **)&stop);
+		P4_PUSH(ctx->ds, (P4_Uint) P4_BOOL(errno == 0 && stop - x.s == w.u));
+		if (P4_TOP(ctx->ds).n == P4_TRUE) {
+			P4_TOP(ctx->P4_FLOAT_STACK).f = f.f;
+		}
+	}
+
+		// (F: f -- )
+_f_dot:		if (ctx->radix != 10) {
+			LONGJMP(ctx->on_throw, P4_THROW_BAD_BASE);
+		}
+		w = P4_POP(ctx->P4_FLOAT_STACK);
+		(void) printf("%.12F ", w.f);
+		NEXT;
+
+		// (F: f -- )
+_f_edot:	if (ctx->radix != 10) {
+			LONGJMP(ctx->on_throw, P4_THROW_BAD_BASE);
+		}
+		w = P4_POP(ctx->P4_FLOAT_STACK);
+		(void) printf("%.12E ", w.f);
+		NEXT;
+
+		// (F: f1 f2 -- f3 )
+_f_add:		w = P4_POP(ctx->P4_FLOAT_STACK);
+		P4_TOP(ctx->P4_FLOAT_STACK).f += w.f;
+		NEXT;
+
+		// (F: f1 f2 -- f3 )
+_f_sub:		w = P4_POP(ctx->P4_FLOAT_STACK);
+		P4_TOP(ctx->P4_FLOAT_STACK).f -= w.f;
+		NEXT;
+
+		// (F: f1 f2 -- f3 )
+_f_mul:		w = P4_POP(ctx->P4_FLOAT_STACK);
+		P4_TOP(ctx->P4_FLOAT_STACK).f *= w.f;
+		NEXT;
+
+		// (F: f1 f2 -- f3 )
+_f_div:		w = P4_POP(ctx->P4_FLOAT_STACK);
+		if (w.f == 0) {
+			LONGJMP(ctx->on_throw, P4_THROW_DIV_ZERO);
+		}
+		P4_TOP(ctx->P4_FLOAT_STACK).f /= w.f;
+		NEXT;
+
+		// (F: f -- )( -- bool_)
+_f_eq0:		w = P4_POP(ctx->P4_FLOAT_STACK);
+		P4_TOP(ctx->ds).n = P4_BOOL(w.f == 0);
+		NEXT;
+
+		// (F: f -- )( -- bool_)
+_f_lt0:		w = P4_POP(ctx->P4_FLOAT_STACK);
+		P4_TOP(ctx->ds).n = P4_BOOL(w.f < 0);
+		NEXT;
+
+		// (F: f1 f2 -- )( -- bool )
+_f_lt:		w = P4_POP(ctx->P4_FLOAT_STACK);
+		x = P4_TOP(ctx->P4_FLOAT_STACK);
+		P4_TOP(ctx->ds).u = P4_BOOL(x.f < w.f);
+		NEXT;
+
+		// (F: f1 -- f2 )
+_f_sqr:		w = P4_TOP(ctx->P4_FLOAT_STACK);
+		P4_TOP(ctx->P4_FLOAT_STACK).f = sqrt(w.f);
+		NEXT;
+
+		// (F: f1 -- f2 )
+_f_cos:		w = P4_TOP(ctx->P4_FLOAT_STACK);
+		P4_TOP(ctx->P4_FLOAT_STACK).f = cos(w.f);
+		NEXT;
+
+		// (F: f1 -- f2 )
+_f_sin:		w = P4_TOP(ctx->P4_FLOAT_STACK);
+		P4_TOP(ctx->P4_FLOAT_STACK).f = sin(w.f);
+		NEXT;
+
+		// (F: f1 -- f2 )
+_f_tan:		w = P4_TOP(ctx->P4_FLOAT_STACK);
+		P4_TOP(ctx->P4_FLOAT_STACK).f = tan(w.f);
+		NEXT;
+
+		// (F: f1 -- f2 )
+_f_exp:		w = P4_TOP(ctx->P4_FLOAT_STACK);
+		P4_TOP(ctx->P4_FLOAT_STACK).f = exp(w.f);
+		NEXT;
+
+		// (F: f1 -- f2 )
+_f_ln:		w = P4_TOP(ctx->P4_FLOAT_STACK);
+		P4_TOP(ctx->P4_FLOAT_STACK).f = log(w.f);
+		NEXT;
+
+		// (F: f1 -- f2 )
+_f_log:		w = P4_TOP(ctx->P4_FLOAT_STACK);
+		P4_TOP(ctx->P4_FLOAT_STACK).f = log10(w.f);
+		NEXT;
+
+		// (F: f1 -- f2 )
+_f_round:	w = P4_TOP(ctx->P4_FLOAT_STACK);
+		P4_TOP(ctx->P4_FLOAT_STACK).f = round(w.f);
+		NEXT;
+
+		// (F: f1 -- f2 )
+_f_floor:	w = P4_TOP(ctx->P4_FLOAT_STACK);
+		P4_TOP(ctx->P4_FLOAT_STACK).f = floor(w.f);
+		NEXT;
+
+		// (F: f1 f2 -- f3 )
+_f_max:		w = P4_POP(ctx->P4_FLOAT_STACK);
+		x = P4_TOP(ctx->P4_FLOAT_STACK);
+		P4_TOP(ctx->P4_FLOAT_STACK).f = fmax(x.f, w.f);
+		NEXT;
+
+		// (F: f1 f2 -- f3 )
+_f_min:		w = P4_POP(ctx->P4_FLOAT_STACK);
+		x = P4_TOP(ctx->P4_FLOAT_STACK);
+		P4_TOP(ctx->P4_FLOAT_STACK).f = fmin(x.f, w.f);
+		NEXT;
+
+		// (F: f1 f2 -- f3 )
+_f_pow:		w = P4_POP(ctx->P4_FLOAT_STACK);
+		x = P4_TOP(ctx->P4_FLOAT_STACK);
+		P4_TOP(ctx->P4_FLOAT_STACK).f = pow(x.f, w.f);
+		NEXT;
+#endif
 }
 
 int
@@ -2511,6 +2735,12 @@ static const char usage[] =
 "If script is \"-\", read it from standard input."
 "\n"
 ;
+
+#ifndef USE_FLOAT_STACK
+# undef P4_FLOAT_STACK_SIZE
+# define P4_FLOAT_STACK_SIZE	0
+#endif
+
 
 static P4_Options options = {
 	.ds_size = P4_STACK_SIZE,

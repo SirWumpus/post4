@@ -38,13 +38,13 @@ MARKER rm_core_words
 \
 \ ( -- )
 \
-: .S 'd' EMIT 's' EMIT '\n' EMIT _ds DROP _stack_dump ;
+: .S 'd' EMIT 's' EMIT '\r' EMIT '\n' EMIT _ds DROP _stack_dump ;
 
 \ ... .RS ...
 \
 \ ( -- )
 \
-: .RS 'r' EMIT 's' EMIT '\n' EMIT _rs DROP 1 - _stack_dump ;
+: .RS 'r' EMIT 's' EMIT '\r' EMIT '\n' EMIT _rs DROP 1 - _stack_dump ;
 
 \ ... PARSE ...
 \ ... parse-escape ...
@@ -1970,8 +1970,8 @@ VARIABLE SCR
 \
 : FIELD: ALIGNED 1 CELLS +FIELD ;
 
-: [DEFINED] ( <space>name -- bool ) BL PARSE-NAME FIND-NAME 0<> ; IMMEDIATE
-: [UNDEFINED] ( <space>name -- bool ) POSTPONE [DEFINED] 0= ; IMMEDIATE
+: [DEFINED] ( <space>name -- bool ) PARSE-NAME FIND-NAME 0<> ; IMMEDIATE
+: [UNDEFINED] ( <space>name -- bool ) PARSE-NAME FIND-NAME 0= ; IMMEDIATE
 
 : [ELSE] ( -- )
 	1 BEGIN 				\ level
@@ -1981,8 +1981,8 @@ VARIABLE SCR
 	    ELSE				\ level adr len
 	      2DUP S" [ELSE]" COMPARE 0= IF	\ level adr len
 	        2DROP 1-			\ level'
-		\ Not yet zero, then restore previous level while nested.
-		DUP IF 1+ THEN			\ level'
+	        \ Not yet zero, then restore previous level while nested.
+	        DUP IF 1+ THEN			\ level'
 	      ELSE 				\ level adr len
 	        S" [THEN]" COMPARE 0= IF	\ level
 	          1-				\ level'
@@ -2000,6 +2000,10 @@ VARIABLE SCR
 ; IMMEDIATE
 
 : [THEN] ( -- ) ; IMMEDIATE
+
+[DEFINED] _fs [IF]
+_fs CONSTANT floating-stack DROP DROP
+[THEN]
 
 BEGIN-STRUCTURE p4_string
 	FIELD: str.length
@@ -2048,6 +2052,9 @@ END-STRUCTURE
 BEGIN-STRUCTURE p4_ctx
 	p4_stack +FIELD ctx.ds	\ see _ds
 	p4_stack +FIELD ctx.rs	\ see _rs
+[DEFINED] floating-stack [IF] floating-stack 0<> [IF]
+	p4_stack +FIELD ctx.fs	\ see _fs
+[THEN] [THEN]
 	FIELD: ctx.state	\ see STATE
 	FIELD: ctx.words	\ p4_word pointer
 	FIELD: ctx.radix	\ see BASE
@@ -2118,5 +2125,68 @@ END-STRUCTURE
 	_ctx ctx.words !	\ C: --  R: xt
 	R> POSTPONE LITERAL	\ C: --  R: --
 ; IMMEDIATE compile-only
+
+[DEFINED] _fs [IF]
+
+\ Combined float and data stacks?
+\ floating-stack 0= [IF]
+\
+\ : FDUP DUP ;
+\ : FROT ROT ;
+\ : FDROP DROP ;
+\ : FSWAP SWAP ;
+\ : FOVER OVER ;
+\ : FCONSTANT CONSTANT ;
+\ : FVARIABLE VARIABLE ;
+\ : FLITERAL POSTPONE LITERAL ; IMMEDIATE compile-only
+\ : .FS 'f' EMIT 's' EMIT '\r' EMIT '\n' EMIT _ds DROP _stack_dump ;
+\
+\ [ELSE]
+\ Separate float and data stacks.
+
+: .fs 'f' EMIT 's' EMIT '\r' EMIT '\n' EMIT _fs DROP _stack_dump ;
+
+\ (F: f -- f f )
+: FDUP f>r R@ >R r>f r>f ;
+
+\ (F: f -- )
+: FDROP f>r R> DROP ;
+
+\ ( F: f1 f2 -- f2 f1 )
+: FSWAP f>r f>r 2R> >R >R r>f r>f ;
+
+\ (F: f1 f2 -- f1 f2 f1 )
+: FOVER FSWAP FDUP f>r FSWAP r>f ;
+
+\ (F: f1 f2 f3 -- f2 f3 f1 )
+: FROT f>r FSWAP r>f FSWAP ;
+
+: FLITERAL f>r R> POSTPONE LITERAL ; IMMEDIATE compile-only
+
+\ (C: F:x <spaces>name -- ) (F: -- x )
+: FCONSTANT CREATE f>r R> , DOES> F@ ;
+
+\ (C: <spaces>name -- ) (S: -- aaddr )
+: FVARIABLE CREATE 0E0 f>r R> , ;
+
+\ [THEN]
+
+: FALIGN ALIGN ;
+: FLOAT+ CELL+ ;
+: FLOATS CELLS ;
+: FFIELD: FIELD: ;
+
+\ (F: f1 f2 -- bool )
+: F< F- F0< ;
+
+\ (S: -- u )
+: FDEPTH _fs DROP NIP ;
+
+\ ( F: f1 -- f2 )
+: FALIGNED f>r ALIGNED r>f ;
+: FNEGATE 0E0 FSWAP F- ;
+: FABS FDUP F0< IF FNEGATE THEN ;
+
+[THEN]
 
 MARKER rm_user_words

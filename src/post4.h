@@ -171,19 +171,25 @@ typedef intptr_t	P4_Int;
 #define P4_UINT_BITS	LONG_BIT
 
 #if P4_UINT_BITS == 64
+typedef double		P4_Float;
 # define P4_INT_FMT	"%ld"
 # define P4_UINT_FMT	"%lu"
+# define P4_FLOAT_FMT	"%lE"
 # define P4_HEX_FMT 	"$%.16lx"
 # define P4_Uint_Half	uint32_t
 # define DIV		ldiv
 # define DIV_T		ldiv_t
-#else
+#elif P4_UINT_BITS == 32
+typedef float		P4_Float;
 # define P4_INT_FMT	"%d"
 # define P4_UINT_FMT	"%u"
 # define P4_HEX_FMT 	"$%.8x"
+# define P4_FLOAT_FMT	"%lE"
 # define P4_Uint_Half	uint16_t
 # define DIV		div
 # define DIV_T		div_t
+#else
+# error "Unsupported cell size."
 #endif
 
 #define P4_UINT_MSB	(~(~(P4_Uint)0 >> 1))
@@ -247,6 +253,9 @@ union p4_cell {
 	P4_Char *	s;
 	P4_Word *	w;
 	P4_Xt		xt;
+#ifdef HAVE_MATH_H
+	P4_Float	f;
+#endif
 };
 
 #define P4_CELL				((P4_Int) sizeof (P4_Cell))
@@ -311,7 +320,7 @@ typedef enum {
 struct p4_ctx {
 	P4_Stack	ds;		/* Data stack */
 	P4_Stack	rs;		/* Return stack */
-#ifdef HAVE_MATH_H
+#ifdef USE_FLOAT_STACK
 	P4_Stack	fs;		/* Float stack */
 #endif
 	P4_Int		state;
@@ -325,6 +334,12 @@ struct p4_ctx {
 	P4_Char		tty[P4_INPUT_SIZE];
 	JMP_BUF		on_throw;
 };
+
+#ifdef USE_FLOAT_STACK
+# define P4_FLOAT_STACK	fs
+#else
+# define P4_FLOAT_STACK	ds
+#endif
 
 /***********************************************************************
  *** Exceptions
@@ -354,7 +369,7 @@ struct p4_ctx {
 #define P4_THROW_PARSE_OVER	(-18)	/* parsed string overflow */
 #define P4_THROW_NAME_TOO_LONG	(-19)	/* definition name too long */
 #define P4_THROW__20		(-20)	/* write to a read-only location */
-#define P4_THROW__21		(-21)	/* unsupported operation (e.g., AT-XY on a too-dumb terminal) */
+#define P4_THROW_UNSUPPORTED	(-21)	/* unsupported operation (e.g., AT-XY on a too-dumb terminal) */
 #define P4_THROW_BAD_CONTROL	(-22)	/* control structure mismatch */
 #define P4_THROW_SIGBUS		(-23)	/* address alignment exception */
 #define P4_THROW_BAD_NUMBER	(-24)	/* invalid numeric argument */
@@ -520,7 +535,7 @@ extern int p4CharLiteral(int ch);
  */
 extern void p4StrRev(P4_Char *s, P4_Size length);
 
-extern int p4StrNum(P4_String str, P4_Uint base, P4_Cell *out);
+extern int p4StrNum(P4_String str, P4_Uint base, P4_Cell *out, int *is_float);
 
 extern P4_Int p4GetC(P4_Input *source);
 

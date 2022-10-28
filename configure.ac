@@ -2,7 +2,7 @@
 #	Thus it begins...
 #######################################################################
 
-AC_INIT(post4, 0.5.0, [Anthony Howe <achowe@snert.com>])
+AC_INIT(post4, 0.7.0, [Anthony Howe <achowe@snert.com>])
 
 dnl The autoconf version I learned to deal with.
 AC_PREREQ(2.59)
@@ -34,6 +34,7 @@ AC_CONFIG_HEADERS(src/config.h)
 
 SNERT_OPTION_ENABLE_64BIT
 SNERT_OPTION_ENABLE_DEBUG
+SNERT_OPTION_ENABLE_MATH
 
 dnl Needs updating since much changed on Cygwin WRT mingw.
 dnl SNERT_OPTION_ENABLE_MINGW
