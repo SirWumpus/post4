@@ -357,11 +357,12 @@ p4StrNum(P4_String str, P4_Uint base, P4_Cell *out)
 		offset++;
 		break;
 	case '0':	/* 0377 octal or 0xFF hex */
-		base = 8;
-		offset++;
-		if (2 < str.length && str.string[1] == 'x') {
+		if (2 < str.length && tolower(str.string[1]) == 'x') {
+			offset += 2;
 			base = 16;
+		} else if (1 < str.length && isdigit(str.string[1])) {
 			offset++;
+			base = 8;
 		}
 		break;
 	case '\'':	/* 'c' and '\x' escaped characters */
