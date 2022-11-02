@@ -35,6 +35,8 @@ extern "C" {
 #undef P4_STRING_SIZE
 #undef P4_SAFE_PATH
 
+#define USE_FLOAT_STACK			1
+
 /*
  * ANSI C
  */

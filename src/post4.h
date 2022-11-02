@@ -320,8 +320,11 @@ typedef enum {
 struct p4_ctx {
 	P4_Stack	ds;		/* Data stack */
 	P4_Stack	rs;		/* Return stack */
-#ifdef USE_FLOAT_STACK
+#ifdef HAVE_MATH_H
+# ifdef USE_FLOAT_STACK
 	P4_Stack	fs;		/* Float stack */
+# endif
+	P4_Int		precision;
 #endif
 	P4_Int		state;
 	P4_Word *	words;		/* Head of the dictionary word list. */

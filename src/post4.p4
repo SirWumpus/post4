@@ -2052,9 +2052,12 @@ END-STRUCTURE
 BEGIN-STRUCTURE p4_ctx
 	p4_stack +FIELD ctx.ds	\ see _ds
 	p4_stack +FIELD ctx.rs	\ see _rs
-[DEFINED] floating-stack [IF] floating-stack 0<> [IF]
+[DEFINED] floating-stack [IF]
+floating-stack 0<> [IF]
 	p4_stack +FIELD ctx.fs	\ see _fs
-[THEN] [THEN]
+[THEN]
+	FIELD: ctx.precision	\ see PRECISION and SET-PRECISION
+[THEN]
 	FIELD: ctx.state	\ see STATE
 	FIELD: ctx.words	\ p4_word pointer
 	FIELD: ctx.radix	\ see BASE
@@ -2186,6 +2189,12 @@ END-STRUCTURE
 : FALIGNED f>r ALIGNED r>f ;
 : FNEGATE 0E0 FSWAP F- ;
 : FABS FDUP F0< IF FNEGATE THEN ;
+
+\ (S: -- u )
+: PRECISION _ctx ctx.precision @ ;
+
+\ (S: u -- )
+: SET-PRECISION _ctx ctx.precision ! ;
 
 [THEN]
 

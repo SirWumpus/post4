@@ -120,13 +120,6 @@ Remove the top of the float stack.
 Duplicate `f` on the float stack.
 
 - - -
-#### FE.
-(F: `f` -- )  
-Display, with a trailing space, the top number on the float stack using  engineering notation:
-
-        [-] digits E digits1
-
-- - -
 #### FEXP
 (F: `f1` -- `f2` )  
 Raise `e` to the power `f1`, giving `f2`.
@@ -197,6 +190,13 @@ Rotate the top three float stack entries.
 Round `f1` to an integral value using the "round to nearest" rule, giving `f2`.
 
 - - -
+#### FS.
+(F: `f` -- )  
+Display, with a trailing space, the top number on the float stack using scientific notation:
+
+        [-] digits[.digits] E digits
+
+- - -
 #### FSIN
 (F: `f1` -- `f2` )  
 `f2` is the sine of the radian angle `f1`.
@@ -220,6 +220,16 @@ Exchange the top two float stack items.
 #### FVARIABLE
 ( `<spaces>name` -- )  
 Create `name` with one float of data.  When `name` is executed push the `faddr` of the float.
+
+- - -
+#### PRECISION
+( -- `u` )  
+Return the number of significant digits currently used by `F.`, `FE.`, or `FS.` as `u`.
+
+- - -
+#### SET-PRECISION
+( u -- )  
+Set the number of significant digits currently used by `F.`, `FE.`, or `FS.` to `u`.
 
 - - -
 

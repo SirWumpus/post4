@@ -1184,13 +1184,16 @@ p4Create(P4_Options *opts)
 	ctx->argv = opts->argv;
 	ctx->state = P4_STATE_INTERPRET;
 
-#ifdef USE_FLOAT_STACK
+#ifdef HAVE_MATH_H
+	ctx->precision = 6;
+# ifdef USE_FLOAT_STACK
 	if ((ctx->fs.base = malloc((opts->fs_size + 1) * sizeof (*ctx->fs.base))) == NULL) {
 		goto error0;
 	}
 	ctx->fs.base[opts->fs_size].u = P4_SENTINEL;
 	ctx->fs.size = opts->fs_size;
 	P4_RESET(ctx->fs);
+# endif
 #endif
 
 	if ((ctx->rs.base = malloc((opts->rs_size + 1) * sizeof (*ctx->rs.base))) == NULL) {
@@ -1326,6 +1329,7 @@ p4Repl(P4_Ctx *ctx)
 		P4_WORD("_fs",		&&_fs,		0),		// p4
 		P4_WORD(">FLOAT",	&&_to_float,	0),
 		P4_WORD("FROUND",	&&_f_round,	0),
+		P4_WORD("FTRUNC",	&&_f_trunc,	0),
 		P4_WORD("FLOOR",	&&_f_floor,	0),
 		P4_WORD("FSQRT",	&&_f_sqr,	0),
 		P4_WORD("FCOS",		&&_f_cos,	0),
@@ -1346,8 +1350,10 @@ p4Repl(P4_Ctx *ctx)
 		P4_WORD("F0<",		&&_f_lt0,	0),
 		P4_WORD("F0=",		&&_f_eq0,	0),
 		P4_WORD("F<",		&&_f_lt,	0),
-		P4_WORD("FE.",		&&_f_edot,	0),
+		P4_WORD("FS.",		&&_f_sdot,	0),
 		P4_WORD("F.",		&&_f_dot,	0),
+		P4_WORD("F>S",		&&_f_to_s,	0),		// p4
+		P4_WORD("S>F",		&&_s_to_f,	0),		// p4
 		P4_WORD("f>r",		&&_fs_to_rs,	0),		// p4
 		P4_WORD("r>f",		&&_rs_to_fs,	0),		// p4
 #endif
@@ -2550,15 +2556,15 @@ _f_dot:		if (ctx->radix != 10) {
 			LONGJMP(ctx->on_throw, P4_THROW_BAD_BASE);
 		}
 		w = P4_POP(ctx->P4_FLOAT_STACK);
-		(void) printf("%.12F ", w.f);
+		(void) printf("%.*lF ", (int) ctx->precision, w.f);
 		NEXT;
 
 		// (F: f -- )
-_f_edot:	if (ctx->radix != 10) {
+_f_sdot:	if (ctx->radix != 10) {
 			LONGJMP(ctx->on_throw, P4_THROW_BAD_BASE);
 		}
 		w = P4_POP(ctx->P4_FLOAT_STACK);
-		(void) printf("%.12E ", w.f);
+		(void) printf("%.*lE ", (int) ctx->precision, w.f);
 		NEXT;
 
 		// (F: f1 f2 -- f3 )
@@ -2641,8 +2647,40 @@ _f_round:	w = P4_TOP(ctx->P4_FLOAT_STACK);
 		NEXT;
 
 		// (F: f1 -- f2 )
+_f_trunc:	w = P4_TOP(ctx->P4_FLOAT_STACK);
+		P4_TOP(ctx->P4_FLOAT_STACK).f = trunc(w.f);
+		NEXT;
+
+		// (F: f1 -- f2 )
 _f_floor:	w = P4_TOP(ctx->P4_FLOAT_STACK);
 		P4_TOP(ctx->P4_FLOAT_STACK).f = floor(w.f);
+		NEXT;
+
+/* This doesn't work entirely as expected for all large values of n (MAX-N).
+ *
+ *	MAX-N DUP S>F F>S .s \ don't match
+ *
+ * Largest value appears to be:
+ *
+ *	0x001fffffffffffff DUP S>F F>S .s
+ *
+ * This is an artifact of moving between 64b int to 64-bit double; too small
+ * to hold all values of "long int".  Using "long double" allows full range
+ * of a "long int", but some older versions of gcc don't appear to support
+ * all the "long double" math functions (NetBSD 9.3 gcc 7.5).
+ *
+ * Implementing D>F and F>D is another problem.
+ */
+		// (S: n -- )(F: -- f )
+		// : S>F S>D D>F ;
+_s_to_f:	w = P4_POP(ctx->ds);
+		P4_PUSH(ctx->P4_FLOAT_STACK, (P4_Float) w.n);
+		NEXT;
+
+		// (S: n -- )(F: -- f )
+		// : F>S F>D D>S ;
+_f_to_s:	w = P4_POP(ctx->P4_FLOAT_STACK);
+		P4_PUSH(ctx->ds, (P4_Int) w.f);
 		NEXT;
 
 		// (F: f1 f2 -- f3 )
