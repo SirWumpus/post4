@@ -57,7 +57,7 @@ VARIABLE srand
 
 : rand ( -- u )
 	srand @ 1103515245 * 12345 + DUP srand !
-	65536 UM/MOD NIP 32768 MOD
+	0 65536 UM/MOD NIP 0 32768 UM/MOD DROP
 ;
 
 \ Original cave, vertices of a dodecahedron.
