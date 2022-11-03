@@ -265,7 +265,7 @@ CREATE objects max_objects CELLS ALLOT
 	BEGIN
 	  BEGIN
 	    ." WHERE TO? " PAD /PAD ACCEPT	\ S: length
-	    DROP 0 PAD /PAD >NUMBER 2DROP	\ S: room
+	    DROP 0 S>D PAD /PAD >NUMBER 2DROP D>S \ S: room
 	    DUP 1 max_rooms WITHIN		\ S: room bool
 	  UNTIL					\ S: room
 	  move-valid-room?			\ S: room | 0
@@ -288,7 +288,7 @@ CREATE shoot-path 5 CELLS ALLOT
 : shoot-distance ( -- dist )
 	BEGIN
 	  ." NO. OF ROOMS(1-5) " PAD /PAD ACCEPT \ S: len
-	  DROP 0 PAD /PAD >NUMBER 2DROP		\ S: dist
+	  DROP 0 S>D PAD /PAD >NUMBER 2DROP D>S	\ S: dist
 	  DUP 1 6 WITHIN			\ S: dist bool
 	UNTIL					\ S: dist
 ;
@@ -296,7 +296,7 @@ CREATE shoot-path 5 CELLS ALLOT
 : shoot-room ( -- room )
 	BEGIN
 	  ." ROOM# " PAD /PAD ACCEPT		\ S: len
-	  DROP 0 PAD /PAD >NUMBER 2DROP		\ S: room
+	  DROP 0 S>D PAD /PAD >NUMBER 2DROP D>S	\ S: room
 	  DUP 1 max_rooms WITHIN		\ S: room bool
 	UNTIL					\ S: room
 ;

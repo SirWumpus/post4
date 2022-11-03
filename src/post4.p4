@@ -242,6 +242,22 @@ CREATE PAD /PAD CHARS ALLOT
 \
 : S>D DUP 0< ;		\ Sign extend into high word.
 
+\ @note
+\	More useful to as way of explaining in code what is being done
+\	rather than rely on a zero value being pushed to the stack.
+\	Consider ` 123456789 0 67 UM/MOD ` vs ` 123456789 U>D 67 UM/MOD `
+\
+\ ( u -- d )
+: u>d 0 ;
+
+\ @note
+\	More useful to as way of explaining in code what is being done
+\	rather than rely on a zero value being pushed to the stack.
+\	Consider ` 123456789 0 67 UM/MOD ` vs ` 123456789 U>D 67 UM/MOD `
+\
+\ ( d -- u )
+: d>u DROP ;
+
 \ ... TUCK ...
 \
 \ (S: x1 x2 -- x2 x1 x2 )
@@ -1103,19 +1119,23 @@ VARIABLE catch_frame
 
 \ ... >NUMBER ...
 \
-\ ( S: acc caddr len -- acc' caddr' len' )
+\ ( S: ud1 caddr len -- ud2 caddr' len' )
 \
 : >NUMBER
 	BEGIN
-	  DUP 0>			\ S: acc caddr len
+	  DUP 0>			\ S: udl udh caddr len
 	WHILE
-	  OVER C@			\ S: acc caddr len char
-	  _digit_value			\ S: acc caddr len digit
-	  DUP BASE @ >= IF		\ S: acc caddr len digit
-	    DROP EXIT			\ S: acc' caddr' len'
-          THEN				\ S: acc caddr len value
-	  3 ROLL BASE @ * +		\ S: caddr len acc'
-	  ROT CHAR+ ROT 1-		\ S: acc' caddr' len'
+	  OVER C@			\ S: udl udh caddr len char
+	  _digit_value			\ S: udl udh caddr len digit
+	  DUP BASE @ >= IF		\ S: udl udh caddr len digit
+	    DROP EXIT			\ S: ud' caddr' len'
+	  THEN				\ S: udl udh caddr len digit
+	  ROT CHAR+ ROT 1-		\ S: ud1 udh digit caddr' len'
+	  2>R >R BASE @			\ S: udl udh base	R: caddr' len' digit
+	  UM* ROT BASE @		\ S: hl hh udl base	R: caddr' len' digit
+	  UM*				\ S: hl hh ll lh	R: caddr' len' digit
+	  R> M+				\ S: hl hh ll' lh'	R: caddr' len'
+	  D+ 2R>			\ S: udl' udh' caddr' len'
 	REPEAT
 ;
 
