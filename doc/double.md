@@ -134,11 +134,16 @@ Add single-cell `n` to the double-cell `d1|ud1` (`lo` `hi`) giving the sum `d2|u
 
 #### max-d
 ( -- `d` ) constant  
-Largest usable signed double integer.  This is a deviation from `ENVIRONMENT?` queries.
+Largest usable double-cell signed integer.  This is a deviation from `ENVIRONMENT?` queries.
 
 - - -
 #### max-ud
 ( -- `ud` ) constant  
-Largest usable unsigned double integer.  This is a deviation from `ENVIRONMENT?` queries.
+Largest usable double-cell unsigned integer.  This is a deviation from `ENVIRONMENT?` queries.
+
+- - -
+#### min-d
+( -- `d` ) constant
+Smallest usable double-cell signed integer.
 
 - - -

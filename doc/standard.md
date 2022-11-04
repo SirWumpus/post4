@@ -1407,13 +1407,18 @@ Maximum value of any character.  Currently Post4 only supports ASCII and address
 
 - - -
 #### max-n
-( -- `u` ) constant
+( -- `n` ) constant
 Largest usable signed integer.  This is a deviation from `ENVIRONMENT?` queries.
 
 - - -
 #### max-u
 ( -- `u` ) constant
 Largest usable unsigned integer.  This is a deviation from `ENVIRONMENT?` queries.
+
+- - -
+#### min-n
+( -- `n` ) constant
+Smallest usable signed integer.
 
 - - -
 #### n!

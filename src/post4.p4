@@ -120,8 +120,9 @@ FALSE INVERT CONSTANT TRUE
 \ ( -- u )
 1 CELLS address-unit-bits * CONSTANT cell-bits
 1 address-unit-bits LSHIFT 1 - CONSTANT MAX-CHAR
--1 1 RSHIFT CONSTANT MAX-N
--1 CONSTANT MAX-U
+0 INVERT 1 RSHIFT CONSTANT MAX-N
+MAX-N INVERT 1 + CONSTANT MIN-N
+0 INVERT CONSTANT MAX-U
 
 _rs CONSTANT return-stack-cells DROP DROP
 _ds CONSTANT stack-cells DROP DROP
@@ -329,6 +330,7 @@ CREATE PAD /PAD CHARS ALLOT
 
 MAX-U MAX-U 2CONSTANT MAX-UD
 MAX-U MAX-N 2CONSTANT MAX-D
+1 MAX-N INVERT 2CONSTANT MIN-D
 
 \ ... 2DROP ...
 \
@@ -475,10 +477,10 @@ MAX-U MAX-N 2CONSTANT MAX-D
 \ (S: xl xh yl yh -- bool )
 : D=
 	2>R R>			\ S: xl xh yh	R: yl
-	=			\ S: x1 boolh	R: yl
-	SWAP R>			\ S: bh x1 yl	R: --
-	=			\ S: bh bl
-	OR			\ S: bool
+	-			\ S: x1 dh	R: yl
+	SWAP R>			\ S: dh x1 yl	R: --
+	-			\ S: dh dl
+	D0=			\ S: bool
 ;
 
 \ (S: xl xh yl yh -- bool )
