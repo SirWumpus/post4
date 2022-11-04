@@ -5,13 +5,10 @@
 *.exe
 *.tds
 *.stackdump
-core
 *.core
-core.*
 *.md5
 *.out
 *.tws
-test/*
 *.html
 *.orig
 Copy\ *
@@ -32,18 +29,6 @@ config.log
 config.status
 src/config.h
 src/config.h.in
-doc/manual.shtml
-package/FreeBSD/+COMMENT
-package/FreeBSD/+CONTENTS
-package/FreeBSD/+DESC
-package/FreeBSD/+DISPLAY
-package/OpenBSD/+COMMENT
-package/OpenBSD/+CONTENTS
-package/OpenBSD/+DESC
-package/OpenBSD/+DISPLAY
-package/Windows/installer.nsi
-
 
 # Compiled
 src/post4
-src/post4_g

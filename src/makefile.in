@@ -95,3 +95,6 @@ post4$E : config.h post4.h post4.c
 
 post4.i : config.h post4.h post4.c
 	${CC} -E ${CFLAGS} -DTEST -DP4_BUILT="\"${BUILT}\"" post4.c >$*.i
+
+test : post4$E
+	./post4 ../test/units.p4
