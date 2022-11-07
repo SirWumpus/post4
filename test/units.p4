@@ -5,11 +5,14 @@
 [ELSE]
 	.( Post4 Unit Tests ) CR
 	INCLUDE ../test/assert.p4
+
+	test_suite
 	INCLUDE ../test/core.p4
-	INCLUDE ../test/umstar.p4
 	INCLUDE ../test/2star.p4
 	INCLUDE ../test/d0equal.p4
-	test_results
+	INCLUDE ../test/umstar.p4
+	test_suite_end
+
 	rm_assert
 [THEN] [THEN]
 .( Done ) CR

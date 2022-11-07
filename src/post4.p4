@@ -429,12 +429,6 @@ MAX-U MAX-N 2CONSTANT MAX-D
 \
 : <> = 0= ;
 
-\ ... < ...
-\
-\ (S: n1 n2 -- flag )
-\
-: < - 0< ;
-
 \ ... > ...
 \
 \ (S: n1 n2 -- flag )

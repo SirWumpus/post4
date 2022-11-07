@@ -1453,6 +1453,7 @@ p4Repl(P4_Ctx *ctx)
 		P4_WORD("0=",		&&_eq0,		0),
 		P4_WORD("0<",		&&_lt0,		0),
 		P4_WORD("U<",		&&_u_lt,	0),
+		P4_WORD("<",		&&_lt,		0),
 
 		/* Tools*/
 		P4_WORD("args",		&&_args,	0),		// p4
@@ -2213,6 +2214,11 @@ _u_lt:		w = P4_POP(ctx->ds);
 		P4_TOP(ctx->ds).u = P4_BOOL(x.u < w.u);
 		NEXT;
 
+		// ( n1 n2 -- )
+_lt:		w = P4_POP(ctx->ds);
+		x = P4_TOP(ctx->ds);
+		P4_TOP(ctx->ds).u = P4_BOOL(x.n < w.n);
+		NEXT;
 
 		/*
 		 * I/O

@@ -45,3 +45,137 @@ test_group_end
 0xdeadbeefcafebabe 0x7ee3cafebeefdead M*
 0xe416c1026f76f666 0xef7bdd9e44bcc2d0 D= assert
 test_group_end
+
+.( SM/REM ) test_group
+ 15 S>D  5 SM/REM  0  3 D= assert
+ 10 S>D  7 SM/REM  3  1 D= assert
+-10 S>D  7 SM/REM -3 -1 D= assert
+ 10 S>D -7 SM/REM  3 -1 D= assert
+-10 S>D -7 SM/REM -3  1 D= assert
+test_group_end
+
+.( FM/MOD ) test_group
+ 15 S>D  5 FM/MOD  0  3 D= assert
+ 10 S>D  7 FM/MOD  3  1 D= assert
+-10 S>D  7 FM/MOD  4 -2 D= assert
+ 10 S>D -7 FM/MOD -4 -2 D= assert
+-10 S>D -7 FM/MOD -3  1 D= assert
+test_group_end
+
+: test/mod >R S>D R> floored IF FM/MOD EXIT THEN SM/REM ;
+
+.( /MOD ) test_group
+ 0  1 /MOD  0  1 test/mod D= assert
+ 1  1 /MOD  1  1 test/mod D= assert
+ 2  1 /MOD  2  1 test/mod D= assert
+-1  1 /MOD -1  1 test/mod D= assert
+-2  1 /MOD -2  1 test/mod D= assert
+ 0 -1 /MOD  0 -1 test/mod D= assert
+ 1 -1 /MOD  1 -1 test/mod D= assert
+ 2 -1 /MOD  2 -1 test/mod D= assert
+-1 -1 /MOD -1 -1 test/mod D= assert
+-2 -1 /MOD -2 -1 test/mod D= assert
+ 2  2 /MOD  2  2 test/mod D= assert
+-1 -1 /MOD -1 -1 test/mod D= assert
+-2 -2 /MOD -2 -2 test/mod D= assert
+test_group_end
+
+: test/ test/mod SWAP DROP ;
+
+.( / ) test_group
+ 0  1 /  0  1 test/ = assert
+ 1  1 /  1  1 test/ = assert
+ 2  1 /  2  1 test/ = assert
+-1  1 / -1  1 test/ = assert
+-2  1 / -2  1 test/ = assert
+ 0 -1 /  0 -1 test/ = assert
+ 1 -1 /  1 -1 test/ = assert
+ 2 -1 /  2 -1 test/ = assert
+-1 -1 / -1 -1 test/ = assert
+-2 -1 / -2 -1 test/ = assert
+ 2  2 /  2  2 test/ = assert
+-1 -1 / -1 -1 test/ = assert
+-2 -2 / -2 -2 test/ = assert
+ 7  3 /  7  3 test/ = assert
+ 7 -3 /  7 -3 test/ = assert
+-7  3 / -7  3 test/ = assert
+-7 -3 / -7 -3 test/ = assert
+MAX-N 1 / MAX-N 1 test/ = assert
+MIN-N 1 / MIN-N 1 test/ = assert
+MAX-N MAX-N / MAX-N MAX-N test/ = assert
+MIN-N MIN-N / MIN-N MIN-N test/ = assert
+test_group_end
+
+: testmod test/mod DROP ;
+
+.( MOD ) test_group
+ 0  1 MOD  0  1 testmod = assert
+ 1  1 MOD  1  1 testmod = assert
+ 2  1 MOD  2  1 testmod = assert
+-1  1 MOD -1  1 testmod = assert
+-2  1 MOD -2  1 testmod = assert
+ 0 -1 MOD  0 -1 testmod = assert
+ 1 -1 MOD  1 -1 testmod = assert
+ 2 -1 MOD  2 -1 testmod = assert
+-1 -1 MOD -1 -1 testmod = assert
+-2 -1 MOD -2 -1 testmod = assert
+ 2  2 MOD  2  2 testmod = assert
+-1 -1 MOD -1 -1 testmod = assert
+-2 -2 MOD -2 -2 testmod = assert
+ 7  3 MOD  7  3 testmod = assert
+ 7 -3 MOD  7 -3 testmod = assert
+-7  3 MOD -7  3 testmod = assert
+-7 -3 MOD -7 -3 testmod = assert
+MAX-N 1 MOD MAX-N 1 testmod = assert
+MIN-N 1 MOD MIN-N 1 testmod = assert
+MAX-N MAX-N MOD MAX-N MAX-N testmod = assert
+MIN-N MIN-N MOD MIN-N MIN-N testmod = assert
+test_group_end
+
+: test*/mod >R M* R> floored IF FM/MOD EXIT THEN SM/REM ;
+
+.( */MOD ) test_group
+ 0  2  1 */MOD  0  2  1 test*/mod D= assert
+ 1  2  1 */MOD  1  2  1 test*/mod D= assert
+ 2  2  1 */MOD  2  2  1 test*/mod D= assert
+-1  2  1 */MOD -1  2  1 test*/mod D= assert
+-2  2  1 */MOD -2  2  1 test*/mod D= assert
+ 0  2 -1 */MOD  0  2 -1 test*/mod D= assert
+ 1  2 -1 */MOD  1  2 -1 test*/mod D= assert
+ 2  2 -1 */MOD  2  2 -1 test*/mod D= assert
+-1  2 -1 */MOD -1  2 -1 test*/mod D= assert
+-2  2 -1 */MOD -2  2 -1 test*/mod D= assert
+ 2  2  2 */MOD  2  2  2 test*/mod D= assert
+-1  2 -1 */MOD -1  2 -1 test*/mod D= assert
+-2  2 -2 */MOD -2  2 -2 test*/mod D= assert
+ 7  2  3 */MOD  7  2  3 test*/mod D= assert
+ 7  2 -3 */MOD  7  2 -3 test*/mod D= assert
+-7  2  3 */MOD -7  2  3 test*/mod D= assert
+-7  2 -3 */MOD -7  2 -3 test*/mod D= assert
+MAX-N 2 MAX-N */MOD MAX-N 2 MAX-N test*/mod D= assert
+MIN-N 2 MIN-N */MOD MIN-N 2 MIN-N test*/mod D= assert
+test_group_end
+
+: test*/ test*/mod SWAP DROP ;
+
+.( */ ) test_group
+ 0  2  1 */  0  2  1 test*/ = assert
+ 1  2  1 */  1  2  1 test*/ = assert
+ 2  2  1 */  2  2  1 test*/ = assert
+-1  2  1 */ -1  2  1 test*/ = assert
+-2  2  1 */ -2  2  1 test*/ = assert
+ 0  2 -1 */  0  2 -1 test*/ = assert
+ 1  2 -1 */  1  2 -1 test*/ = assert
+ 2  2 -1 */  2  2 -1 test*/ = assert
+-1  2 -1 */ -1  2 -1 test*/ = assert
+-2  2 -1 */ -2  2 -1 test*/ = assert
+ 2  2  2 */  2  2  2 test*/ = assert
+-1  2 -1 */ -1  2 -1 test*/ = assert
+-2  2 -2 */ -2  2 -2 test*/ = assert
+ 7  2  3 */  7  2  3 test*/ = assert
+ 7  2 -3 */  7  2 -3 test*/ = assert
+-7  2  3 */ -7  2  3 test*/ = assert
+-7  2 -3 */ -7  2 -3 test*/ = assert
+MAX-N 2 MAX-N */ MAX-N 2 MAX-N test*/ = assert
+MIN-N 2 MIN-N */ MIN-N 2 MIN-N test*/ = assert
+test_group_end
