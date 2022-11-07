@@ -361,7 +361,7 @@ p4StrNum(P4_String str, P4_Uint base, P4_Cell *out, int *is_float)
 		if (2 < str.length && tolower(str.string[1]) == 'x') {
 			offset += 2;
 			base = 16;
-		} else if (1 < str.length && isdigit(str.string[1])) {
+		} else if (1 < str.length && (isdigit(str.string[1]) || str.string[1] == '-')) {
 			offset++;
 			base = 8;
 		}
@@ -1509,14 +1509,14 @@ p4Repl(P4_Ctx *ctx)
 		case P4_THROW_ABORT_MSG:
 		case P4_THROW_DS_OVER:
 		case P4_THROW_DS_UNDER:
-#ifdef USE_FLOAT_STACK
+#if defined(HAVE_MATH_H) && defined(USE_FLOAT_STACK)
 			P4_RESET(ctx->fs);
 #endif
 			P4_RESET(ctx->ds);
 			/*@fallthrough@*/
 
 		case P4_THROW_QUIT:
-		case P4_THROW_SIGSEGV:
+		case P4_THROW_SIGSEGV:		/* Retain data stack. */
 		case P4_THROW_RS_OVER:
 		case P4_THROW_RS_UNDER:
 		case P4_THROW_UNDEFINED:	/* Retain data stack. */
