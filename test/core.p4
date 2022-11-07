@@ -272,11 +272,18 @@ test_group_end
 0 CHAR+ 1 = assert
 test_group_end
 
+.( CELL+ ) test_group
+test_group_end
+
 .( CHARS ) test_group
 1 CHARS 1 < assert_not
 1 CHARS 1 CELLS > assert_not
 1 CHARS 1 = assert
-1 CHARS address-unit-bits * 8 >= assert
+test_group_end
+
+.( CELLS ) test_group
+1 CELLS 1 < assert_not
+1 CELLS 1 CHARS MOD 0= assert
 test_group_end
 
 .( ' EXECUTE ) test_group
@@ -335,6 +342,31 @@ MIN-N MAX-N MIN MIN-N = assert
 0 MIN-N MIN MIN-N = assert
 MIN-N MIN-N MIN MIN-N = assert
 MIN-N 0 MIN MIN-N = assert
+test_group_end
+
+.( S" S\\" EVALUATE ) test_group
+: eval_0 EVALUATE ;
+: eval_1 S" 9876" EVALUATE ;
+S" 123" EVALUATE 123 = assert
+S\" 123\n432" EVALUATE 123 432 D= assert
+S" 456" eval_0 456 = assert
+eval_1 9876 = assert
+test_group_end
+
+.( EXIT ) test_group
+: exit_0 IF 123 EXIT THEN 456 ;
+FALSE exit_0 456 = assert
+TRUE exit_0 123 = assert
+test_group_end
+
+.( PAD FILL ) test_group
+PAD 0 $23 FILL PAD C@ $23 <> assert
+PAD 1 $24 FILL PAD C@ $24 = assert
+PAD 2 $25 FILL PAD C@ $25 = assert PAD CHAR+ C@ $25 = assert
+\ Fill the whole PAD
+PAD /PAD $26 FILL
+\ Check last char in buffer is set and no overflow.
+PAD /PAD 1 - + DUP C@ $26 = assert CHAR+ C@ $26 <> assert
 test_group_end
 
 rm_core_words

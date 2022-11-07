@@ -1046,10 +1046,14 @@ VARIABLE catch_frame
 \ (S: caddr u char -- )
 \
 : FILL
-	2 PICK			\  S: caddr u char caddr
-	C! 1- OVER		\  S: caddr u' caddr
-	CHAR+ SWAP		\  S: caddr caddr' u
-	CMOVE			\  S: --
+	>R			\ S: caddr u		R: ch
+	BEGIN ?DUP WHILE
+	  1- SWAP		\ S: u' caddr		R: ch
+	  R@ OVER >R		\ S: u' caddr ch	R: ch caddr
+	  SWAP C! R> CHAR+	\ S: u'	caddr'		R: ch
+	  SWAP			\ S: caddr' u'		R: ch
+	REPEAT
+	R> 2DROP
 ;
 
 \ ... BLANK ...
