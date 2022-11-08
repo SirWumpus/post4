@@ -171,21 +171,21 @@ typedef intptr_t	P4_Int;
 #define P4_UINT_BITS	LONG_BIT
 
 #if P4_UINT_BITS == 64
+typedef uint32_t	P4_Uint_Half;
 typedef double		P4_Float;
 # define P4_INT_FMT	"%ld"
 # define P4_UINT_FMT	"%lu"
 # define P4_FLOAT_FMT	"%lE"
 # define P4_HEX_FMT 	"$%.16lx"
-# define P4_Uint_Half	uint32_t
 # define DIV		ldiv
 # define DIV_T		ldiv_t
 #elif P4_UINT_BITS == 32
+typedef uint16_t	P4_Uint_Half;
 typedef float		P4_Float;
 # define P4_INT_FMT	"%d"
 # define P4_UINT_FMT	"%u"
 # define P4_HEX_FMT 	"$%.8x"
 # define P4_FLOAT_FMT	"%lE"
-# define P4_Uint_Half	uint16_t
 # define DIV		div
 # define DIV_T		div_t
 #else

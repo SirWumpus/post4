@@ -771,7 +771,7 @@ p4Divu(P4_Uint dend0, P4_Uint dend1, P4_Uint dsor, P4_Uint *rem)
 		(qhat >> P4_HALF_SHIFT) != 0 ||
 		// Both qhat and rhat are less 2**P4_HALF_SHIFT here!
 		(qhat & P4_LOWER_MASK) * (dsor & P4_LOWER_MASK) >
-		((rhat << P4_HALF_SHIFT) | (dend0 >> P4_HALF_SHIFT))
+		((rhat << P4_HALF_SHIFT) | (dend0 & ~0))
 	) {
 		qhat -= 1;
 		rhat += (dsor >> P4_HALF_SHIFT);

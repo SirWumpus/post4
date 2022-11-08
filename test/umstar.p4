@@ -2,11 +2,18 @@
 INCLUDE ../test/assert.p4
 
 .( UM* ) test_group
-0x7fffffffffffffff 0x7fffffffffffffff UM*
-0x0000000000000001 0x3fffffffffffffff D= assert
-
-0xffffffffffffffff 0xffffffffffffffff UM*
-0x0000000000000001 0xfffffffffffffffe D= assert
+0 0 UM* 0 0 D= assert
+0 1 UM* 0 0 D= assert
+1 0 UM* 0 0 D= assert
+1 2 UM* 2 0 D= assert
+2 1 UM* 2 0 D= assert
+3 3 UM* 9 0 D= assert
+MAX-N 1 + 1 RSHIFT 2 UM* MAX-N 1 + 0 D= assert
+MAX-N 1 + 2 UM* 0 1 D= assert
+MAX-N 1 + 4 UM* 0 2 D= assert
+0 INVERT 2  UM* 0 INVERT 1 LSHIFT 1 D= assert
+MAX-N MAX-N UM* 1 1 INVERT 2 RSHIFT D= assert
+MAX-U MAX-U UM* 1 1 INVERT D= assert
 
 0xdeadbeefdeadbeef 0xbeefdeadbeefdead UM*
 0x3a522ca1ca1e4983 0xa615999d16497cbb D= assert
@@ -44,6 +51,16 @@ test_group_end
 \ -ve * +ve = -ve
 0xdeadbeefcafebabe 0x7ee3cafebeefdead M*
 0xe416c1026f76f666 0xef7bdd9e44bcc2d0 D= assert
+test_group_end
+
+.( UM/MOD ) test_group
+0 0 1 UM/MOD 0 0 D= assert
+1 0 1 UM/MOD 0 1 D= assert
+1 0 2 UM/MOD 1 0 D= assert
+3 0 2 UM/MOD 1 1 D= assert
+MAX-U 2 UM* 2 UM/MOD 0 MAX-U D= assert
+MAX-U 2 UM* MAX-U UM/MOD 0 2 D= assert
+MAX-U MAX-U UM* MAX-U UM/MOD 0 MAX-U D= assert
 test_group_end
 
 .( SM/REM ) test_group
