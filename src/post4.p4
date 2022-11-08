@@ -121,7 +121,8 @@ FALSE INVERT CONSTANT TRUE
 1 CELLS address-unit-bits * CONSTANT cell-bits
 1 address-unit-bits LSHIFT 1 - CONSTANT MAX-CHAR
 0 INVERT 1 RSHIFT CONSTANT MAX-N
-MAX-N INVERT 1 + CONSTANT MIN-N
+MAX-N INVERT CONSTANT MIN-N~
+MIN-N~ 1 + CONSTANT MIN-N
 0 INVERT CONSTANT MAX-U
 
 _rs CONSTANT return-stack-cells DROP DROP
@@ -330,7 +331,8 @@ CREATE PAD /PAD CHARS ALLOT
 
 MAX-U MAX-U 2CONSTANT MAX-UD
 MAX-U MAX-N 2CONSTANT MAX-D
-1 MAX-N INVERT 2CONSTANT MIN-D
+0 MIN-N~ 2CONSTANT MIN-D~
+1 MIN-N~ 2CONSTANT MIN-D
 
 \ ... 2DROP ...
 \
@@ -477,24 +479,6 @@ MAX-U MAX-N 2CONSTANT MAX-D
 	D0=			\ S: bool
 ;
 
-\ (S: xl xh yl yh -- bool )
-: D<
-	2>R R>			\ S: xl xh yh	R: yl
-	<			\ S: x1 boolh	R: yl
-	SWAP R>			\ S: bh x1 yl	R: --
-	<			\ S: bh bl
-	OR			\ S: bool
-;
-
-\ (S: xl xh yl yh -- bool )
-: DU<
-	2>R R>			\ S: xl xh yh	R: yl
-	U<			\ S: x1 boolh	R: yl
-	SWAP R>			\ S: bh x1 yl	R: --
-	U<			\ S: bh bl
-	OR			\ S: bool
-;
-
 \ ... CR ...
 \
 \ (S: -- )
@@ -574,6 +558,20 @@ MAX-U MAX-N 2CONSTANT MAX-D
 \ (S: x -- 0 | x x )
 \
 : ?DUP DUP IF DUP THEN ;
+
+\ (S: xl xh yl yh -- bool )
+: DU<
+	ROT 2DUP = IF		\ S: xl yl yh xh
+	  2DROP U< EXIT		\ S: bool
+	THEN U> >R 2DROP R>
+;
+
+\ (S: xl xh yl yh -- bool )
+: D<
+	ROT 2DUP = IF
+	  2DROP < EXIT
+	THEN > >R 2DROP R>
+;
 
 \ ... NAME>COMPILE ...
 \

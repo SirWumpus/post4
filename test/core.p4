@@ -106,7 +106,7 @@ test_group_end
 MAX-N 0 INVERT 1 RSHIFT = assert
 test_group_end
 
-.( MN-N ) test_group
+.( MIN-N ) test_group
 MIN-N MAX-N INVERT 1 + = assert
 test_group_end
 
@@ -140,6 +140,21 @@ test_group_end
 -1 -1 * 1 = assert
 -1 -3 * 3 = assert
  2 -3 * -6 = assert
+test_group_end
+
+.( 1+ ) test_group
+ 0 1+ 1 = assert
+-1 1+ 0 = assert
+ 1 1+ 2 = assert
+MAX-N 1+ MAX-N 1 + = assert
+MAX-N 1+ 0 INVERT 1 RSHIFT INVERT = assert
+test_group_end
+
+.( 1- ) test_group
+2 1-  1 = assert
+1 1-  0 = assert
+0 1- -1 = assert
+MAX-N 1 + 1- MAX-N = assert
 test_group_end
 
 .( U< ) test_group
@@ -268,6 +283,15 @@ CHAR allo $61 = assert
 'a' $61 = assert
 test_group_end
 
+.( [CHAR] ) test_group
+: tw_char_0 [CHAR] @ ;
+: tw_char_1 [CHAR] allo ;
+: tw_char_2 'a' ;
+tw_char_0 $40 = assert
+tw_char_1 $61 = assert
+tw_char_2 $61 = assert
+test_group_end
+
 .( CHAR+ ) test_group
 0 CHAR+ 1 = assert
 test_group_end
@@ -287,13 +311,13 @@ test_group_end
 test_group_end
 
 .( ' EXECUTE ) test_group
-: tick_value 1234 ;
-' tick_value EXECUTE 1234 = assert
+: tw_tick_value 1234 ;
+' tw_tick_value EXECUTE 1234 = assert
 test_group_end
 
 .( CREATE >BODY HERE ) test_group
-CREATE create_empty
-' create_empty >BODY HERE = assert
+CREATE tw_create_empty
+' tw_create_empty >BODY HERE = assert
 [DEFINED] >HERE [IF]
 >HERE 0 = assert
 [THEN]
@@ -345,18 +369,18 @@ MIN-N 0 MIN MIN-N = assert
 test_group_end
 
 .( S" S\\" EVALUATE ) test_group
-: eval_0 EVALUATE ;
-: eval_1 S" 9876" EVALUATE ;
+: tw_eval_0 EVALUATE ;
+: tw_eval_1 S" 9876" EVALUATE ;
 S" 123" EVALUATE 123 = assert
 S\" 123\n432" EVALUATE 123 432 D= assert
-S" 456" eval_0 456 = assert
-eval_1 9876 = assert
+S" 456" tw_eval_0 456 = assert
+tw_eval_1 9876 = assert
 test_group_end
 
 .( EXIT ) test_group
-: exit_0 IF 123 EXIT THEN 456 ;
-FALSE exit_0 456 = assert
-TRUE exit_0 123 = assert
+: tw_exit_0 IF 123 EXIT THEN 456 ;
+FALSE tw_exit_0 456 = assert
+TRUE tw_exit_0 123 = assert
 test_group_end
 
 .( PAD FILL ) test_group
