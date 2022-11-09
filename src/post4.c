@@ -1722,11 +1722,9 @@ _colon:		if (ctx->state == P4_STATE_COMPILE) {
 		goto _do_colon;
 
 		// (C: -- colon) (R: -- ip)
-		// Save the current tops so we can check for imbalance.
-_do_colon:	w.p = ctx->ds.top;
+		// Save the current lengths so we can check for imbalance.
+_do_colon:	w.u = ((char)P4_LENGTH(ctx->rs) << CHAR_BIT) | (char)P4_LENGTH(ctx->ds);
 		P4_PUSH(ctx->ds, w);
-		x.p = ctx->rs.top;
-		P4_PUSH(ctx->ds, x);
 		ctx->state = P4_STATE_COMPILE;
 		word = p4WordCreate(ctx, str.string, str.length, &&_enter);
 		P4_WORD_SET_HIDDEN(word);
@@ -1734,9 +1732,9 @@ _do_colon:	w.p = ctx->ds.top;
 
 		// (C: colon -- ) (R: ip -- )
 _semicolon:	ctx->words = p4WordAppend(ctx, ctx->words, (P4_Cell) &w_exit);
-		x = P4_POP(ctx->ds);
 		w = P4_POP(ctx->ds);
-		if (w.p != ctx->ds.top || x.p != ctx->rs.top) {
+		x.u = ((char)P4_LENGTH(ctx->rs) << CHAR_BIT) | (char)P4_LENGTH(ctx->ds);
+		if (w.u != x.u) {
 			/* Control structure imbalance.  Did we match
 			 * all the IF-THEN, BEGIN-REPEAT, etc.
 			 */
