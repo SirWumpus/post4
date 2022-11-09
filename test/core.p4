@@ -69,6 +69,25 @@ test_group_end
 %11 %01 XOR 2 = assert
 test_group_end
 
+.( LSHIFT ) test_group
+1 0 LSHIFT 1 = assert
+1 1 LSHIFT 2 = assert
+1 2 LSHIFT 4 = assert
+1 $F LSHIFT $8000 = assert
+-1 1 LSHIFT 1 XOR -1 = assert
+MIN-N~ 1 LSHIFT 0 = assert
+test_group_end
+
+.( RSHIFT ) test_group
+1 0 RSHIFT 1 = assert
+1 1 RSHIFT 0 = assert
+2 1 RSHIFT 1 = assert
+4 2 RSHIFT 1 = assert
+$8000 $F RSHIFT 1 = assert
+MIN-N~ 1 RSHIFT MIN-N~ AND 0 = assert
+MIN-N~ 1 RSHIFT 2* MIN-N~ = assert
+test_group_end
+
 .( Numeric notation ) test_group
 #1289 1289 = assert
 \ #12346789. 12346789. = assert
@@ -258,11 +277,15 @@ test_group_end
 0xCAFE CONSTANT java java 0xCAFE = assert
 test_group_end
 
-.( VARIABLE ! @ ) test_group
+.( VARIABLE ! @ +! ) test_group
 VARIABLE woot woot @ 0= assert
 0xCAFE woot ! woot @ 0xCAFE = assert
 0xDEAD woot ! woot @ 0xCAFE = assert_not
 woot @ 0xDEAD = assert
+0 woot ! DEPTH 0= assert
+1 woot +! DEPTH 0= assert
+woot @ 1 = assert
+-1 woot +! woot @ 0= assert
 test_group_end
 
 .( BASE HEX DECIMAL ) test_group
@@ -382,14 +405,16 @@ FALSE tw_exit_0 456 = assert
 TRUE tw_exit_0 123 = assert
 test_group_end
 
-.( PAD FILL ) test_group
-PAD 0 $23 FILL PAD C@ $23 <> assert
-PAD 1 $24 FILL PAD C@ $24 = assert
-PAD 2 $25 FILL PAD C@ $25 = assert PAD CHAR+ C@ $25 = assert
+.( PAD C@ C! FILL ) test_group
+'!' PAD C! DEPTH 0= assert
+PAD C@ '!' = assert
+PAD 0 '#' FILL PAD C@ '#' <> assert
+PAD 1 '$' FILL PAD C@ '$' = assert
+PAD 2 '%' FILL PAD C@ '%' = assert PAD CHAR+ C@ '%' = assert
 \ Fill the whole PAD
-PAD /PAD $26 FILL
+PAD /PAD '&' FILL
 \ Check last char in buffer is set and no overflow.
-PAD /PAD 1 - + DUP C@ $26 = assert CHAR+ C@ $26 <> assert
+PAD /PAD 1 - + DUP C@ '&' = assert CHAR+ C@ '&' <> assert
 test_group_end
 
 rm_core_words

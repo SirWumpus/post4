@@ -1792,7 +1792,7 @@ VARIABLE _str_buf_index
 : _abort_msg?
 	ROT IF
 	  catch_frame @ 0= IF
-	    TYPE CR
+	    TYPE CR ABORT
 	  THEN
 	  -2 THROW
 	THEN
@@ -2136,6 +2136,9 @@ END-STRUCTURE
 \ (C: quotation-sys colon-sys -- )(S: -- xt )
 \
 : ;]				\ C: q-sys c-sys
+	\ Bump the saved RS length to account for ;] return IP
+	\ in order to pass the stack depth checks.
+	$100 +
 	\ End current nested definition.
 	POSTPONE ; ]		\ C: q-sys xt
 	>R			\ C: q-sys  R: xt
