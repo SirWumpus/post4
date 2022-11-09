@@ -1,17 +1,20 @@
 INCLUDE ../test/assert.p4
 
 .( 2* ) test_group
+0 2* 0 = assert
 1 2* 2 = assert
-0x12345 2* 0x2468a = assert
-0x3fffffffffffffff 2* 0x7ffffffffffffffe = assert
-0xffffffffffffedcc 2* 0xffffffffffffdb98 = assert
+4000 2* 8000 = assert
+MAX-U 2* 1 XOR MAX-U = assert
+MIN-N~ 2* 0 = assert
 test_group_end
 
 .( 2/ ) test_group
-0x1234 2/ 0x091a = assert
-MAX-N 2/ 0x3fffffffffffffff = assert
-0xffffffffffffedcc 2/ 0xfffffffffffff6e6 = assert
-0xffffffffffffedcc 2/ 2/ 0xfffffffffffffb73 = assert
+0 2/ 0 = assert
+1 2/ 0 = assert
+4000 2/ 2000 = assert
+MAX-U 2/ MAX-U = assert
+MAX-U 1 XOR 2/ MAX-U = assert
+MIN-N~ 2/ MIN-N~ AND MIN-N~ = assert
 test_group_end
 
 .( D2* ) test_group

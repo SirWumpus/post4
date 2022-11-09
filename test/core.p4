@@ -249,10 +249,9 @@ MAX-U >R R> MAX-U = assert
 test_group_end
 
 .( DEPTH ) test_group
-\ Stack might not be empty, so compare DEPTH before / after.
-DEPTH DEPTH - -1 = assert
-DEPTH 0 DEPTH >R DROP R> - -2 = assert
-DEPTH 0 1 DEPTH  >R DROP DROP R> - -3 = assert
+DEPTH 0 = assert
+1 DEPTH >R DROP R> 1 = assert
+1 2 DEPTH  >R 2DROP R> 2 = assert
 test_group_end
 
 .( CONSTANT ) test_group

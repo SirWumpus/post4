@@ -32,14 +32,14 @@ VARIABLE group_failed
 
 : test_group
 	0 group_passed ! 0 group_failed !
-	DEPTH
+	DEPTH R> SWAP >R >R
 	CR
 ;
 
 : test_group_end
 \	." Pass " group_passed @ ansi_green U. ansi_normal
 \	." Fail " group_failed @ ansi_red U. ansi_normal
-	DEPTH 1 - <> CR ABORT" Test group stack depth incorrect."
+	DEPTH 2R> >R <> CR ABORT" Test group stack depth incorrect."
 ;
 
 [THEN]

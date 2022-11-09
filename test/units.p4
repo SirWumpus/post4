@@ -11,8 +11,8 @@
 	INCLUDE ../test/2star.p4
 	INCLUDE ../test/d0equal.p4
 	INCLUDE ../test/umstar.p4
+	INCLUDE ../test/exceptions.p4
 	test_suite_end
 
 	rm_assert
 [THEN] [THEN]
-.( Done ) CR
