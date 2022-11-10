@@ -28,6 +28,7 @@ VARIABLE group_failed
 : test_suite_end
 	." Total Pass " tests_passed @ ansi_green U. ansi_normal
 	." Fail " tests_failed @ ansi_red U. ansi_normal CR
+	tests_failed @ 0<> IF 1 bye-code THEN
 ;
 
 : test_group

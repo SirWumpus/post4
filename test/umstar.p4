@@ -69,6 +69,38 @@ test_group_end
 -10 S>D  7 SM/REM -3 -1 D= assert
  10 S>D -7 SM/REM  3 -1 D= assert
 -10 S>D -7 SM/REM -3  1 D= assert
+ 0 S>D  1 SM/REM  0  0 D= assert
+ 1 S>D  1 SM/REM  0  1 D= assert
+ 2 S>D  1 SM/REM  0  2 D= assert
+-1 S>D  1 SM/REM  0 -1 D= assert
+-2 S>D  1 SM/REM  0 -2 D= assert
+ 0 S>D -1 SM/REM  0  0 D= assert
+ 1 S>D -1 SM/REM  0 -1 D= assert
+ 2 S>D -1 SM/REM  0 -2 D= assert
+-1 S>D -1 SM/REM  0  1 D= assert
+-2 S>D -1 SM/REM  0  2 D= assert
+ 2 S>D  2 SM/REM  0  1 D= assert
+-1 S>D -1 SM/REM  0  1 D= assert
+-2 S>D -2 SM/REM  0  1 D= assert
+ 7 S>D  3 SM/REM  1  2 D= assert
+ 7 S>D -3 SM/REM  1 -2 D= assert
+-7 S>D  3 SM/REM -1 -2 D= assert		\ hmm
+-7 S>D -3 SM/REM -1  2 D= assert
+MAX-N S>D 1 SM/REM 0 MAX-N D= assert
+\ MIN-N~ S>D 1 SM/REM .s 0 MIN-N~ D= assert	\ grr
+MIN-N S>D 1 SM/REM 0 MIN-N D= assert
+MAX-N S>D MAX-N SM/REM 0 1 D= assert
+\ MIN-N~ S>D MIN-N~ SM/REM .s 0 1 D= assert	\ grr
+MIN-N S>D MIN-N SM/REM 0 1 D= assert
+MAX-U 1 4 SM/REM 3 MAX-N D= assert
+2 MIN-N~ M* 2 SM/REM 0 MIN-N~ D= assert
+2 MIN-N~ M* MIN-N~ SM/REM 0 2 D= assert
+2 MAX-N M* 2 SM/REM 0 MAX-N D= assert
+2 MAX-N M* MAX-N SM/REM 0 2 D= assert
+MIN-N~ MIN-N~ M* MIN-N~ SM/REM 0 MIN-N~ D= assert
+MIN-N~ MAX-N M* MIN-N~ SM/REM 0 MAX-N D= assert
+MIN-N~ MAX-N M* MAX-N SM/REM 0 MIN-N~ D= assert
+MAX-N MAX-N M* MAX-N SM/REM 0 MAX-N D= assert
 test_group_end
 
 .( FM/MOD ) test_group
@@ -77,6 +109,44 @@ test_group_end
 -10 S>D  7 FM/MOD  4 -2 D= assert
  10 S>D -7 FM/MOD -4 -2 D= assert
 -10 S>D -7 FM/MOD -3  1 D= assert
+ 0 S>D  1 FM/MOD  0  0 D= assert
+ 1 S>D  1 FM/MOD  0  1 D= assert
+ 2 S>D  1 FM/MOD  0  2 D= assert
+-1 S>D  1 FM/MOD  0 -1 D= assert
+-2 S>D  1 FM/MOD  0 -2 D= assert
+ 0 S>D -1 FM/MOD  0  0 D= assert
+ 1 S>D -1 FM/MOD  0 -1 D= assert
+ 2 S>D -1 FM/MOD  0 -2 D= assert
+-1 S>D -1 FM/MOD  0  1 D= assert
+-2 S>D -1 FM/MOD  0  2 D= assert
+ 2 S>D  2 FM/MOD  0  1 D= assert
+-1 S>D -1 FM/MOD  0  1 D= assert
+-2 S>D -2 FM/MOD  0  1 D= assert
+ 7 S>D  3 FM/MOD  1  2 D= assert
+ 7 S>D -3 FM/MOD -2 -3 D= assert
+-7 S>D  3 FM/MOD  2 -3 D= assert
+-7 S>D -3 FM/MOD -1  2 D= assert
+MAX-N S>D 1 FM/MOD 0 MAX-N D= assert
+\ MIN-N~ S>D 1 FM/MOD 0 MIN-N~ D= assert		\ grr
+MIN-N S>D 1 FM/MOD 0 MIN-N D= assert
+MAX-N S>D MAX-N FM/MOD 0 1 D= assert
+\ MIN-N~ S>D MIN-N~ FM/MOD 0 1 D= assert		\ grr
+MIN-N S>D MIN-N FM/MOD 0 1 D= assert
+MAX-U 1 4 FM/MOD 3 MAX-N D= assert
+1 MIN-N~ M* 1 FM/MOD 0 MIN-N~ D= assert
+\ 1 MIN-N~ M* MIN-N~ FM/MOD 0 1 D= assert		\ grr
+1 MIN-N M* MIN-N FM/MOD 0 1 D= assert
+2 MIN-N~ M* 2 FM/MOD 0 MIN-N~ D= assert
+2 MIN-N~ M* MIN-N~ FM/MOD 0 2 D= assert
+1 MAX-N M* 1 FM/MOD 0 MAX-N D= assert
+1 MAX-N M* MAX-N FM/MOD 0 1 D= assert
+2 MAX-N M* 2 FM/MOD 0 MAX-N D= assert
+2 MAX-N M* MAX-N FM/MOD 0 2 D= assert
+MIN-N~ MIN-N~ M* MIN-N~ FM/MOD 0 MIN-N~ D= assert
+MIN-N~ MAX-N M* MIN-N~ FM/MOD 0 MAX-N D= assert
+MIN-N~ MAX-N M* MAX-N FM/MOD 0 MIN-N~ D= assert
+MAX-N MAX-N M* MAX-N FM/MOD 0 MAX-N D= assert
+
 test_group_end
 
 : test/mod >R S>D R> floored IF FM/MOD EXIT THEN SM/REM ;
