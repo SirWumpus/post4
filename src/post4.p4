@@ -1588,7 +1588,7 @@ MAX-CHAR CONSTANT /COUNTED-STRING
 	\ The IP points to counted string, get its length.
 	R> DUP DUP C@		\ S: ip ip u R: --
 	\ Update IP to point immediate after the counted string.
-	CHARS + ALIGNED >R	\ S: caddr R: ip'
+	1+ CHARS + ALIGNED >R	\ S: caddr R: ip'
 ;
 
 : _cstring_append

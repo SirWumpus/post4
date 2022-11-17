@@ -278,14 +278,14 @@ test_group_end
 test_group_end
 
 .( VARIABLE ! @ +! ) test_group
-VARIABLE woot woot @ 0= assert
-0xCAFE woot ! woot @ 0xCAFE = assert
-0xDEAD woot ! woot @ 0xCAFE = assert_not
-woot @ 0xDEAD = assert
-0 woot ! DEPTH 0= assert
-1 woot +! DEPTH 0= assert
-woot @ 1 = assert
--1 woot +! woot @ 0= assert
+VARIABLE tw_var_0 tw_var_0 @ 0= assert
+0xCAFE tw_var_0 ! tw_var_0 @ 0xCAFE = assert
+0xDEAD tw_var_0 ! tw_var_0 @ 0xCAFE = assert_not
+tw_var_0 @ 0xDEAD = assert
+0 tw_var_0 ! DEPTH 0= assert
+1 tw_var_0 +! DEPTH 0= assert
+tw_var_0 @ 1 = assert
+-1 tw_var_0 +! tw_var_0 @ 0= assert
 test_group_end
 
 .( BASE HEX DECIMAL ) test_group
@@ -335,6 +335,15 @@ test_group_end
 .( ' EXECUTE ) test_group
 : tw_tick_value 1234 ;
 ' tw_tick_value EXECUTE 1234 = assert
+test_group_end
+
+.( :NONAME ) test_group
+VARIABLE tw_var_1
+VARIABLE tw_var_2
+:NONAME 1234 ; tw_var_1 !
+:NONAME 9876 ; tw_var_2 !
+tw_var_1 @ EXECUTE 1234 = assert
+tw_var_2 @ EXECUTE 9876 = assert
 test_group_end
 
 .( CREATE >BODY HERE ) test_group
@@ -399,6 +408,20 @@ S" 456" tw_eval_0 456 = assert
 tw_eval_1 9876 = assert
 test_group_end
 
+.( IF ELSE THEN ) test_group
+: tw_ifthen_0 IF 123 THEN ;
+: tw_ifthen_1 IF 234 ELSE 345 THEN ;
+: tw_ifthen_2 IF 1 ELSE 2 ELSE 3 ELSE 4 ELSE 5 THEN ;
+377  0 tw_ifthen_0 377 = assert
+377  1 tw_ifthen_0 123 = assert 377 = assert
+377 -1 tw_ifthen_0 123 = assert 377 = assert
+ 0 tw_ifthen_1 345 = assert
+ 1 tw_ifthen_1 234 = assert
+-1 tw_ifthen_1 234 = assert
+FALSE tw_ifthen_2 4 = assert 2 = assert
+TRUE  tw_ifthen_2 5 = assert 3 = assert 1 = assert
+test_group_end
+
 .( EXIT ) test_group
 : tw_exit_0 IF 123 EXIT THEN 456 ;
 FALSE tw_exit_0 456 = assert
@@ -415,6 +438,72 @@ PAD 2 '%' FILL PAD C@ '%' = assert PAD CHAR+ C@ '%' = assert
 PAD /PAD '&' FILL
 \ Check last char in buffer is set and no overflow.
 PAD /PAD 1 - + DUP C@ '&' = assert CHAR+ C@ '&' <> assert
+test_group_end
+
+.( SOURCE ) test_group
+: tw_source_0 S" SOURCE" 2DUP EVALUATE >R SWAP >R = R> R> = ;
+tw_source_0 assert assert
+test_group_end
+
+.( STATE ) test_group
+: tw_state_0 STATE @ ; IMMEDIATE
+: tw_state_1 tw_state_0 LITERAL ;
+tw_state_0 0= assert
+tw_state_1 0= assert_not
+test_group_end
+
+.( UNTIL ) test_group
+: tw_until_0 BEGIN DUP 1+ DUP 5 > UNTIL ;
+3 tw_until_0 5 6 D= assert 3 4 D= assert
+5 tw_until_0 5 6 D= assert
+6 tw_until_0 6 7 D= assert
+test_group_end
+
+.( WHILE ) test_group
+: tw_while_0 BEGIN DUP 3 < WHILE DUP 1+ REPEAT ;
+0 tw_while_0 2 3 D= assert 0 1 D= assert
+2 tw_while_0 2 3 D= assert
+3 tw_while_0 3 = assert
+4 tw_while_0 4 = assert
+: tw_while_1 BEGIN DUP 2 > WHILE DUP 5 < WHILE DUP 1+ REPEAT 123 ELSE 345 THEN ;
+1 tw_while_1 1 345 D= assert
+2 tw_while_1 2 345 D= assert
+3 tw_while_1 5 123 D= assert 3 4 D= assert
+4 tw_while_1 5 123 D= assert 4 = assert
+5 tw_while_1 5 123 D= assert
+test_group_end
+
+.( WORD ) test_group
+: tw_word_0 WORD COUNT SWAP C@ ;
+BL tw_word_0 HELLO 5 CHAR H D= assert
+CHAR " tw_word_0 GOODBYE" 7 CHAR G D= assert
+BL tw_word_0
+	\ Test case split by newline, blank lines return zero-length strings.
+	DROP 0= assert
+test_group_end
+
+.( C" COUNT ) test_group
+: tw_cquote_0 C" " ;
+: tw_cquote_1 C" 123" ;
+377 tw_cquote_0 COUNT EVALUATE 377 = assert
+tw_cquote_1 COUNT EVALUATE 123 = assert
+test_group_end
+
+
+.( [ ] ) test_group
+: tw_square_0 [ tw_char_0 ] LITERAL ;
+tw_square_0 '@' = assert
+test_group_end
+
+.( ['] ) test_group
+: tw_square_tick_0 ['] tw_tick_value ; IMMEDIATE
+tw_square_tick_0 EXECUTE 1234 = assert
+test_group_end
+
+.( ( ) test_group
+: tw_paren_0 ( A comment)1234 ;		\ There is no space either side of the ).
+( A comment)1234			\ There is no space either side of the ).
+tw_paren_0 = assert
 test_group_end
 
 rm_core_words
