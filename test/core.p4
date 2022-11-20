@@ -346,12 +346,34 @@ tw_var_1 @ EXECUTE 1234 = assert
 tw_var_2 @ EXECUTE 9876 = assert
 test_group_end
 
+.( COMPILE, ) test_group
+t{ :NONAME DUP + ; CONSTANT tw_compile_0 -> }t
+t{ : tw_compile_1 tw_compile_0 COMPILE, ; -> }t
+t{ : tw_compile_2 [ tw_compile_1 ] ; -> }t
+t{ 123 tw_compile_2 -> 246 }t
+test_group_end
+
 .( CREATE >BODY HERE ) test_group
 CREATE tw_create_empty
 ' tw_create_empty >BODY HERE = assert
 [DEFINED] >HERE [IF]
 >HERE 0 = assert
 [THEN]
+test_group_end
+
+.( DEFER DEFER! DEFER@ IS ACTION-OF ) test_group
+t{ DEFER tw_defer_0 -> }t
+t{ : tw_actionof_0 ACTION-OF tw_defer_0 ; -> }t
+t{ ' * ' tw_defer_0 DEFER! -> }t
+t{ 2 3 tw_defer_0 -> 6 }t
+t{ ' tw_defer_0 DEFER@ -> ' * }t
+t{ ACTION-OF tw_defer_0 -> ' * }t
+t{ tw_actionof_0 -> ' * }t
+t{ ' + IS tw_defer_0 -> }t
+t{ 1 2 tw_defer_0 -> 3 }t
+t{ ' tw_defer_0 DEFER@ -> ' + }t
+t{ ACTION-OF tw_defer_0 -> ' + }t
+t{ tw_actionof_0 -> ' + }t
 test_group_end
 
 .( ABS ) test_group
@@ -504,6 +526,118 @@ test_group_end
 : tw_paren_0 ( A comment)1234 ;		\ There is no space either side of the ).
 ( A comment)1234			\ There is no space either side of the ).
 tw_paren_0 = assert
+test_group_end
+
+.( BUFFER: ) test_group
+t{ 127 CHARS BUFFER: tw_buf_0 -> }t
+t{ 127 CHARS BUFFER: tw_buf_1 -> }t
+
+\ Buffer is aligned
+t{ tw_buf_0 ALIGNED -> tw_buf_0 }t
+
+\ Buffers do not overlap
+t{ tw_buf_1 tw_buf_0 - ABS 127 CHARS < -> FALSE }t
+
+\ Buffer can be written to
+: tw_buf_full? ( c-addr n char -- flag )
+	TRUE 2SWAP CHARS OVER + SWAP ?DO
+	OVER I C@ = AND
+	/CHAR +LOOP NIP
+;
+
+t{ tw_buf_0 127 CHAR * FILL -> }t
+t{ tw_buf_0 127 CHAR * tw_buf_full? -> TRUE }t
+t{ tw_buf_0 127 0 FILL -> }t
+t{ tw_buf_0 127 0 tw_buf_full? -> TRUE }t
+test_group_end
+
+.( CASE OF ENDOF ENDCASE ) test_group
+: tw_case_0
+	CASE
+	1 OF 111 ENDOF
+	2 OF 222 ENDOF
+	3 OF 333 ENDOF
+	>R 999 R>
+	ENDCASE
+;
+T{ 1 tw_case_0 -> 111 }T
+T{ 2 tw_case_0 -> 222 }T
+T{ 3 tw_case_0 -> 333 }T
+T{ 4 tw_case_0 -> 999 }T
+: tw_case_1 ( case1 case2 -- )
+	>R
+	CASE
+	  -1 OF
+	    CASE
+	      R@
+	      1 OF 100 ENDOF
+	      2 OF 200 ENDOF
+	      >R -300 R>
+	    ENDCASE
+	  ENDOF
+	  -2 OF
+	    CASE
+	      R@
+	      1 OF -99 ENDOF
+	      >R -199 R>
+	    ENDCASE
+	  ENDOF
+	  >R 299 R>
+	ENDCASE
+	R> DROP
+;
+T{ -1 1 tw_case_1 ->  100 }T
+T{ -1 2 tw_case_1 ->  200 }T
+T{ -1 3 tw_case_1 -> -300 }T
+T{ -2 1 tw_case_1 -> -99 }T
+T{ -2 2 tw_case_1 -> -199 }T
+T{  0 2 tw_case_1 ->  299 }T
+test_group_end
+
+.( COMPARE ) test_group
+: tw_str_0 S" abcdefghijklmnopqrstuvwxyz" ;
+: tw_str_1 S" 12345" ;
+: tw_str_2 S" 0abc" ;
+: tw_str_3 S" 0aBc" ;
+T{ tw_str_0 tw_str_0 COMPARE -> 0 }T
+T{ tw_str_0 PAD SWAP CMOVE -> }T \ Copy tw_str_0 to PAD
+T{ tw_str_0 PAD OVER COMPARE -> 0 }T
+T{ tw_str_0 PAD 6 COMPARE -> 1 }T
+T{ PAD 10 tw_str_0 COMPARE -> -1 }T
+T{ tw_str_0 PAD 0 COMPARE -> 1 }T
+T{ PAD 0 tw_str_0 COMPARE -> -1 }T
+T{ tw_str_0 tw_str_1 COMPARE -> 1 }T
+T{ tw_str_1 tw_str_0 COMPARE -> -1 }T
+: "abdde" S" abdde" ;
+: "abbde" S" abbde" ;
+: "abcdf" S" abcdf" ;
+: "abcdee" S" abcdee" ;
+T{ tw_str_0 "abdde"  COMPARE -> -1 }T		\ grr
+T{ tw_str_0 "abbde"  COMPARE ->  1 }T
+T{ tw_str_0 "abcdf"  COMPARE -> -1 }T		\ grr
+T{ tw_str_0 "abcdee" COMPARE ->  1 }T
+T{ tw_str_2 tw_str_3 COMPARE ->  1 }T
+T{ tw_str_3 tw_str_2 COMPARE -> -1 }T
+test_group_end
+
+.( PARSE-NAME ) test_group
+T{ PARSE-NAME abcd S" abcd" COMPARE 0= -> TRUE }T
+T{ PARSE-NAME   abcde S" abcde" COMPARE 0= -> TRUE }T
+\ test empty parse area
+T{ PARSE-NAME
+	NIP -> 0 }T	\ empty line
+T{ PARSE-NAME
+	NIP -> 0 }T	\ line with white space
+T{ : tw_parse_name_0 ( "name1" "name2" -- n )
+	PARSE-NAME PARSE-NAME COMPARE 0= ; -> }T
+T{ tw_parse_name_0 abcd abcd -> TRUE }T
+T{ tw_parse_name_0   abcd abcd -> TRUE }T
+T{ tw_parse_name_0 abcde abcdf -> FALSE }T
+T{ tw_parse_name_0 abcdf abcde -> FALSE }T
+T{ tw_parse_name_0 abcde abcde
+	-> TRUE }T
+T{ tw_parse_name_0 abcde abcde
+	-> TRUE }T	\ line with white space
 test_group_end
 
 rm_core_words
