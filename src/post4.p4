@@ -1716,6 +1716,8 @@ VARIABLE _str_buf_index
 \
 : ." POSTPONE S" POSTPONE TYPE ; IMMEDIATE compile-only
 
+: .\" POSTPONE S\" POSTPONE TYPE ; IMMEDIATE compile-only
+
 \ (S: caddr1 caddr2 u -- n )
 : _strcmp
 	BEGIN ?DUP WHILE	\ S: caddr1 caddr2 u

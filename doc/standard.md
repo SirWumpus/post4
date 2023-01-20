@@ -1278,6 +1278,10 @@ Enter compilation state.
 
 ### Post4 Specific Words
 
+#### .\\" ccc"
+( `ccc<quote>` -- ) immediate  
+Display the escaped string `ccc`.
+
 #### /cell
 ( -- `u` ) constant
 Size of a cell in octets.
