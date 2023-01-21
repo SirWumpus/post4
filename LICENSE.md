@@ -1,4 +1,4 @@
-Copyright 2007, 2022 by Anthony Howe.  All rights reserved.
+Copyright 2007, 2023 by Anthony Howe.  All rights reserved.
 
 Redistribution and use in source and binary forms, with or without modification, are permitted provided that the following conditions are met:
 

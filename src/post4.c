@@ -1,7 +1,7 @@
 /*
  * post4.c
  *
- * Copyright 2007, 2022 by Anthony Howe. All rights reserved.
+ * Copyright 2007, 2023 by Anthony Howe. All rights reserved.
  */
 
 #include "post4.h"

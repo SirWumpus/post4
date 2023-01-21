@@ -1,7 +1,7 @@
 Post4 (Post-Forth)
 ==================
 
-Copyright 2007, 2022 Anthony Howe.  All rights reserved.
+Copyright 2007, 2023 Anthony Howe.  All rights reserved.
 
 
 ### Block File Words
