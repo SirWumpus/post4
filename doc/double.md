@@ -143,7 +143,7 @@ Largest usable double-cell unsigned integer.  This is a deviation from `ENVIRONM
 
 - - -
 #### min-d
-( -- `d` ) constant
+( -- `d` ) constant  
 Smallest usable double-cell signed integer.
 
 - - -

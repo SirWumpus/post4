@@ -391,7 +391,7 @@ Parse `name` delimited by a space and create a definition for `name`.  Return a 
 
 - - -
 #### BL
-( -- `char` ) constant
+( -- `char` ) constant  
 `char` is the character value for a space, since Forth words are delimited by space.  A space can also be specified with `'\s'`.
 
 - - -
@@ -665,7 +665,7 @@ Return control from the currently executing word to its caller.  Before executin
 
 - - -
 #### FALSE
-( -- `false` ) constant
+( -- `false` ) constant  
 Return false value, equivalent to zero (0).
 
 - - -
@@ -816,7 +816,7 @@ Or
 
 - - -
 #### LSHIFT
-( `x1` `u` -- `x2`)
+( `x1` `u` -- `x2`)  
 Logical left shift of `x1` by `u` bits, putting `u` zeroes into the least significant bits.
 
 - - -
@@ -1122,7 +1122,7 @@ See `VALUE` and `2VALUE`.
 
 - - -
 #### TRUE
-( -- `true` ) constant
+( -- `true` ) constant  
 Return a true flag, a single-cell value with all bits set.
 
 - - -
@@ -1282,28 +1282,29 @@ Enter compilation state.
 ( `ccc<quote>` -- ) immediate  
 Display the escaped string `ccc`.
 
+- - -
 #### /cell
-( -- `u` ) constant
+( -- `u` ) constant  
 Size of a cell in octets.
 
 - - -
 #### /char
-( -- `u` ) constant
+( -- `u` ) constant  
 Size of a character in octets.
 
 - - -
 #### /counted-string
-( -- `u` ) constant
+( -- `u` ) constant  
 Maximum size of a counted string in characters.  This is a deviation from `ENVIRONMENT?` queries.
 
 - - -
 #### /hold
-( -- `u` ) constant
+( -- `u` ) constant  
 Size of a numeric picture buffer in characters.  This is a deviation from `ENVIRONMENT?` queries.
 
 - - -
 #### /pad
-( -- `u` ) constant
+( -- `u` ) constant  
 Size of a pad buffer in characters.  This is a deviation from `ENVIRONMENT?` queries.
 
 - - -
@@ -1328,7 +1329,7 @@ Return the number of arguments on the command line `argc` and the NULL terminate
 
 - - -
 #### address-unit-bits
-( -- `u` ) constant
+( -- `u` ) constant  
 Size of one address unit in bits.  This is a deviation from `ENVIRONMENT?` queries.
 
 - - -
@@ -1396,7 +1397,7 @@ Lookup the environment variable string `key` `k`.  Return string `value` `v`; if
 
 - - -
 #### floored
-( -- `false` ) constant
+( -- `false` ) constant  
 True if floored division is the default.  This is a deviation from `ENVIRONMENT?` queries.
 
 - - -
@@ -1406,22 +1407,22 @@ Return `TRUE` if `xt` references an immediate word; otherwise `FALSE`.
 
 - - -
 #### max-char
-( -- `u` ) constant
+( -- `u` ) constant  
 Maximum value of any character.  Currently Post4 only supports ASCII and addressable units are octets.  This is a deviation from `ENVIRONMENT?` queries.
 
 - - -
 #### max-n
-( -- `n` ) constant
+( -- `n` ) constant  
 Largest usable signed integer.  This is a deviation from `ENVIRONMENT?` queries.
 
 - - -
 #### max-u
-( -- `u` ) constant
+( -- `u` ) constant  
 Largest usable unsigned integer.  This is a deviation from `ENVIRONMENT?` queries.
 
 - - -
 #### min-n
-( -- `n` ) constant
+( -- `n` ) constant  
 Smallest usable signed integer.
 
 - - -
@@ -1480,12 +1481,12 @@ Should `ALLOT` enlarge and relocate the data-space, the address saved by `HERE` 
 
 - - -
 #### return-stack-cells
-( -- `u`) constant
+( -- `u`) constant  
 Push the return stack's size.
 
 - - -
 #### stack-cells
-( -- `u`) constant
+( -- `u`) constant  
 Push the data stack's size.
 
 - - -

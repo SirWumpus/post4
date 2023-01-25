@@ -71,7 +71,7 @@ Display, with a trailing space, the top number on the float stack using fixed-po
 
 - - -
 #### F\<
-(F: `f1` `f2` --  ) ( -- `bool`  
+(F: `f1` `f2` --  ) ( -- `bool`)  
 `bool` is true if and only if `f1` is less than `f2`.
 
 - - -
