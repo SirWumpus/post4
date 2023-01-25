@@ -12,7 +12,7 @@
 # This configure script is free software; the Free Software Foundation
 # gives unlimited permission to copy, distribute and modify it.
 #
-# Copyright 2007, 2022 by Anthony Howe. All rights reserved.
+# Copyright 2007, 2023 by Anthony Howe. All rights reserved.
 ## -------------------- ##
 ## M4sh Initialization. ##
 ## -------------------- ##
@@ -1364,7 +1364,7 @@ Optional Features:
   --enable-FEATURE[=ARG]  include FEATURE [ARG=yes]
   --enable-64bit          enable compile & link options for 64-bit
   --enable-debug          enable compiler debug option
-  --enable-math           enable libm support
+  --disable-math          disable libm support
 
 Some influential environment variables:
   CC          C compiler command
@@ -1450,7 +1450,7 @@ Copyright (C) 2021 Free Software Foundation, Inc.
 This configure script is free software; the Free Software Foundation
 gives unlimited permission to copy, distribute and modify it.
 
-Copyright 2007, 2022 by Anthony Howe. All rights reserved.
+Copyright 2007, 2023 by Anthony Howe. All rights reserved.
 _ACEOF
   exit
 fi
@@ -2681,7 +2681,7 @@ ac_compiler_gnu=$ac_cv_c_compiler_gnu
 
 
 
-	package_copyright='Copyright 2007, 2022 by Anthony Howe. All rights reserved.'
+	package_copyright='Copyright 2007, 2023 by Anthony Howe. All rights reserved.'
 
 	package_major=`echo $PACKAGE_VERSION | cut -f1 -d.`
 
@@ -4401,15 +4401,34 @@ fi
 if test ${enable_math+y}
 then :
   enableval=$enable_math;
-			enable_math='yes'
-			LIBS="${LIBS} -lm"
-			ac_fn_c_check_header_compile "$LINENO" "math.h" "ac_cv_header_math_h" "$ac_includes_default"
+			if test $enable_math = 'yes'
+then :
+
+				       for ac_header in math.h
+do :
+  ac_fn_c_check_header_compile "$LINENO" "math.h" "ac_cv_header_math_h" "$ac_includes_default"
 if test "x$ac_cv_header_math_h" = xyes
 then :
   printf "%s\n" "#define HAVE_MATH_H 1" >>confdefs.h
+ LIBS="${LIBS:+$LIBS }-lm"
+fi
+
+done
 
 fi
 
+else $as_nop
+
+			       for ac_header in math.h
+do :
+  ac_fn_c_check_header_compile "$LINENO" "math.h" "ac_cv_header_math_h" "$ac_includes_default"
+if test "x$ac_cv_header_math_h" = xyes
+then :
+  printf "%s\n" "#define HAVE_MATH_H 1" >>confdefs.h
+ LIBS="${LIBS:+$LIBS }-lm";enable_math='yes'
+fi
+
+done
 
 
 fi

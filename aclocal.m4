@@ -690,11 +690,14 @@ dnl SNERT_OPTION_ENABLE_MATH
 dnl
 AC_DEFUN(SNERT_OPTION_ENABLE_MATH,[
 	AC_ARG_ENABLE(math,
-		[AS_HELP_STRING([--enable-math ],[enable libm support])],
+		[AS_HELP_STRING([--disable-math ],[disable libm support])],
 		[
-			enable_math='yes'
-			LIBS="${LIBS} -lm"
-			AC_CHECK_HEADERS([math.h])
+			AS_IF([test $enable_math = 'yes'],[
+				AC_CHECK_HEADERS([math.h],[LIBS="${LIBS:+$LIBS }-lm"])
+			])
+		],
+		[
+			AC_CHECK_HEADERS([math.h],[LIBS="${LIBS:+$LIBS }-lm";enable_math='yes'])
 		]
 	)
 ])

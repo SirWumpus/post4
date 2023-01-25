@@ -7,13 +7,9 @@ Copyright 2007, 2023 Anthony Howe.  All rights reserved.
 Building
 ---------
 
-Post4 is written in ISO C11 using only one extension, `Labels As Values`, which is supported by `gcc` and `clang` compilers.  The bulk of the floating point support is provided by ISO C11 `libm`, which needs to be enabled to use.
+Post4 is written in ISO C11 using only one extension, `Labels As Values`, which is supported by `gcc` and `clang` compilers.  The bulk of the floating point support is provided by ISO C11 `libm`, which is enabled by default.  It can be disabled.
 
-        $ ./configure --help
-        $ ./configure --enable-math
-        $ make
-        $ sudo make install
-        $ post4
+        $ ./configure --disable-math
 
 
 ### Floating Point Words

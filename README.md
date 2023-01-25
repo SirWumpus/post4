@@ -44,7 +44,7 @@ Glossary
 
 
 Building
----------
+--------
 
 Post4 is written in ISO C11 using only one extension, `Labels As Values`, which is supported by `gcc` and `clang` compilers.
 
@@ -169,7 +169,7 @@ repeatedly to create further generations.
 
 ### life1d.p4 - [One Dimensional Cellular Atomata](https://en.wikipedia.org/wiki/Cellular_automaton)
 
-This example demostrates five  Wolfram rules 30, 90, 110, 184, and 104 using the same initial state.
+This example demostrates five Wolfram rules 30, 90, 110, 184, and 104 using the same initial state.
 
         $ post4 life1d.p4
 
