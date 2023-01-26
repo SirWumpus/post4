@@ -33,8 +33,6 @@ LIBS		= @LIBS@
 
 XARGSI		= @XARGSI@
 RANLIB		= @RANLIB@
-ARCHIVE		= @ARCHIVE@
-COMPILE		= @COMPILE@
 
 BUILT		:= `date +'%a, %d %b %Y %H:%M:%S %z'`
 
@@ -42,10 +40,7 @@ BUILT		:= `date +'%a, %d %b %Y %H:%M:%S %z'`
 
 #%$O : %.c
 .c$O :
-	$(COMPILE)
-
-#(%) : %
-#	$(ARCHIVE)$*
+	$(CC) $(CFLAGS) -c $<
 
 #%$E : %.c
 .c$E :

@@ -594,6 +594,54 @@ T{ -2 2 tw_case_1 -> -199 }T
 T{  0 2 tw_case_1 ->  299 }T
 test_group_end
 
+.( strcmp ) test_group
+: tw_0 S" " ;
+: tw_a S" A" ;
+: tw_b S" B" ;
+: tw_z S" Z" ;
+: tw_ab S" AB" ;
+: tw_az S" AZ" ;
+: tw_abc S" ABC" ;
+T{ tw_0 tw_0 strcmp -> 0 }T
+T{ tw_0 tw_a strcmp -> -1 }T
+T{ tw_a tw_0 strcmp ->  1 }T
+T{ tw_0 tw_z strcmp -> -1 }T
+T{ tw_z tw_0 strcmp ->  1 }T
+T{ tw_a tw_a strcmp -> 0 }T
+T{ tw_b tw_b strcmp -> 0 }T
+T{ tw_ab tw_ab strcmp -> 0 }T
+T{ tw_abc tw_abc strcmp -> 0 }T
+T{ tw_a tw_b strcmp -> -1 }T
+T{ tw_b tw_a strcmp ->  1 }T
+T{ tw_a tw_z strcmp -> -1 }T
+T{ tw_z tw_a strcmp ->  1 }T
+T{ tw_a tw_ab strcmp -> -1 }T
+T{ tw_ab tw_a strcmp ->  1 }T
+T{ tw_a tw_abc strcmp -> -1 }T
+T{ tw_abc tw_a strcmp ->  1 }T
+T{ tw_ab tw_abc strcmp -> -1 }T
+T{ tw_abc tw_ab strcmp ->  1 }T
+T{ tw_z tw_ab strcmp ->   1 }T
+T{ tw_ab tw_z strcmp ->  -1 }T
+T{ tw_az tw_ab strcmp ->  1 }T
+T{ tw_ab tw_az strcmp -> -1 }T
+T{ tw_z tw_abc strcmp ->  1 }T
+T{ tw_abc tw_z strcmp -> -1 }T
+T{ tw_az tw_abc strcmp ->  1 }T
+T{ tw_abc tw_az strcmp -> -1 }T
+test_group_end
+
+.( strrev ) test_group
+: tw_ba S" BA" ;
+: tw_cba S" CBA" ;
+T{ tw_0 strrev tw_0 tw_0 strcmp -> 0 }T
+T{ tw_a strrev tw_a tw_a strcmp -> 0 }T
+T{ tw_ab strrev tw_ab tw_ba strcmp -> 0 }T
+T{ tw_abc strrev tw_abc tw_cba strcmp -> 0 }T
+T{ tw_ab strrev tw_ab tw_ba strcmp -> -1 }T	\ revert tw_ab
+T{ tw_abc strrev tw_abc tw_cba strcmp -> -1 }T	\ revert tw_abc
+test_group_end
+
 .( COMPARE ) test_group
 : tw_str_0 S" abcdefghijklmnopqrstuvwxyz" ;
 : tw_str_1 S" 12345" ;
@@ -612,12 +660,19 @@ T{ tw_str_1 tw_str_0 COMPARE -> -1 }T
 : "abbde" S" abbde" ;
 : "abcdf" S" abcdf" ;
 : "abcdee" S" abcdee" ;
-T{ tw_str_0 "abdde"  COMPARE -> -1 }T		\ grr
+T{ tw_str_0 "abdde"  COMPARE -> -1 }T
 T{ tw_str_0 "abbde"  COMPARE ->  1 }T
-T{ tw_str_0 "abcdf"  COMPARE -> -1 }T		\ grr
+T{ tw_str_0 "abcdf"  COMPARE -> -1 }T
 T{ tw_str_0 "abcdee" COMPARE ->  1 }T
 T{ tw_str_2 tw_str_3 COMPARE ->  1 }T
 T{ tw_str_3 tw_str_2 COMPARE -> -1 }T
+test_group_end
+
+.( starts-with ) test_group
+T{ s" " s" " starts-with -> TRUE }T
+T{ s" " s" foo" starts-with -> FALSE }T
+T{ s" hello" s" bar" starts-with -> FALSE }T
+T{ s" hello" s" hel" starts-with -> TRUE }T
 test_group_end
 
 .( PARSE-NAME ) test_group

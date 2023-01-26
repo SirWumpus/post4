@@ -1718,57 +1718,61 @@ VARIABLE _str_buf_index
 
 : .\" POSTPONE S\" POSTPONE TYPE ; IMMEDIATE compile-only
 
-\ (S: caddr1 caddr2 u -- n )
-: _strcmp
-	BEGIN ?DUP WHILE	\ S: caddr1 caddr2 u
-	  1- >R			\ S: caddr1 caddr2 R: u'
-	  DUP C@ >R CHAR+ SWAP	\ S: caddr2' caddr1 R: u' c2
-	  DUP C@ >R CHAR+ SWAP  \ S: caddr1' caddr2' R: u' c2 c1
-	  R> R> - ?DUP IF	\ S: caddr1' caddr2' diff R: u'
-	    \ Different strings.
-	    R> DROP 		\ S: caddr1' caddr2' diff R: --
-	    >R 2DROP R>	        \ S: diff
+\ Same behaviour as C's strcmp().
+\
+\ (S: caddr1 u1 caddr2 u2 --  )
+: strcmp
+	ROT SWAP 2DUP -		\ S: s1 s2 u1 u2 du
+	DUP >R			\ S: s1 s2 u1 u2 du	R: du
+	DUP 0= IF		\ S: s1 s2 u1 u2 du	R: du
+	  \ Equal string lengths.
+	  2DROP			\ S: s1 s2 u1		R: du
+	ELSE 0< IF		\ S: s1 s2 u1 u2	R: du
+	  \ s1 shorter than s2.
+	  DROP			\ S: s1 s2 u1		R: du
+	ELSE
+	  \ s1 longer than s2.
+	  NIP			\ S: s1 s2 u2		R: du
+	THEN THEN
+	BEGIN ?DUP WHILE	\ S: s1 s2 u		R: du
+	  1- >R			\ S: s1 s2		R: du u'
+	  DUP C@ >R CHAR+ SWAP	\ S: s2' s1             R: du u' c2
+	  DUP C@ >R CHAR+ SWAP  \ S: s1' s2'		R: du u' c2 c1
+	  R> R> - ?DUP IF	\ S: s1' s2' diff	R: du u'
+	    \ Different stings at character.
+	    2R> 2DROP 		\ S: s1' s2' diff
+	    >R 2DROP R>		\ S: diff
+	    0< IF -1 ELSE 1 THEN
 	    EXIT
 	  THEN
-	  R>			\ S: caddr1' caddr2' u' R:
+	  R>			\ S: s1' s2' u'		R: du
 	REPEAT
-	\ Equal strings.
-	2DROP 0			\ S: 0
-;
-
-\ ... strcmp ...
-\
-\ (S: caddr1 u1 caddr2 u2 -- n )
-\
-: strcmp
-	ROT SWAP 2DUP -		\ S: caddr1 caddr2 u1 u2 udiff
-	IF
-	  \ Different length strings.
-	  - >R 2DROP R> EXIT	\ S: udiff
+	\ Matching leading strings.
+	2DROP R>		\ S: du
+	?DUP IF
+	  0< IF -1 ELSE 1 THEN
+	ELSE
+	  0			\ Equal strings.
 	THEN
-	\ Same length strings.
-	DROP _strcmp
 ;
 
 \ ... COMPARE ...
 \
-\ (S: caddr1 u1 caddr2 u2 -- n )
+\ (S: caddr1 u1 caddr2 u2 -- -1 | 0 | 1 )
 \
-: COMPARE
-	strcmp DUP IF
-	  0< IF -1 ELSE 1 THEN
-	THEN
-;
+: COMPARE strcmp ;
 
 \ (S: caddr1 u1 caddr2 u2 -- bool )
 : starts-with
-	ROT SWAP 2DUP <		\ S: caddr1 caddr2 u1 u2
+	ROT SWAP 2DUP <		\ S: s1 s2 u1 u2
 	IF
 	  \ String too short to start with prefix.
 	  2DROP 2DROP FALSE
 	  EXIT			\ S: bool
 	THEN
-	NIP _strcmp 0=		\ S: bool
+	NIP DUP			\ S: s1 s2 u2 u2
+	ROT ROT			\ S: s1 u2 s2 u2
+ 	strcmp 0=		\ S: bool
 ;
 
 \ ... SEARCH ...
