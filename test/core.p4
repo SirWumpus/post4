@@ -513,12 +513,13 @@ test_group_end
 
 
 .( [ ] ) test_group
-: tw_square_0 [ tw_char_0 ] LITERAL ;
+: tw_square_0 [ '@' ] LITERAL ;
 tw_square_0 '@' = assert
 test_group_end
 
 .( ['] ) test_group
-: tw_square_tick_0 ['] tw_tick_value ; IMMEDIATE
+: tw_square_tick_value 1234 ;
+: tw_square_tick_0 ['] tw_square_tick_value ; IMMEDIATE
 tw_square_tick_0 EXECUTE 1234 = assert
 test_group_end
 
@@ -632,6 +633,10 @@ T{ tw_abc tw_az strcmp -> -1 }T
 test_group_end
 
 .( strrev ) test_group
+: tw_0 S" " ;
+: tw_a S" A" ;
+: tw_ab S" AB" ;
+: tw_abc S" ABC" ;
 : tw_ba S" BA" ;
 : tw_cba S" CBA" ;
 T{ tw_0 strrev tw_0 tw_0 strcmp -> 0 }T
@@ -742,6 +747,13 @@ T{ tw_parse_name_0 abcde abcde
 	-> TRUE }T
 T{ tw_parse_name_0 abcde abcde
 	-> TRUE }T	\ line with white space
+test_group_end
+
+.( N>R NR> ) test_group
+: tw_nr_1 N>R SWAP NR> ;
+: tw_nr_2 N>R N>R SWAP NR> NR> ;
+T{ 1 2 10 20 30 3 tw_nr_1 -> 2 1 10 20 30 3 }T
+T{ 1 2 10 20 30 3 40 50 2 tw_nr_2 -> 2 1 10 20 30 3 40 50 2 }T
 test_group_end
 
 rm_core_words

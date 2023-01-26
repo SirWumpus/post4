@@ -93,12 +93,16 @@ VARIABLE tc_stack_expect
 	['] test_fail IS test_skip_fail
 	DEPTH R> SWAP >R >R
 	CR
+	\ Setup clean-up marker.
+	S" MARKER rm_test_group" EVALUATE
 ;
 
 : test_group_end
 \	." Pass " group_passed @ ansi_green U. ansi_normal
 \	." Fail " group_failed @ ansi_red U. ansi_normal
 	DEPTH 2R> >R <> CR ABORT" Test group stack depth incorrect."
+	\ Clean-up test words and data.
+	S" rm_test_group" EVALUATE
 ;
 
 .( Test case stack check ) test_group
