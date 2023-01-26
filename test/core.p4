@@ -675,6 +675,55 @@ T{ s" hello" s" bar" starts-with -> FALSE }T
 T{ s" hello" s" hel" starts-with -> TRUE }T
 test_group_end
 
+.( BLANK ) test_group
+T{ PAD 25 CHAR a FILL -> }T		\ Fill PAD with 25 'a's
+T{ PAD 5 CHARS + 6 BLANK -> }T		\ Put 6 spaced from character 5
+T{ PAD 12 S" aaaaa      a" COMPARE -> 0 }T
+test_group_end
+
+.( /STRING ) test_group
+: tw_str_0 S" abcdefghijklmnopqrstuvwxyz" ;
+T{ tw_str_0 5 /STRING -> tw_str_0 SWAP 5 + SWAP 5 - }T
+T{ tw_str_0 10 /STRING -4 /STRING -> tw_str_0 6 /STRING }T
+T{ tw_str_0 0 /STRING -> tw_str_0 }T
+test_group_end
+
+.( -TRAILING ) test_group
+: tw_str_0 S" " ;
+: tw_str_1 S" abcdefghijklmnopqrstuvwxyz" ;
+: tw_str_2 S" abc  " ;
+: tw_str_3 S"      " ;
+: tw_str_4 S"    a " ;
+T{ tw_str_0 -TRAILING -> tw_str_0 }T
+T{ tw_str_2 -TRAILING -> tw_str_2 2 - }T
+T{ tw_str_0 -TRAILING -> tw_str_0 }T
+T{ tw_str_3 -TRAILING -> tw_str_3 DROP 0 }T
+T{ tw_str_4 -TRAILING -> tw_str_4 1- }T
+test_group_end
+
+.( SEARCH ) test_group
+: tw_str_0 S" " ;
+: tw_str_1 S" abcdefghijklmnopqrstuvwxyz" ;
+: tw_str_2 S" abc" ;
+: tw_str_3 S" jklmn" ;
+: tw_str_4 S" z" ;
+: tw_str_5 S" mnoq" ;
+: tw_str_6 S" 12345" ;
+T{ tw_str_1 tw_str_0 SEARCH -> tw_str_1 TRUE }T
+T{ tw_str_1 tw_str_2 SEARCH -> tw_str_1 TRUE }T
+T{ tw_str_1 tw_str_3 SEARCH -> tw_str_1 9 /STRING TRUE }T
+T{ tw_str_1 tw_str_4 SEARCH -> tw_str_1 25 /STRING TRUE }T
+T{ tw_str_1 tw_str_5 SEARCH -> tw_str_1 FALSE }T
+T{ tw_str_1 tw_str_6 SEARCH -> tw_str_1 FALSE }T
+test_group_end
+
+.( SLITERAL ) test_group
+: tw_str_0 S" abcdefghijklmnopqrstuvwxyz" ;
+: tw_str_1 [ tw_str_0 ] SLITERAL ;
+T{ tw_str_0 tw_str_1 COMPARE -> 0 }T
+T{ tw_str_0 tw_str_1 ROT = ROT ROT = -> TRUE FALSE }T
+test_group_end
+
 .( PARSE-NAME ) test_group
 T{ PARSE-NAME abcd S" abcd" COMPARE 0= -> TRUE }T
 T{ PARSE-NAME   abcde S" abcde" COMPARE 0= -> TRUE }T
