@@ -2246,11 +2246,20 @@ _accept:	w = P4_POP(ctx->ds);
 		P4_TOP(ctx->ds) = w;
 		NEXT;
 
+/* TODO Consider more generic I/O redirection words.
+ *
+ * stream = 0 input, 1 output
+ * STREAM-GET ( stream -- fileid )
+ * STREAM-SET ( fileid stream -- bool )
+ * STREAM-SAVE ( stream -- )
+ * STREAM-RESTORE ( stream -- bool )
+ */
+
 		// ( -- xn ... x1 n )
 _save_input:	w.n = sizeof (P4_Input) / P4_CELL;
 		p4StackCanPopPush(ctx, &ctx->ds, 0, w.n);
+		ctx->input.fpos = ftell(ctx->input.fp);
 		(void) memcpy(ctx->ds.top + 1, &ctx->input, sizeof (ctx->input));
-		/* TODO save file position. */
 		P4_DROP(ctx->ds, -w.n);
 		P4_PUSH(ctx->ds, w.n);
 		NEXT;
@@ -2258,9 +2267,10 @@ _save_input:	w.n = sizeof (P4_Input) / P4_CELL;
 		// ( xn ... x1 n -- bool )
 _restore_input:	w = P4_POP(ctx->ds);
 		P4_DROP(ctx->ds, w.n);
-		/* TODO restore file position if possible, true on failure. */
 		(void) memcpy(&ctx->input, ctx->ds.top + 1, sizeof (ctx->input));
-		P4_PUSH(ctx->ds, (P4_Int) P4_FALSE);
+		/* Restore file position if possible, true on failure. */
+		x.n = P4_BOOL(fseek(ctx->input.fp, ctx->input.fpos, SEEK_SET) != 0);
+		P4_PUSH(ctx->ds, x.n);
 		NEXT;
 
 		// ( -- flag)

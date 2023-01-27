@@ -223,6 +223,7 @@ typedef struct {
 	P4_Size		offset;		/* Offset of unconsumed input. */
 	P4_Char *	buffer;
 	P4_Int		unget;
+	long int	fpos;		/* See SAVE-INPUT and RESTORE-INPUT */
 } P4_Input;
 
 #define P4_INPUT_IS_BLK(input)	((input).fp == (FILE *) -1 && (input).blk > 0)
