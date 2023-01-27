@@ -5,9 +5,6 @@ MARKER rm_assert
 VARIABLE tests_passed
 VARIABLE tests_failed
 VARIABLE tests_skipped
-VARIABLE group_passed
-VARIABLE group_failed
-VARIABLE group_skipped
 
 : ansi_normal S\" \e[0m" TYPE ;
 : ansi_bold S\" \e[1m" TYPE ;
@@ -36,9 +33,9 @@ VARIABLE group_skipped
 : ansi_bg_cyan S\" \e[46m" TYPE ;
 : ansi_bg_white S\" \e[47m" TYPE ;
 
-: test_pass 1 group_passed +! 1 tests_passed +! ansi_green ." ." ansi_normal ;
-: test_fail 1 group_failed +! 1 tests_failed +! ansi_red ." F" ansi_normal ;
-: test_skip 1 group_skipped +! 1 tests_skipped +! ansi_magenta ." S" ansi_normal ;
+: test_pass 1 tests_passed +! ansi_green ." ." ansi_normal ;
+: test_fail 1 tests_failed +! ansi_red ." F" ansi_normal ;
+: test_skip 1 tests_skipped +! ansi_magenta ." S" ansi_normal ;
 
 DEFER test_skip_fail
 ' test_fail IS test_skip_fail
@@ -59,8 +56,8 @@ VARIABLE tc_stack_start
 VARIABLE tc_stack_expect
 
 : tc_stack_drop BEGIN DEPTH tc_stack_start @ > WHILE DROP REPEAT ;
-: t{ DEPTH tc_stack_start ! ['] test_fail IS test_skip_fail ;
 : ts{ DEPTH tc_stack_start ! ['] test_skip IS test_skip_fail ;
+: t{ DEPTH tc_stack_start ! ['] test_fail IS test_skip_fail ;
 : -> DEPTH tc_stack_expect ! ;
 : }t
 	DEPTH tc_stack_expect @ - DUP >R
@@ -88,19 +85,18 @@ VARIABLE tc_stack_expect
 	tests_failed @ 0<> IF 1 bye-code THEN
 ;
 
-: test_group
-	0 group_passed ! 0 group_failed ! 0 group_skipped !
-	['] test_fail IS test_skip_fail
-	DEPTH R> SWAP >R >R
+: test_group ( -- )( R: -- depth)
+	['] test_fail IS test_skip_fail	\ S: --		R: ip
+	DEPTH R>			\ S: depth ip	R: --
+	SWAP >R >R			\ S: --		R: depth ip
 	CR
 	\ Setup clean-up marker.
 	S" MARKER rm_test_group" EVALUATE
 ;
 
-: test_group_end
-\	." Pass " group_passed @ ansi_green U. ansi_normal
-\	." Fail " group_failed @ ansi_red U. ansi_normal
-	DEPTH 2R> >R <> CR ABORT" Test group stack depth incorrect."
+: test_group_end ( -- )( R: depth -- )
+	DEPTH 2R> >R <>
+	CR ABORT" Test group stack depth incorrect."
 	\ Clean-up test words and data.
 	S" rm_test_group" EVALUATE
 ;
