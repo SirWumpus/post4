@@ -77,7 +77,7 @@ realclean : title _realclean
 	@for i in $(BUILD_DIRS); do ( cd $$i; ${MAKE} ${MAKEFLAGS} $@ ); done
 
 test : build
-	@cd $@; $(MAKE) $@
+	@cd src; $(MAKE) $@
 
 title :
 	@echo
