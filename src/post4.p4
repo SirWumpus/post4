@@ -2064,6 +2064,7 @@ BEGIN-STRUCTURE p4_input
 	FIELD: in.offset
 	FIELD: in.buffer	\ pointer
 	FIELD: in.unget
+	FIELD: in.fpos
 END-STRUCTURE
 
 \ Example
