@@ -1069,6 +1069,7 @@ p4WordCreate(P4_Ctx *ctx, const char *name, size_t length, P4_Code code)
 	if ((word = malloc(sizeof (*word))) == NULL) {
 		goto error0;
 	}
+	MEMSET(word->data, BYTE_ME, sizeof (*word->data));
 	word->mdata = sizeof (*word->data);
 	word->ndata = 0;
 	word->bits = 0;
@@ -1096,10 +1097,11 @@ p4WordAllot(P4_Ctx *ctx, P4_Word *word, P4_Int n)
 	size_t size = P4_CELL_ALIGN(word->ndata + n);
 
 	/* Check for size overflow. */
-	if (word->mdata <= size) {
+	if (word->mdata < size) {
 		if ((word = realloc(word, sizeof (*word) + size)) == NULL) {
 			LONGJMP(ctx->on_throw, P4_THROW_RESIZE);
 		}
+		MEMSET((P4_Char *)(word->data) + word->ndata, BYTE_ME, n);
 		word->mdata = size;
 	}
 
@@ -1988,6 +1990,7 @@ _unused:	w.u = ctx->words->mdata - ctx->words->ndata;
 		// ( u -- aaddr ior )
 _allocate:	w = P4_TOP(ctx->ds);
 		P4_TOP(ctx->ds).s = malloc(w.u);
+		MEMSET(P4_TOP(ctx->ds).s, BYTE_ME, w.u);
 		P4_PUSH(ctx->ds, (P4_Int)(w.s == NULL));
 		NEXT;
 

@@ -19,9 +19,20 @@ x/8gx ctx->rs.base
 end
 
 define showword
+p ctx->words
 p *ctx->words
 x/8gx ctx->words->data
 end
+
+define showwords
+  set var $p = ctx->words
+  while $p != 0
+    printf "%#lx %s\n", $p, $p->name.string
+    set var $p = $p->prev
+  end
+end
+
+set can-use-hw-watchpoints 0
 
 b p4Bp
 commands

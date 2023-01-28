@@ -126,6 +126,24 @@ extern "C" {
 #define QUOTE_THIS(x)	#x
 #define STRLEN(s)	(sizeof (s)-1)
 
+/*
+ * Help detect uninitialised memory issues or memory corruption.  Some
+ * systems allocate cleared (NetBSD) or undefined (Cygwin) memory.  The
+ * former can hide uninitialised data problems.  When debugging, setting
+ * newly allocated memory to garbage can help expose these issues.
+ *
+ * Also debugging with Valgrind, often reports "...points to uninitialised
+ * byte(s)" when part of a buffer remains unused.  Should only be disabled
+ * once you are sure that what Valgrind is reporting can be safely ignored.
+ */
+#ifdef NDEBUG
+# define MEMSET(p, b, s)
+#else
+# define MEMSET(p, b, s)	memset((void *)(p),(int)(b), (size_t)(s))
+#endif
+
+#define BYTE_ME		(0x7F)
+
 /***********************************************************************
  *** Types
  ***********************************************************************/
