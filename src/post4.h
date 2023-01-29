@@ -82,6 +82,7 @@ extern "C" {
 #include <string.h>
 #include <setjmp.h>
 #include <signal.h>
+#include <time.h>
 
 #ifdef HAVE_SYS_TYPES_H
 # include <sys/types.h>
@@ -90,22 +91,11 @@ extern "C" {
 # include <sys/stat.h>
 #endif
 
-#ifdef TIME_WITH_SYS_TIME
-# include <sys/time.h>
-# include <time.h>
-#else
-# ifdef HAVE_SYS_TIME_H
-#  include <sys/time.h>
-# else
-#  include <time.h>
-# endif
-#endif
-
 #if HAVE_INTTYPES_H
 # include <inttypes.h>
 #else
 # if HAVE_STDINT_H
-# include <stdint.h>
+#  include <stdint.h>
 # endif
 #endif
 
