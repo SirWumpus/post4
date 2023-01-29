@@ -604,9 +604,18 @@ p4Mulu(P4_Uint a, P4_Uint b, P4_Uint *c0, P4_Uint *c1)
 	P4_Uint ah_bh = ah * bh;
 
 	/* Sum partial products. */
+#define CARRY_V2
+#ifdef CARRY_V2
+	*c0 = (al_bh << P4_HALF_SHIFT) + al_bl;
+	P4_Uint carry = *c0 < al_bl;
+	*c0 += (ah_bl << P4_HALF_SHIFT);
+	carry += *c0 < (ah_bl << P4_HALF_SHIFT);
+	*c1 = ah_bh + (ah_bl >> P4_HALF_SHIFT) + (al_bh >> P4_HALF_SHIFT) + carry;
+#else
 	P4_Uint carry = ((al_bl >> P4_HALF_SHIFT) + (P4_Uint_Half) al_bh + (P4_Uint_Half) ah_bl) >> P4_HALF_SHIFT;
 	*c1 = ah_bh + (ah_bl >> P4_HALF_SHIFT) + (al_bh >> P4_HALF_SHIFT) + carry;
 	*c0 = (ah_bl << P4_HALF_SHIFT) + (al_bh << P4_HALF_SHIFT) + al_bl;
+#endif
 }
 
 /*
