@@ -288,6 +288,31 @@ tw_var_0 @ 1 = assert
 -1 tw_var_0 +! tw_var_0 @ 0= assert
 test_group_end
 
+.( VALUE TO ) test_group
+T{ 111 VALUE tv_v1 -> }T
+T{ -999 VALUE tv_v2 -> }T
+T{ tv_v1 -> 111 }T
+T{ tv_v2 -> -999 }T
+T{ 222 TO tv_v1 -> }T
+T{ tv_v1 -> 222 }T
+T{ : tw_vd1 tv_v1 ; -> }T
+T{ tw_vd1 -> 222 }T
+T{ : tw_vd2 TO tv_v2 ; -> }T
+T{ tv_v2 -> -999 }T
+T{ -333 tw_vd2 -> }T
+T{ tv_v2 -> -333 }T
+T{ tv_v1 -> 222 }T
+test_group_end
+
+.( 2VALUE TO 2SWAP ) test_group
+T{ 1 2 2VALUE tv_t2val -> }T
+T{ tv_t2val -> 1 2 }T
+T{ 3 4 TO tv_t2val -> }T
+T{ tv_t2val -> 3 4 }T
+T{ : tw_sett2val tv_t2val 2SWAP TO tv_t2val ; -> }T
+T{ 5 6 tw_sett2val tv_t2val -> 3 4 5 6 }T
+test_group_end
+
 .( BASE HEX DECIMAL ) test_group
 BASE @ >R
 HEX BASE @ #16 = assert
