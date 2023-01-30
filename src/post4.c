@@ -1247,6 +1247,17 @@ p4Bp(P4_Ctx *ctx)
 	);
 }
 
+#ifdef P4_TRACE
+static void
+p4Trace(P4_Ctx *ctx, P4_Xt xt)
+{
+	if (ctx->trace) {
+		P4_Int depth = ctx->ds.top - ctx->ds.base + 1;
+		(void) printf("%#lx %.*s\tdepth=%ld\r\n", xt, (int)xt->name.length, xt->name.string, depth);
+	}
+}
+#endif
+
 static void
 p4StackCanPopPush(P4_Ctx *ctx, P4_Stack *stack, int pop, int push)
 {
@@ -1367,6 +1378,9 @@ p4Repl(P4_Ctx *ctx)
 		P4_WORD("S>F",		&&_s_to_f,	0),		// p4
 		P4_WORD("f>r",		&&_fs_to_rs,	0),		// p4
 		P4_WORD("r>f",		&&_rs_to_fs,	0),		// p4
+#endif
+#ifdef P4_TRACE
+		P4_WORD("TRACE",	&&_trace,	0),		// p4
 #endif
 		/* Constants. */
 		P4_WORD("/hold",		&&_pic_size,	0),	// p4
@@ -1621,10 +1635,16 @@ setjmp_cleanup:
 		/* Check data stack bounds. */
 _next:		p4StackCanPopPush(ctx, &ctx->ds, 0, 0);
 		w = *ip++;
+#ifdef P4_TRACE
+		p4Trace(ctx, w.xt);
+#endif
 		goto *w.xt->code;
 
 		// ( xt -- )
 _execute:	w = P4_POP(ctx->ds);
+#ifdef P4_TRACE
+		p4Trace(ctx, w.xt);
+#endif
 		goto *w.xt->code;
 
 		// ( i*x -- j*y )(R: -- ip)
@@ -1905,6 +1925,12 @@ _env:		P4_DROP(ctx->ds, 1);		// Ignore k, S" NUL terminates.
 		// ( -- addr )
 _state:		P4_PUSH(ctx->ds, (P4_Cell *) &ctx->state);
 		NEXT;
+
+#ifdef P4_TRACE
+		// ( -- addr )
+_trace:		P4_PUSH(ctx->ds, (P4_Cell *) &ctx->trace);
+		NEXT;
+#endif
 
 		/*
 		 * Numeric formatting
