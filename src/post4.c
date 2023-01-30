@@ -2031,9 +2031,14 @@ _unused:	w.u = ctx->words->mdata - ctx->words->ndata;
 		 */
 		// ( u -- aaddr ior )
 _allocate:	w = P4_TOP(ctx->ds);
-		P4_TOP(ctx->ds).s = malloc(w.u);
-		MEMSET(P4_TOP(ctx->ds).s, BYTE_ME, w.u);
-		P4_PUSH(ctx->ds, (P4_Int)(w.s == NULL));
+		x.s = malloc((size_t) w.u);
+#ifndef NDEBUG
+		if (x.s != NULL) {
+			MEMSET(x.s, BYTE_ME, w.u);
+		}
+#endif
+		P4_TOP(ctx->ds) = x;
+		P4_PUSH(ctx->ds, (P4_Int)(x.s == NULL));
 		NEXT;
 
 		// ( aaddr -- ior )
@@ -2045,7 +2050,7 @@ _free:		w = P4_TOP(ctx->ds);
 		// ( aaddr1 u -- aaddr2 ior )
 _resize:	w = P4_POP(ctx->ds);
 		x = P4_TOP(ctx->ds);
-		w.s = realloc(x.s, w.u);
+		w.s = realloc(x.s, (size_t) w.u);
 		P4_TOP(ctx->ds) = w.s == NULL ? x : w;
 		P4_PUSH(ctx->ds, (P4_Int)(w.s == NULL));
 		NEXT;
