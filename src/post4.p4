@@ -668,6 +668,8 @@ VARIABLE catch_frame
 	['] COMPILE, COMPILE,
 ; IMMEDIATE compile-only
 
+: [_bp] POSTPONE _bp ;
+
 \ ...  [CHAR]  ...
 \
 \  (C: <spaces>name -- ) \ (S: -- char )
@@ -1568,8 +1570,8 @@ int_max INVERT CONSTANT int_min	\ 0x80...00
 \
 \ Print a NUL terminated string.
 \
-\	CREATE greet S\" Hello world.\n"
-\	greet puts
+\	: greet S\" Hello world.\n" ;
+\	greet DROP puts
 \
 : puts BEGIN DUP C@ ?DUP WHILE EMIT 1+ REPEAT DROP ;
 
@@ -1944,18 +1946,18 @@ VARIABLE SCR
 
 \ ... BEGIN-STRUCTURE name ...
 \
-\ (C: <spaces>name -- aaddr 0 ) \ (S: -- size )
+\ (C: <spaces>name -- aaddr 0 ) (S: -- size )
 \
 : BEGIN-STRUCTURE
-	CREATE 1 CELLS reserve 0 	\ C: aaddr 0
-	DOES> @ 		 	\ S: -- size
+	0 VALUE
+	HERE 2 CELLS - 0	\ C: aaddr 0
 ;
 
 \ ... END-STRUCTURE ...
 \
 \ (C: aaddr size -- )
 \
-: END-STRUCTURE SWAP ! ;
+: END-STRUCTURE SWAP n! ;
 
 \ ... +FIELD name ...
 \
@@ -1979,7 +1981,7 @@ VARIABLE SCR
 \
 : +FIELD
 	CREATE OVER , +		\ C: aaddr offset size -- aaddr offset'
-	DOES> @ +		\ S: aaddr -- aaddr'
+	DOES> @ +		\ S: addr -- addr'
 ;
 
 \ ... CFIELD: name ...
@@ -2045,8 +2047,8 @@ BEGIN-STRUCTURE p4_word
 END-STRUCTURE
 
 BEGIN-STRUCTURE p4_block
-	FIELD: blk.state
-	FIELD: blk.number
+	FIELD: blk.state	\ 0 free, 1 clean, 2 dirty
+	FIELD: blk.number	\ 0 < number
 	1024 +FIELD blk.buffer	\ buffer
 END-STRUCTURE
 

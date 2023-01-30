@@ -354,10 +354,10 @@ t{ 123 tw_compile_2 -> 246 }t
 test_group_end
 
 .( CREATE >BODY HERE ) test_group
-CREATE tw_create_empty
-' tw_create_empty >BODY HERE = assert
+t{ CREATE tw_create_empty -> }t
+t{ ' tw_create_empty >BODY -> HERE }t
 [DEFINED] >HERE [IF]
->HERE 0 = assert
+t{ >HERE -> 8 }t		\ CREATE reserves 1st data cell for DOES>
 [THEN]
 test_group_end
 
