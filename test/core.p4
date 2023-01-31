@@ -304,15 +304,6 @@ T{ tv_v2 -> -333 }T
 T{ tv_v1 -> 222 }T
 test_group_end
 
-.( 2VALUE TO 2SWAP ) test_group
-T{ 1 2 2VALUE tv_t2val -> }T
-T{ tv_t2val -> 1 2 }T
-T{ 3 4 TO tv_t2val -> }T
-T{ tv_t2val -> 3 4 }T
-T{ : tw_sett2val tv_t2val 2SWAP TO tv_t2val ; -> }T
-T{ 5 6 tw_sett2val tv_t2val -> 3 4 5 6 }T
-test_group_end
-
 .( BASE HEX DECIMAL ) test_group
 BASE @ >R
 HEX BASE @ #16 = assert

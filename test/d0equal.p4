@@ -123,14 +123,25 @@ test_group_end
 
 .( 2ROT ) test_group
 \ :NONAME 2 1 2ROT ; CATCH -4 = assert
-100 99 2 1 4 3 6 5 2ROT 2 1 D= assert
-6 5 D= assert
-4 3 D= assert
-100 99 D= assert
+T{ 100 99 2 1 4 3 6 5 2ROT -> 100 99 4 3 6 5 2 1 }T
+T{ MAX-D MIN-D 0xCAFE 0xBABE 2ROT -> MIN-D 0xCAFE 0xBABE MAX-D }T
+[UNDEFINED] _fs cell-bits 64 < AND [IF]
+\ Assumes floats are double cells on the data-stack.
+T{ 1. 2. 3. 2ROT -> 2. 3. 1. }T
+[THEN]
 test_group_end
 
 .( 2CONSTANT ) test_group
-0xCAFE 0xBABE 2CONSTANT const_pair const_pair 0xCAFE 0xBABE D= assert
+0xCAFE 0xBABE 2CONSTANT tv_pair tv_pair 0xCAFE 0xBABE D= assert
+T{ 1 2 2CONSTANT tv_2c1 -> }T
+T{ tv_2c1 -> 1 2 }T
+T{ : tw_cd1 tv_2c1 ; -> }T
+T{ tw_cd1 -> 1 2 }T
+T{ : tw_cd2 2CONSTANT ; -> }T
+T{ -1 -2 tw_cd2 tv_2c2 -> }T
+T{ tv_2c2 -> -1 -2 }T
+T{ 4 5 2CONSTANT tv_2c3 IMMEDIATE tv_2c3 -> 4 5 }T
+T{ : tw_cd6 tv_2c3 2LITERAL ; tw_cd6 -> 4 5 }T
 test_group_end
 
 .( 2VARIABLE 2! 2@ ) test_group
@@ -138,6 +149,38 @@ test_group_end
 0xCAFE 0xBABE var_pair 2! var_pair 2@ 0xCAFE 0xBABE D= assert
 0xDEAD 0xBEEF var_pair 2! var_pair 2@ 0xCAFE 0xBABE D= assert_not
 var_pair 2@ 0xDEAD 0xBEEF D= assert
+T{ 2VARIABLE tv_2v1 -> }T
+[UNDEFINED] _fs cell-bits 64 < AND [IF]
+\ Assumes float 0. is a double cell on the data-stack.
+T{ 0. tv_2v1 2! -> }T
+T{ tv_2v1 2@ -> 0. }T
+[THEN]
+T{ -1 -2 tv_2v1 2! -> }T
+T{ tv_2v1 2@ -> -1 -2 }T
+T{ : tw_cd2 2VARIABLE ; -> }T
+T{ tw_cd2 tv_2v2 -> }T
+T{ : tw_cd3 tv_2v2 2! ; -> }T
+T{ -2 -1 tw_cd3 -> }T
+T{ tv_2v2 2@ -> -2 -1 }T
+T{ 2VARIABLE tv_2v3 IMMEDIATE 5 6 tv_2v3 2! -> }T
+T{ tv_2v3 2@ -> 5 6 }T
+test_group_end
+
+.( 2LITERAL 2VARIABLE 2! 2@ ) test_group
+T{ : tw_cd1 [ MAX-D ] 2LITERAL ; -> }T
+T{ tw_cd1 -> MAX-D }T
+T{ 2VARIABLE tv_2v4 IMMEDIATE 5 6 tv_2v4 2! -> }T
+T{ : tw_cd7 tv_2v4 [ 2@ ] 2LITERAL ; tw_cd7 -> 5 6 }T
+T{ : tw_cd8 [ 6 7 ] tv_2v4 [ 2! ] ; tv_2v4 2@ -> 6 7 }T
+test_group_end
+
+.( 2VALUE TO 2SWAP ) test_group
+T{ 1 2 2VALUE tv_t2val -> }T
+T{ tv_t2val -> 1 2 }T
+T{ 3 4 TO tv_t2val -> }T
+T{ tv_t2val -> 3 4 }T
+T{ : tw_sett2val tv_t2val 2SWAP TO tv_t2val ; -> }T
+T{ 5 6 tw_sett2val tv_t2val -> 3 4 5 6 }T
 test_group_end
 
 .( DABS ) test_group
