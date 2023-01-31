@@ -4,7 +4,7 @@ Post4 (Post-Forth)
 Copyright 2007, 2023 Anthony Howe.  All rights reserved.
 
 
-### Standard Words
+### Standard Core Words
 
 #### \!
 ( `x` `aaddr` -- )  
@@ -97,11 +97,6 @@ Align and reserve one cell of data-space and store `x` there.
 Subtract the top two stack values.
 
 - - -
-#### -TRAILING
-( `caddr` `u` -- `caddr` `u'` )  
-Trim trailing spaces from end of string `caddr` `u`.
-
-- - -
 #### .
 ( `n` -- )  
 Display `n` in free field format.
@@ -131,11 +126,6 @@ Divide the dividend `dend` by the divisor `dsor` leaving the symmetric quotient 
 #### /MOD
 ( `dend` `dsor` -- `rem` `quot` )  
 Divide the dividend `dend` by the divisor `dsor` leaving the remainder `rem` and quotient `quot` on top the stack.
-
-- - -
-#### /STRING
-( `caddr` `u` `n` -- `caddr'` `u'` )  
-Adjust the character string at `caddr` `u` by offset `n` characters, by adding `n` to `caddr` and subtracting `n` from length `u`.
 
 - - -
 #### 0<
@@ -461,21 +451,6 @@ Add the size in address units of a character.
 #### CHARS
 ( `n1` -- `n2` )  
 `n2` is the size in address units of `n1` characters.
-
-- - -
-#### CMOVE
-( `src` `dst` `u` -- )  
-Move `u` characters from character `src` address to `dst` address, proceeding from low to higher addresses.
-
-- - -
-#### CMOVE>
-( `src` `dst` `u` -- )  
-Move `u` characters from character `src` address to `dst` address, proceeding from high to lower addresses.
-
-- - -
-#### COMPARE
-( `caddr1` `u1` `caddr2` `u2` -- `n` )  
-Compare the two strings lexicographically.  Return `n` as 1, zero (0), or -1, according to whether the string `caddr1` `u1` is greater than, equal to, or less than the string `caddr2` `u2`.
 
 - - -
 #### COMPILE,
@@ -1022,7 +997,7 @@ Convert the number `n` to the double-cell number `d` (`lo` `hi`) with the same n
 - - -
 #### S\\" ccc"
 ( `ccc<quote>` -- `caddr` `u` ) immediate  
-When interpreting, copy the escaped string `ccc` to a transient buffer and return `caddr u`.  When compiling, append the escaped string `ccc` to the current word so when executed it leaves `caddr u` of the string on the stack. Note as an extension strings are also `NUL` terminated to facilitate use of host environment functions.
+When interpreting, copy the escaped string `ccc` to a transient buffer and return `caddr u`.  When compiling, append the escaped string `ccc` to the current word so when executed it leaves `caddr u` of the string on the stack.  Note as an extension strings are also `NUL` terminated to facilitate use of host environment functions.
 
 - - -
 #### SAVE-INPUT
@@ -1030,19 +1005,9 @@ When interpreting, copy the escaped string `ccc` to a transient buffer and retur
 Save the current input source state for later use by `RESTORE-INPUT`.
 
 - - -
-#### SEARCH
-( `caddr1` `u1` `caddr2` `u2` -- `caddr3` `u3` `bool` )  
-Search the string `caddr1` `u1` for the string `caddr2` `u2`.  If `bool` is true, a match was found at `caddr3` with `u3` characters remaining.  If `bool` is false there was no match and `caddr3` `u3` are just `caddr1` `u1`.
-
-- - -
 #### SIGN
 ( `n` -- )  
 If `n` is negative, add a minus sign to the beginning of the pictured numeric output string.  An ambiguous condition exists if `SIGN` executes outside of a `<# #>` delimited number conversion.
-
-- - -
-#### SLITERAL
-( `caddr` `u` -- ) immediate  
-Compile the string given by `caddr` and `u` into the definition so that it is later pushed onto the stack during execution of the definition.  See `S"` and `S\"`.
 
 - - -
 #### SM/REM
@@ -1488,26 +1453,6 @@ Push the return stack's size.
 #### stack-cells
 ( -- `u`) constant  
 Push the data stack's size.
-
-- - -
-#### starts-with
-( `caddr1` `u1` `caddr2` `u2` -- `bool` )  
-Return true if string `caddr1` `u1` starts with string `caddr2` `u2`; otherwise false.
-
-- - -
-#### strcmp
-( `caddr1` `u1` `caddr2` `u2` -- `n` )  
-Compare the two strings lexicographically.  Return `n` greater than, equal to, or less than zero (0), according to whether the string `caddr1` `u1` is greater than, equal to, or less than the string `caddr2` `u2`.
-
-- - -
-#### strlen
-( `caddr` -- `u` )  
-String length of NUL terminated string.
-
-- - -
-#### strrev
-( `caddr` `u` -- )  
-Reverse the string in place.
 
 - - -
 #### _branch

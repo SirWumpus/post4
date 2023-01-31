@@ -35,11 +35,12 @@ Post4 cell size is equivalent to C's `intptr_t`, which for most current systems 
 Glossary
 --------
 
-* [Standard Words](./doc/standard.md)
+* [Standard Core Words](./doc/standard.md)
 * [Block File Words](./doc/block.md)
-* [Floating-Point Words](./doc/float.md)
 * [Double-Cell Words](./doc/double.md)
+* [Floating-Point Words](./doc/float.md)
 * [Memory Words](./doc/memory.md)
+* [String Words](./doc/string.md)
 * [Tool Words](./doc/tools.md)
 * [THROW Codes](./doc/throw_codes.md)
 
