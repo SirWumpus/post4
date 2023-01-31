@@ -12,6 +12,7 @@
 	INCLUDE ../test/d0equal.p4
 	INCLUDE ../test/umstar.p4
 	INCLUDE ../test/memory.p4
+	INCLUDE ../test/string.p4
 	INCLUDE ../test/tools.p4
 	INCLUDE ../test/exceptions.p4
 	test_suite_end
