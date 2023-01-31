@@ -1191,7 +1191,7 @@ VARIABLE _>pic
 : D>S DROP ;
 
 \ ( n -- )
-: . DUP >R ABS S>D <# #S R> SIGN #> TYPE SPACE ;
+: . DUP >R S>D DABS <# #S R> SIGN #> TYPE SPACE ;
 
 \ (S: char "<chars>ccc" -- "ccc" )
 : skip_chars
