@@ -9,7 +9,8 @@ Glossary
 
 * [Standard Words](standard.md)
 * [Block File Words](block.md)
-* [Double-Cell Words](double.md)
 * [Floating-Point Words](float.md)
+* [Double-Cell Words](double.md)
+* [Memory Words](memory.md)
 * [Tool Words](tools.md)
 * [THROW Codes](throw_codes.md)

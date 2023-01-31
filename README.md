@@ -29,7 +29,7 @@ Post4 reads input from standard input and writes to standard output, which can b
 
         echo "123 69 + ." | post4
 
-Post4 cell size is equivalent to C's `intptr_t`, for current systems are either 32 or 64 bit values.
+Post4 cell size is equivalent to C's `intptr_t`, which for most current systems are 64 bits.
 
 
 Glossary
@@ -37,8 +37,9 @@ Glossary
 
 * [Standard Words](./doc/standard.md)
 * [Block File Words](./doc/block.md)
-* [Double-Cell Words](./doc/double.md)
 * [Floating-Point Words](./doc/float.md)
+* [Double-Cell Words](./doc/double.md)
+* [Memory Words](./doc/memory.md)
 * [Tool Words](./doc/tools.md)
 * [THROW Codes](./doc/throw_codes.md)
 
