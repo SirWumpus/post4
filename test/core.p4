@@ -446,6 +446,66 @@ S" 456" tw_eval_0 456 = assert
 tw_eval_1 9876 = assert
 test_group_end
 
+.( <# # #> ) test_group
+: tw_pattern_0 <# 1 0 # # #> S" 01" COMPARE ;
+T{ tw_pattern_0 -> 0 }T
+test_group_end
+
+.( <# #S #> ) test_group
+24 CONSTANT MAX-BASE
+: tw_match COMPARE 0= ;
+: tw_gp4 <# 1 0 #S #> S" 1" tw_match ;
+T{ tw_gp4 -> TRUE }T
+: tw_gp5
+	BASE @ TRUE
+	  MAX-BASE 1+ 2 DO		\ FOR EACH POSSIBLE BASE
+	  I BASE ! 			\ TBD: ASSUMES BASE WORKS
+	  I 0 <# #S #> S" 10" tw_match AND
+	LOOP
+	SWAP BASE !
+;
+T{ tw_gp5 -> TRUE }T
+: tw_gp6
+	BASE @ >R 2 BASE !
+	MAX-U MAX-U <# #S #>		\ MAXIMUM UD TO BINARY
+	R> BASE ! 			\ S: caddr u
+	DUP cell-bits 2* = SWAP
+	0 DO 				\ S: caddr flag
+	  OVER C@ [CHAR] 1 = AND	\ ALL ONES
+	  >R CHAR+ R>
+	LOOP SWAP DROP
+;
+T{ tw_gp6 -> TRUE }T
+: tw_gp7
+	BASE @ >R MAX-BASE BASE !
+	TRUE
+	$A 0 DO
+	  I 0 <# #S #>
+	  1 = SWAP C@ I $30 + = AND AND
+	LOOP
+	MAX-BASE $A DO
+	  I 0 <# #S #>
+	  1 = SWAP C@ $41 I $A - + = AND AND
+	LOOP
+	R> BASE !
+;
+T{ tw_gp7 -> TRUE }T
+test_group_end
+
+.( <# HOLD #> ) test_group
+: tw_gp1 <# $41 HOLD $42 HOLD 0 0 #> S" BA" COMPARE 0= ;
+T{ tw_gp1 -> TRUE }T
+test_group_end
+
+.( <# HOLDS #> ) test_group
+T{ 0 0 <# S" Test" HOLDS #> S" Test" COMPARE -> 0 }T
+test_group_end
+
+.( <# SIGN #> ) test_group
+: tw_gp1 <# -1 SIGN 0 SIGN -1 SIGN 0 0 #> S" --" COMPARE 0= ;
+T{ tw_gp1 -> TRUE }T
+test_group_end
+
 .( IF ELSE THEN ) test_group
 : tw_ifthen_0 IF 123 THEN ;
 : tw_ifthen_1 IF 234 ELSE 345 THEN ;

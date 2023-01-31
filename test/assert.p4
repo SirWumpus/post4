@@ -2,6 +2,10 @@
 
 MARKER rm_assert
 
+\ Name space prefixes used:
+\ ts_ tg_ tc_ tw_ tv_	test suite group case word value
+
+
 VARIABLE tests_passed
 VARIABLE tests_failed
 VARIABLE tests_skipped
