@@ -1354,6 +1354,8 @@ p4Repl(P4_Ctx *ctx)
 
 	static P4_Word words[] = {
 #ifdef HAVE_MATH_H
+//		P4_WORD("min-float",	&&_min_float,	0),		// p4
+		P4_WORD("max-float",	&&_max_float,	0),		// p4
 		P4_WORD("_fs",		&&_fs,		0),		// p4
 		P4_WORD(">FLOAT",	&&_to_float,	0),
 		P4_WORD("FROUND",	&&_f_round,	0),
@@ -2301,8 +2303,8 @@ _accept:	w = P4_POP(ctx->ds);
  * stream = 0 input, 1 output
  * STREAM-GET ( stream -- fileid )
  * STREAM-SET ( fileid stream -- bool )
- * STREAM-SAVE ( stream -- )
- * STREAM-RESTORE ( stream -- bool )
+ * STREAM-PUSH ( stream -- )
+ * STREAM-POP ( stream -- bool )
  */
 
 		// ( -- xn ... x1 n )
@@ -2563,6 +2565,21 @@ _seext:		word = P4_POP(ctx->ds).xt;
 		NEXT;
 
 #ifdef HAVE_MATH_H
+# if defined(FLT_EVAL_METHOD) == 0
+#  define MAX_FLOAT	((float) FLT_MAX)
+#  define MIN_FLOAT	((float) FLT_MIN)
+# else
+#  define MAX_FLOAT	((double) DBL_MAX)
+#  define MIN_FLOAT	((double) DBL_MIN)
+# endif
+		// (F: -- f )
+_max_float:	P4_PUSH(ctx->P4_FLOAT_STACK, MAX_FLOAT);
+		NEXT;
+
+//		// (F: -- f )
+//_min_float:	P4_PUSH(ctx->P4_FLOAT_STACK, MIN_FLOAT);
+//		NEXT;
+
 # ifdef USE_FLOAT_STACK
 		// ( -- aaddr n s )
 _fs:		w.n = P4_LENGTH(ctx->fs);
