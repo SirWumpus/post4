@@ -1,5 +1,14 @@
 INCLUDE ../test/assert.p4
 
+.( strlen env ) test_group
+\ Environment variables are NUL terminated.
+T{ S" HOME" env SWAP strlen = -> TRUE }T
+T{ S" USER" env SWAP strlen = -> TRUE }T
+\ S" extension NUL terminates its string.
+T{ S" Hello world!" SWAP strlen = -> TRUE }T
+T{ S" " SWAP strlen = -> TRUE }T
+test_group_end
+
 .( strcmp ) test_group
 : tw_0 S" " ;
 : tw_a S" A" ;

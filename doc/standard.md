@@ -1295,8 +1295,8 @@ Empty the data stack.
 ( `key` `k` -- `value` `v` )  
 Lookup the environment variable string `key` `k`.  Return string `value` `v`; if length `v` is `-1`, then the environment variable `key` was not found and `value` is invalid.
 
-        S" HOME" env puts CR
-        S" USER" env puts CR
+        S" HOME" env TYPE CR
+        S" USER" env TYPE CR
 
 - - -
 #### floored
