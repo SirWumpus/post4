@@ -73,6 +73,15 @@ Regardless of the current value of `BASE`, it is possible to input numbers in on
         %1111111 = #127 = 0177 = $7f = 0x7f = $000000000000007f
         %-1111111 = #-127 = 0-177 = $-7f = 0x-7f = $ffffffffffffff81
 
+When current `BASE` is ten (10) its possible to input floating point numbers (provided support is enabled) with a decimal point and/or scientific notation.  For example:
+
+        0.0 = 0. = 0E0 = 0e0
+        1.0 = 1. = 1E0 = 1e0 = +1.E0
+        -0.123 = -123e-3
+        12.3 = 123E-1
+
+Floating point numbers are placed on the float stack, which is separate from the data and return stacks.  Also the float stack is small, though at least six (6) deep.  See [Floating-Point Words](./doc/float.md), in particular words [f.](./doc/float.md) and [fs.](./doc/float.md) to start with.  Note the input notation, eg. `123E`, where there is no value following the exponent is not supported.
+
 It is also possible to input a character constant or backslash escape character.  Simple use single-quotes around the character or backslash-escape string (see also `CHAR` and `[CHAR]`).  For example:
 
         'A'     ASCII upper case A.
