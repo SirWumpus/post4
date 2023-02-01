@@ -202,14 +202,14 @@ Exchange the top two cell pairs.
 - - -
 #### :
 (C: `<spaces>name` -- `colon-sys` )  
-Start definition of word `name`.  The current definition shall not be findable in the dictionary until it is ended (or until the execution of `DOES>`).  See also `;`, `CREATE`, `DOES>`, `:NONAME`, `[:` and `;]`.
+Start definition of word `name`.  The current definition shall not be findable in the dictionary until it is ended (or until the execution of `DOES>`).  See also `;`, `CREATE`, `DOES>`, `:NONAME`, [\[:](./tools.md) and [;\]](./tools.md).
 
         : SOMENAME words that do stuff ;
 
 - - -
 #### :NONAME ...
 (C: -- `colon-sys` )(S: -- `xt` )  
-Create a nameless word definition, which when terminated by `;` leaves `xt` on the data stack.  The nameless word cannot be found with `'` nor `FIND-NAME`.  See also `[:` and `;]`.
+Create a nameless word definition, which when terminated by `;` leaves `xt` on the data stack.  The nameless word cannot be found with `'` nor `FIND-NAME`.  See also [\[:](./tools.md) and [;\]](./tools.md).
 
         \ Create forward reference.
         DEFER print
@@ -328,16 +328,6 @@ Loop back to matching `BEGIN` indefinitely.
         BEGIN
             \ loop body
         AGAIN
-
-- - -
-#### AHEAD
-( -- ) immediate  
-Jump ahead over a block of code.  A building block for several flow control words.
-
-        AHEAD
-            \ not executed
-        THEN
-        \ continue
 
 - - -
 #### ALIGN
@@ -503,16 +493,6 @@ Or when combined with `DOES>` make new "defining" words, eg.
         monaco ( -- 377 )  
 
 - - -
-#### CS-PICK
-( `xu` `xu-1` ... `x1` `x0` `u` -- `xu` `xu-1` ... `x1` `x0` `xu` )  
-Remove `u`.  Copy the `xu` to the top of the control-stack.  `0 CS-PICK` equivalent to `DUP`, `1 CS-PICK` equivalent to `OVER`.
-
-- - -
-#### CS-ROLL
-( `xu` `xu-1` ... `x0` `u` -- `xu-1` ... `x0` `xu` )  
-Left rotate the control-stack `u` cells.
-
-- - -
 #### DECIMAL
 ( -- )  
 Set the numeric conversion radix to ten (decimal).
@@ -661,14 +641,9 @@ Fill memory at address `caddr` with `u` consecutive characters `char`.
 - - -
 #### FIND
 ( `caddr` -- `caddr` 0 | `xt` 1 | `xt` -1 )  
-Given the counted string `caddr`, find its execution token `xt`.  If found and `xt` is an immediate, return `xt 1`; if not immediate, return `xt -1`; otherwise not found, return `caddr 0`.  See `FIND-NAME`.
+Given the counted string `caddr`, find its execution token `xt`.  If found and `xt` is an immediate, return `xt 1`; if not immediate, return `xt -1`; otherwise not found, return `caddr 0`.  See [FIND-NAME](./tools.md).
 
         ... BL WORD FIND DUP 0= -13 AND THROW ...
-
-- - -
-#### FIND-NAME
-( `caddr` `u` -- `xt` | 0 )  
-Find the definition identified by the string `caddr` `u` in the current search order.  Return its execution token `xt` if found, otherwise zero (0).
 
 - - -
 #### FM/MOD
@@ -825,21 +800,6 @@ If `u` is greater than zero (0), copy from `src` the contents of `u` consecutive
 Wait at least `u` milliseconds.
 
 - - -
-#### NAME>COMPILE
-( `nt` -- `xt` `xt-compile` )  
-Given a name token `nt` (aka `xt` in Post4) return the word's `xt` and the action `xt-compile` to perform when compiling.
-
-- - -
-#### NAME>INTERPRET
-( `nt` -- `xt` | 0 )  
-Given a name token `nt` (aka `xt` in Post4) return the word's `xt` for the interpretation semantics.  Otherwise if there are  no interpretation semantics, return 0.
-
-- - -
-#### NAME>STRING
-( `nt` -- `caddr` `u` )  
-Given a name token `nt` (aka `xt` in Post4) return the word's read-only name string.
-
-- - -
 #### NEGATE
 ( `n1` -- `n2` )  
 Negate `n1`, giving its arithmetic inverse `n2`.
@@ -848,16 +808,6 @@ Negate `n1`, giving its arithmetic inverse `n2`.
 #### NIP
 ( `x1` `x2` -- `x2` )  
 Drop the first item below the top of stack.
-
-- - -
-#### N>R
-( `i*x` `u` -- ) (R: -- `i*x` `u` )  
-Move `u+1` items from the data stack to the return stack for later retrieval using `NR>`.  Note the data will not be overwritten by a subsequent invocation of `N>R` and a program may not access data placed on the return stack before the invocation of `N>R`.
-
-- - -
-#### NR>
-( -- `i*x` `u` ) (R: `i*x` `u` -- )  
-Move `u+1` items, previously stored with `N>R`, from the return stack to the data stack.  The behaviour is undefined if `NR>` is used with data not stored by `N>R`.
 
 - - -
 #### OF
@@ -1083,7 +1033,7 @@ If the top of the stack is non-zero and there is no exception frame on the excep
 #### TO
 ( `i*x` `<spaces>name` -- )  
 
-See `VALUE` and `2VALUE`.
+See `VALUE` and [2VALUE](./double.md).
 
 - - -
 #### TRUE
@@ -1218,13 +1168,6 @@ Enter interpretation state.
 Place name's execution token xt on the stack.
 
 - - -
-#### [:
-(C: -- `quotation-sys` `colon-sys` ) immediate  
-Suspends compilation of the current (enclosing) definition, continues compilation with this nested definition until terminated by `;]` that leaves `xt` on the data stack for the enclosing definition.
-
-        : foo 123 [: ." wave " ;] execute . ;
-
-- - -
 #### [CHAR] ccc
 ( `<spaces>ccc` -- `char` ) immediate  
 Place char, the value of the first character of `ccc`, on the stack.
@@ -1303,11 +1246,6 @@ Size of one address unit in bits.  This is a deviation from `ENVIRONMENT?` queri
 Set the numeric conversion radix to 2 (binary).
 
 - - -
-#### bye-code
-( `exit_code` -- )  
-Terminate and return to the host OS an exit code; zero (0) for normal/success, non-zero an error occurred.
-
-- - -
 #### c\\" ccc"
 ( `ccc<quote>` -- `caddr` ) immediate  
 Compile the escaped string `ccc` into the current word so when executed it leaves the counted string `caddr` on the stack.  See also `S\"`.
@@ -1330,7 +1268,7 @@ Size of a cell in bits.
 - - -
 #### compile-only
 ( -- ) immediate  
-Make the most recent definition as compile-only.  See `NAME>INTERPRET`.
+Make the most recent definition as compile-only.  See [NAME>INTERPRET](./tools.md).
 
 - - -
 #### compile-only?
@@ -1477,7 +1415,7 @@ The base address of the Post4 current machine context.
 - - -
 #### _ds
 ( -- `aaddr` `n` `s` )  
-Push the data stack base `aaddr` address, depth, and size (before executing `_ds`).  This stack is a fixed size and grows upward.
+Push the data stack base `aaddr` address, depth `n`, and size `s` (before executing `_ds`).  This stack is a fixed size and grows upward.
 
 - - -
 #### _dsp!
@@ -1502,7 +1440,7 @@ Parse `ccc` delimited by the delimiter `char`.  When `bool` is false, behaviour 
 - - -
 #### _rs
 ( -- `aaddr` `n` `s` )  
-Push the return stack base address, depth, and size.  This stack is a fixed size and grows upward.
+Push the return stack base address, depth `n`, and size `s`.  This stack is a fixed size and grows upward.
 
 - - -
 #### _rsp!

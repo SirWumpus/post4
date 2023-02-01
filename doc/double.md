@@ -27,7 +27,7 @@ Rotate the top three cell pairs on the stack bringing cell pair `x1` `x2` to the
 - - -
 #### 2VALUE
 ( `lo` `hi` `<spaces>name` -- )  
-Create `name` with two cells of data assigned `hi` and `lo`.  When `name` is executed, the values `lo` `hi` are pushed to the stack.  See `TO`.
+Create `name` with two cells of data assigned `hi` and `lo`.  When `name` is executed, the values `lo` `hi` are pushed to the stack.  See [TO](./standard.md).
 
 - - -
 #### 2VARIABLE

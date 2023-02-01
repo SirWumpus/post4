@@ -231,6 +231,11 @@ Set the number of significant digits currently used by `F.`, `FE.`, or `FS.` to 
 
 ### Post4 Specific Words
 
+#### _fs
+( -- `aaddr` `n` `s` )  
+Push the float stack base `aaddr` address, depth `n`, and size `s` (before executing `_fs`).  This stack is a fixed size and grows upward.  See `.fs` and `_stack_dump`.
+
+- - -
 #### floating-stack
 (  -- `u` ) constant  
 Size of the float stack.  Zero (0) if the float stack is combined with the data stack.  This is a deviation from `ENVIRONMENT?` queries.
