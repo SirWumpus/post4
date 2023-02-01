@@ -334,7 +334,8 @@ test_group_end
 0 CHAR+ 1 = assert
 test_group_end
 
-.( CELL+ ) test_group
+.( CELL+ /CELL ) test_group
+T{ 0 CELL+ -> /CELL }T
 test_group_end
 
 .( CHARS ) test_group
@@ -375,6 +376,14 @@ t{ ' tw_create_empty >BODY -> HERE }t
 [DEFINED] >HERE [IF]
 t{ >HERE -> 8 }t		\ CREATE reserves 1st data cell for DOES>
 [THEN]
+test_group_end
+
+.( CREATE C, C@ C! >BODY ) test_group
+T{ CREATE tv_char CHAR * C, -> }T
+T{ ' tv_char >BODY -> tv_char }T
+T{ tv_char C@ -> '*' }T
+T{ '&' tv_char C! -> }T
+T{ tv_char C@ -> CHAR & }T
 test_group_end
 
 .( DEFER DEFER! DEFER@ IS ACTION-OF ) test_group
@@ -572,12 +581,12 @@ test_group_end
 test_group_end
 
 .( WORD ) test_group
-: tw_word_0 WORD COUNT SWAP C@ ;
-BL tw_word_0 HELLO 5 CHAR H D= assert
-CHAR " tw_word_0 GOODBYE" 7 CHAR G D= assert
-BL tw_word_0
-	\ Test case split by newline, blank lines return zero-length strings.
-	DROP 0= assert
+: tw_word0 WORD COUNT SWAP C@ ;
+T{ BL tw_word0 HELLO -> 5 CHAR H }T
+T{ CHAR " tw_word0 GOODBYE" -> 7 CHAR G }T
+T{ BL tw_word0
+   \ Blank lines return zero-length strings
+   DROP -> 0 }T
 test_group_end
 
 .( C" COUNT ) test_group
@@ -689,6 +698,41 @@ T{ tw_parse_name_0 abcde abcde
 	-> TRUE }T
 T{ tw_parse_name_0 abcde abcde
 	-> TRUE }T	\ line with white space
+test_group_end
+
+.( >IN ) test_group
+\ The original draft test suite assumes HEX.
+HEX
+VARIABLE tv_scans
+: tw_rescan? -1 tv_scans +! tv_scans @ IF 0 >IN ! THEN ;
+
+\ This test is sensitive to the layout.
+T{   2 tv_scans !
+   345 tw_rescan?
+-> 345 345 }T
+
+: tw_in1 5 tv_scans ! S" 123 tw_rescan?" EVALUATE ;
+T{ tw_in1 -> 123 123 123 123 123 }T
+
+\ These tests must start on a new line
+DECIMAL
+T{ 123456 DEPTH OVER 9 < 35 AND + 3 + >IN !
+-> 123456 23456 3456 456 56 6 }T
+T{ 14145 8115 ?DUP 0= 34 AND >IN +! TUCK MOD 14 >IN !
+-> 15 }T
+test_group_end
+
+.( SOURCE >IN ) test_group
+: tw_src0 S" SOURCE" 2DUP EVALUATE >R SWAP >R = R> R> = ;
+T{ tw_src0 -> TRUE TRUE }T
+: tw_src1 SOURCE >IN ! DROP ;
+\ This test is sensitive to the layout.
+T{ tw_src1 123 456
+   -> }T
+test_group_end
+
+.( SOURCE-ID ) test_group
+T{ SOURCE-ID DUP -1 = SWAP 0= OR -> FALSE }T
 test_group_end
 
 rm_core_words
