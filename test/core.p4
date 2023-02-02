@@ -731,8 +731,20 @@ T{ tw_src1 123 456
    -> }T
 test_group_end
 
+.( ( ) test_group
+T{ 99
+   ( 1 2 3
+     4 5 6
+     7 8 9 ) 11 22 33 -> 99 11 22 33 }T
+test_group_end
+
 .( SOURCE-ID ) test_group
 T{ SOURCE-ID DUP -1 = SWAP 0= OR -> FALSE }T
+test_group_end
+
+.( INCLUDE INCLUDED ) test_group
+T{ 0 INCLUDE ../test/data/increment_tos.p4 -> 1 }T
+T{ 2 S" ../test/data/increment_tos.p4" INCLUDED  -> 3 }T
 test_group_end
 
 rm_core_words
