@@ -2310,7 +2310,9 @@ _accept:	w = P4_POP(ctx->ds);
 		// ( -- xn ... x1 n )
 _save_input:	w.n = sizeof (P4_Input) / P4_CELL;
 		p4StackCanPopPush(ctx, &ctx->ds, 0, w.n);
-		ctx->input.fpos = ftell(ctx->input.fp);
+		if (P4_INPUT_IS_FILE(ctx->input)) {
+			ctx->input.fpos = ftello(ctx->input.fp);
+		}
 		(void) memcpy(ctx->ds.top + 1, &ctx->input, sizeof (ctx->input));
 		P4_DROP(ctx->ds, -w.n);
 		P4_PUSH(ctx->ds, w.n);
@@ -2320,8 +2322,11 @@ _save_input:	w.n = sizeof (P4_Input) / P4_CELL;
 _restore_input:	w = P4_POP(ctx->ds);
 		P4_DROP(ctx->ds, w.n);
 		(void) memcpy(&ctx->input, ctx->ds.top + 1, sizeof (ctx->input));
-		/* Restore file position if possible, true on failure. */
-		x.n = P4_BOOL(fseek(ctx->input.fp, ctx->input.fpos, SEEK_SET) != 0);
+		x.n = P4_FALSE;
+		if (P4_INPUT_IS_FILE(ctx->input)) {
+			/* Restore file position if possible, true on failure. */
+			x.n = P4_BOOL(fseeko(ctx->input.fp, ctx->input.fpos, SEEK_SET) != 0);
+		}
 		P4_PUSH(ctx->ds, x.n);
 		NEXT;
 

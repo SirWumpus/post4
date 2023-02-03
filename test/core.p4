@@ -747,4 +747,31 @@ T{ 0 INCLUDE ../test/data/increment_tos.p4 -> 1 }T
 T{ 2 S" ../test/data/increment_tos.p4" INCLUDED  -> 3 }T
 test_group_end
 
+.( SAVE-INPUT RESTORE-INPUT ) test_group
+\ Testing with a file source.
+VARIABLE tv_si0 TRUE tv_si0 !
+
+: tw_not_executed ." This should never be executed" ABORT ;
+
+T{ 11111 SAVE-INPUT
+	tv_si0 @
+	[IF]
+	  FALSE tv_si0 !
+	  RESTORE-INPUT
+	  tw_not_executed
+	[ELSE]
+	  \ Testing the ELSE part is executed
+	  22222
+	[THEN]
+	\ FALSE comes from RESTORE-INPUT
+	-> 11111 FALSE 22222
+}T
+
+\ Testing nesting.
+VARIABLE tv_si_inc 0 tv_si_inc !
+: tw_si1 tv_si_inc @ >IN +! 15 tv_si_inc ! ;
+: tw_str S" SAVE-INPUT tw_si1 RESTORE-INPUT 12345" ;
+T{ tw_str EVALUATE tv_si_inc @ -> 0 2345 15 }T
+test_group_end
+
 rm_core_words

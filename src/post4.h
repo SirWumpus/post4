@@ -232,12 +232,12 @@ typedef struct {
 	P4_Size		offset;		/* Offset of unconsumed input. */
 	P4_Char *	buffer;
 	P4_Int		unget;
-	long int	fpos;		/* See SAVE-INPUT and RESTORE-INPUT */
+	off_t		fpos;		/* See SAVE-INPUT and RESTORE-INPUT */
 } P4_Input;
 
 #define P4_INPUT_IS_BLK(input)	((input).fp == (FILE *) -1 && (input).blk > 0)
 #define P4_INPUT_IS_STR(input)	((input).fp == (FILE *) -1 && (input).blk == 0)
-#define P4_INPUT_IS_FILE(input) ((input).fp != (FILE *) -1 && !P4_IS_TERM(input))
+#define P4_INPUT_IS_FILE(input) ((input).fp != (FILE *) -1 && !P4_INPUT_IS_TERM(input))
 #define P4_INPUT_IS_TERM(input)	((input).fp == stdin)
 #define P4_INPUT_PUSH(input)	{ P4_Input input_save = *(input);
 #define P4_INPUT_POP(input)	*(input) = input_save; }
