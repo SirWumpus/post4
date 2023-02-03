@@ -150,11 +150,8 @@ test_group_end
 0xDEAD 0xBEEF var_pair 2! var_pair 2@ 0xCAFE 0xBABE D= assert_not
 var_pair 2@ 0xDEAD 0xBEEF D= assert
 T{ 2VARIABLE tv_2v1 -> }T
-[UNDEFINED] _fs cell-bits 64 < AND [IF]
-\ Assumes float 0. is a double cell on the data-stack.
-T{ 0. tv_2v1 2! -> }T
-T{ tv_2v1 2@ -> 0. }T
-[THEN]
+T{ 0 S>D tv_2v1 2! -> }T
+T{ tv_2v1 2@ -> 0 S>D }T
 T{ -1 -2 tv_2v1 2! -> }T
 T{ tv_2v1 2@ -> -1 -2 }T
 T{ : tw_cd2 2VARIABLE ; -> }T
