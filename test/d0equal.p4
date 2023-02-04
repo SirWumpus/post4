@@ -117,13 +117,13 @@ T{ HI-2INT MIN-2INT D+ 1 S>D D+ -> LO-2INT }T
 test_group_end
 
 .( DNEGATE ) test_group
-0 0 DNEGATE 0 0 D= assert
-MAX-UD DNEGATE 1 0 D= assert
-1 0 DNEGATE MAX-UD D= assert
-MAX-D DNEGATE MIN-D D= assert
-MIN-D DNEGATE MAX-D D= assert
-0x1234 0 DNEGATE 0xffffffffffffedcc MAX-U D= assert
-0xffffffffffffedcc MAX-U DNEGATE 0x1234 0 D= assert
+T{ 0 S>D DNEGATE -> 0 S>D }T
+T{ 1 S>D DNEGATE -> -1 S>D }T
+T{ -1 S>D DNEGATE -> 1 S>D }T
+T{ $1234 S>D DNEGATE $-1234 S>D }T
+T{ $-1234 S>D DNEGATE $1234 S>D }T
+T{ MAX-2INT DNEGATE -> MIN-2INT SWAP 1+ SWAP }T
+T{ MIN-2INT SWAP 1+ SWAP DNEGATE -> MAX-2INT }T
 test_group_end
 
 .( D- ) test_group
@@ -323,6 +323,13 @@ MAX-D   1 S>D DMIN  1 S>D D= assert
 MAX-D  -1 S>D DMIN -1 S>D D= assert
 MIN-D~  1 S>D DMIN MIN-D~ D= assert
 MIN-D~ -1 S>D DMIN MIN-D~ D= assert
+test_group_end
+
+.( M+) test_group
+T{ HI-2INT   1 M+ -> HI-2INT   1 S>D D+ }T
+T{ MAX-2INT -1 M+ -> MAX-2INT -1 S>D D+ }T
+T{ MIN-2INT  1 M+ -> MIN-2INT  1 S>D D+ }T
+T{ LO-2INT  -1 M+ -> LO-2INT  -1 S>D D+ }T
 test_group_end
 
 rm_d0equal_words

@@ -15,11 +15,14 @@ MAX-N 1 + 4 UM* 0 2 D= assert
 MAX-N MAX-N UM* 1 1 INVERT 2 RSHIFT D= assert
 MAX-U MAX-U UM* 1 1 INVERT D= assert
 
+cell-bits 64 = [IF]
 0xdeadbeefdeadbeef 0xbeefdeadbeefdead UM*
 0x3a522ca1ca1e4983 0xa615999d16497cbb D= assert
+[THEN]
 test_group_end
 
 .( M* ) test_group
+cell-bits 64 = [IF]
 \ +ve * +ve = +ve
 0x7fffffffffffffff 0x7fffffffffffffff M*
 0x0000000000000001 0x3fffffffffffffff D= assert
@@ -51,6 +54,26 @@ test_group_end
 \ -ve * +ve = -ve
 0xdeadbeefcafebabe 0x7ee3cafebeefdead M*
 0xe416c1026f76f666 0xef7bdd9e44bcc2d0 D= assert
+[THEN]
+
+T{  0  0 M* ->  0 S>D }T
+T{  0  1 M* ->  0 S>D }T
+T{  1  0 M* ->  0 S>D }T
+T{  1  2 M* ->  2 S>D }T
+T{  2  1 M* ->  2 S>D }T
+T{  3  3 M* ->  9 S>D }T
+T{ -3  3 M* -> -9 S>D }T
+T{  3 -3 M* -> -9 S>D }T
+T{ -3 -3 M* ->  9 S>D }T
+T{ 0 MIN-INT M* -> 0 S>D }T
+T{ 1 MIN-INT M* -> MIN-INT S>D }T
+T{ 2 MIN-INT M* -> 0 1S }T
+T{ 0 MAX-INT M* -> 0 S>D }T
+T{ 1 MAX-INT M* -> MAX-INT S>D }T
+T{ 2 MAX-INT M* -> MAX-INT 1 LSHIFT 0 }T
+T{ MIN-INT MIN-INT M* -> 0 MSB 1 RSHIFT }T
+T{ MAX-INT MIN-INT M* -> MSB MSB 2/ }T
+T{ MAX-INT MAX-INT M* -> 1 MSB 2/ INVERT }T
 test_group_end
 
 .( UM/MOD ) test_group
@@ -64,89 +87,88 @@ MAX-U MAX-U UM* MAX-U UM/MOD 0 MAX-U D= assert
 test_group_end
 
 .( SM/REM ) test_group
- 15 S>D  5 SM/REM  0  3 D= assert
- 10 S>D  7 SM/REM  3  1 D= assert
--10 S>D  7 SM/REM -3 -1 D= assert
- 10 S>D -7 SM/REM  3 -1 D= assert
--10 S>D -7 SM/REM -3  1 D= assert
- 0 S>D  1 SM/REM  0  0 D= assert
- 1 S>D  1 SM/REM  0  1 D= assert
- 2 S>D  1 SM/REM  0  2 D= assert
--1 S>D  1 SM/REM  0 -1 D= assert
--2 S>D  1 SM/REM  0 -2 D= assert
- 0 S>D -1 SM/REM  0  0 D= assert
- 1 S>D -1 SM/REM  0 -1 D= assert
- 2 S>D -1 SM/REM  0 -2 D= assert
--1 S>D -1 SM/REM  0  1 D= assert
--2 S>D -1 SM/REM  0  2 D= assert
- 2 S>D  2 SM/REM  0  1 D= assert
--1 S>D -1 SM/REM  0  1 D= assert
--2 S>D -2 SM/REM  0  1 D= assert
- 7 S>D  3 SM/REM  1  2 D= assert
- 7 S>D -3 SM/REM  1 -2 D= assert
--7 S>D  3 SM/REM -1 -2 D= assert		\ hmm
--7 S>D -3 SM/REM -1  2 D= assert
-MAX-N S>D 1 SM/REM 0 MAX-N D= assert
-MIN-N~ S>D 1 SM/REM 0 MIN-N~ D= assert_skip	\ known issue
-MIN-N S>D 1 SM/REM 0 MIN-N D= assert
-MAX-N S>D MAX-N SM/REM 0 1 D= assert
-MIN-N~ S>D MIN-N~ SM/REM 0 1 D= assert_skip	\ known issue
-MIN-N S>D MIN-N SM/REM 0 1 D= assert
-MAX-U 1 4 SM/REM 3 MAX-N D= assert
-2 MIN-N~ M* 2 SM/REM 0 MIN-N~ D= assert
-2 MIN-N~ M* MIN-N~ SM/REM 0 2 D= assert
-2 MAX-N M* 2 SM/REM 0 MAX-N D= assert
-2 MAX-N M* MAX-N SM/REM 0 2 D= assert
-MIN-N~ MIN-N~ M* MIN-N~ SM/REM 0 MIN-N~ D= assert
-MIN-N~ MAX-N M* MIN-N~ SM/REM 0 MAX-N D= assert
-MIN-N~ MAX-N M* MAX-N SM/REM 0 MIN-N~ D= assert
-MAX-N MAX-N M* MAX-N SM/REM 0 MAX-N D= assert
+T{  15 S>D  5 SM/REM ->  0  3 }T
+T{  10 S>D  7 SM/REM ->  3  1 }T
+T{ -10 S>D  7 SM/REM -> -3 -1 }T
+T{  10 S>D -7 SM/REM ->  3 -1 }T
+T{ -10 S>D -7 SM/REM -> -3  1 }T
+T{  0 S>D  1 SM/REM ->  0  0 }T
+T{  1 S>D  1 SM/REM ->  0  1 }T
+T{  2 S>D  1 SM/REM ->  0  2 }T
+T{ -1 S>D  1 SM/REM ->  0 -1 }T
+T{ -2 S>D  1 SM/REM ->  0 -2 }T
+T{  0 S>D -1 SM/REM ->  0  0 }T
+T{  1 S>D -1 SM/REM ->  0 -1 }T
+T{  2 S>D -1 SM/REM ->  0 -2 }T
+T{ -1 S>D -1 SM/REM ->  0  1 }T
+T{ -2 S>D -1 SM/REM ->  0  2 }T
+T{  2 S>D  2 SM/REM ->  0  1 }T
+T{ -1 S>D -1 SM/REM ->  0  1 }T
+T{ -2 S>D -2 SM/REM ->  0  1 }T
+T{  7 S>D  3 SM/REM ->  1  2 }T
+T{  7 S>D -3 SM/REM ->  1 -2 }T
+T{ -7 S>D  3 SM/REM -> -1 -2 }T		\ hmm
+T{ -7 S>D -3 SM/REM -> -1  2 }T
+T{ MAX-N S>D 1 SM/REM -> 0 MAX-N }T
+T{ MIN-N~ S>D 1 SM/REM -> 0 MIN-N~ }T
+T{ MIN-N S>D 1 SM/REM -> 0 MIN-N }T
+T{ MAX-N S>D MAX-N SM/REM -> 0 1 }T
+T{ MIN-N~ S>D MIN-N~ SM/REM -> 0 1 }T
+T{ MIN-N S>D MIN-N SM/REM -> 0 1 }T
+T{ MAX-U 1 4 SM/REM -> 3 MAX-N }T
+T{ 2 MIN-N~ M* 2 SM/REM -> 0 MIN-N~ }T
+T{ 2 MIN-N~ M* MIN-N~ SM/REM -> 0 2 }T
+T{ 2 MAX-N M* 2 SM/REM -> 0 MAX-N }T
+T{ 2 MAX-N M* MAX-N SM/REM -> 0 2 }T
+T{ MIN-INT MIN-INT M* MIN-INT SM/REM -> 0 MIN-INT }T
+T{ MIN-INT MAX-INT M* MIN-INT SM/REM -> 0 MAX-INT }T
+T{ MIN-INT MAX-INT M* MAX-INT SM/REM -> 0 MIN-INT }T
+T{ MAX-INT MAX-INT M* MAX-INT SM/REM -> 0 MAX-INT }T
 test_group_end
 
 .( FM/MOD ) test_group
- 15 S>D  5 FM/MOD  0  3 D= assert
- 10 S>D  7 FM/MOD  3  1 D= assert
--10 S>D  7 FM/MOD  4 -2 D= assert
- 10 S>D -7 FM/MOD -4 -2 D= assert
--10 S>D -7 FM/MOD -3  1 D= assert
- 0 S>D  1 FM/MOD  0  0 D= assert
- 1 S>D  1 FM/MOD  0  1 D= assert
- 2 S>D  1 FM/MOD  0  2 D= assert
--1 S>D  1 FM/MOD  0 -1 D= assert
--2 S>D  1 FM/MOD  0 -2 D= assert
- 0 S>D -1 FM/MOD  0  0 D= assert
- 1 S>D -1 FM/MOD  0 -1 D= assert
- 2 S>D -1 FM/MOD  0 -2 D= assert
--1 S>D -1 FM/MOD  0  1 D= assert
--2 S>D -1 FM/MOD  0  2 D= assert
- 2 S>D  2 FM/MOD  0  1 D= assert
--1 S>D -1 FM/MOD  0  1 D= assert
--2 S>D -2 FM/MOD  0  1 D= assert
- 7 S>D  3 FM/MOD  1  2 D= assert
- 7 S>D -3 FM/MOD -2 -3 D= assert
--7 S>D  3 FM/MOD  2 -3 D= assert
--7 S>D -3 FM/MOD -1  2 D= assert
-MAX-N S>D 1 FM/MOD 0 MAX-N D= assert
-MIN-N~ S>D 1 FM/MOD 0 MIN-N~ D= assert_skip		\ known issue
-MIN-N S>D 1 FM/MOD 0 MIN-N D= assert
-MAX-N S>D MAX-N FM/MOD 0 1 D= assert
-MIN-N~ S>D MIN-N~ FM/MOD 0 1 D= assert_skip		\ known issue
-MIN-N S>D MIN-N FM/MOD 0 1 D= assert
-MAX-U 1 4 FM/MOD 3 MAX-N D= assert
-1 MIN-N~ M* 1 FM/MOD 0 MIN-N~ D= assert
-1 MIN-N~ M* MIN-N~ FM/MOD 0 1 D= assert_skip		\ known issue
-1 MIN-N M* MIN-N FM/MOD 0 1 D= assert
-2 MIN-N~ M* 2 FM/MOD 0 MIN-N~ D= assert
-2 MIN-N~ M* MIN-N~ FM/MOD 0 2 D= assert
-1 MAX-N M* 1 FM/MOD 0 MAX-N D= assert
-1 MAX-N M* MAX-N FM/MOD 0 1 D= assert
-2 MAX-N M* 2 FM/MOD 0 MAX-N D= assert
-2 MAX-N M* MAX-N FM/MOD 0 2 D= assert
-MIN-N~ MIN-N~ M* MIN-N~ FM/MOD 0 MIN-N~ D= assert
-MIN-N~ MAX-N M* MIN-N~ FM/MOD 0 MAX-N D= assert
-MIN-N~ MAX-N M* MAX-N FM/MOD 0 MIN-N~ D= assert
-MAX-N MAX-N M* MAX-N FM/MOD 0 MAX-N D= assert
-
+T{  15 S>D  5 FM/MOD ->  0  3 }T
+T{  10 S>D  7 FM/MOD ->  3  1 }T
+T{ -10 S>D  7 FM/MOD ->  4 -2 }T
+T{  10 S>D -7 FM/MOD -> -4 -2 }T
+T{ -10 S>D -7 FM/MOD -> -3  1 }T
+T{  0 S>D  1 FM/MOD ->  0  0 }T
+T{  1 S>D  1 FM/MOD ->  0  1 }T
+T{  2 S>D  1 FM/MOD ->  0  2 }T
+T{ -1 S>D  1 FM/MOD ->  0 -1 }T
+T{ -2 S>D  1 FM/MOD ->  0 -2 }T
+T{  0 S>D -1 FM/MOD ->  0  0 }T
+T{  1 S>D -1 FM/MOD ->  0 -1 }T
+T{  2 S>D -1 FM/MOD ->  0 -2 }T
+T{ -1 S>D -1 FM/MOD ->  0  1 }T
+T{ -2 S>D -1 FM/MOD ->  0  2 }T
+T{  2 S>D  2 FM/MOD ->  0  1 }T
+T{ -1 S>D -1 FM/MOD ->  0  1 }T
+T{ -2 S>D -2 FM/MOD ->  0  1 }T
+T{  7 S>D  3 FM/MOD ->  1  2 }T
+T{  7 S>D -3 FM/MOD -> -2 -3 }T
+T{ -7 S>D  3 FM/MOD ->  2 -3 }T
+T{ -7 S>D -3 FM/MOD -> -1  2 }T
+T{ MAX-INT S>D 1 FM/MOD -> 0 MAX-INT }T
+T{ MIN-INT S>D 1 FM/MOD -> 0 MIN-INT }T
+T{ MIN-N S>D 1 FM/MOD -> 0 MIN-N }T
+T{ MAX-INT S>D MAX-INT FM/MOD -> 0 1 }T
+T{ MIN-INT S>D MIN-INT FM/MOD -> 0 1 }T
+T{ MIN-N S>D MIN-N FM/MOD -> 0 1 }T
+T{ 1S 1 4 FM/MOD -> 3 MAX-INT }T
+T{ 1 MIN-INT M* 1 FM/MOD -> 0 MIN-INT }T
+T{ 1 MIN-INT M* MIN-INT FM/MOD -> 0 1 }T
+T{ 1 MIN-N M* MIN-N FM/MOD -> 0 1 }T
+T{ 2 MIN-INT M* 2 FM/MOD -> 0 MIN-INT }T
+T{ 2 MIN-INT M* MIN-INT FM/MOD -> 0 2 }T
+T{ 1 MAX-INT M* 1 FM/MOD -> 0 MAX-INT }T
+T{ 1 MAX-INT M* MAX-INT FM/MOD -> 0 1 }T
+T{ 2 MAX-INT M* 2 FM/MOD -> 0 MAX-INT }T
+T{ 2 MAX-INT M* MAX-INT FM/MOD -> 0 2 }T
+T{ MIN-INT MIN-INT M* MIN-INT FM/MOD -> 0 MIN-INT }T
+T{ MIN-INT MAX-INT M* MIN-INT FM/MOD -> 0 MAX-INT }T
+T{ MIN-INT MAX-INT M* MAX-INT FM/MOD -> 0 MIN-INT }T
+T{ MAX-INT MAX-INT M* MAX-INT FM/MOD -> 0 MAX-INT }T
 test_group_end
 
 : test/mod >R S>D R> floored IF FM/MOD EXIT THEN SM/REM ;

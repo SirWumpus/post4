@@ -658,12 +658,11 @@ p4Mulu(P4_Uint a, P4_Uint b, P4_Uint *c0, P4_Uint *c1)
 void
 p4Muls(P4_Int a, P4_Int b, P4_Int *c0, P4_Int *c1)
 {
-	int sign = ((a < 0) ^ (b < 0)) ? -1 : 1;
+	P4_Int sign = a ^ b;
 	p4Mulu(a < 0 ? -a : a, b < 0 ? -b : b, c0, c1);
 	if (sign < 0) {
-		P4_Int cc0 = ~*c0;
-		*c0 = cc0 + 1;
-		*c1 = ~*c1 + (*c0 < cc0);
+		/* Double cell negate. */
+		*c1 = ~*c1 + ((*c0 = -*c0) == 0);
 	}
 }
 
@@ -803,11 +802,10 @@ p4Divs(P4_Int dend0, P4_Int dend1, P4_Int dsor, P4_Int *rem)
 {
 	P4_Int quot;
 	int neg_rem = (dend1 < 0);
-	int sign = (neg_rem ^ (dsor < 0)) ? -1 : 1;
+	P4_Int sign = dend1 ^ dsor;
 	if (dend1 < 0) {
-		P4_Int d0 = ~dend0;
-		dend0 = d0 + 1;
-		dend1 = ~dend1 + (dend0 < d0);
+		/* Double cell negate. */
+		dend1 = ~dend1 + ((dend0 = -dend0) == 0);
 	}
 	quot = (P4_Int) p4Divu(dend0, dend1, dsor < 0 ? -dsor : dsor, rem);
 	if (sign < 0) {
