@@ -801,15 +801,7 @@ VARIABLE catch_frame
 : DABS DUP 0< IF DNEGATE THEN ;
 
 \ (S: xl xh yl yh -- zl zh )
-: D+
-	2>R R>			\ S: xl xh yh	R: yl
-	+ SWAP			\ S: zh xl	R: yl
-	DUP R> +		\ S: zh xl zl	R: yl
-	TUCK			\ S: zh zl x1 zl
-	U> >R SWAP R> IF	\ S: zl zh
-	  1 +			\ S: zl zh'
-	THEN
-;
+: D+ ROT + >R DUP >R + DUP R> U< NEGATE R> + ;
 
 \ (S: xl xh yl yh -- zl zh )
 : D- DNEGATE D+ ;
@@ -829,29 +821,33 @@ VARIABLE catch_frame
 \ (S: xl xh n -- yl yh )
 : M+ S>D D+ ;
 
-\ (S: d0 d1 u -- t0 t1 t2 )
-\ See Wil Baden http://computer-programming-forum.com/22-forth/4e2ea55a1dc706b2.htm
-\
-: T*
-	TUCK			\ S: d0 u d1 u
-	UM* 2SWAP		\ S: a0 a1 d0 u
-	UM* SWAP		\ S: a0 a1 b1 b0
-	>R 0			\ S: a0 a1 b1 0		R: b0
-	D+ R>			\ S: c0 c1 b0
-	ROT ROT			\ S: b0 c0 c1
+\ ( ul uh u -- tl tm th )
+: ut*
+	ROT OVER		\ S: uh u ul u
+	UM* 2SWAP		\ S: tl tm uh u
+	UM* SWAP		\ S: tl tm th tt
+	0 D+			\ S: tl tm' th'
 ;
 
-\ (S: t0 t1 t2 u -- ud )
-: T/
-	DUP >R			\ S: t0 t1 t2 u		R: u
-	UM/MOD			\ S: t0 r q		R: u
-	ROT ROT R>		\ S: q t0 r u
-	UM/MOD			\ S: q rr qq
-	NIP SWAP		\ S: qq q
+\ ( tl tm th u -- ud )
+: ut/
+	DUP >R			\ S: tl tm th u		R: u
+	UM/MOD			\ S: tl r0 q0		R: u
+	ROT ROT R>		\ S: q0 tl r0 u
+	UM/MOD			\ S: q0 r1 q1
+	NIP SWAP		\ S: q1 q0
 ;
 
 \ ( d1 n1 n2 -- d2 )
-: M*/ >R T* R> T/ ;
+: M*/
+	>R 2DUP XOR >R		\ S: dl dh n1		R: n2 sign
+	ABS >R			\ S: dl dh		R: n2 sign u1
+	DABS R>			\ S: ul uh u1		R: n2 sign
+	ut*			\ S: tl tm th 		R: n2 sign
+	2R> >R			\ S: tl tm th n2	R: sign
+	ut/			\ S: ud			R: sign
+	R> 0< IF DNEGATE THEN	\ S: d2
+;
 
 \ ... : name ... [ x1 x2 ] 2LITERAL ... ;
 \

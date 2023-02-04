@@ -2,22 +2,22 @@
 INCLUDE ../test/assert.p4
 
 .( UM* ) test_group
-0 0 UM* 0 0 D= assert
-0 1 UM* 0 0 D= assert
-1 0 UM* 0 0 D= assert
-1 2 UM* 2 0 D= assert
-2 1 UM* 2 0 D= assert
-3 3 UM* 9 0 D= assert
-MAX-N 1 + 1 RSHIFT 2 UM* MAX-N 1 + 0 D= assert
-MAX-N 1 + 2 UM* 0 1 D= assert
-MAX-N 1 + 4 UM* 0 2 D= assert
-0 INVERT 2  UM* 0 INVERT 1 LSHIFT 1 D= assert
-MAX-N MAX-N UM* 1 1 INVERT 2 RSHIFT D= assert
-MAX-U MAX-U UM* 1 1 INVERT D= assert
+T{ 0 0 UM* -> 0 0 }T
+T{ 0 1 UM* -> 0 0 }T
+T{ 1 0 UM* -> 0 0 }T
+T{ 1 2 UM* -> 2 0 }T
+T{ 2 1 UM* -> 2 0 }T
+T{ 3 3 UM* -> 9 0 }T
+T{ MAX-N 1 + 1 RSHIFT 2 UM* -> MAX-N 1 + 0 }T
+T{ MAX-N 1 + 2 UM* -> 0 1 }T
+T{ MAX-N 1 + 4 UM* -> 0 2 }T
+T{ 0 INVERT 2  UM* -> 0 INVERT 1 LSHIFT 1 }T
+T{ MAX-N MAX-N UM* -> 1 1 INVERT 2 RSHIFT }T
+T{ MAX-U MAX-U UM* -> 1 1 INVERT }T
 
 cell-bits 64 = [IF]
-0xdeadbeefdeadbeef 0xbeefdeadbeefdead UM*
-0x3a522ca1ca1e4983 0xa615999d16497cbb D= assert
+T{ 0xdeadbeefdeadbeef 0xbeefdeadbeefdead UM*
+-> 0x3a522ca1ca1e4983 0xa615999d16497cbb }T
 [THEN]
 test_group_end
 
@@ -287,4 +287,26 @@ test_group_end
 -7  2 -3 */ -7  2 -3 test*/ = assert
 MAX-N 2 MAX-N */ MAX-N 2 MAX-N test*/ = assert
 MIN-N 2 MIN-N */ MIN-N 2 MIN-N test*/ = assert
+test_group_end
+
+.( M*/ ) test_group
+\ To correct the result if the division is floored, only used when
+\ necessary, i.e., negative quotient and remainder != 0.
+: tw_is_floored ( d -- d' )
+	[ -3 2 / -2 = ] LITERAL IF 1 S>D D- THEN
+;
+T{    5 S>D  7 11 M*/ ->  3 S>D }T
+T{    5 S>D -7 11 M*/ -> -3 S>D tw_is_floored }T
+T{   -5 S>D  7 11 M*/ -> -3 S>D tw_is_floored }T
+T{   -5 S>D -7 11 M*/ ->  3 S>D }T
+T{ MAX-2INT  8 16 M*/ -> HI-2INT }T
+T{ MAX-2INT -8 16 M*/ -> HI-2INT DNEGATE tw_is_floored }T
+T{ MIN-2INT  8 16 M*/ -> LO-2INT }T
+T{ MIN-2INT -8 16 M*/ -> LO-2INT DNEGATE }T
+T{ MAX-2INT MAX-INT MAX-INT M*/ -> MAX-2INT }T
+T{ MAX-2INT MAX-INT 2/ MAX-INT M*/ -> MAX-INT 1- HI-2INT NIP }T
+T{ MIN-2INT LO-2INT NIP DUP NEGATE M*/ -> MIN-2INT }T
+T{ MIN-2INT LO-2INT NIP 1- MAX-INT M*/ -> MIN-INT 3 + HI-2INT NIP 2 + }T
+T{ MAX-2INT LO-2INT NIP DUP NEGATE M*/ -> MAX-2INT DNEGATE }T
+T{ MIN-2INT MAX-INT DUP M*/ -> MIN-2INT }T
 test_group_end

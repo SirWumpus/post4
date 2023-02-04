@@ -751,14 +751,14 @@ p4Divu(P4_Uint dend0, P4_Uint dend1, P4_Uint dsor, P4_Uint *rem)
 	}
 
 	// Compute high quotient digit.
-	qhat = dend1 / (dsor >> P4_HALF_SHIFT);
-	rhat = dend1 % (dsor >> P4_HALF_SHIFT);
+	qhat = dend1 / (P4_Uint_Half)(dsor >> P4_HALF_SHIFT);
+	rhat = dend1 % (P4_Uint_Half)(dsor >> P4_HALF_SHIFT);
 
 	while (
-		(qhat >> P4_HALF_SHIFT) != 0 ||
+		(P4_Uint_Half)(qhat >> P4_HALF_SHIFT) != 0 ||
 		// Both qhat and rhat are less 2**P4_HALF_SHIFT here!
-		(qhat & P4_LOWER_MASK) * (dsor & P4_LOWER_MASK) >
-		((rhat << P4_HALF_SHIFT) | (dend0 >> P4_HALF_SHIFT))
+		(qhat & P4_LOWER_MASK) * (P4_Uint_Half)(dsor & P4_LOWER_MASK) >
+		((rhat << P4_HALF_SHIFT) | (P4_Uint_Half)(dend0 >> P4_HALF_SHIFT))
 	) {
 		qhat -= 1;
 		rhat += (dsor >> P4_HALF_SHIFT);
@@ -768,18 +768,18 @@ p4Divu(P4_Uint dend0, P4_Uint dend1, P4_Uint dsor, P4_Uint *rem)
 	}
 
 	// Multiply and subtract.
-	q1 = (qhat & P4_LOWER_MASK);
+	q1 = (P4_Uint_Half)(qhat & P4_LOWER_MASK);
 	uhat = ((dend1 << P4_HALF_SHIFT) | (dend0 >> P4_HALF_SHIFT)) - q1 * dsor;
 
 	// Compute low quotient digit.
-	qhat = uhat / (dsor >> P4_HALF_SHIFT);
-	rhat = uhat % (dsor >> P4_HALF_SHIFT);
+	qhat = uhat / (P4_Uint_Half)(dsor >> P4_HALF_SHIFT);
+	rhat = uhat % (P4_Uint_Half)(dsor >> P4_HALF_SHIFT);
 
 	while (
-		(qhat >> P4_HALF_SHIFT) != 0 ||
+		(P4_Uint_Half)(qhat >> P4_HALF_SHIFT) != 0 ||
 		// Both qhat and rhat are less 2**P4_HALF_SHIFT here!
-		(qhat & P4_LOWER_MASK) * (dsor & P4_LOWER_MASK) >
-		((rhat << P4_HALF_SHIFT) | (dend0 & ~0))
+		(qhat & P4_LOWER_MASK) * (P4_Uint_Half)(dsor & P4_LOWER_MASK) >
+		((rhat << P4_HALF_SHIFT) | (P4_Uint_Half)(dend0 & ~0))
 	) {
 		qhat -= 1;
 		rhat += (dsor >> P4_HALF_SHIFT);
@@ -788,10 +788,10 @@ p4Divu(P4_Uint dend0, P4_Uint dend1, P4_Uint dsor, P4_Uint *rem)
 		}
 	}
 
-	q0 = (qhat & P4_LOWER_MASK);
+	q0 = (P4_Uint_Half)(qhat & P4_LOWER_MASK);
 
 	if (rem != NULL) {
-		*rem =  (((uhat << P4_HALF_SHIFT) | (dend0 & P4_LOWER_MASK)) - q0 * dsor) >> shift;
+		*rem =  (((uhat << P4_HALF_SHIFT) | (P4_Uint_Half)(dend0 & P4_LOWER_MASK)) - q0 * dsor) >> shift;
 	}
 
 	return ((P4_Uint) q1 << P4_HALF_SHIFT) | q0;
