@@ -1157,6 +1157,9 @@ p4Free(P4_Ctx *ctx)
 			p4WordFree(word);
 		}
 		(void) p4BlockClose(ctx->block_fd, &ctx->block);
+#ifdef USE_FLOAT_STACK
+		free(ctx->fs.base);
+#endif
 		free(ctx->ds.base);
 		free(ctx->rs.base);
 		free(ctx);
@@ -1206,7 +1209,6 @@ p4Create(P4_Options *opts)
 	P4_RESET(ctx->fs);
 # endif
 #endif
-
 	if ((ctx->rs.base = malloc((opts->rs_size + 1) * sizeof (*ctx->rs.base))) == NULL) {
 		goto error0;
 	}
@@ -1279,6 +1281,33 @@ p4StackCanPopPush(P4_Ctx *ctx, P4_Stack *stack, int pop, int push)
 		p4Bp(ctx);
 		LONGJMP(ctx->on_throw, stack == &ctx->ds ? P4_THROW_DS_OVER : P4_THROW_RS_OVER);
 	}
+}
+
+static void
+p4SaveInput(P4_Input *input, P4_Input *frame)
+{
+	if (input->fp != (FILE *) -1) {
+		input->fpos = ftello(input->fp);
+		input->saved = malloc(input->length);
+		(void) memcpy(input->saved, input->buffer, input->length);
+	}
+	(void) memcpy(frame, input, sizeof (*frame));
+}
+
+static P4_Int
+p4RestoreInput(P4_Input *input, P4_Input *frame)
+{
+	P4_Int rc = P4_FALSE;
+
+	(void) memcpy(input, frame, sizeof (*input));
+	if (input->fp != (FILE *) -1) {
+		/* Restore file position if possible, true on failure. */
+		rc = P4_BOOL(fseeko(input->fp, input->fpos, SEEK_SET) != 0);
+		(void) memcpy(input->buffer, input->saved, input->length);
+		free(input->saved);
+	}
+
+	return rc;
 }
 
 /* Display exception message when there is no catch-frame.
@@ -2310,10 +2339,7 @@ _accept:	w = P4_POP(ctx->ds);
 		// ( -- xn ... x1 n )
 _save_input:	w.n = sizeof (P4_Input) / P4_CELL;
 		p4StackCanPopPush(ctx, &ctx->ds, 0, w.n);
-		if (P4_INPUT_IS_FILE(ctx->input)) {
-			ctx->input.fpos = ftello(ctx->input.fp);
-		}
-		(void) memcpy(ctx->ds.top + 1, &ctx->input, sizeof (ctx->input));
+		p4SaveInput(&ctx->input, (P4_Input *)(ctx->ds.top + 1));
 		P4_DROP(ctx->ds, -w.n);
 		P4_PUSH(ctx->ds, w.n);
 		NEXT;
@@ -2321,12 +2347,7 @@ _save_input:	w.n = sizeof (P4_Input) / P4_CELL;
 		// ( xn ... x1 n -- bool )
 _restore_input:	w = P4_POP(ctx->ds);
 		P4_DROP(ctx->ds, w.n);
-		(void) memcpy(&ctx->input, ctx->ds.top + 1, sizeof (ctx->input));
-		x.n = P4_FALSE;
-		if (P4_INPUT_IS_FILE(ctx->input)) {
-			/* Restore file position if possible, true on failure. */
-			x.n = P4_BOOL(fseeko(ctx->input.fp, ctx->input.fpos, SEEK_SET) != 0);
-		}
+		x.n = p4RestoreInput(&ctx->input, (P4_Input *)(ctx->ds.top + 1));
 		P4_PUSH(ctx->ds, x.n);
 		NEXT;
 
@@ -2805,8 +2826,8 @@ p4Eval(P4_Ctx *ctx)
 int
 p4EvalFile(P4_Ctx *ctx, const char *file)
 {
-	int rc = P4_THROW_EIO;
 	P4_Int state_save;
+	int rc = P4_THROW_EIO;
 
 	state_save = ctx->state;
 	P4_INPUT_PUSH(&ctx->input);
@@ -2838,7 +2859,6 @@ p4EvalString(P4_Ctx *ctx, P4_Char *str, size_t len)
 	ctx->input.length = len;
 	ctx->input.buffer = str;
 	ctx->input.offset = 0;
-	ctx->input.blk = 0;
 
 	rc = p4Exception(ctx, p4Repl(ctx));
 

@@ -1851,7 +1851,7 @@ VARIABLE SCR
 \
 \ (S: i*x u -- j*x )
 \
-: LOAD >R SAVE-INPUT R> DUP BLK ! BLOCK 1024 EVALUATE RESTORE-INPUT ;
+: LOAD BLK @ SWAP DUP BLK ! BLOCK 1024 EVALUATE BLK ! ;
 
 \ ... THRU ...
 \
@@ -2092,9 +2092,9 @@ BEGIN-STRUCTURE p4_ctx
 	FIELD: ctx.radix	\ see BASE
 	FIELD: ctx.argc
 	FIELD: ctx.argv
-	p4_input +FIELD ctx.input
-	p4_block +FIELD ctx.block
 	FIELD: ctx.block_fd
+	p4_block +FIELD ctx.block
+	p4_input +FIELD ctx.input
 	256 +FIELD ctx.tty	\ buffer, see SOURCE
 	\ ctx.on_throw		\ size varies by host OS
 END-STRUCTURE
