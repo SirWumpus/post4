@@ -3,36 +3,6 @@ INCLUDE ../test/assert.p4
 
 MARKER rm_d0equal_words
 
-.( D0= ) test_group
-0 0 D0= assert
-2 1 D0= assert_not
--1 -1 D0= assert_not
--2 -1 D0= assert_not
-test_group_end
-
-.( D0< ) test_group
-0 0 D0< assert_not
-2 1 D0= assert_not
--1 -1 D0< assert
--2 -1 D0< assert
-test_group_end
-
-.( D= ) test_group
-0 0 0 0 D= assert
-2 1 2 1 D= assert
-2 1 4 3 D= assert_not
--1 -1 -1 -1 D= assert
--2 -1 -2 -1 D= assert
--2 -1 2 1 D= assert_not
-test_group_end
-
-.( D+ ) test_group
-0 0 1 0 D+ 1 0 D= assert
-1 0 1 0 D+ 2 0 D= assert
--1 -1 1 0 D+ D0= assert
--1 0 1 0 D+ 0 1 D= assert
-test_group_end
-
 .( S>D ) test_group
  0 S>D  0  0 D= assert
  1 S>D  1  0 D= assert
@@ -50,6 +20,102 @@ MAX-N  0 D>S MAX-N = assert
 MIN-N -1 D>S MIN-N = assert
 test_group_end
 
+.( D0= ) test_group
+T{    1 S>D D0= -> FALSE }T
+T{  MIN-N 0 D0= -> FALSE }T
+T{ MAX-2INT D0= -> FALSE }T
+T{ -1 MAX-N D0= -> FALSE }T
+T{    0 S>D D0= -> TRUE  }T
+T{   -1 S>D D0= -> FALSE }T
+T{  0 MIN-N D0= -> FALSE }T
+test_group_end
+
+.( D0< ) test_group
+T{    0 S>D D0< -> FALSE }T
+T{    1 S>D D0< -> FALSE }T
+T{  MIN-N 0 D0< -> FALSE }T
+T{  0 MAX-N D0< -> FALSE }T
+T{ MAX-2INT D0< -> FALSE }T
+T{   -1 S>D D0< -> TRUE  }T
+T{ MIN-2INT D0< -> TRUE  }T
+test_group_end
+
+.( D= ) test_group
+0 0 0 0 D= assert
+2 1 2 1 D= assert
+2 1 4 3 D= assert_not
+-1 -1 -1 -1 D= assert
+-2 -1 -2 -1 D= assert
+-2 -1 2 1 D= assert_not
+
+T{ -1 S>D -1 S>D D= -> TRUE  }T
+T{ -1 S>D  0 S>D D= -> FALSE }T
+T{ -1 S>D  1 S>D D= -> FALSE }T
+T{  0 S>D -1 S>D D= -> FALSE }T
+T{  0 S>D  0 S>D D= -> TRUE  }T
+T{  0 S>D  1 S>D D= -> FALSE }T
+T{  1 S>D -1 S>D D= -> FALSE }T
+T{  1 S>D  0 S>D D= -> FALSE }T
+T{  1 S>D  1 S>D D= -> TRUE  }T
+
+T{ 0 -1 0 -1 D= -> TRUE  }T
+T{ 0 -1 0  0 D= -> FALSE }T
+T{ 0 -1 0  1 D= -> FALSE }T
+T{ 0  0 0 -1 D= -> FALSE }T
+T{ 0  0 0  0 D= -> TRUE  }T
+T{ 0  0 0  1 D= -> FALSE }T
+T{ 0  1 0 -1 D= -> FALSE }T
+T{ 0  1 0  0 D= -> FALSE }T
+T{ 0  1 0  1 D= -> TRUE  }T
+
+T{ MAX-2INT MIN-2INT D= -> FALSE }T
+T{ MAX-2INT    0 S>D D= -> FALSE }T
+T{ MAX-2INT MAX-2INT D= -> TRUE  }T
+T{ MAX-2INT  HI-2INT D= -> FALSE }T
+T{ MAX-2INT MIN-2INT D= -> FALSE }T
+T{ MIN-2INT MIN-2INT D= -> TRUE  }T
+T{ MIN-2INT  LO-2INT D= -> FALSE }T
+T{ MIN-2INT MAX-2INT D= -> FALSE }T
+test_group_end
+
+.( D+ ) test_group
+T{  0  0 1 0 D+ -> 1 0 }T
+T{  1  0 1 0 D+ -> 2 0 }T
+T{ -1 -1 1 0 D+ -> 0 0 }T
+T{ -1  0 1 0 D+ -> 0 1 }T
+
+\ small integers
+T{  0 S>D  5 S>D D+ ->  5 S>D }T
+T{ -5 S>D  0 S>D D+ -> -5 S>D }T
+T{  1 S>D  2 S>D D+ ->  3 S>D }T
+T{  1 S>D -2 S>D D+ -> -1 S>D }T
+T{ -1 S>D  2 S>D D+ ->  1 S>D }T
+T{ -1 S>D -2 S>D D+ -> -3 S>D }T
+T{ -1 S>D  1 S>D D+ ->  0 S>D }T
+
+\ mid range integers
+T{  0  0  0  5 D+ ->  0  5 }T
+T{ -1  5  0  0 D+ -> -1  5 }T
+T{  0  0  0 -5 D+ ->  0 -5 }T
+T{  0 -5 -1  0 D+ -> -1 -5 }T
+T{  0  1  0  2 D+ ->  0  3 }T
+T{ -1  1  0 -2 D+ -> -1 -1 }T
+T{  0 -1  0  2 D+ ->  0  1 }T
+T{  0 -1 -1 -2 D+ -> -1 -3 }T
+T{ -1 -1  0  1 D+ -> -1  0 }T
+
+T{ MIN-N~ 0 2DUP D+ -> 0 1 }T
+T{ MIN-N~ S>D MIN-N~ 0 D+ -> 0 0 }T
+
+\ large double integers
+T{ HI-2INT 1 S>D D+ -> 0 HI-INT 1+ }T
+T{ HI-2INT 2DUP D+ -> 1S 1- MAX-N }T
+T{ MAX-2INT MIN-2INT D+ -> -1 S>D }T
+T{ MAX-2INT LO-2INT D+ -> HI-2INT }T
+T{ LO-2INT 2DUP D+ -> MIN-2INT }T
+T{ HI-2INT MIN-2INT D+ 1 S>D D+ -> LO-2INT }T
+test_group_end
+
 .( DNEGATE ) test_group
 0 0 DNEGATE 0 0 D= assert
 MAX-UD DNEGATE 1 0 D= assert
@@ -61,10 +127,43 @@ MIN-D DNEGATE MAX-D D= assert
 test_group_end
 
 .( D- ) test_group
-1 0 1 0 D- D0= assert
-2 0 1 0 D- 1 0 D= assert
-0 0 1 0 D- -1 -1 D= assert
-0 1 1 0 D- -1 0 D= assert
+T{ 1 0 1 0 D- ->  0  0 }T
+T{ 2 0 1 0 D- ->  1  0 }T
+T{ 0 0 1 0 D- -> -1 -1 }T
+T{ 0 1 1 0 D- -> -1  0 }T
+
+\ small double integers
+T{  0 S>D  5 S>D D- -> -5 S>D }T
+T{  5 S>D  0 S>D D- ->  5 S>D }T
+T{  0 S>D -5 S>D D- ->  5 S>D }T
+T{  1 S>D  2 S>D D- -> -1 S>D }T
+T{  1 S>D -2 S>D D- ->  3 S>D }T
+T{ -1 S>D  2 S>D D- -> -3 S>D }T
+T{ -1 S>D -2 S>D D- ->  1 S>D }T
+T{ -1 S>D -1 S>D D- ->  0 S>D }T
+
+\ mid-range double integers
+T{  0  0  0  5 D- ->  0 -5 }T
+T{ -1  5  0  0 D- -> -1  5 }T
+T{  0  0 -1 -5 D- ->  1  4 }T
+T{  0 -5  0  0 D- ->  0 -5 }T
+T{ -1  1  0  2 D- -> -1 -1 }T
+T{  0  1 -1 -2 D- ->  1  2 }T
+T{  0 -1  0  2 D- ->  0 -3 }T
+T{  0 -1  0 -2 D- ->  0  1 }T
+T{  0  0  0  1 D- ->  0 -1 }T
+
+T{ MIN-N~ 0 2DUP D- -> 0 0 }T
+T{ MIN-N~ S>D MAX-N 0 D- -> 1 MAX-U }T
+
+\ large double integers
+T{ MAX-2INT MAX-2INT D- -> 0 S>D }T
+T{ MIN-2INT MIN-2INT D- -> 0 S>D }T
+T{ MAX-2INT HI-2INT  D- -> LO-2INT DNEGATE }T
+T{ HI-2INT  LO-2INT  D- -> MAX-2INT }T
+T{ LO-2INT  HI-2INT  D- -> MIN-2INT 1 S>D D+ }T
+T{ MIN-2INT MIN-2INT D- -> 0 S>D }T
+T{ MIN-2INT LO-2INT  D- -> LO-2INT }T
 test_group_end
 
 MAX-N 2/ CONSTANT HALF-MAX-N

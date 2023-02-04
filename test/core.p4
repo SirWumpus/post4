@@ -507,7 +507,7 @@ T{ tw_gp1 -> TRUE }T
 test_group_end
 
 .( <# HOLDS #> ) test_group
-T{ 0 0 <# S" Test" HOLDS #> S" Test" COMPARE -> 0 }T
+T{ 0 S>D <# S" Test" HOLDS #> S" Test" COMPARE -> 0 }T
 test_group_end
 
 .( <# SIGN #> ) test_group
