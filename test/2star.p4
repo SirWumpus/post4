@@ -1,20 +1,20 @@
 INCLUDE ../test/assert.p4
 
 .( 2* ) test_group
-0 2* 0 = assert
-1 2* 2 = assert
-4000 2* 8000 = assert
-MAX-U 2* 1 XOR MAX-U = assert
-MIN-N~ 2* 0 = assert
+T{ 0    2* -> 0 }T
+T{ 1    2* -> 2 }T
+T{ 4000 2* -> 8000 }T
+T{ 1S   2* 1 XOR -> 1S }T
+T{ MSB  2* -> 0 }T
 test_group_end
 
 .( 2/ ) test_group
-0 2/ 0 = assert
-1 2/ 0 = assert
-4000 2/ 2000 = assert
-MAX-U 2/ MAX-U = assert
-MAX-U 1 XOR 2/ MAX-U = assert
-MIN-N~ 2/ MIN-N~ AND MIN-N~ = assert
+T{ 0        2/ -> 0 }T
+T{ 1        2/ -> 0 }T
+T{ 4000     2/ -> 2000 }T
+T{ 1S       2/ -> 1S }T
+T{ 1S 1 XOR 2/ -> 1S }T
+T{ MSB      2/ MSB AND -> MSB }T
 test_group_end
 
 .( D2* ) test_group

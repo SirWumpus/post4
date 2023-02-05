@@ -70,22 +70,22 @@ test_group_end
 test_group_end
 
 .( LSHIFT ) test_group
-1 0 LSHIFT 1 = assert
-1 1 LSHIFT 2 = assert
-1 2 LSHIFT 4 = assert
-1 $F LSHIFT $8000 = assert
--1 1 LSHIFT 1 XOR -1 = assert
-MIN-N~ 1 LSHIFT 0 = assert
+T{ 1   0 LSHIFT -> 1 }T
+T{ 1   1 LSHIFT -> 2 }T
+T{ 1   2 LSHIFT -> 4 }T
+T{ 1  $F LSHIFT -> $8000 }T
+T{ 1S  1 LSHIFT -> 1 XOR 1S }T
+T{ MSB 1 LSHIFT -> 0 }T
 test_group_end
 
 .( RSHIFT ) test_group
-1 0 RSHIFT 1 = assert
-1 1 RSHIFT 0 = assert
-2 1 RSHIFT 1 = assert
-4 2 RSHIFT 1 = assert
-$8000 $F RSHIFT 1 = assert
-MIN-N~ 1 RSHIFT MIN-N~ AND 0 = assert
-MIN-N~ 1 RSHIFT 2* MIN-N~ = assert
+T{ 1   0 RSHIFT -> 1 }T
+T{ 1   1 RSHIFT -> 0 }T
+T{ 2   1 RSHIFT -> 1 }T
+T{ 4   2 RSHIFT -> 1 }T
+T{ $8000 $F RSHIFT -> 1 }T
+T{ MSB 1 RSHIFT MSB AND -> 0 }T
+T{ MSB 1 RSHIFT 2* -> MSB }T
 test_group_end
 
 .( Numeric notation ) test_group
@@ -118,15 +118,18 @@ test_group_end
 test_group_end
 
 .( MAX-U ) test_group
-MAX-U -1 = assert
+T{ MAX-U -> 1S }T
+T{ MAX-U -> -1 }T
 test_group_end
 
 .( MAX-N ) test_group
-MAX-N 0 INVERT 1 RSHIFT = assert
+T{ MAX-N -> MAX-INT }T
+T{ MAX-N -> 0 INVERT 1 RSHIFT }T
 test_group_end
 
 .( MIN-N ) test_group
-MIN-N MAX-N INVERT 1 + = assert
+T{ MIN-N -> MIN-INT }T
+T{ MIN-N -> MAX-INT INVERT }T
 test_group_end
 
 .( BL ) test_group
@@ -135,13 +138,13 @@ BL '\s' = assert
 test_group_end
 
 .( NEGATE ) test_group
- 0 NEGATE  0 = assert
- 1 NEGATE -1 = assert
--1 NEGATE  1 = assert
- 2 NEGATE -2 = assert
--2 NEGATE  2 = assert
-MAX-N NEGATE MIN-N = assert
-MIN-N NEGATE MAX-N = assert
+T{  0 NEGATE ->  0 }T
+T{  1 NEGATE -> -1 }T
+T{ -1 NEGATE ->  1 }T
+T{  2 NEGATE -> -2 }T
+T{ -2 NEGATE ->  2 }T
+T{ MAX-INT NEGATE -> MIN-INT 1 + }T
+T{ MIN-INT 1 + NEGATE -> MAX-INT }T
 test_group_end
 
 .( - ) test_group
@@ -402,10 +405,11 @@ t{ tw_actionof_0 -> ' + }t
 test_group_end
 
 .( ABS ) test_group
- 0 ABS 0 = assert
- 1 ABS 1 = assert
--1 ABS 1 = assert
-MIN-N ABS MAX-N = assert
+T{  0 ABS -> 0 }T
+T{  1 ABS -> 1 }T
+T{ -1 ABS -> 1 }T
+T{ MIN-INT ABS -> MIN-INT }T
+T{ MIN-INT 1 + ABS -> MAX-INT }T
 test_group_end
 
 .( MAX ) test_group

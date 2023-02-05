@@ -104,8 +104,8 @@ T{  0 -1  0  2 D+ ->  0  1 }T
 T{  0 -1 -1 -2 D+ -> -1 -3 }T
 T{ -1 -1  0  1 D+ -> -1  0 }T
 
-T{ MIN-N~ 0 2DUP D+ -> 0 1 }T
-T{ MIN-N~ S>D MIN-N~ 0 D+ -> 0 0 }T
+T{ MIN-INT 0 2DUP D+ -> 0 1 }T
+T{ MIN-INT S>D MIN-INT 0 D+ -> 0 0 }T
 
 \ large double integers
 T{ HI-2INT 1 S>D D+ -> 0 HI-INT 1+ }T
@@ -153,8 +153,8 @@ T{  0 -1  0  2 D- ->  0 -3 }T
 T{  0 -1  0 -2 D- ->  0  1 }T
 T{  0  0  0  1 D- ->  0 -1 }T
 
-T{ MIN-N~ 0 2DUP D- -> 0 0 }T
-T{ MIN-N~ S>D MAX-N 0 D- -> 1 MAX-U }T
+T{ MIN-INT 0 2DUP D- -> 0 0 }T
+T{ MIN-INT S>D MAX-INT 0 D- -> 1 1S }T
 
 \ large double integers
 T{ MAX-2INT MAX-2INT D- -> 0 S>D }T
@@ -166,10 +166,10 @@ T{ MIN-2INT MIN-2INT D- -> 0 S>D }T
 T{ MIN-2INT LO-2INT  D- -> LO-2INT }T
 test_group_end
 
-MAX-N 2/ CONSTANT HALF-MAX-N
-MIN-N 2/ CONSTANT HALF-MIN-N
-MAX-D 2/ 2CONSTANT HALF-MAX-D
-MIN-D 2/ 2CONSTANT HALF-MIN-D
+MAX-INT 2/ CONSTANT HALF-MAX-N
+MIN-INT 2/ CONSTANT HALF-MIN-N
+MAX-2INT 2/ 2CONSTANT HALF-MAX-D
+MIN-2INT 2/ 2CONSTANT HALF-MIN-D
 
 .( DU< ) test_group
  1 S>D  1 S>D DU< assert_not
@@ -178,9 +178,9 @@ MIN-D 2/ 2CONSTANT HALF-MIN-D
 -1 S>D -2 S>D DU< assert_not
 MAX-D HALF-MAX-D DU< assert_not
 HALF-MAX-D MAX-D DU< assert
-MAX-D MIN-D~ DU< assert
-MIN-D~ MAX-D DU< assert_not
-MIN-D~ HALF-MIN-D DU< assert
+MAX-D MIN-D DU< assert
+MIN-D MAX-D DU< assert_not
+MIN-D HALF-MIN-D DU< assert
 test_group_end
 
 .( D< ) test_group
@@ -193,7 +193,7 @@ test_group_end
 -1 S>D -2 S>D D< assert_not
 -1 S>D MAX-D D< assert
 MIN-D  MAX-D D< assert
-MAX-D -1 S>D D< assert_not
+MAX-D 1S S>D D< assert_not
 MAX-D MIN-D  D< assert_not
 MAX-D 2DUP -1 S>D D+ D< assert_not
 MIN-D 2DUP  1 S>D D+ D< assert
@@ -280,49 +280,48 @@ T{ 5 6 tw_sett2val tv_t2val -> 3 4 5 6 }T
 test_group_end
 
 .( DABS ) test_group
- 1 S>D DABS 1 0 D= assert
--1 S>D DABS 1 0 D= assert
-MAX-D DABS MAX-D D= assert
-MIN-D DABS MAX-D D= assert
-MIN-D~ 1 0 D+ DABS MAX-D D= assert
+T{  1 S>D DABS -> 1 0 }T
+T{ -1 S>D DABS -> 1 0 }T
+T{ MAX-2INT DABS -> MAX-2INT }T
+T{ MIN-2INT 1 S>D D+ DABS -> MAX-2INT }T
 test_group_end
 
 .( DMAX ) test_group
- 1 S>D  2 S>D DMAX  2 S>D D= assert
- 1 S>D  0 S>D DMAX  1 S>D D= assert
- 1 S>D -1 S>D DMAX  1 S>D D= assert
- 1 S>D  1 S>D DMAX  1 S>D D= assert
- 0 S>D  1 S>D DMAX  1 S>D D= assert
- 0 S>D -1 S>D DMAX  0 S>D D= assert
--1 S>D  1 S>D DMAX  1 S>D D= assert
--1 S>D -2 S>D DMAX -1 S>D D= assert
-MAX-D HALF-MAX-D DMAX MAX-D D= assert
-MAX-D MIN-D~ DMAX MAX-D D= assert
-MIN-D~ MAX-D DMAX MAX-D D= assert
-MIN-D HALF-MIN-D DMAX HALF-MIN-D D= assert
-MAX-D   1 S>D DMAX MAX-D D= assert
-MAX-D  -1 S>D DMAX MAX-D D= assert
-MIN-D~  1 S>D DMAX  1 S>D D= assert
-MIN-D~ -1 S>D DMAX -1 S>D D= assert
+T{  1 S>D  2 S>D DMAX ->  2 S>D }T
+T{  1 S>D  0 S>D DMAX ->  1 S>D }T
+T{  1 S>D -1 S>D DMAX ->  1 S>D }T
+T{  1 S>D  1 S>D DMAX ->  1 S>D }T
+T{  0 S>D  1 S>D DMAX ->  1 S>D }T
+T{  0 S>D -1 S>D DMAX ->  0 S>D }T
+T{ -1 S>D  1 S>D DMAX ->  1 S>D }T
+T{ -1 S>D -2 S>D DMAX -> -1 S>D }T
+T{ MAX-D HALF-MAX-D DMAX -> MAX-D }T
+T{ MAX-D MIN-D DMAX -> MAX-D }T
+T{ MIN-D MAX-D DMAX -> MAX-D }T
+T{ MIN-D HALF-MIN-D DMAX HALF-MIN-D }T
+T{ MAX-2INT  1 S>D DMAX -> MAX-2INT }T
+T{ MAX-2INT -1 S>D DMAX -> MAX-2INT }T
+T{ MIN-2INT  1 S>D DMAX ->  1 S>D }T
+T{ MIN-2INT -1 S>D DMAX -> -1 S>D }T
 test_group_end
 
 .( DMIN ) test_group
- 1 S>D  2 S>D DMIN  1 S>D D= assert
- 1 S>D  0 S>D DMIN  0 S>D D= assert
- 1 S>D -1 S>D DMIN -1 S>D D= assert
- 1 S>D  1 S>D DMIN  1 S>D D= assert
- 0 S>D  1 S>D DMIN  0 S>D D= assert
- 0 S>D -1 S>D DMIN -1 S>D D= assert
--1 S>D  1 S>D DMIN -1 S>D D= assert
--1 S>D -2 S>D DMIN -2 S>D D= assert
-MAX-D HALF-MAX-D DMIN HALF-MAX-D D= assert
-MAX-D MIN-D~ DMIN MIN-D~ D= assert
-MIN-D~ MAX-D DMIN MIN-D~ D= assert
-MIN-D HALF-MIN-D DMIN MIN-D D= assert
-MAX-D   1 S>D DMIN  1 S>D D= assert
-MAX-D  -1 S>D DMIN -1 S>D D= assert
-MIN-D~  1 S>D DMIN MIN-D~ D= assert
-MIN-D~ -1 S>D DMIN MIN-D~ D= assert
+T{  1 S>D  2 S>D DMIN ->  1 S>D }T
+T{  1 S>D  0 S>D DMIN ->  0 S>D }T
+T{  1 S>D -1 S>D DMIN -> -1 S>D }T
+T{  1 S>D  1 S>D DMIN ->  1 S>D }T
+T{  0 S>D  1 S>D DMIN ->  0 S>D }T
+T{  0 S>D -1 S>D DMIN -> -1 S>D }T
+T{ -1 S>D  1 S>D DMIN -> -1 S>D }T
+T{ -1 S>D -2 S>D DMIN -> -2 S>D }T
+T{ MAX-D HALF-MAX-D DMIN -> HALF-MAX-D }T
+T{ MAX-D MIN-D DMIN -> MIN-D }T
+T{ MIN-D MAX-D DMIN -> MIN-D }T
+T{ MIN-D HALF-MIN-D DMIN -> MIN-D }T
+T{ MAX-2INT  1 S>D DMIN ->  1 S>D }T
+T{ MAX-2INT -1 S>D DMIN -> -1 S>D }T
+T{ MIN-2INT  1 S>D DMIN -> MIN-2INT }T
+T{ MIN-2INT -1 S>D DMIN -> MIN-2INT }T
 test_group_end
 
 .( M+) test_group
