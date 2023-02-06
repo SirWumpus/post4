@@ -12,6 +12,12 @@ p ctx->ds
 x/8gx ctx->ds.base
 end
 
+define showfs
+p ctx->fs.top + 1 - ctx->fs.base
+p ctx->fs
+x/8gx ctx->fs.base
+end
+
 define showrs
 p ctx->rs.top + 1 - ctx->rs.base
 p ctx->rs

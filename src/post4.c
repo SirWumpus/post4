@@ -1384,6 +1384,10 @@ p4Repl(P4_Ctx *ctx)
 //		P4_WORD("min-float",	&&_min_float,	0),		// p4
 		P4_WORD("max-float",	&&_max_float,	0),		// p4
 		P4_WORD("_fs",		&&_fs,		0),		// p4
+# ifdef USE_FLOAT_STACK
+		P4_WORD("_fsp_get",	&&_fsp_get,	0),		// p4
+		P4_WORD("_fsp_put",	&&_fsp_put,	0),		// p4
+# endif
 		P4_WORD(">FLOAT",	&&_to_float,	0),
 		P4_WORD("FROUND",	&&_f_round,	0),
 		P4_WORD("FTRUNC",	&&_f_trunc,	0),
@@ -1743,6 +1747,18 @@ _rsp_get:	w.p = ctx->rs.top;
 _rsp_put:	w = P4_POP(ctx->ds);
 		ctx->rs.top = w.p;
 		NEXT;
+
+#ifdef USE_FLOAT_STACK
+		// ( -- aaddr )
+_fsp_get:	w.p = ctx->fs.top;
+		P4_PUSH(ctx->ds, w);
+		NEXT;
+
+		// ( aaddr -- )
+_fsp_put:	w = P4_POP(ctx->ds);
+		ctx->fs.top = w.p;
+		NEXT;
+#endif
 
 		// ( n -- )
 _longjmp:	w = P4_POP(ctx->ds);

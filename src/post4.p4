@@ -603,7 +603,31 @@ MAX-U MAX-N 2CONSTANT MAX-D
 	THEN
 ;
 
+\ ... DEFER name ...
+\
+\ (S: <spaces>name -- )
+\
+: DEFER CREATE ['] ABORT , DOES> @ EXECUTE ;
+
+\ ... DEFER! ...
+\
+\ (S: xt2 xt1 -- )
+\
+: DEFER! >BODY ! ;
+
+\ ... DEFER@ ...
+\
+\ (S: xt1 -- xt2 )
+\
+: DEFER@ >BODY @ ;
+
 VARIABLE catch_frame
+
+DEFER _fsp@
+DEFER _fsp!
+
+:NONAME $dead ; ' _fsp@ DEFER!
+:NONAME DROP ; ' _fsp! DEFER!
 
 \ ... CATCH ...
 \
@@ -611,11 +635,12 @@ VARIABLE catch_frame
 \
 : CATCH				\ S: xt   R: ip
 	_dsp@ >R		\ S: xt   R: ip ds
-	catch_frame @ >R	\ S: xt   R: ip ds cf
-	_rsp@ catch_frame !	\ S: xt   R: ip ds cf
-	EXECUTE			\ S: --   R: ip ds cf
-	R> catch_frame !	\ S: --   R: ip ds
-	R> DROP			\ S: --   R: ip
+	_fsp@ >R		\ S: xt   R: ip ds fs
+	catch_frame @ >R	\ S: xt   R: ip ds fs cf
+	_rsp@ catch_frame !	\ S: xt   R: ip ds fs cf
+	EXECUTE			\ S: --   R: ip ds fs cf
+	R> catch_frame !	\ S: --   R: ip ds fs
+	2R> 2DROP 		\ S: --   R: ip
 	0			\ S: 0    R: ip
 ; compile-only
 
@@ -631,8 +656,9 @@ VARIABLE catch_frame
 	    _longjmp		\ S: --   R: --
 	  THEN
 	  \ Restore return stack of CATCH at EXECUTE.
-	  catch_frame @ _rsp!	\ S: n    R: ip ds cf
-	  R> catch_frame !	\ S: n    R: ip ds
+	  catch_frame @ _rsp!	\ S: n    R: ip ds fs cf
+	  R> catch_frame !	\ S: n    R: ip ds fs
+	  R> _fsp!		\ S: n    R: ip ds fs
 	  R> SWAP >R		\ S: ds   R: ip n
 	  \ Restore data stack at start of CATCH
 	  _dsp!			\ S: xt   R: ip n
@@ -1894,24 +1920,6 @@ VARIABLE SCR
 \
 : BUFFER: CREATE ALLOT ;
 
-\ ... DEFER name ...
-\
-\ (S: <spaces>name -- )
-\
-: DEFER CREATE ['] ABORT , DOES> @ EXECUTE ;
-
-\ ... DEFER! ...
-\
-\ (S: xt2 xt1 -- )
-\
-: DEFER! >BODY ! ;
-
-\ ... DEFER@ ...
-\
-\ (S: xt1 -- xt2 )
-\
-: DEFER@ >BODY @ ;
-
 \ ... ACTION-OF ...
 \
 \ (S: <spaces>name -- xt )
@@ -2156,6 +2164,11 @@ END-STRUCTURE
 ; IMMEDIATE compile-only
 
 [DEFINED] _fs [IF]
+
+  [DEFINED] _fsp_get [IF]
+' _fsp_get IS _fsp@
+' _fsp_put IS _fsp!
+  [THEN]
 
 \ Combined float and data stacks?
 \ floating-stack 0= [IF]
