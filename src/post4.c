@@ -1501,7 +1501,6 @@ p4Repl(P4_Ctx *ctx)
 		P4_WORD("-",		&&_sub,		0),
 		P4_WORD("/",		&&_div,		0),
 		P4_WORD("AND",		&&_and,		0),
-		P4_WORD("FM/MOD",	&&_fm_div_mod,	0),
 		P4_WORD("INVERT",	&&_not,		0),
 		P4_WORD("LSHIFT",	&&_lshift,	0),
 		P4_WORD("M*",		&&_mstar,	0),
@@ -2211,28 +2210,6 @@ _sm_div_rem:	d = P4_POP(ctx->ds);
 			LONGJMP(ctx->on_throw, P4_THROW_DIV_ZERO);
 		}
 		w.n = p4Divs(x.n, w.n, d.n, &x.n);
-		P4_TOP(ctx->ds).n = x.n;
-		P4_PUSH(ctx->ds, w.n);
-		NEXT;
-
-		// ( d dsor -- mod quot )
-		// Dividend Divisor Remainder Quotient
-		//       10       7         3        1
-		//      -10       7         4       -2
-		//       10      -7        -4       -2
-		//      -10      -7        -3        1
-		//
-_fm_div_mod:	d = P4_POP(ctx->ds);
-		w = P4_POP(ctx->ds);
-		x = P4_TOP(ctx->ds);
-		if (d.n == 0) {
-			LONGJMP(ctx->on_throw, P4_THROW_DIV_ZERO);
-		}
-		w.n = p4Divs(x.n, w.n, d.n, &x.n);
-		if (w.n < 0 && x.n != 0) {
-			x.n = -x.n + (d.n < 0 ? -1 : 1);
-			w.n -= 1;
-		}
 		P4_TOP(ctx->ds).n = x.n;
 		P4_PUSH(ctx->ds, w.n);
 		NEXT;

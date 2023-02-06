@@ -390,7 +390,7 @@ MAX-U MAX-N 2CONSTANT MAX-D
 \
 \ (S: n1 n2 -- rem quot )
 \
-: /MOD 2DUP / >R MOD R> ;
+: /MOD >R S>D R> SM/REM ;
 
 \ ... */ ...
 \
@@ -601,6 +601,34 @@ MAX-U MAX-N 2CONSTANT MAX-D
 	IF
 	  DROP 0 EXIT
 	THEN
+;
+
+\ ... FM/MOD ...
+\
+\ Dividend Divisor Remainder Quotient
+\       10       7         3        1
+\      -10       7         4       -2
+\       10      -7        -4       -2
+\      -10      -7        -3        1
+\
+\ See https://github.com/MitchBradley/cforth/blob/master/src/cforth/util.fth
+\
+\ ( dend dsor -- mod quot )
+: FM/MOD
+	\ Dividend and divisor have different signs?
+	2DUP XOR 0< IF
+	  \ Yep
+	  DUP >R SM/REM
+	  OVER IF
+	    \ mod != 0, mod--, quot + dvr.
+	    1- SWAP R> + SWAP EXIT
+	  THEN
+	  \ mod == 0
+	  R> DROP
+	  EXIT
+	THEN
+	\ No, same sign, SM/REM result same as FM/MOD.
+	SM/REM
 ;
 
 \ ... DEFER name ...
