@@ -115,13 +115,6 @@ Because Forth uses whitespace for input delimiters, in particular space (ASCII 3
 Examples
 --------
 
-### cat.p4
-
-Example of implementing `cat(1)`.
-
-        $ post4 cat.p4 </etc/hosts
-
-
 ### catch_throw.p4
 
 A demonstration of using CATCH and THROW.
