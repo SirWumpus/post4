@@ -33,7 +33,7 @@ Find `name` and place its execution token on the stack.  Throw undefined word (-
 - - -
 #### ( ccc)
 ( `ccc<paren>` -- ) immediate  
-Parse and ignore characters up to the closing right parenthesis, which an empty string or span multiple lines.
+Parse and ignore characters up to the closing right parenthesis, which an empty string or span multiple lines.  Note as an extension a literal right parenthesis, `)`, can be expressed as a backslash literal `\)`, likewise backslash as `\\`.
 
 - - -
 #### \*
@@ -915,11 +915,6 @@ Loop back to matching `BEGIN`.
         \ continue once test is false
 
 - - -
-#### RESTORE-INPUT
-( `xn`...`x1` `n` -- bool )  
-Restore the input source state described by `x1` through `xn`.  `bool` is true if the input source cannot be so restored (terminal, pipeline).
-
-- - -
 #### ROLL
 ( `xu` `xu-1` ... `x0` `u` -- `xu-1` ... `x0` `xu` )  
 Left rotate the stack `u` cells.
@@ -948,11 +943,6 @@ Convert the number `n` to the double-cell number `d` (`lo` `hi`) with the same n
 #### S\\" ccc"
 ( `ccc<quote>` -- `caddr` `u` ) immediate  
 When interpreting, copy the escaped string `ccc` to a transient buffer and return `caddr u`.  When compiling, append the escaped string `ccc` to the current word so when executed it leaves `caddr u` of the string on the stack.  Note as an extension strings are also `NUL` terminated to facilitate use of host environment functions.
-
-- - -
-#### SAVE-INPUT
-( -- `xn`...`x1` `n` )  
-Save the current input source state for later use by `RESTORE-INPUT`.
 
 - - -
 #### SIGN

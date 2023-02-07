@@ -1280,33 +1280,7 @@ p4StackCanPopPush(P4_Ctx *ctx, P4_Stack *stack, int pop, int push)
 		LONGJMP(ctx->on_throw, stack == &ctx->ds ? P4_THROW_DS_OVER : P4_THROW_RS_OVER);
 	}
 }
-
-static void
-p4SaveInput(P4_Input *input, P4_Input *frame)
-{
-	if (input->fp != (FILE *) -1) {
-		input->fpos = ftello(input->fp);
-		input->saved = malloc(input->length);
-		(void) memcpy(input->saved, input->buffer, input->length);
-	}
-	(void) memcpy(frame, input, sizeof (*frame));
-}
-
-static P4_Int
-p4RestoreInput(P4_Input *input, P4_Input *frame)
-{
-	P4_Int rc = P4_FALSE;
-
-	(void) memcpy(input, frame, sizeof (*input));
-	if (input->fp != (FILE *) -1) {
-		/* Restore file position if possible, true on failure. */
-		rc = P4_BOOL(fseeko(input->fp, input->fpos, SEEK_SET) != 0);
-		(void) memcpy(input->buffer, input->saved, input->length);
-		free(input->saved);
-	}
-
-	return rc;
-}
+#endif
 
 /* Display exception message when there is no catch-frame.
  *
@@ -1542,10 +1516,8 @@ p4Repl(P4_Ctx *ctx)
 		P4_WORD("MS",		&&_ms,		0),
 		P4_WORD("_parse",	&&_parse,	0),		// p4
 		P4_WORD("PARSE-NAME",	&&_parse_name,	0),
-		P4_WORD("RESTORE-INPUT", &&_restore_input, 0),
 		P4_WORD("REFILL",	&&_refill,	0),
 		P4_WORD("SAVE-BUFFERS",	&&_save_buffers, 0),
-		P4_WORD("SAVE-INPUT",	&&_save_input, 0),
 		P4_WORD("SOURCE",	&&_source,	0),
 		P4_WORD("SOURCE-ID",	&&_source_id,	0),
 		P4_WORD("TIME&DATE",	&&_time_date,	0),
@@ -2316,30 +2288,6 @@ _accept:	w = P4_POP(ctx->ds);
 		x = P4_TOP(ctx->ds);
 		w.u = p4Accept(&ctx->input, x.s, w.u);
 		P4_TOP(ctx->ds) = w;
-		NEXT;
-
-/* TODO Consider more generic I/O redirection words.
- *
- * stream = 0 input, 1 output
- * STREAM-GET ( stream -- fileid )
- * STREAM-SET ( fileid stream -- bool )
- * STREAM-PUSH ( stream -- )
- * STREAM-POP ( stream -- bool )
- */
-
-		// ( -- xn ... x1 n )
-_save_input:	w.n = sizeof (P4_Input) / P4_CELL;
-		p4StackCanPopPush(ctx, &ctx->ds, 0, w.n);
-		p4SaveInput(&ctx->input, (P4_Input *)(ctx->ds.top + 1));
-		P4_DROP(ctx->ds, -w.n);
-		P4_PUSH(ctx->ds, w.n);
-		NEXT;
-
-		// ( xn ... x1 n -- bool )
-_restore_input:	w = P4_POP(ctx->ds);
-		P4_DROP(ctx->ds, w.n);
-		x.n = p4RestoreInput(&ctx->input, (P4_Input *)(ctx->ds.top + 1));
-		P4_PUSH(ctx->ds, x.n);
 		NEXT;
 
 		// ( -- flag)
