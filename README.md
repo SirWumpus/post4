@@ -48,7 +48,7 @@ Glossary
 Building
 --------
 
-Post4 is written in ISO C11 using only one extension, `Labels As Values`, which is supported by `gcc` and `clang` compilers.
+Post4 is written in ISO C11 using only one extension, `Labels As Values`, which is supported by `gcc` and `clang` compilers.  Post4 has been built and tested on NetBSD, Cygwin, and Alpine Linux.
 
         $ ./configure --help
         $ ./configure

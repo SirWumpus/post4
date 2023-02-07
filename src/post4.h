@@ -145,6 +145,14 @@ extern "C" {
 
 #define BYTE_ME		(0x7F)
 
+#ifndef P4_TRACE
+# define p4Trace(c, xt)
+#endif
+
+#ifndef USE_STACK_CHECKS
+# define p4StackCanPopPush(c, s, pop, push)
+#endif
+
 /***********************************************************************
  *** Types
  ***********************************************************************/

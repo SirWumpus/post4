@@ -2125,8 +2125,8 @@ BEGIN-STRUCTURE p4_ctx
 	FIELD: ctx.block_fd
 	p4_block +FIELD ctx.block
 	p4_input +FIELD ctx.input
-	256 +FIELD ctx.tty	\ buffer, see SOURCE
-	\ ctx.on_throw		\ size varies by host OS
+	/PAD +FIELD ctx.tty	\ buffer, see SOURCE
+	0 +FIELD ctx.on_throw	\ size varies by host OS
 END-STRUCTURE
 
 \ ... NAME>STRING ...

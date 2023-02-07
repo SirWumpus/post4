@@ -126,6 +126,8 @@ static const char *p4_exceptions[] = {
 };
 #endif
 
+static const char crlf[] = "\r\n";
+
 static int p4Repl(P4_Ctx *ctx);
 
 /***********************************************************************
@@ -547,7 +549,7 @@ p4MemDump(FILE *fp, P4_Char *addr, P4_Size length)
 			for ( ; s <= addr; s++) {
 				(void) fputc(isprint(*s) ? *s : '.', fp);
 			}
-			(void) fprintf(fp, "\r\n");
+			(void) fprintf(fp, crlf);
 		}
 	}
 	if ((count & 0xF) != 0) {
@@ -561,7 +563,7 @@ p4MemDump(FILE *fp, P4_Char *addr, P4_Size length)
 		for ( ; s < addr; s++) {
 			(void) fputc(isprint(*s) ? *s : '.', fp);
 		}
-		(void) fprintf(fp, "\r\n");
+		(void) fprintf(fp, crlf);
 	}
 }
 
@@ -1249,7 +1251,7 @@ p4Bp(P4_Ctx *ctx)
 	(void) printf(
 		">> %.*s\r\n>> %*c\r\n",
 		(int)ctx->input.length - has_nl, ctx->input.buffer,
-		(int)ctx->input.offset+3, '^'
+		(int)ctx->input.offset, '^'
 	);
 }
 
@@ -1264,6 +1266,7 @@ p4Trace(P4_Ctx *ctx, P4_Xt xt)
 }
 #endif
 
+#ifdef USE_STACK_CHECKS
 static void
 p4StackCanPopPush(P4_Ctx *ctx, P4_Stack *stack, int pop, int push)
 {
@@ -1327,7 +1330,7 @@ p4Exception(P4_Ctx *ctx, int code)
 		ctx->words = word->prev;
 		p4WordFree(word);
 	}
-	(void) printf("\r\n");
+	(void) printf(crlf);
 	(void) fflush(stdout);
 	return code;
 }
@@ -1645,16 +1648,12 @@ setjmp_cleanup:
 		/* Check data stack bounds. */
 _next:		p4StackCanPopPush(ctx, &ctx->ds, 0, 0);
 		w = *ip++;
-#ifdef P4_TRACE
 		p4Trace(ctx, w.xt);
-#endif
 		goto *w.xt->code;
 
 		// ( xt -- )
 _execute:	w = P4_POP(ctx->ds);
-#ifdef P4_TRACE
 		p4Trace(ctx, w.xt);
-#endif
 		goto *w.xt->code;
 
 		// ( i*x -- j*y )(R: -- ip)
@@ -2497,7 +2496,7 @@ _seext:		word = P4_POP(ctx->ds).xt;
 			}
 			(void) printf(";%s", P4_WORD_IS_IMM(word) ? " IMMEDIATE" : "");
 			(void) printf("%s", P4_WORD_IS_COMPILE(word) ? " compile-only" : "");
-			(void) printf("\r\n");
+			(void) printf(crlf);
 		} else if (word->code == &&_do_does) {
 			// Dump word's data.
 			for (w.u = 0, x.u = P4_CELL; x.u < word->ndata - P4_CELL; x.u += P4_CELL, w.u++) {

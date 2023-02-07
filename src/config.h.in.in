@@ -37,6 +37,8 @@ extern "C" {
 #undef P4_TRACE
 
 #define USE_FLOAT_STACK			1
+#define USE_STACK_CHECKS		1
+#undef USE_EXCEPTION_STRINGS
 
 /*
  * ANSI C
@@ -274,10 +276,6 @@ struct winsize {
 # define LOCK_UN	0x08		/* unlock file */
 #endif
 
-/*
- *
- */
-#undef HAVE_UNISTD_H
 #undef HAVE_SYS_IOCTL_H
 
 /***********************************************************************
