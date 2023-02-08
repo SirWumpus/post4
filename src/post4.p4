@@ -2068,7 +2068,7 @@ END-STRUCTURE
 
 BEGIN-STRUCTURE p4_word
 	FIELD: w.prev		\ pointer previous word
-	FIELD: w.name		\ p4_string
+	p4_string +FIELD w.name
 	FIELD: w.bits
 	FIELD: w.code		\ pointer
 	FIELD: w.mdata		\ data size
