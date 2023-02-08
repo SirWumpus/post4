@@ -2564,12 +2564,12 @@ _fs:		w.n = P4_LENGTH(ctx->fs);
 		P4_PUSH(ctx->ds, ctx->fs.size);
 		NEXT;
 
-		// ( aaddr -- x )
-_f_fetch:	w = P4_TOP(ctx->ds);
-		P4_TOP(ctx->P4_FLOAT_STACK) = *w.p;
+		// ( aaddr -- ) (F: -- f_
+_f_fetch:	w = P4_POP(ctx->ds);
+		P4_PUSH(ctx->P4_FLOAT_STACK, *w.p);
 		NEXT;
 
-		// ( x aaddr -- )
+		// ( aaddr -- ) (F: f -- )
 _f_store:	w = P4_POP(ctx->ds);
 		x = P4_POP(ctx->P4_FLOAT_STACK);
 		*w.p = x;

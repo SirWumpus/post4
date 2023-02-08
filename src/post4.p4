@@ -2216,6 +2216,9 @@ END-STRUCTURE
 
 : .fs 'f' EMIT 's' EMIT '\r' EMIT '\n' EMIT _fs DROP _stack_dump ;
 
+\ (F: f -- )
+: F, 1 CELLS reserve F! ;
+
 \ (F: f -- f f )
 : FDUP f>r R@ >R r>f r>f ;
 
@@ -2231,13 +2234,24 @@ END-STRUCTURE
 \ (F: f1 f2 f3 -- f2 f3 f1 )
 : FROT f>r FSWAP r>f FSWAP ;
 
-: FLITERAL f>r R> POSTPONE LITERAL ; IMMEDIATE compile-only
+\ (F: -- f ) (R: ip -- ip' )
+: flit R> DUP CELL+ >R F@ ;
+
+\ Similar to LIT,
+\ (F: f -- )
+: flit, ['] flit COMPILE, F, ;
+
+\ ... : name ... [ x.y ] FLITERAL ... ;
+\
+\  (C: f -- ) (F: -- f )
+\
+: FLITERAL flit, ; IMMEDIATE compile-only
 
 \ (C: F:x <spaces>name -- ) (F: -- x )
-: FCONSTANT CREATE f>r R> , DOES> F@ ;
+: FCONSTANT CREATE F, DOES> F@ ;
 
 \ (C: <spaces>name -- ) (S: -- aaddr )
-: FVARIABLE CREATE 0E0 f>r R> , ;
+: FVARIABLE VARIABLE ;
 
 \ [THEN]
 
