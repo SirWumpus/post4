@@ -1404,8 +1404,8 @@ p4Repl(P4_Ctx *ctx)
 		P4_WORD("F.",		&&_f_dot,	0),
 		P4_WORD("F>S",		&&_f_to_s,	0),		// p4
 		P4_WORD("S>F",		&&_s_to_f,	0),		// p4
-		P4_WORD("f>r",		&&_fs_to_rs,	0),		// p4
-		P4_WORD("r>f",		&&_rs_to_fs,	0),		// p4
+		P4_WORD("fs>rs",	&&_fs_to_rs,	0),		// p4
+		P4_WORD("rs>fs",	&&_rs_to_fs,	0),		// p4
 #endif
 #ifdef P4_TRACE
 		P4_WORD("TRACE",	&&_trace,	0),		// p4

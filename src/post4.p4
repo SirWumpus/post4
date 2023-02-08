@@ -2216,23 +2216,26 @@ END-STRUCTURE
 
 : .fs 'f' EMIT 's' EMIT '\r' EMIT '\n' EMIT _fs DROP _stack_dump ;
 
+: fs>ds fs>rs R> ;
+: ds>fs >R rs>fs ;
+
 \ (F: f -- )
 : F, 1 CELLS reserve F! ;
 
 \ (F: f -- f f )
-: FDUP f>r R@ >R r>f r>f ;
+: FDUP fs>rs R@ ds>fs rs>fs ;
 
 \ (F: f -- )
-: FDROP f>r R> DROP ;
+: FDROP fs>ds DROP ;
 
 \ ( F: f1 f2 -- f2 f1 )
-: FSWAP f>r f>r 2R> >R >R r>f r>f ;
+: FSWAP fs>ds fs>ds SWAP ds>fs ds>fs ;
 
 \ (F: f1 f2 -- f1 f2 f1 )
-: FOVER FSWAP FDUP f>r FSWAP r>f ;
+: FOVER FSWAP FDUP fs>rs FSWAP rs>fs ;
 
 \ (F: f1 f2 f3 -- f2 f3 f1 )
-: FROT f>r FSWAP r>f FSWAP ;
+: FROT fs>rs FSWAP rs>fs FSWAP ;
 
 \ (F: -- f ) (R: ip -- ip' )
 : flit R> DUP CELL+ >R F@ ;
@@ -2267,7 +2270,7 @@ END-STRUCTURE
 : FDEPTH _fs DROP NIP ;
 
 \ ( F: f1 -- f2 )
-: FALIGNED f>r ALIGNED r>f ;
+: FALIGNED fs>rs ALIGNED rs>fs ;
 : FNEGATE 0E0 FSWAP F- ;
 : FABS FDUP F0< IF FNEGATE THEN ;
 

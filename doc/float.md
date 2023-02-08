@@ -241,12 +241,12 @@ Push the float stack base `aaddr` address, depth `n`, and size `s` (before execu
 Size of the float stack.  Zero (0) if the float stack is combined with the data stack.  This is a deviation from `ENVIRONMENT?` queries.
 
 - - -
-#### f>r
+#### fs>rs
 (F: `f` -- ) (R: -- `f` )  
 Move top of the float stack to the return stack.
 
 - - -
-#### r>f
+#### rs>fs
 (R: `f` -- ) (F: -- `f` )  
 Move top of the return stack to the float stack.
 
