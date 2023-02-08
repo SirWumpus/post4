@@ -2537,7 +2537,7 @@ _seext:		word = P4_POP(ctx->ds).xt;
 #  define MIN_FLOAT	((double) DBL_MIN)
 # endif
 		// (F: -- f )
-_max_float:	P4_PUSH(ctx->P4_FLOAT_STACK, MAX_FLOAT);
+_max_float:	P4_PUSH(ctx->P4_FLOAT_STACK, (P4_Float) MAX_FLOAT);
 		NEXT;
 
 //		// (F: -- f )
@@ -2875,6 +2875,13 @@ main(int argc, char **argv)
 			break;
 		case 'V':
 			(void) printf("%s", p4_build_info);
+			(void) printf(
+				"\r\nsizeof char=%zu short=%zu int=%zu long=%zu size_t=%zu "
+				"intptr_t=%zu float=%zu double=%zu\r\nvoid *=%zu long long=%zu long double=%zu\r\n",
+				sizeof (char), sizeof (short), sizeof (int), sizeof (long),
+				sizeof (size_t), sizeof (intptr_t), sizeof (float), sizeof (double),
+				sizeof (void *), sizeof (long long), sizeof (long double)
+			);
 			return EXIT_SUCCESS;
 		default:
 			(void)fprintf(stderr, usage);
