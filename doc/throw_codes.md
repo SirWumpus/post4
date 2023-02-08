@@ -29,6 +29,8 @@ This is a list of `THROW` codes used internally by Post4.
 * -34 block write exception
 * -35 invalid block number, such as zero (0)
 * -40 invalid BASE for floating point conversion
+* -44 floating-point stack overflow
+* -45 floating-point stack underflow
 * -55 floating-point unidentified fault (`SIGFPE`)
 * -56 `QUIT`
 * -59 `ALLOCATE`

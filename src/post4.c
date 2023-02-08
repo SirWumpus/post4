@@ -1157,7 +1157,7 @@ p4Free(P4_Ctx *ctx)
 			p4WordFree(word);
 		}
 		(void) p4BlockClose(ctx->block_fd, &ctx->block);
-#ifdef USE_FLOAT_STACK
+#if defined(HAVE_MATH_H) && defined(USE_FLOAT_STACK)
 		free(ctx->fs.base);
 #endif
 		free(ctx->ds.base);
@@ -1270,17 +1270,29 @@ p4Trace(P4_Ctx *ctx, P4_Xt xt)
 static void
 p4StackCanPopPush(P4_Ctx *ctx, P4_Stack *stack, int pop, int push)
 {
+	int over = P4_THROW_DS_OVER;
+	int under = P4_THROW_DS_UNDER;
 	int length = (stack->top + 1 - stack->base);
+
+	if (stack == &ctx->rs) {
+		over = P4_THROW_RS_OVER;
+		under = P4_THROW_RS_UNDER;
+# if defined(HAVE_MATH_H) && defined(USE_FLOAT_STACK)
+	} else if (stack == &ctx->fs) {
+		over = P4_THROW_FS_OVER;
+		under = P4_THROW_FS_UNDER;
+# endif
+	}
 
 	/* Stack has enough data to pop? */
 	if (length < pop) {
 		p4Bp(ctx);
-		LONGJMP(ctx->on_throw, stack == &ctx->ds ? P4_THROW_DS_UNDER : P4_THROW_RS_UNDER);
+		LONGJMP(ctx->on_throw, under);
 	}
 	/* Stack has enough space to push data? */
 	if (stack->size < length + push - pop) {
 		p4Bp(ctx);
-		LONGJMP(ctx->on_throw, stack == &ctx->ds ? P4_THROW_DS_OVER : P4_THROW_RS_OVER);
+		LONGJMP(ctx->on_throw, over);
 	}
 }
 #endif
@@ -1614,7 +1626,7 @@ _repl:
 					ctx->words = p4WordAppend(ctx, ctx->words, x);
 #ifdef HAVE_MATH_H
 				} else if (is_float) {
-//					p4StackCanPopPush(ctx, &ctx->P4_FLOAT_STACK, 0, 1);
+					p4StackCanPopPush(ctx, &ctx->P4_FLOAT_STACK, 0, 1);
 					P4_PUSH(ctx->P4_FLOAT_STACK, x);
 #endif
 				} else {
@@ -1718,7 +1730,7 @@ _rsp_put:	w = P4_POP(ctx->ds);
 		ctx->rs.top = w.p;
 		NEXT;
 
-#ifdef USE_FLOAT_STACK
+#if defined(HAVE_MATH_H) && defined(USE_FLOAT_STACK)
 		// ( -- aaddr )
 _fsp_get:	w.p = ctx->fs.top;
 		P4_PUSH(ctx->ds, w);
@@ -2029,7 +2041,7 @@ _move:		w = P4_POP(ctx->ds);
 		 * @standard p4
 		 */
 		// ( -- u )
-_here_offset:	P4_PUSH(ctx->ds, ctx->words->ndata);
+_here_offset:	P4_PUSH(ctx->ds, (P4_Uint) ctx->words->ndata);
 		NEXT;
 
 		// ( -- addr )

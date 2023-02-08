@@ -268,13 +268,11 @@ union p4_cell {
 	P4_Uint		u;
 	P4_Size		z;
 	P4_Time		t;
+	P4_Float	f;
 	P4_Cell	*	p;
 	P4_Char *	s;
 	P4_Word *	w;
 	P4_Xt		xt;
-#ifdef HAVE_MATH_H
-	P4_Float	f;
-#endif
 };
 
 #define P4_CELL				((P4_Int) sizeof (P4_Cell))
@@ -417,8 +415,8 @@ struct p4_ctx {
 #define P4_THROW__41		(-41)	/* loss of precision */
 #define P4_THROW__42		(-42)	/* floating-point divide by zero */
 #define P4_THROW__43		(-43)	/* floating-point result out of range */
-#define P4_THROW__44		(-44)	/* floating-point stack overflow */
-#define P4_THROW__45		(-45)	/* floating-point stack underflow */
+#define P4_THROW_FS_OVER	(-44)	/* floating-point stack overflow */
+#define P4_THROW_FS_UNDER	(-45)	/* floating-point stack underflow */
 #define P4_THROW__46		(-46)	/* floating-point invalid argument */
 #define P4_THROW__47		(-47)	/* compilation word list deleted */
 #define P4_THROW__48		(-48)	/* invalid POSTPONE */
