@@ -81,7 +81,7 @@ MARKER rm_core_words
 : reserve DUP ALLOT HERE SWAP - ;
 
 \ ( x -- )
-: , 1 CELLS reserve ! ;
+: , ALIGN 1 CELLS reserve ! ;
 
 \ ( char -- )
 : C, 1 CHARS reserve C! ;
@@ -2198,6 +2198,12 @@ END-STRUCTURE
 ' _fsp_put IS _fsp!
   [THEN]
 
+: FALIGN ALIGN ;
+: FALIGNED ALIGNED ;
+: FLOAT+ CELL+ ;
+: FLOATS CELLS ;
+: FFIELD: FIELD: ;
+
 \ Combined float and data stacks?
 \ floating-stack 0= [IF]
 \
@@ -2220,7 +2226,7 @@ END-STRUCTURE
 : ds>fs >R rs>fs ;
 
 \ (F: f -- )
-: F, 1 CELLS reserve F! ;
+: F, FALIGN 1 FLOATS reserve F! ;
 
 \ (F: f -- f f )
 : FDUP fs>rs R@ ds>fs rs>fs ;
@@ -2258,20 +2264,17 @@ END-STRUCTURE
 
 \ [THEN]
 
-: FALIGN ALIGN ;
-: FLOAT+ CELL+ ;
-: FLOATS CELLS ;
-: FFIELD: FIELD: ;
-
-\ (F: f1 f2 -- bool )
+\ (F: f1 f2 -- ) (S: -- bool)
 : F< F- F0< ;
+
+\ (F: f1 f2 -- ) (S: -- bool)
+: F= F- F0= ;
 
 \ (S: -- u )
 : FDEPTH _fs DROP NIP ;
 
 \ ( F: f1 -- f2 )
-: FALIGNED fs>rs ALIGNED rs>fs ;
-: FNEGATE 0E0 FSWAP F- ;
+: FNEGATE [ 0.0 ] FLITERAL FSWAP F- ;
 : FABS FDUP F0< IF FNEGATE THEN ;
 
 \ (S: -- u )

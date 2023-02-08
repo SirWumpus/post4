@@ -1399,7 +1399,6 @@ p4Repl(P4_Ctx *ctx)
 		P4_WORD("F/",		&&_f_div,	0),
 		P4_WORD("F0<",		&&_f_lt0,	0),
 		P4_WORD("F0=",		&&_f_eq0,	0),
-		P4_WORD("F<",		&&_f_lt,	0),
 		P4_WORD("FS.",		&&_f_sdot,	0),
 		P4_WORD("F.",		&&_f_dot,	0),
 		P4_WORD("F>S",		&&_f_to_s,	0),		// p4
@@ -2649,18 +2648,12 @@ _f_div:		w = P4_POP(ctx->P4_FLOAT_STACK);
 
 		// (F: f -- )( -- bool_)
 _f_eq0:		w = P4_POP(ctx->P4_FLOAT_STACK);
-		P4_TOP(ctx->ds).n = P4_BOOL(w.f == 0);
+		P4_PUSH(ctx->ds, P4_BOOL(w.f == 0.0));
 		NEXT;
 
 		// (F: f -- )( -- bool_)
 _f_lt0:		w = P4_POP(ctx->P4_FLOAT_STACK);
-		P4_TOP(ctx->ds).n = P4_BOOL(w.f < 0);
-		NEXT;
-
-		// (F: f1 f2 -- )( -- bool )
-_f_lt:		w = P4_POP(ctx->P4_FLOAT_STACK);
-		x = P4_TOP(ctx->P4_FLOAT_STACK);
-		P4_TOP(ctx->ds).u = P4_BOOL(x.f < w.f);
+		P4_PUSH(ctx->ds, P4_BOOL(w.f < 0.0));
 		NEXT;
 
 		// (F: f1 -- f2 )

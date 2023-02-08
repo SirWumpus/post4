@@ -11,6 +11,7 @@
 	INCLUDE ../test/2star.p4
 	INCLUDE ../test/umstar.p4
 	INCLUDE ../test/d0equal.p4
+	INCLUDE ../test/float.p4
 	INCLUDE ../test/memory.p4
 	INCLUDE ../test/string.p4
 	INCLUDE ../test/tools.p4
