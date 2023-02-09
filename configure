@@ -3323,8 +3323,6 @@ ac_config_headers="$ac_config_headers src/config.h"
 #	Configuration options: settings
 #######################################################################
 
-CFLAGS="-Os"
-
 
 	# Check whether --enable-64bit was given.
 if test ${enable_64bit+y}
@@ -3360,7 +3358,7 @@ then :
 		if test $enable_debug = 'yes'
 then :
 
-			CFLAGS="-g${CFLAGS:+ $CFLAGS}"
+			CFLAGS="-g -O0${CFLAGS:+ $CFLAGS}"
 
 fi
 
@@ -3369,6 +3367,7 @@ else $as_nop
 
 printf "%s\n" "#define NDEBUG 1" >>confdefs.h
 
+		CFLAGS="-Os${CFLAGS:+ $CFLAGS}"
 		enable_debug='no'
 
 fi

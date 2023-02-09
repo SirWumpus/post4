@@ -655,10 +655,11 @@ AC_DEFUN(SNERT_OPTION_ENABLE_DEBUG,[
 
 	AC_ARG_ENABLE(debug,[AS_HELP_STRING([--enable-debug],[enable compiler debug option])],[
 		AS_IF([test $enable_debug = 'yes'],[
-			CFLAGS="-g${CFLAGS:+ $CFLAGS}"
+			CFLAGS="-g -O0${CFLAGS:+ $CFLAGS}"
 		])
 	],[
 		AC_DEFINE(NDEBUG,[1],[Disable debug code])
+		CFLAGS="-Os${CFLAGS:+ $CFLAGS}"
 		enable_debug='no'
 	])
 ])

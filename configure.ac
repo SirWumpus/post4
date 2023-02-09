@@ -32,8 +32,6 @@ AC_CONFIG_HEADERS(src/config.h)
 #	Configuration options: settings
 #######################################################################
 
-CFLAGS="-Os"
-
 SNERT_OPTION_ENABLE_64BIT
 SNERT_OPTION_ENABLE_DEBUG
 SNERT_OPTION_ENABLE_MATH
