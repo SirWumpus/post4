@@ -17,6 +17,15 @@ extern "C" {
 
 #include "config.h"
 
+#ifndef P4_MEM_SIZE
+/* When selecting the default data space memory size, consider the number
+ * of cells that will be available for defining the core and new words.
+ * Historically a 64KB system with 16 bit cell allowed for 32K of cells.
+ * For 64KB with 64 bit cells that is only 8K of cells.  See -m option.
+ */
+#define P4_MEM_SIZE			128		/* in kilo-bytes */
+#endif
+
 #ifndef P4_BLOCK_SIZE
 #define P4_BLOCK_SIZE			1024		/* in bytes */
 #endif
@@ -153,6 +162,12 @@ extern "C" {
 # define p4StackCanPopPush(c, s, pop, push)
 #endif
 
+#ifdef NDEBUG
+# define CHECK_ADDR(a)
+#else
+# define CHECK_ADDR(a)		if (((P4_Uint)(a) & 1) == 1) { raise(SIGBUS); }
+#endif
+
 /***********************************************************************
  *** Types
  ***********************************************************************/
@@ -167,6 +182,7 @@ typedef struct {
 	unsigned ds_size;
 	unsigned rs_size;
 	unsigned fs_size;
+	unsigned mem_size;
 	const char *core_file;
 	const char *block_file;
 } P4_Options;
@@ -278,6 +294,7 @@ union p4_cell {
 #define P4_CELL				((P4_Int) sizeof (P4_Cell))
 #define P4_ALIGN_SIZE(sz, pow2)    	(((sz) + (pow2-1)) & -(pow2))
 #define P4_CELL_ALIGN(nbytes)		P4_ALIGN_SIZE(nbytes, sizeof (P4_Cell))
+#define P4_ALIGN_BY(nbytes)		(P4_CELL_ALIGN(nbytes) - nbytes)
 
 struct p4_word {
 	/* Header */
@@ -306,13 +323,12 @@ struct p4_word {
 #define P4_WORD_CLEAR_COMPILE(w)	((w)->bits &= ~P4_BIT_COMPILE)
 
 	/* Body */
-	P4_Code		code;		/* Code field points primative. */
-	P4_Size		mdata;		/* Size of data[] in address units. */
-	P4_Size		ndata;		/* Length of data[] in address units. */
-	P4_Cell		data[1];	/* Word grows by data cells. */
+	P4_Code		code;		/* Code field points of primative. */
+	P4_Size		ndata;		/* Size of data[] in bytes. */
+	P4_Cell *	data;		/* Word grows by data cells. */
 };
 
-#define P4_WORD(name, code, bits)	{ NULL, { STRLEN(name), name }, bits, code, 0, 0, {{ 0 }} }
+#define P4_WORD(name, code, bits)	{ NULL, { STRLEN(name), name }, bits, code, 0 }
 
 typedef struct {
 	P4_Size		size;		/* Size of table in cells. */
@@ -351,6 +367,9 @@ struct p4_ctx {
 	P4_Uint		radix;		/* Input/Output radix */
 	P4_Int		argc;
 	char **		argv;
+	P4_Char *	here;		/* Next unused data space. */
+	P4_Char *	end;		/* End of data space memory. */
+	P4_Char	*	mem;		/* Fixed, do not resize. */
 	P4_Input	input;
 	P4_Block	block;
 	P4_Int		block_fd;

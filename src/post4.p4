@@ -2122,9 +2122,12 @@ BEGIN-STRUCTURE p4_ctx
 	FIELD: ctx.radix	\ see BASE
 	FIELD: ctx.argc
 	FIELD: ctx.argv
-	FIELD: ctx.block_fd
-	p4_block +FIELD ctx.block
+	FIELD: ctx.here		\ see HERE
+	FIELD: ctx.end		\ see UNUSED
+	FIELD: ctx.mem		\ current data space
 	p4_input +FIELD ctx.input
+	p4_block +FIELD ctx.block
+	FIELD: ctx.block_fd
 	/PAD +FIELD ctx.tty	\ buffer, see SOURCE
 	0 +FIELD ctx.on_throw	\ size varies by host OS
 END-STRUCTURE
@@ -2164,6 +2167,7 @@ END-STRUCTURE
 \ (C: -- quotation-sys colon-sys )
 \
 : [:
+	POSTPONE AHEAD
 	\ Pop enclosing defintion being compiled.
 	_ctx ctx.words @	\ C: q-sys
 	DUP w.prev @		\ C: q-sys word
@@ -2188,6 +2192,7 @@ END-STRUCTURE
 	_ctx ctx.words @	\ C: q-sys prev word  R: xt
 	SWAP ! 			\ C: q-sys  R: xt
 	_ctx ctx.words !	\ C: --  R: xt
+	POSTPONE THEN
 	R> POSTPONE LITERAL	\ C: --  R: --
 ; IMMEDIATE compile-only
 

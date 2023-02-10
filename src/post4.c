@@ -1070,6 +1070,26 @@ p4WordFree(P4_Word *word)
 	}
 }
 
+void *
+p4Allot(P4_Ctx *ctx, P4_Int n)
+{
+	if (ctx->end <= ctx->here + n) {
+		/* Attempt to reserve more data space than available. */
+		LONGJMP(ctx->on_throw, P4_THROW_ALLOCATE);
+	}
+	if (ctx->here + n < (P4_Char *) ctx->words->data) {
+		/* Attempt to release data space below the most recently
+		 * created word.
+		 */
+		LONGJMP(ctx->on_throw, P4_THROW_RESIZE);
+	}
+	void *start = ctx->here;
+	MEMSET(start, BYTE_ME, n);
+	ctx->words->ndata += n;
+	ctx->here += n;
+	return start;
+}
+
 P4_Word *
 p4WordCreate(P4_Ctx *ctx, const char *name, size_t length, P4_Code code)
 {
@@ -1078,8 +1098,10 @@ p4WordCreate(P4_Ctx *ctx, const char *name, size_t length, P4_Code code)
 	if ((word = malloc(sizeof (*word))) == NULL) {
 		goto error0;
 	}
-	MEMSET(word->data, BYTE_ME, sizeof (*word->data));
-	word->mdata = sizeof (*word->data);
+	/* Make sure new word starts with aligned data. */
+	(void) p4Allot(ctx, P4_ALIGN_BY((P4_Uint) ctx->here));
+	word->data = (P4_Cell *) ctx->here;
+	CHECK_ADDR(word->data);
 	word->ndata = 0;
 	word->bits = 0;
 
@@ -1099,35 +1121,13 @@ error0:
 	LONGJMP(ctx->on_throw, P4_THROW_ALLOCATE);
 }
 
-P4_Word *
-p4WordAllot(P4_Ctx *ctx, P4_Word *word, P4_Int n)
+void
+p4WordAppend(P4_Ctx *ctx, P4_Cell data)
 {
-	/* Always allocate in cell units... */
-	size_t size = P4_CELL_ALIGN(word->ndata + n);
-
-	/* Check for size overflow. */
-	if (word->mdata < size) {
-		if ((word = realloc(word, sizeof (*word) + size)) == NULL) {
-			LONGJMP(ctx->on_throw, P4_THROW_RESIZE);
-		}
-		MEMSET((P4_Char *)(word->data) + word->ndata, BYTE_ME, n);
-		word->mdata = size;
-	}
-
-	/* ... but house keeping done in address units. */
-	word->ndata += n;
-
-	return word;
-}
-
-P4_Word *
-p4WordAppend(P4_Ctx *ctx, P4_Word *word, P4_Cell data)
-{
-	P4_Size index = P4_CELL_ALIGN(word->ndata);
-	word = p4WordAllot(ctx, word, sizeof (P4_Cell));
-	word->data[index / sizeof (P4_Cell)] = data;
-
-	return word;
+	(void) p4Allot(ctx, P4_ALIGN_BY(ctx->words->ndata));
+	P4_Cell *here = p4Allot(ctx, sizeof (data));
+	CHECK_ADDR(here);
+	*here = data;
 }
 
 P4_Word *
@@ -1162,6 +1162,7 @@ p4Free(P4_Ctx *ctx)
 #endif
 		free(ctx->ds.base);
 		free(ctx->rs.base);
+		free(ctx->mem);
 		free(ctx);
 	}
 }
@@ -1197,6 +1198,12 @@ p4Create(P4_Options *opts)
 	ctx->argc = opts->argc;
 	ctx->argv = opts->argv;
 	ctx->state = P4_STATE_INTERPRET;
+
+	if ((ctx->mem = malloc(opts->mem_size * 1024)) == NULL) {
+		goto error0;
+	}
+	ctx->end = ctx->mem + opts->mem_size * 1024;
+	ctx->here = ctx->mem;
 
 #ifdef HAVE_MATH_H
 	ctx->precision = 6;
@@ -1340,6 +1347,8 @@ p4Exception(P4_Ctx *ctx, int code)
 		);
 		ctx->state = P4_STATE_INTERPRET;
 		ctx->words = word->prev;
+		/* Rewind HERE, does not free ALLOCATE data. */
+		ctx->here = (P4_Char *) word->data;
 		p4WordFree(word);
 	}
 	(void) printf(crlf);
@@ -1621,8 +1630,8 @@ _repl:
 					LONGJMP(ctx->on_throw, P4_THROW_UNDEFINED);
 				}
 				if (ctx->state == P4_STATE_COMPILE) {
-					ctx->words = p4WordAppend(ctx, ctx->words, (P4_Cell) &w_lit);
-					ctx->words = p4WordAppend(ctx, ctx->words, x);
+					p4WordAppend(ctx, (P4_Cell) &w_lit);
+					p4WordAppend(ctx, x);
 #ifdef HAVE_MATH_H
 				} else if (is_float) {
 					p4StackCanPopPush(ctx, &ctx->P4_FLOAT_STACK, 0, 1);
@@ -1633,7 +1642,7 @@ _repl:
 					P4_PUSH(ctx->ds, x);
 				}
 			} else if (ctx->state == P4_STATE_COMPILE && !P4_WORD_IS_IMM(word)) {
-				ctx->words = p4WordAppend(ctx, ctx->words, (P4_Cell) word);
+				p4WordAppend(ctx, (P4_Cell) word);
 			} else {
 				// Setup XT of word found to execute.
 				exec[0].w = word;
@@ -1794,8 +1803,7 @@ _do_colon:	w.u = ((char)P4_LENGTH(ctx->rs) << CHAR_BIT) | (char)P4_LENGTH(ctx->d
 		NEXT;
 
 		// (C: colon -- ) (R: ip -- )
-_semicolon:	ctx->words = p4WordAppend(ctx, ctx->words, (P4_Cell) &w_exit);
-		w = P4_POP(ctx->ds);
+_semicolon:	w = P4_POP(ctx->ds);
 		x.u = ((char)P4_LENGTH(ctx->rs) << CHAR_BIT) | (char)P4_LENGTH(ctx->ds);
 		if (w.u != x.u) {
 			/* Control structure imbalance.  Did we match
@@ -1803,6 +1811,7 @@ _semicolon:	ctx->words = p4WordAppend(ctx, ctx->words, (P4_Cell) &w_exit);
 			 */
 			LONGJMP(ctx->on_throw, P4_THROW_BAD_CONTROL);
 		}
+		p4WordAppend(ctx, (P4_Cell) &w_exit);
 		P4_WORD_CLEAR_HIDDEN(ctx->words);
 		ctx->state = P4_STATE_INTERPRET;
 		if (ctx->words->name.length == 0) {
@@ -1839,6 +1848,8 @@ _rm_marker:	x.w = w.xt;
 			p4WordFree(word);
 		}
 		ctx->words = word->prev;
+		/* Rewind HERE, does not free ALLOCATE data. */
+		ctx->here = (P4_Char *) word->data;
 		p4WordFree(word);
 		NEXT;
 
@@ -1877,8 +1888,7 @@ _evaluate:	w = P4_POP(ctx->ds);
 _create:	str = p4ParseName(&ctx->input);
 		word = p4WordCreate(ctx, str.string, str.length, &&_data_field);
 		// Reserve the 1st data cell for possible DOES>; wasted otherwise.
-		word->ndata += sizeof *word->data;
-		word->data[0].n = 0;
+		p4WordAppend(ctx, (P4_Cell)(P4_Int) 0),
 		P4_WORD_SET_CREATED(word);
 		NEXT;
 
@@ -1932,11 +1942,11 @@ _tick:		str = p4ParseName(&ctx->input);
 
 		// ( n -- )
 _allot:		w = P4_POP(ctx->ds);
-		ctx->words = p4WordAllot(ctx, ctx->words, w.n);
+		(void) p4Allot(ctx, w.n);
 		NEXT;
 
 		// ( -- )
-_align:		ctx->words->ndata = P4_CELL_ALIGN(ctx->words->ndata);
+_align:		(void) p4Allot(ctx, P4_ALIGN_BY(ctx->words->ndata));
 		NEXT;
 
 		/*
@@ -2040,16 +2050,15 @@ _move:		w = P4_POP(ctx->ds);
 		 * @standard p4
 		 */
 		// ( -- u )
-_here_offset:	P4_PUSH(ctx->ds, (P4_Uint) ctx->words->ndata);
+_here_offset:	P4_PUSH(ctx->ds, (P4_Size)(ctx->here - (P4_Char *) ctx->words->data));
 		NEXT;
 
 		// ( -- addr )
-_here_addr:	P4_PUSH(ctx->ds, (P4_Char *)ctx->words->data + ctx->words->ndata);
+_here_addr:	P4_PUSH(ctx->ds, ctx->here);
 		NEXT;
 
 		// ( -- u )
-_unused:	w.u = ctx->words->mdata - ctx->words->ndata;
-		P4_PUSH(ctx->ds, w);
+_unused:	P4_PUSH(ctx->ds, ctx->end - ctx->here);
 		NEXT;
 
 		/*
@@ -2817,16 +2826,17 @@ p4EvalString(P4_Ctx *ctx, P4_Char *str, size_t len)
  ***********************************************************************/
 
 static const char usage[] =
-"usage: post4 [-V][-b file][-c file][-d size][-i file][-r size] [script [args ...]]\n"
+"usage: post4 [-V][-b file][-c file][-d size][-i file][-m size][-r size]\r\n"
+"             [script [args ...]]\r\n"
 "\n"
-"-b file\t\tblock file; default " P4_BLOCK_FILE "\n"
-"-c file\t\tword definition file; default " P4_CORE_FILE "\n"
-"-d size\t\tdata stack size in cells; default " QUOTE(P4_STACK_SIZE) "\n"
-"-i file\t\tinclude file; can be repeated\n"
-"-r size\t\treturn stack size in cells; default " QUOTE(P4_STACK_SIZE) "\n"
-"-V\t\tbuild and version information\n\n"
-"If script is \"-\", read it from standard input."
-"\n"
+"-b file\t\tblock file; default ./.post4.blk or $HOME/.post4.blk\r\n"
+"-c file\t\tword definition file; default post4.p4 from $POST4_PATH\r\n"
+"-d size\t\tdata stack size in cells; default " QUOTE(P4_STACK_SIZE) "\r\n"
+"-i file\t\tinclude file; can be repeated; searches $POST4_PATH\r\n"
+"-m size\t\tdata space memory in KB; default " QUOTE(P4_MEM_SIZE) "\r\n"
+"-r size\t\treturn stack size in cells; default " QUOTE(P4_STACK_SIZE) "\r\n"
+"-V\t\tbuild and version information\r\n\r\n"
+"If script is \"-\", read it from standard input.\r\n"
 ;
 
 #ifndef USE_FLOAT_STACK
@@ -2839,6 +2849,7 @@ static P4_Options options = {
 	.ds_size = P4_STACK_SIZE,
 	.rs_size = P4_STACK_SIZE,
 	.fs_size = P4_FLOAT_STACK_SIZE,
+	.mem_size = P4_MEM_SIZE,
 	.core_file = P4_CORE_FILE,
 	.block_file = P4_BLOCK_FILE,
 };
@@ -2861,7 +2872,7 @@ main(int argc, char **argv)
 	p4Init();
 	(void) atexit(p4Fini);
 
-	while ((ch = getopt(argc, argv, "b:c:d:i:r:V")) != -1) {
+	while ((ch = getopt(argc, argv, "b:c:d:i:m:r:V")) != -1) {
 		switch (ch) {
 		case 'b':
 			options.block_file = optarg;
@@ -2874,6 +2885,9 @@ main(int argc, char **argv)
 			break;
 		case 'i':
 			// Ignore for now.
+			break;
+		case 'm':
+			options.mem_size = strtol(optarg, NULL, 10);
 			break;
 		case 'r':
 			options.rs_size = strtol(optarg, NULL, 10);
@@ -2902,7 +2916,7 @@ main(int argc, char **argv)
 	}
 
 	optind = 1;
-	while ((ch = getopt(argc, argv, "b:c:d:i:r:V")) != -1) {
+	while ((ch = getopt(argc, argv, "b:c:d:i:m:r:V")) != -1) {
 		if (ch == 'i' && (rc = p4EvalFile(ctx, optarg)) != P4_THROW_OK) {
 			err(EXIT_FAILURE, "%s", optarg);
 		}
