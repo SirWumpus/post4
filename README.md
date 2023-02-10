@@ -9,19 +9,21 @@ Overview
 
 Post4 is a hosted indirect threaded Forth dialect written in C, based on the ["Forth 200x Draft 19.1, 2019-09-30"](http://www.forth200x.org/documents/forth19-1.pdf).  Post4 aims to implement the fewest possible built-in words in C, those that are needed to interact with memory and I/O, leaving the remaining standard words to be implemented in Forth.
 
-        usage: post4 [-V][-b file][-c file][-d size][-i file][-r size] [script [args ...]]
-
+        usage: post4 [-V][-b file][-c file][-d size][-i file][-m size][-r size]
+                     [script [args ...]]
+        
         -b file         block file; default ./.post4.blk or $HOME/.post4.blk
         -c file         word definition file; default post4.p4 from $POST4_PATH
         -d size         data stack size in cells; default 64
         -i file         include file; can be repeated; searches $POST4_PATH
+        -m size         data space memory in KB; default 64
         -r size         return stack size in cells; default 64
         -V              build and version information
         
         If script is "-", read it from standard input.
 
 
-The environment variable `POST4_PATH` provides a colon separated search path for the `post4.p4` core word definitions file.  If `POST4_PATH` is undefined, then an OS specific default path is used.  A specific word definition file can be specified with `-c`.
+The environment variable `POST4_PATH` provides a colon separated search path for the `post4.p4` core word definitions file and include files.  If `POST4_PATH` is undefined, then an OS specific default path is used.  A specific word definition file can be specified with `-c`.
 
 By default a user block file, `.post4.blk`, is opened from the current directory or user's `HOME` directory.  This can be overridden with the `-b` option.  To skip the block file, specify an empty filepath, eg. `-b ''`.
 

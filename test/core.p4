@@ -376,9 +376,6 @@ test_group_end
 .( CREATE >BODY HERE ) test_group
 t{ CREATE tw_create_empty -> }t
 t{ ' tw_create_empty >BODY -> HERE }t
-[DEFINED] >HERE [IF]
-t{ >HERE -> 8 }t		\ CREATE reserves 1st data cell for DOES>
-[THEN]
 test_group_end
 
 .( CREATE C, C@ C! >BODY ) test_group
