@@ -979,9 +979,9 @@ DEFER _fsp!
 	STATE @ IF
 	  POSTPONE LITERAL
 	  POSTPONE n!
-	ELSE
-	  n!
+	  EXIT
 	THEN
+	n!
 ; IMMEDIATE
 
 \ ( -- caddr u )
@@ -2203,27 +2203,13 @@ END-STRUCTURE
 ' _fsp_put IS _fsp!
   [THEN]
 
+: FLOATS CELLS ;
+1 FLOATS CONSTANT /FLOAT
+: FLOAT+ /FLOAT + ;
+
 : FALIGN ALIGN ;
 : FALIGNED ALIGNED ;
-: FLOAT+ CELL+ ;
-: FLOATS CELLS ;
 : FFIELD: FIELD: ;
-
-\ Combined float and data stacks?
-\ floating-stack 0= [IF]
-\
-\ : FDUP DUP ;
-\ : FROT ROT ;
-\ : FDROP DROP ;
-\ : FSWAP SWAP ;
-\ : FOVER OVER ;
-\ : FCONSTANT CONSTANT ;
-\ : FVARIABLE VARIABLE ;
-\ : FLITERAL POSTPONE LITERAL ; IMMEDIATE compile-only
-\ : .FS 'f' EMIT 's' EMIT '\r' EMIT '\n' EMIT _ds DROP _stack_dump ;
-\
-\ [ELSE]
-\ Separate float and data stacks.
 
 : .fs 'f' EMIT 's' EMIT '\r' EMIT '\n' EMIT _fs DROP _stack_dump ;
 
@@ -2249,7 +2235,7 @@ END-STRUCTURE
 : FROT fs>rs FSWAP rs>fs FSWAP ;
 
 \ (F: -- f ) (R: ip -- ip' )
-: flit R> DUP CELL+ >R F@ ;
+: flit R> DUP FLOAT+ >R F@ ;
 
 \ Similar to LIT,
 \ (F: f -- )

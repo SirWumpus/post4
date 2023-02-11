@@ -236,6 +236,16 @@ Set the number of significant digits currently used by `F.`, `FE.`, or `FS.` to 
 Push the float stack base `aaddr` address, depth `n`, and size `s` (before executing `_fs`).  This stack is a fixed size and grows upward.  See `.fs` and `_stack_dump`.
 
 - - -
+#### F,
+(F: `f` -- )  
+Align and reserve data-space to store `f` there.
+
+- - -
+#### F=
+(F: `f1` `f2` -- bool )  
+Return `bool` as true if `f1` and `f2` are exactly equal (same internal representation).
+
+- - -
 #### floating-stack
 (  -- `u` ) constant  
 Size of the float stack.  Zero (0) if the float stack is combined with the data stack.  This is a deviation from `ENVIRONMENT?` queries.
