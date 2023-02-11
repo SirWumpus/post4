@@ -61,17 +61,6 @@ dnl AS_IF([test $GCC_MAJOR -ge 4],[CFLAGS="-Wno-pointer-sign $CFLAGS"])
 SNERT_TAR_SETTINGS
 
 #######################################################################
-#	Check for types.
-#######################################################################
-
-AS_ECHO()
-AS_ECHO("Checking for common types...")
-AS_ECHO()
-
-AC_C_CONST
-AC_CHECK_TYPES([mode_t, off_t, pid_t, uid_t, gid_t, size_t, ssize_t, time_t, intptr_t])
-
-#######################################################################
 #	Check for library, header, and function families.
 #######################################################################
 
@@ -86,6 +75,25 @@ SNERT_FILE_LOCKS
 SNERT_TERMIOS
 
 AC_CHECK_HEADERS([ctype.h errno.h inttypes.h limits.h stddef.h stdint.h stdio.h unistd.h sys/ioctl.h])
+
+#######################################################################
+#	Check for types.
+#######################################################################
+
+AS_ECHO()
+AS_ECHO("Checking for common types...")
+AS_ECHO()
+
+AC_C_CONST
+AC_TYPE_MODE_T
+AC_TYPE_OFF_T
+AC_TYPE_PID_T
+AC_TYPE_SIZE_T
+AC_TYPE_SSIZE_T
+AC_TYPE_UID_T
+AC_TYPE_INTPTR_T
+AC_TYPE_UINTPTR_T
+dnl AC_CHECK_TYPES([gid_t, time_t])
 
 #######################################################################
 #	Check for library functions

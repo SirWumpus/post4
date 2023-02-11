@@ -62,6 +62,8 @@ extern "C" {
  */
 #undef HAVE_INTTYPES_H
 #undef HAVE_STDINT_H
+#undef HAVE_INTPTR_T
+#undef HAVE_UINTPTR_T
 
 /*
  * POSIX Types
