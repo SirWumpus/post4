@@ -748,4 +748,37 @@ T{ 0 INCLUDE ../test/data/increment_tos.p4 -> 1 }T
 T{ 2 S" ../test/data/increment_tos.p4" INCLUDED  -> 3 }T
 test_group_end
 
+.( RECURSE ) test_group
+\ Regular word defintion.
+T{ : tw_recurse0 ( N -- 0, 1, ... N )
+	DUP IF DUP >R 1- RECURSE R> THEN
+; -> }T
+T{ 0 tw_recurse0 -> 0 }T
+T{ 1 tw_recurse0 -> 0 1 }T
+T{ 2 tw_recurse0 -> 0 1 2 }T
+T{ 3 tw_recurse0 -> 0 1 2 3 }T
+T{ 4 tw_recurse0 -> 0 1 2 3 4 }T
+
+\ Noname word defintion.
+T{ :NONAME ( n -- 0, 1, .., n )
+	DUP IF DUP >R 1- RECURSE R> THEN
+; CONSTANT tw_recurse1 -> }T
+T{ 0 tw_recurse1 EXECUTE -> 0 }T
+T{ 4 tw_recurse1 EXECUTE -> 0 1 2 3 4 }T
+
+:NONAME ( n -- n1 )
+	1- DUP
+	CASE 0 OF EXIT ENDOF
+	  1 OF 11 SWAP RECURSE ENDOF
+	  2 OF 22 SWAP RECURSE ENDOF
+	  3 OF 33 SWAP RECURSE ENDOF
+	  DROP ABS RECURSE EXIT
+	ENDCASE
+; CONSTANT tw_recurse2
+T{ 1 tw_recurse2 EXECUTE -> 0 }T
+T{ 2 tw_recurse2 EXECUTE -> 11 0 }T
+T{ 4 tw_recurse2 EXECUTE -> 33 22 11 0 }T
+T{ 25 tw_recurse2 EXECUTE -> 33 22 11 0 }T
+test_group_end
+
 rm_core_words
