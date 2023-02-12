@@ -507,17 +507,12 @@ MAX-U MAX-N 2CONSTANT MAX-D
 \
 : CHAR PARSE-NAME DROP C@ ;
 
-\ Compile a literal cell into the current word definition.
-\
-\  (C: x -- ) (S: x -- )
-\
-: LIT, LIT [ ' LIT COMPILE, ] COMPILE, , ;
+\ Compile LIT xt into the current word, which pushes xt when run.
+\ (C: <spaces>name -- ) (S: -- xt )
+: ['] LIT [ ' LIT COMPILE, ] COMPILE, ' COMPILE, ; IMMEDIATE compile-only
 
-\ ... ['] name ...
-\
-\  (C: <spaces>name -- ) \ (S: -- xt )
-\
-: ['] ' LIT, ; IMMEDIATE
+\ (C: x -- ) (S: x -- )
+: LIT, ['] LIT COMPILE, , ;
 
 \ ... : name ... [ x ] LITERAL ... ;
 \
