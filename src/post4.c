@@ -1809,6 +1809,10 @@ _semicolon:	w = P4_POP(ctx->ds);
 			/* Control structure imbalance.  Did we match
 			 * all the IF-THEN, BEGIN-REPEAT, etc.
 			 */
+			warnx("before "P4_HEX_FMT" ds=%u rs=%u, after "P4_HEX_FMT" ds=%u rs=%u",
+				w.u, (w.u & 0xFF), (w.u >> CHAR_BIT),
+				x.u, P4_LENGTH(ctx->ds), P4_LENGTH(ctx->rs)
+			);
 			LONGJMP(ctx->on_throw, P4_THROW_BAD_CONTROL);
 		}
 		p4WordAppend(ctx, (P4_Cell) &w_exit);

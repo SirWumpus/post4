@@ -213,6 +213,18 @@ Exchange the top two float stack items.
 `f2` is the tangent of the radian angle `f1`.
 
 - - -
+#### FVALUE
+( `f` `<spaces>name` -- )  
+Create `name` and reserve data-space to store `f` from the float stack.  When `name` is executed, the value `f` is pushed to the float stack.  See `TO`.
+
+        ok 123.45 FVALUE fizz
+        ok fizz f.
+        123.450000 ok
+        ok 0.314159e1 TO fizz
+        ok fizz f.
+        3.141590 ok
+
+- - -
 #### FVARIABLE
 ( `<spaces>name` -- )  
 Create `name` with one float of data.  When `name` is executed push the `faddr` of the float.
@@ -236,13 +248,13 @@ Set the number of significant digits currently used by `F.`, `FE.`, or `FS.` to 
 Push the float stack base `aaddr` address, depth `n`, and size `s` (before executing `_fs`).  This stack is a fixed size and grows upward.  See `.fs` and `_stack_dump`.
 
 - - -
-#### F,
+#### f,
 (F: `f` -- )  
 Align and reserve data-space to store `f` there.
 
 - - -
-#### F=
-(F: `f1` `f2` -- bool )  
+#### f=
+(F: `f1` `f2` -- `bool` )  
 Return `bool` as true if `f1` and `f2` are exactly equal (same internal representation).
 
 - - -

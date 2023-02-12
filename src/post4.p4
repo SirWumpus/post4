@@ -2248,6 +2248,31 @@ END-STRUCTURE
 \ (C: <spaces>name -- ) (S: -- aaddr )
 : FVARIABLE VARIABLE ;
 
+: FVALUE CREATE 0 , F, DOES> FLOAT+ F@ ;
+
+\ ( F: f -- ) ( <spaces>name -- )
+: fto
+	' >BODY CELL+
+	STATE @ IF
+	  POSTPONE LITERAL
+	  POSTPONE F!
+	  EXIT
+	THEN
+	F!
+; IMMEDIATE
+
+\ ( F: f -- ) ( <spaces>name -- )
+: TO
+	>IN @ ' >BODY @ 		\ S: v in type
+	SWAP >IN !			\ S: v type
+	IF
+	  \ type != 0, eg. 1 or 2
+	  ['] TO EXECUTE EXIT
+	THEN
+	\ type == 0
+	['] fto EXECUTE
+; IMMEDIATE
+
 \ [THEN]
 
 \ (F: f1 f2 -- ) (S: -- bool)

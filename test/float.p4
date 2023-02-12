@@ -71,3 +71,15 @@ FDEPTH 0 = assert
 1.0 FDEPTH 1 = assert FDROP
 1.0 2.0 FDEPTH 2 = assert FDROP FDROP
 test_group_end
+
+.( FVALUE TO ) test_group
+T{ 123e0 FVALUE tv_fval -> }T
+tv_fval 123.0 F= assert
+T{ 234e0 TO tv_fval -> }T
+tv_fval 234e0 F= assert
+T{ : tw_set_fval tv_fval FSWAP TO tv_fval ; -> }T
+345e0 tw_set_fval tv_fval 345e0 F= assert 234e0 F= assert
+T{ 5e0 TO tv_fval -> }T
+T{ : [execute] EXECUTE ; IMMEDIATE -> }T
+' tv_fval ] [execute] [ 5e0 F= assert
+test_group_end
