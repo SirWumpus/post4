@@ -1391,6 +1391,16 @@ p4Repl(P4_Ctx *ctx)
 		P4_WORD("FTRUNC",	&&_f_trunc,	0),
 		P4_WORD("FLOOR",	&&_f_floor,	0),
 		P4_WORD("FSQRT",	&&_f_sqr,	0),
+		P4_WORD("FATAN2",	&&_f_atan2,	0),
+		P4_WORD("FACOSH",	&&_f_acosh,	0),
+		P4_WORD("FASINH",	&&_f_asinh,	0),
+		P4_WORD("FATANH",	&&_f_atanh,	0),
+		P4_WORD("FACOS",	&&_f_acos,	0),
+		P4_WORD("FASIN",	&&_f_asin,	0),
+		P4_WORD("FATAN",	&&_f_atan,	0),
+		P4_WORD("FCOSH",	&&_f_cosh,	0),
+		P4_WORD("FSINH",	&&_f_sinh,	0),
+		P4_WORD("FTANH",	&&_f_tanh,	0),
 		P4_WORD("FCOS",		&&_f_cos,	0),
 		P4_WORD("FSIN",		&&_f_sin,	0),
 		P4_WORD("FTAN",		&&_f_tan,	0),
@@ -2653,9 +2663,10 @@ _f_mul:		w = P4_POP(ctx->P4_FLOAT_STACK);
 
 		// (F: f1 f2 -- f3 )
 _f_div:		w = P4_POP(ctx->P4_FLOAT_STACK);
-		if (w.f == 0) {
-			LONGJMP(ctx->on_throw, P4_THROW_DIV_ZERO);
-		}
+// With floating point, divide by zero doesn't generate SIGFPE.
+//		if (w.f == 0) {
+//			LONGJMP(ctx->on_throw, P4_THROW_DIV_ZERO);
+//		}
 		P4_TOP(ctx->P4_FLOAT_STACK).f /= w.f;
 		NEXT;
 
@@ -2687,6 +2698,58 @@ _f_sin:		w = P4_TOP(ctx->P4_FLOAT_STACK);
 		// (F: f1 -- f2 )
 _f_tan:		w = P4_TOP(ctx->P4_FLOAT_STACK);
 		P4_TOP(ctx->P4_FLOAT_STACK).f = tan(w.f);
+		NEXT;
+
+		// (F: f1 -- f2 )
+_f_cosh:	w = P4_TOP(ctx->P4_FLOAT_STACK);
+		P4_TOP(ctx->P4_FLOAT_STACK).f = cosh(w.f);
+		NEXT;
+
+		// (F: f1 -- f2 )
+_f_sinh:		w = P4_TOP(ctx->P4_FLOAT_STACK);
+		P4_TOP(ctx->P4_FLOAT_STACK).f = sinh(w.f);
+		NEXT;
+
+		// (F: f1 -- f2 )
+_f_tanh:		w = P4_TOP(ctx->P4_FLOAT_STACK);
+		P4_TOP(ctx->P4_FLOAT_STACK).f = tanh(w.f);
+		NEXT;
+
+		// (F: f1 -- f2 )
+_f_acos:	w = P4_TOP(ctx->P4_FLOAT_STACK);
+		P4_TOP(ctx->P4_FLOAT_STACK).f = acos(w.f);
+		NEXT;
+
+		// (F: f1 -- f2 )
+_f_asin:	w = P4_TOP(ctx->P4_FLOAT_STACK);
+		P4_TOP(ctx->P4_FLOAT_STACK).f = asin(w.f);
+		NEXT;
+
+		// (F: f1 -- f2 )
+_f_atan:	w = P4_TOP(ctx->P4_FLOAT_STACK);
+		P4_TOP(ctx->P4_FLOAT_STACK).f = atan(w.f);
+		NEXT;
+
+		// (F: f1 -- f2 )
+_f_acosh:	w = P4_TOP(ctx->P4_FLOAT_STACK);
+		P4_TOP(ctx->P4_FLOAT_STACK).f = acosh(w.f);
+		NEXT;
+
+		// (F: f1 -- f2 )
+_f_asinh:	w = P4_TOP(ctx->P4_FLOAT_STACK);
+		P4_TOP(ctx->P4_FLOAT_STACK).f = asinh(w.f);
+		NEXT;
+
+		// (F: f1 -- f2 )
+_f_atanh:	w = P4_TOP(ctx->P4_FLOAT_STACK);
+		P4_TOP(ctx->P4_FLOAT_STACK).f = atanh(w.f);
+		NEXT;
+
+		// (F: w x -- rad )
+_f_atan2:	x = P4_POP(ctx->P4_FLOAT_STACK);
+		w = P4_TOP(ctx->P4_FLOAT_STACK);
+		/* Return arctan w/x in the interval [−pi , +pi ] radians. */
+		P4_TOP(ctx->P4_FLOAT_STACK).f = atan2(w.f, x.f);
 		NEXT;
 
 		// (F: f1 -- f2 )

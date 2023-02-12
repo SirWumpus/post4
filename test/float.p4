@@ -83,3 +83,107 @@ T{ 5e0 TO tv_fval -> }T
 T{ : [execute] EXECUTE ; IMMEDIATE -> }T
 ' tv_fval ] [execute] [ 5e0 F= assert
 test_group_end
+
+.( FTRUNC ) test_group
+T{ -0E0         FTRUNC F0= -> TRUE }T
+T{ -1E-9        FTRUNC F0= -> TRUE }T
+T{ -0.9E0       FTRUNC F0= -> TRUE }T
+T{ -1E0 1E-5 F+ FTRUNC F0= -> TRUE }T
+   0E0          FTRUNC 0E0 F= assert
+   1E-9         FTRUNC 0E0 F= assert
+  -1E0 -1E-5 F+ FTRUNC -1E0 F= assert
+   3.14E0       FTRUNC 3E0 F= assert
+   3.99E0       FTRUNC 3E0 F= assert
+   4E0          FTRUNC 4E0 F= assert
+  -4E0          FTRUNC -4E0 F= assert
+  -4.1E0        FTRUNC -4E0 F= assert
+test_group_end
+
+.( FATAN2 ) test_group
+.fs
+21 SET-PRECISION
+
+3.141592653589793238463 FCONSTANT pi
+pi FNEGATE FCONSTANT -pi
+
+ pi   4e0 F/ FCONSTANT   pi/4
+-pi   4e0 F/ FCONSTANT  -pi/4
+ pi   2e0 F/ FCONSTANT   pi/2
+-pi   2e0 F/ FCONSTANT  -pi/2
+ pi/2 3e0 F* FCONSTANT  3pi/2
+ pi/4 3e0 F* FCONSTANT  3pi/4
+-pi/4 3e0 F* FCONSTANT -3pi/4
+
+\ y    x           rad            deg
+ 0e0  1e0 FATAN2   0e0  F= assert \ 0
+ 1e0  1e0 FATAN2   pi/4 F= assert \ 45
+ 1e0  0e0 FATAN2   pi/2 F= assert \ 90
+-1e0 -1e0 FATAN2 -3pi/4 F= assert \ 135
+ 0e0 -1e0 FATAN2   pi   F= assert \ 180
+-1e0  1e0 FATAN2  -pi/4 F= assert \ 225
+-1e0  0e0 FATAN2  -pi/2 F= assert \ 270
+-1e0  1e0 FATAN2  -pi/4 F= assert \ 315
+
+\ If y is +/-0 and x is < 0, +/-pi shall be returned.
+ 0e0 -1e0 FATAN2   pi   F= assert
+-0e0 -1e0 FATAN2  -pi   F= assert
+
+\ If y is +/-0 and x is > 0, +/-0 shall be0 returned.
+ 0e0  1e0 FATAN2   0e0  F= assert
+-0e0  1e0 FATAN2  -0e0  F= assert
+
+\ If y is < 0 and x is +/-0, -pi/2 shall be0 returned.
+-1e0  0e0 FATAN2  -pi/2 F= assert
+-1e0 -0e0 FATAN2  -pi/2 F= assert
+
+\ If y is > 0 and x is +/-0, pi/2 shall be0 returned.
+ 1e0  0e0 FATAN2   pi/2 F= assert
+ 1e0 -0e0 FATAN2   pi/2 F= assert
+
+\ Optional ISO C / single UNIX specs:
+\ If either x or y is NaN, a NaN shall be returned.
+ 0e0  0e0 F/ FCONSTANT  NaN
+ 1e0  0e0 F/ FCONSTANT +Inf
+-1e0  0e0 F/ FCONSTANT -Inf
+
+\ Any operation on a NaN results in a NaN.  Cannot use F= to compare a
+\ result against NaN, need to test exact bit pattern match, so compare
+\ as integers instead.
+ NaN  1e0 FATAN2 fs>ds NaN fs>ds = assert
+ 1e0  NaN FATAN2 fs>ds NaN fs>ds = assert
+ NaN  NaN FATAN2 fs>ds NaN fs>ds = assert
+
+\ If y is +/-0 and x is -0, +/-pi shall be0 returned.
+ 0e0 -0e0 FATAN2  pi F= assert
+-0e0 -0e0 FATAN2 -pi F= assert
+
+\ If y is +/-0 and x is +0, +/-0 shall be0 returned.
+ 0e0  0e0 FATAN2  0e0 F= assert
+-0e0  0e0 FATAN2 -0e0 F= assert
+
+\ For finite0 values of +/-y > 0, if x is -Inf, +/-pi shall be0 returned.
+ 1e0 -Inf FATAN2  pi F= assert
+-1e0 -Inf FATAN2 -pi F= assert
+
+\ For finite0 values of +/-y > 0, if x is +Inf, +/-0 shall be0 returned.
+ 1e0 +Inf FATAN2  0e0 F= assert
+-1e0 +Inf FATAN2 -0e0 F= assert
+
+\ For finite0 values of x, if y is +/-Inf, +/-pi/2 shall be0 returned.
++Inf  1e0 FATAN2  pi/2 F= assert
++Inf -1e0 FATAN2  pi/2 F= assert
++Inf  0e0 FATAN2  pi/2 F= assert
++Inf -0e0 FATAN2  pi/2 F= assert
+-Inf  1e0 FATAN2 -pi/2 F= assert
+-Inf -1e0 FATAN2 -pi/2 F= assert
+-Inf  0e0 FATAN2 -pi/2 F= assert
+-Inf -0e0 FATAN2 -pi/2 F= assert
+
+\ If y is +/-Inf and x is -Inf, +/-3pi/4 shall be0 returned.
++Inf -Inf FATAN2  3pi/4 F= assert
+-Inf -Inf FATAN2 -3pi/4 F= assert
+
+\ If y is +/-Inf and x is +Inf, +/-pi/4 shall be0 returned.
++Inf +Inf FATAN2  pi/4 F= assert
+-Inf +Inf FATAN2 -pi/4 F= assert
+test_group_end
