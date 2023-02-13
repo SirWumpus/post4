@@ -59,25 +59,7 @@ MARKER rm_core_words
 \
 : SEE ' _seext ;
 
-\ ... reserve ...
-\
 \ (S: u -- addr )
-\
-\ @note
-\	During the compiliation of a word in C based implementations
-\	data-space regions may be relocated when they are enlarged,
-\	thus invalidating previous values of HERE.  Therefore:
-\
-\	... HERE 100 ALLOT ... \ fill in allotment
-\
-\	Should ALLOT enlarge and relocate the data-space, the address
-\	saved by HERE on the stack will now point into invalid memory.
-\
-\	With RESERVE the address of the region just reserved is on
-\	top of the stack insuring that the address is valid until the
-\	next enlargement of the data-space by RESERVE, comma (,),
-\	c-comma (C,), or ALIGN.
-\
 : reserve DUP ALLOT HERE SWAP - ;
 
 \ ( x -- )
@@ -2066,9 +2048,8 @@ BEGIN-STRUCTURE p4_word
 	p4_string +FIELD w.name
 	FIELD: w.bits
 	FIELD: w.code		\ pointer
-	FIELD: w.mdata		\ data size
 	FIELD: w.ndata		\ data length
-	0 +FIELD w.data
+	FIELD: w.data		\ pointer to data cells
 END-STRUCTURE
 
 BEGIN-STRUCTURE p4_block

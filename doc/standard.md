@@ -1218,7 +1218,7 @@ Size of a pad buffer in characters.  This is a deviation from `ENVIRONMENT?` que
 - - -
 #### >here
 ( -- `u` )  
-Offset into the current data-space for the word being compiled.  Similar to the word `HERE`, except expressed as an offset from the start of the data-space when the current word was created.  During the compilation of a word in C based implementations, the data-space region may be relocated when its enlarged by `,`, `ALIGN`, `ALLOT`, `C,`, `COMPILE,` thus invalidating previous values of `HERE` on the stack.  Providing an offset into the current data-region allows for computing relative locations.
+Offset into the current data-space for the word being compiled.  Similar to the word `HERE`, except expressed as an offset from the start of the data-space when the current word was created.
 
 - - -
 #### args
@@ -1366,11 +1366,7 @@ Print a NUL terminated string.
 - - -
 #### reserve
 ( `n` -- `addr` )  
-Similar to `ALLOT`, reserve `n` address-units of data-space and return its start address.  While defining a word in C based implementations, like Post4, data-space regions may be relocated when they are enlarged, thus invalidating previous values of `HERE`.  Therefore consider:
-
-        HERE 100 CELLS ALLOT
-
-Should `ALLOT` enlarge and relocate the data-space, the address saved by `HERE` on the stack will now point into invalid memory.  With `reserve` the address of the region just reserved is on top of the stack insuring that the address is valid until the next enlargement of the data-space by `reserve`,`,`, `ALIGN`, `ALLOT`, `C,`, or `COMPILE,`.
+Similar to `ALLOT`, reserve `n` address-units of data-space and return its start address.
 
 - - -
 #### return-stack-cells

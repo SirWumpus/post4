@@ -2047,22 +2047,6 @@ _move:		w = P4_POP(ctx->ds);
 		(void) memmove(x.s, P4_POP(ctx->ds).s, w.z);
 		NEXT;
 
-
-		/*
-		 * ... >HERE ...
-		 *
-		 * (S: -- u )
-		 *
-		 * Offset from the data-space start address for the word being compiled.
-		 * Similar to the word HERE, except expressed as an offset.
-		 *
-		 * @note
-		 *	During the compiliation of a word with C based implementations
-		 *	data-space regions may be relocated when they are enlarged,
-		 *	thus invalidating previous values of HERE.
-		 *
-		 * @standard p4
-		 */
 		// ( -- u )
 _here_offset:	P4_PUSH(ctx->ds, (P4_Size)(ctx->here - (P4_Char *) ctx->words->data));
 		NEXT;
