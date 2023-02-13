@@ -1485,8 +1485,6 @@ p4Repl(P4_Ctx *ctx)
 		P4_WORD("@",		&&_fetch,	0),
 		P4_WORD("C!",		&&_cstore,	0),
 		P4_WORD("C@",		&&_cfetch,	0),
-		P4_WORD("CS-PICK",	&&_pick,	P4_BIT_COMPILE), // C: on data stack
-		P4_WORD("CS-ROLL",	&&_roll,	P4_BIT_COMPILE), // C: on data stack
 		P4_WORD("DROP",		&&_drop,	0),
 		P4_WORD("DUP",		&&_dup,		0),
 		P4_WORD("MOVE",		&&_move,	0),
@@ -2046,6 +2044,7 @@ _move:		w = P4_POP(ctx->ds);
 		 */
 		(void) memmove(x.s, P4_POP(ctx->ds).s, w.z);
 		NEXT;
+
 
 		// ( -- u )
 _here_offset:	P4_PUSH(ctx->ds, (P4_Size)(ctx->here - (P4_Char *) ctx->words->data));

@@ -59,6 +59,12 @@ MARKER rm_core_words
 \
 : SEE ' _seext ;
 
+\ (C: xu ... x1 x0 u -- xu ... x1 x0 xu )
+: CS-PICK PICK ; compile-only
+
+\ (C: xu xu-1 ... x0 u -- xu-1 ... x0 xu )
+: CS-ROLL ROLL ; compile-only
+
 \ (S: u -- addr )
 : reserve DUP ALLOT HERE SWAP - ;
 
