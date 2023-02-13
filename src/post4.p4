@@ -115,11 +115,14 @@ MAX-N INVERT CONSTANT MIN-N
 _rs CONSTANT return-stack-cells DROP DROP
 _ds CONSTANT stack-cells DROP DROP
 
+\ ( u "<spaces>name" -- addr )
+: BUFFER: CREATE ALLOT ;
+
 \ ... PAD ...
 \
 \ ( -- )
 \
-CREATE PAD /PAD CHARS ALLOT
+/PAD CHARS BUFFER: PAD
 
 \ VARIABLE name
 \
@@ -1170,7 +1173,7 @@ DEFER _fsp!
 	REPEAT
 ;
 
-CREATE _pic /HOLD CHARS ALLOT
+/HOLD CHARS BUFFER: _pic
 
 VARIABLE _>pic
 
@@ -1671,7 +1674,7 @@ MAX-CHAR CONSTANT /COUNTED-STRING
 _str_buf_max 1- CONSTANT _str_buf_mask
 
 \ Transient string buffers of size /PAD.
-CREATE _str_bufs /PAD CHARS _str_buf_max * ALLOT
+/PAD CHARS _str_buf_max * BUFFER: _str_bufs
 
 \ Offset of last used buffer.
 VARIABLE _str_buf_index
@@ -1924,12 +1927,6 @@ VARIABLE SCR
 \ (S: <spaces>filename" -- )
 \
 : INCLUDE PARSE-NAME INCLUDED ;
-
-\ ... BUFFER: name
-\
-\ ( u "<spaces>name" -- ; -- aaddr )
-\
-: BUFFER: CREATE ALLOT ;
 
 \ ... ACTION-OF ...
 \
