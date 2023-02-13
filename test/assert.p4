@@ -56,27 +56,60 @@ DEFER test_skip_fail
 \ ( bool -- )
 : assert_not_skip 0= assert_skip ;
 
-VARIABLE tc_stack_start
-VARIABLE tc_stack_expect
+VARIABLE tc_ds_start
+VARIABLE tc_ds_expect
+VARIABLE tc_fs_start
+VARIABLE tc_fs_expect
 
-: tc_stack_drop BEGIN DEPTH tc_stack_start @ > WHILE DROP REPEAT ;
-: ts{ DEPTH tc_stack_start ! ['] test_skip IS test_skip_fail ;
-: t{ DEPTH tc_stack_start ! ['] test_fail IS test_skip_fail ;
-: -> DEPTH tc_stack_expect ! ;
-: }t
-	DEPTH tc_stack_expect @ - DUP >R
-	tc_stack_expect @ tc_stack_start @ -
-	<> IF R> tc_stack_drop test_skip_fail EXIT THEN
+: tc_ds_drop BEGIN DEPTH tc_ds_start @ > WHILE DROP REPEAT ;
+: tc_fs_drop BEGIN FDEPTH tc_fs_start @ > WHILE FDROP REPEAT ;
+: tc_drop_all tc_ds_drop tc_fs_drop ;
+
+: xt{ ( xt -- )
+	IS test_skip_fail
+	DEPTH tc_ds_start !
+	FDEPTH tc_fs_start !
+;
+: ts{ ['] test_skip xt{ ;
+: t{ ['] test_fail xt{ ;
+
+: ->
+	DEPTH tc_ds_expect !
+	FDEPTH tc_fs_expect !
+;
+
+: }t_ds
+	DEPTH tc_ds_expect @ - DUP >R
+	tc_ds_expect @ tc_ds_start @ -
+	<> IF R> DROP TRUE EXIT THEN
 	R@ BEGIN
 	  ?DUP
 	WHILE
 	  1-
 	  R@ 1+ PICK ROT
-	  <> IF R> tc_stack_drop test_skip_fail EXIT THEN
+	  <> IF R> 2DROP TRUE EXIT THEN
 	REPEAT
-	R> tc_stack_drop test_pass
+	R> DROP FALSE
 ;
-
+: }t_fs
+	FDEPTH tc_fs_expect @ - DUP >R
+	tc_fs_expect @ tc_fs_start @ -
+	<> IF R> DROP TRUE EXIT THEN
+	R@ BEGIN
+	  ?DUP
+	WHILE
+	  1-
+	  R@ FPICK FSWAP
+	  F= 0= IF R> 2DROP TRUE EXIT THEN
+	REPEAT
+	R> DROP FALSE
+;
+: }t
+	}t_ds }t_fs OR IF
+	  tc_drop_all test_skip_fail EXIT
+	THEN
+	tc_drop_all test_pass
+;
 : test_suite
 	0 tests_passed ! 0 tests_failed ! 0 tests_skipped !
 	DECIMAL
@@ -105,16 +138,33 @@ VARIABLE tc_stack_expect
 	S" rm_test_group" EVALUATE
 ;
 
+test_suite
 .( Test case stack check ) test_group
 t{ -> }t
 t{ 1 -> 1 }t
 t{ 1 2 -> 1 2 }t
 t{ 1 2 3 -> 1 2 3 }t
+
+t{ 1e0 -> 1e0 }t
+t{ 1e0 2e0 -> 1e0 2e0 }t
+t{ 1e0 2e0 3e0 -> 1e0 2e0 3e0 }t
+
+t{ 1 2e0 -> 1 2e0 }t
+t{ 1 2e0 3 4.0 -> 1 2e0 3 4.0 }t
+t{ 1 2e0 3e0 4 5.0 -> 1 2e0 3e0 4 5.0 }t
+
 ts{ -> 377 }t
 ts{ 377 -> }t
 ts{ 377 -> 377 33 }t
 ts{ 377 33 -> 33 }t
+
+ts{ -> 123.45 }t
+ts{ 123.45 -> }t
+ts{ 377 -> 377 33.0 }t
+ts{ 33.0 -> 377 33.0 }t
+ts{ 377 33.0 -> 33.0 }t
 test_group_end
+test_suite_end
 
           0 INVERT CONSTANT 1S		\ 1111...1111
 1S 1 RSHIFT INVERT CONSTANT MSB		\ 1000...0000
