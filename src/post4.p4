@@ -2197,6 +2197,9 @@ END-STRUCTURE
 : fs>ds fs>rs R> ;
 : ds>fs >R rs>fs ;
 
+\ ( fu ... f1 f0 u -- fu ... f1 f0 fu )
+: fpick _fs drop floats + /float - swap floats - f@ ;
+
 \ (F: f -- )
 : F, FALIGN 1 FLOATS reserve F! ;
 

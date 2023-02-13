@@ -2101,11 +2101,13 @@ _dup:		w = P4_TOP(ctx->ds);
 		NEXT;
 
 		// ( xu ... x1 x0 u -- xu ... x1 x0 xu )
+		// Could be implemented in Post4 minus the stack depth check.
+		// : PICK >R _ds DROP 1 - CELLS + R> CELLS - @ ;
 		// 0 PICK == DUP, 1 PICK == OVER
 _pick:		w = P4_POP(ctx->ds);
 		/* Check stack depth. */
-		p4StackCanPopPush(ctx, &ctx->ds, w.n+1, w.n+2);
-		x = P4_PICK(ctx->ds, w.n);
+		p4StackCanPopPush(ctx, &ctx->ds, w.u+1, w.u+2);
+		x = P4_PICK(ctx->ds, w.u);
 		P4_PUSH(ctx->ds, x);
 		NEXT;
 
@@ -2617,6 +2619,7 @@ _to_float:	errno = 0;
 _f_dot:		if (ctx->radix != 10) {
 			LONGJMP(ctx->on_throw, P4_THROW_BAD_BASE);
 		}
+		p4StackCanPopPush(ctx, &ctx->P4_FLOAT_STACK, 1, 0);
 		w = P4_POP(ctx->P4_FLOAT_STACK);
 		(void) printf("%.*lF ", (int) ctx->precision, w.f);
 		NEXT;
@@ -2625,6 +2628,7 @@ _f_dot:		if (ctx->radix != 10) {
 _f_sdot:	if (ctx->radix != 10) {
 			LONGJMP(ctx->on_throw, P4_THROW_BAD_BASE);
 		}
+		p4StackCanPopPush(ctx, &ctx->P4_FLOAT_STACK, 1, 0);
 		w = P4_POP(ctx->P4_FLOAT_STACK);
 		(void) printf("%.*lE ", (int) ctx->precision, w.f);
 		NEXT;
