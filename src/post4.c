@@ -2880,12 +2880,13 @@ p4EvalString(P4_Ctx *ctx, P4_Char *str, size_t len)
  ***********************************************************************/
 
 static const char usage[] =
-"usage: post4 [-V][-b file][-c file][-d size][-i file][-m size][-r size]\r\n"
-"             [script [args ...]]\r\n"
+"usage: post4 [-V][-b file][-c file][-d size][-f size][-i file][-m size]\r\n"
+"             [-r size][script [args ...]]\r\n"
 "\n"
 "-b file\t\tblock file; default ./" P4_BLOCK_FILE " or $HOME/" P4_BLOCK_FILE "\r\n"
 "-c file\t\tword definition file; default " P4_CORE_FILE " from $POST4_PATH\r\n"
 "-d size\t\tdata stack size in cells; default " QUOTE(P4_STACK_SIZE) "\r\n"
+"-f size\t\tfloat stack size; default " QUOTE(P4_FLOAT_STACK_SIZE) "\r\n"
 "-i file\t\tinclude file; can be repeated; searches $POST4_PATH\r\n"
 "-m size\t\tdata space memory in KB; default " QUOTE(P4_MEM_SIZE) "\r\n"
 "-r size\t\treturn stack size in cells; default " QUOTE(P4_STACK_SIZE) "\r\n"
@@ -2926,7 +2927,7 @@ main(int argc, char **argv)
 	p4Init();
 	(void) atexit(p4Fini);
 
-	while ((ch = getopt(argc, argv, "b:c:d:i:m:r:V")) != -1) {
+	while ((ch = getopt(argc, argv, "b:c:d:f:i:m:r:V")) != -1) {
 		switch (ch) {
 		case 'b':
 			options.block_file = optarg;
@@ -2936,6 +2937,9 @@ main(int argc, char **argv)
 			break;
 		case 'd':
 			options.ds_size = strtol(optarg, NULL, 10);
+			break;
+		case 'f':
+			options.fs_size = strtol(optarg, NULL, 10);
 			break;
 		case 'i':
 			// Ignore for now.
@@ -2970,7 +2974,7 @@ main(int argc, char **argv)
 	}
 
 	optind = 1;
-	while ((ch = getopt(argc, argv, "b:c:d:i:m:r:V")) != -1) {
+	while ((ch = getopt(argc, argv, "b:c:d:f:i:m:r:V")) != -1) {
 		if (ch == 'i' && (rc = p4EvalFile(ctx, optarg)) != P4_THROW_OK) {
 			err(EXIT_FAILURE, "%s", optarg);
 		}
