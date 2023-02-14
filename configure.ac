@@ -22,7 +22,6 @@ AC_CONFIG_SRCDIR(src/post4.c)
 #	Auxliary files to be modified later
 #######################################################################
 
-AC_CONFIG_FILES(MANIFEST.TXT)
 AC_CONFIG_FILES(makefile)
 AC_CONFIG_FILES(src/makefile)
 AC_CONFIG_FILES(src/config.h.in)

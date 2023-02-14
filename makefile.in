@@ -91,7 +91,7 @@ _clean :
 	find . \( -name 'tmp.*' -o -name '*.core' \) -exec rm -f \{\} \;
 
 _distclean : _clean
-	rm -f *.log config.status configure.scan configure~ makefile MANIFEST.TXT
+	rm -f *.log config.status configure.scan configure~ makefile
 
 _realclean : _distclean
 	rm -f configure *.md5
@@ -129,14 +129,5 @@ snapshot:
 	git archive --format=tar.gz --prefix=${TARNAME}-${COMMIT}/ ${COMMIT} >../${TARNAME}-${COMMIT}.tar.gz
 	@echo '***************************************************************'
 	@${MD5SUM} ../${TARNAME}-${COMMIT}.tar.gz | tee ../${TARNAME}-${COMMIT}.md5
-	@echo '***************************************************************'
-	@echo
-
-tar: MANIFEST.TXT
-	@echo
-	@echo '***************************************************************'
-	tar -C .. ${TAR_I} MANIFEST.TXT -zcf ../${TARNAME}-${VERSION}.tar.gz
-	@echo '***************************************************************'
-	@${MD5SUM} ../${TARNAME}-${VERSION}.tar.gz | tee ../${TARNAME}-${VERSION}.md5
 	@echo '***************************************************************'
 	@echo
