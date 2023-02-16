@@ -1243,6 +1243,9 @@ error0:
 	return NULL;
 }
 
+#ifdef NDEBUG
+# define p4Bp(ctx)
+#else
 static void
 p4Bp(P4_Ctx *ctx)
 {
@@ -1259,6 +1262,8 @@ p4Bp(P4_Ctx *ctx)
 		(int)ctx->input.offset, '^'
 	);
 }
+#endif
+
 
 #ifdef P4_TRACE
 static void
@@ -1667,6 +1672,10 @@ setjmp_cleanup:
 	SETJMP_POP(ctx->on_throw);
 	return rc;
 
+		// ( -- )
+_bp:		p4Bp(ctx);
+		/*@fallthrough@*/
+
 		// Indirect threading.
 		/* Check data stack bounds. */
 _next:		p4StackCanPopPush(ctx, &ctx->ds, 0, 0);
@@ -1697,10 +1706,6 @@ _bye_code:	w = P4_TOP(ctx->ds);
 
 		// ( -- aaddr )
 _ctx:		P4_PUSH(ctx->ds, (P4_Cell *) ctx);
-		NEXT;
-
-		// ( -- )
-_bp:		p4Bp(ctx);
 		NEXT;
 
 		// ( -- )
