@@ -4,69 +4,69 @@ INCLUDE ../test/assert.p4
 MARKER rm_core_words
 
 .( 0= ) test_group
- 0 0= assert
- 1 0= assert_not
--1 0= assert_not
+t{  0 0= ->  TRUE }t
+t{  1 0= -> FALSE }t
+t{ -1 0= -> FALSE }t
 test_group_end
 
 .( 0< ) test_group
- 0 0< assert_not
- 1 0< assert_not
--1 0< assert
--2 0< assert
+t{  0 0< -> FALSE }t
+t{  1 0< -> FALSE }t
+t{ -1 0< ->  TRUE }t
+t{ -2 0< ->  TRUE }t
 test_group_end
 
 .( = ) test_group
- 0  0 = assert
- 1  1 = assert
--1 -1 = assert
- 1  0 = assert_not
--1  0 = assert_not
- 0  1 = assert_not
- 0 -1 = assert_not
+t{  0  0 = ->  TRUE }t
+t{  1  1 = ->  TRUE }t
+t{ -1 -1 = ->  TRUE }t
+t{  1  0 = -> FALSE }t
+t{ -1  0 = -> FALSE }t
+t{  0  1 = -> FALSE }t
+t{  0 -1 = -> FALSE }t
 test_group_end
 
 .( FALSE ) test_group
-FALSE 0= assert
+t{ FALSE 0= -> TRUE }t
 test_group_end
 
 .( TRUE ) test_group
-TRUE -1 = assert
+t{ TRUE -1 = -> TRUE }t
 test_group_end
 
 .( INVERT ) test_group
-FALSE INVERT TRUE = assert
-TRUE INVERT FALSE = assert
-0 INVERT -1 = assert
+t{ FALSE INVERT -> TRUE }t
+t{ TRUE INVERT -> FALSE }t
+t{ 0 INVERT -> -1 }t
 test_group_end
 
 .( AND ) test_group
-0 0 AND 0= assert
-0 1 AND 0= assert
-1 0 AND 0= assert
-1 1 AND 1 = assert
-%01 %10 AND 0 = assert
-%10 %10 AND 2 = assert
-%11 %10 AND 2 = assert
-0 INVERT 1 AND 1 = assert
-1 INVERT 1 AND 0 = assert
+t{ 0 0 AND -> 0 }t
+t{ 0 1 AND -> 0 }t
+t{ 1 0 AND -> 0 }t
+t{ 1 1 AND -> 1 }t
+t{ %01 %10 AND -> 0 }t
+t{ %10 %10 AND -> 2 }t
+t{ %11 %10 AND -> 2 }t
+t{ 0 INVERT 1 AND -> 1 }t
+t{ 1 INVERT 1 AND -> 0 }t
 test_group_end
 
 .( OR ) test_group
-0 0 OR 0 = assert
-0 1 OR 1 = assert
-1 0 OR 1 = assert
-1 1 OR 1 = assert
-%01 %10 OR 3 = assert
+t{ 0 0 OR -> 0 }t
+t{ 0 1 OR -> 1 }t
+t{ 1 0 OR -> 1 }t
+t{ 1 1 OR -> 1 }t
+t{ %01 %10 OR -> 3 }t
 test_group_end
 
 .( XOR ) test_group
-0 0 XOR 0 = assert
-0 1 XOR 1 = assert
-1 0 XOR 1 = assert
-1 1 XOR 0 = assert
-%01 %10 XOR 3 = assert
-%11 %01 XOR 2 = assert
+t{ 0 0 XOR -> 0 }t
+t{ 0 1 XOR -> 1 }t
+t{ 1 0 XOR -> 1 }t
+t{ 1 1 XOR -> 0 }t
+t{ %01 %10 XOR -> 3 }t
+t{ %11 %01 XOR -> 2 }t
 test_group_end
 
 .( LSHIFT ) test_group
@@ -89,32 +89,32 @@ T{ MSB 1 RSHIFT 2* -> MSB }T
 test_group_end
 
 .( Numeric notation ) test_group
-#1289 1289 = assert
-\ #12346789. 12346789. = assert
-#-1289 -1289 = assert
-\ #-12346789. -12346789. = assert
-$12eF 4847 = assert
-\ $12aBcDeF. 313249263. = assert
-$-12eF -4847 = assert
-\ $-12AbCdEf. -313249263. = assert
-%10010110 150 = assert
-\ %10010110. 150. = assert
-%-10010110 -150 = assert
+t{ #1289 -> 1289 }t
+\ t{ #12346789. -> 12346789. }t
+t{ #-1289 -> -1289 }t
+\ t{ #-12346789. -> -12346789. }t
+t{ $12eF -> 4847 }t
+\ t{ $12aBcDeF. -> 313249263. }t
+t{ $-12eF -> -4847 }t
+\ t{ $-12AbCdEf. -> -313249263. }t
+t{ %10010110 -> 150 }t
+\ t{ %10010110. -> 150. }t
+t{ %-10010110 -> -150 }t
 \ Post4 extensions.
-0x12eF 4847 = assert
-0x-12eF -4847 = assert
-0377 255 = assert
-0-377 -255 = assert
-0177777 65535 = assert
+t{ 0x12eF -> 4847 }t
+t{ 0x-12eF -> -4847 }t
+t{ 0377 -> 255 }t
+t{ 0-377 -> -255 }t
+t{ 0177777 -> 65535 }t
 test_group_end
 
 .( + ) test_group
-0 0 + 0 = assert
-1 0 + 1 = assert
-0 1 + 1 = assert
-1 1 + 2 = assert
--1 1 + 0 = assert
-1 -1 + 0 = assert
+t{ 0 0 + -> 0 }t
+t{ 1 0 + -> 1 }t
+t{ 0 1 + -> 1 }t
+t{ 1 1 + -> 2 }t
+t{ -1 1 + -> 0 }t
+t{ 1 -1 + -> 0 }t
 test_group_end
 
 .( MAX-U ) test_group
@@ -133,8 +133,8 @@ T{ MIN-N -> MAX-INT INVERT }T
 test_group_end
 
 .( BL ) test_group
-BL $20 = assert
-BL '\s' = assert
+t{ BL -> $20 }t
+t{ BL -> '\s' }t
 test_group_end
 
 .( NEGATE ) test_group
@@ -148,147 +148,143 @@ T{ MIN-INT 1 + NEGATE -> MAX-INT }T
 test_group_end
 
 .( - ) test_group
-0 0 - 0 = assert
-1 0 - 1 = assert
-2 1 - 1 = assert
-0 1 - -1 = assert
-1 -1 - 2 = assert
-test_group_end
+t{ 0  0 - ->  0 }t
+t{ 1  0 - ->  1 }t
+t{ 2  1 - ->  1 }t
+t{ 0  1 - -> -1 }t
+t{ 1 -1 - ->  2 }t
+t{ test_group_end
 
 .( * ) test_group
-0 3 * 0 = assert
-1 3 * 3 = assert
-2 3 * 6 = assert
--1 -1 * 1 = assert
--1 -3 * 3 = assert
- 2 -3 * -6 = assert
+t{  0  3 * ->  0 }t
+t{  1  3 * ->  3 }t
+t{  2  3 * ->  6 }t
+t{ -1 -1 * ->  1 }t
+t{ -1 -3 * ->  3 }t
+t{  2 -3 * -> -6 }t
 test_group_end
 
 .( 1+ ) test_group
- 0 1+ 1 = assert
--1 1+ 0 = assert
- 1 1+ 2 = assert
-MAX-N 1+ MAX-N 1 + = assert
-MAX-N 1+ 0 INVERT 1 RSHIFT INVERT = assert
+t{  0 1+ -> 1 }t
+t{ -1 1+ -> 0 }t
+t{  1 1+ -> 2 }t
+t{ MAX-N 1+ -> MAX-N 1 + }t
+t{ MAX-N 1+ -> 0 INVERT 1 RSHIFT INVERT }t
 test_group_end
 
 .( 1- ) test_group
-2 1-  1 = assert
-1 1-  0 = assert
-0 1- -1 = assert
-MAX-N 1 + 1- MAX-N = assert
+t{ 2 1- ->  1 }t
+t{ 1 1- ->  0 }t
+t{ 0 1- -> -1 }t
+t{ MAX-N 1 + 1- -> MAX-N }t
 test_group_end
 
 .( U< ) test_group
-0 1 U< assert
-1 2 U< assert
-0 MAX-N U< assert
-0 MAX-U U< assert
-MAX-N MAX-U U< assert
-0 0 U< assert_not
-1 0 U< assert_not
-1 1 U< assert_not
-2 1 U< assert_not
-MAX-N 0 U< assert_not
-MAX-U 0 U< assert_not
-MAX-U MAX-N U< assert_not
+t{ 0 1 U< -> TRUE }t
+t{ 1 2 U< -> TRUE }t
+t{ 0 MAX-N U< -> TRUE }t
+t{ 0 MAX-U U< -> TRUE }t
+t{ MAX-N MAX-U U< -> TRUE }t
+t{ 0 0 U< -> FALSE }t
+t{ 1 0 U< -> FALSE }t
+t{ 1 1 U< -> FALSE }t
+t{ 2 1 U< -> FALSE }t
+t{ MAX-N 0 U< -> FALSE }t
+t{ MAX-U 0 U< -> FALSE }t
+t{ MAX-U MAX-N U< -> FALSE }t
 test_group_end
 
 .( < ) test_group
- 0 1 < assert
- 1 2 < assert
--1 0 < assert
--1 1 < assert
-MIN-N 0 < assert
-MIN-N MAX-N < assert
- 0 MAX-N < assert
- 0 0 < assert_not
- 1 1 < assert_not
- 1 0 < assert_not
- 2 1 < assert_not
- 0 -1 < assert_not
- 1 -1 < assert_not
- 0 MIN-N < assert_not
-MAX-N MIN-N < assert_not
-MAX-N 0 < assert_not
+t{  0 1 < -> TRUE }t
+t{  1 2 < -> TRUE }t
+t{ -1 0 < -> TRUE }t
+t{ -1 1 < -> TRUE }t
+t{ MIN-N 0 < -> TRUE }t
+t{ MIN-N MAX-N < -> TRUE }t
+t{  0 MAX-N < -> TRUE }t
+t{  0 0 < -> FALSE }t
+t{  1 1 < -> FALSE }t
+t{  1 0 < -> FALSE }t
+t{  2 1 < -> FALSE }t
+t{  0 -1 < -> FALSE }t
+t{  1 -1 < -> FALSE }t
+t{  0 MIN-N < -> FALSE }t
+t{ MAX-N MIN-N < -> FALSE }t
+t{ MAX-N 0 < -> FALSE }t
 test_group_end
 
 .( > ) test_group
- 0 1 > assert_not
- 1 2 > assert_not
--1 0 > assert_not
--1 1 > assert_not
-MIN-N 0 > assert_not
-MIN-N MAX-N > assert_not
- 0 MAX-N > assert_not
- 0 0 > assert_not
- 1 1 > assert_not
- 1 0 > assert
- 2 1 > assert
- 0 -1 > assert
- 1 -1 > assert
- 0 MIN-N > assert
-MAX-N MIN-N > assert
-MAX-N 0 > assert
+t{  0 1 > -> FALSE }t
+t{  1 2 > -> FALSE }t
+t{ -1 0 > -> FALSE }t
+t{ -1 1 > -> FALSE }t
+t{ MIN-N 0 > -> FALSE }t
+t{ MIN-N MAX-N > -> FALSE }t
+t{  0 MAX-N > -> FALSE }t
+t{  0 0 > -> FALSE }t
+t{  1 1 > -> FALSE }t
+t{  1 0 > -> TRUE }t
+t{  2 1 > -> TRUE }t
+t{  0 -1 > -> TRUE }t
+t{  1 -1 > -> TRUE }t
+t{  0 MIN-N > -> TRUE }t
+t{ MAX-N MIN-N > -> TRUE }t
+t{ MAX-N 0 > -> TRUE }t
 test_group_end
 
 .( DROP ) test_group
-12 34 DROP 12 = assert
+t{ 12 34 DROP -> 12 }t
 test_group_end
 
 .( DUP ) test_group
-12 DUP = assert
+t{ 12 DUP -> 12 12 }t
 test_group_end
 
 .( ?DUP ) test_group
--1 ?DUP = assert
-0 ?DUP 0= assert
-1 ?DUP = assert
+t{ -1 ?DUP -> -1 -1 }t
+t{  0 ?DUP -> 0 }t
+t{  1 ?DUP -> 1 1 }t
 test_group_end
 
 .( OVER ) test_group
-12 34 OVER 12 = assert
-34 = assert
-12 = assert
+t{ 12 34 OVER -> 12 34 12 }t
 test_group_end
 
 .( SWAP ) test_group
-12 34 SWAP 12 = assert
-34 = assert
+t{ 12 34 SWAP -> 34 12 }t
 test_group_end
 
 .( ROT ) test_group
-12 34 56 ROT 12 = assert
-56 = assert
-34 = assert
+t{ 12 34 56 ROT -> 34 56 12 }t
 test_group_end
 
 .( >R R@ R> ) test_group
-1 >R R> 1 = assert
-2 >R R@ R> 2 = assert 2 = assert
-3 4 >R >R R> R> 4 = assert 3 = assert
-MAX-U >R R> MAX-U = assert
+t{ 1 >R R> -> 1 }t
+t{ 2 >R R@ R> -> 2 2 }t
+t{ 3 4 >R >R R> R> -> 3 4 }t
+t{ MAX-U >R R> -> MAX-U }t
 test_group_end
 
 .( DEPTH ) test_group
-DEPTH 0 = assert
-1 DEPTH >R DROP R> 1 = assert
-1 2 DEPTH  >R 2DROP R> 2 = assert
+t{ DEPTH -> 0 }t
+t{ 12 DEPTH -> 12 1 }t
+t{ 12 34 DEPTH -> 12 34 2 }t
+t{ 12 DEPTH >R DROP R> -> 1 }t
+t{ 12 34 DEPTH >R 2DROP R> -> 2 }t
 test_group_end
 
 .( CONSTANT ) test_group
-0xCAFE CONSTANT java java 0xCAFE = assert
+t{ 0xCAFE CONSTANT java java -> 0xCAFE }t
 test_group_end
 
 .( VARIABLE ! @ +! ) test_group
-VARIABLE tw_var_0 tw_var_0 @ 0= assert
-0xCAFE tw_var_0 ! tw_var_0 @ 0xCAFE = assert
-0xDEAD tw_var_0 ! tw_var_0 @ 0xCAFE = assert_not
-tw_var_0 @ 0xDEAD = assert
-0 tw_var_0 ! DEPTH 0= assert
-1 tw_var_0 +! DEPTH 0= assert
-tw_var_0 @ 1 = assert
--1 tw_var_0 +! tw_var_0 @ 0= assert
+t{ VARIABLE tw_var_0 tw_var_0 @ -> 0 }t
+t{ 0xCAFE tw_var_0 ! tw_var_0 @ -> 0xCAFE }t
+t{ 0xDEAD tw_var_0 ! tw_var_0 @ -> 0xDEAD }t
+t{ 0 tw_var_0 ! DEPTH -> 0 }t
+t{ 1 tw_var_0 +! DEPTH -> 0 }t
+t{ tw_var_0 @ -> 1 }t
+t{ -1 tw_var_0 +! tw_var_0 @ -> 0 }t
 test_group_end
 
 .( VALUE TO ) test_group
@@ -308,62 +304,68 @@ T{ tv_v1 -> 222 }T
 test_group_end
 
 .( BASE HEX DECIMAL ) test_group
-BASE @ >R
-HEX BASE @ #16 = assert
-DECIMAL BASE @ #10 = assert
+t{ BASE @ >R -> }t
+t{ HEX BASE @ -> #16 }t
+t{ DECIMAL BASE @ -> #10 }t
 [DEFINED] OCTAL [IF]
-OCTAL BASE @ #8 = assert
-BINARY BASE @ #2 = assert
+t{ OCTAL BASE @ -> #8 }t
 [THEN]
-R> BASE !
+[DEFINED] BINARY [IF]
+t{ BINARY BASE @ -> #2 }t
+[THEN]
+t{ R> BASE ! -> }t
 test_group_end
 
 .( CHAR ) test_group
-CHAR @ $40 = assert
-CHAR allo $61 = assert
-'a' $61 = assert
+t{ CHAR @ -> $40 }t
+t{ CHAR allo -> $61 }t
+t{ 'a' -> $61 }t
 test_group_end
 
 .( [CHAR] ) test_group
-: tw_char_0 [CHAR] @ ;
-: tw_char_1 [CHAR] allo ;
-: tw_char_2 'a' ;
-tw_char_0 $40 = assert
-tw_char_1 $61 = assert
-tw_char_2 $61 = assert
+t{ : tw_char_0 [CHAR] @ ; -> }t
+t{ : tw_char_1 [CHAR] allo ; -> }t
+t{ : tw_char_2 'a' ; -> }t
+t{ tw_char_0 -> $40 }t
+t{ tw_char_1 -> $61 }t
+t{ tw_char_2 -> $61 }t
 test_group_end
 
-.( CHAR+ ) test_group
-0 CHAR+ 1 = assert
+.( CHAR+ CHARS ) test_group
+t{ 0 CHAR+ -> 1 CHARS }t
+t{ PAD CHAR+ -> PAD 1 CHARS + }t
 test_group_end
 
-.( CELL+ /CELL ) test_group
+.( CELL+ /CELL CELLS ) test_group
 T{ 0 CELL+ -> /CELL }T
+T{ 0 CELL+ -> 1 CELLS }T
 test_group_end
 
 .( CHARS ) test_group
-1 CHARS 1 < assert_not
-1 CHARS 1 CELLS > assert_not
-1 CHARS 1 = assert
+t{ 1 CHARS 1 < -> FALSE }t
+t{ 1 CHARS 1 CELLS > -> FALSE }t
+t{ 1 CHARS -> /CHAR }t
 test_group_end
 
 .( CELLS ) test_group
-1 CELLS 1 < assert_not
-1 CELLS 1 CHARS MOD 0= assert
+t{ 1 CELLS -> /CELL }t
+t{ 1 CELLS 1 < -> FALSE }t		\ 1 <= AU
+t{ 1 CELLS 1 CHARS MOD -> 0 }t		\ multiple of CHAR size
+t{ 1S $FFFF U< -> FALSE }t		\ >= 16 bits
 test_group_end
 
 .( ' EXECUTE ) test_group
-: tw_tick_value 1234 ;
-' tw_tick_value EXECUTE 1234 = assert
+t{ : tw_tick_value 1234 ; -> }t
+t{ ' tw_tick_value EXECUTE -> 1234 }t
 test_group_end
 
 .( :NONAME ) test_group
 VARIABLE tw_var_1
 VARIABLE tw_var_2
-:NONAME 1234 ; tw_var_1 !
-:NONAME 9876 ; tw_var_2 !
-tw_var_1 @ EXECUTE 1234 = assert
-tw_var_2 @ EXECUTE 9876 = assert
+t{ :NONAME 1234 ; tw_var_1 ! -> }t
+t{ :NONAME 9876 ; tw_var_2 ! -> }t
+t{ tw_var_1 @ EXECUTE -> 1234 }t
+t{ tw_var_2 @ EXECUTE -> 9876 }t
 test_group_end
 
 .( COMPILE, ) test_group
@@ -410,50 +412,50 @@ T{ MIN-INT 1 + ABS -> MAX-INT }T
 test_group_end
 
 .( MAX ) test_group
-0 1 MAX 1 = assert
-1 2 MAX 2 = assert
--1 0 MAX 0 = assert
--1 1 MAX 1 = assert
-MIN-N 0 MAX 0 = assert
-MIN-N MAX-N MAX MAX-N = assert
-0 MAX-N MAX MAX-N = assert
-0 0 MAX 0 = assert
-1 1 MAX 1 = assert
-1 0 MAX 1 = assert
-2 1 MAX 2 = assert
-0 -1 MAX 0 = assert
-1 -1 MAX 1 = assert
-0 MIN-N MAX 0 = assert
-MAX-N MIN-N MAX MAX-N = assert
-MAX-N 0 MAX MAX-N = assert
+t{ 0 1 MAX -> 1 }t
+t{ 1 2 MAX -> 2 }t
+t{ -1 0 MAX -> 0 }t
+t{ -1 1 MAX -> 1 }t
+t{ MIN-N 0 MAX -> 0 }t
+t{ MIN-N MAX-N MAX -> MAX-N }t
+t{ 0 MAX-N MAX -> MAX-N }t
+t{ 0 0 MAX -> 0 }t
+t{ 1 1 MAX -> 1 }t
+t{ 1 0 MAX -> 1 }t
+t{ 2 1 MAX -> 2 }t
+t{ 0 -1 MAX -> 0 }t
+t{ 1 -1 MAX -> 1 }t
+t{ 0 MIN-N MAX -> 0 }t
+t{ MAX-N MIN-N MAX -> MAX-N }t
+t{ MAX-N 0 MAX -> MAX-N }t
 test_group_end
 
 .( MIN ) test_group
-0 1 MIN 0 = assert
-1 2 MIN 1 = assert
--1 0 MIN -1 = assert
--1 1 MIN -1 = assert
-MIN-N 0 MIN MIN-N = assert
-MIN-N MAX-N MIN MIN-N = assert
-0 MAX-N MIN 0 = assert
-0 0 MIN 0 = assert
-1 1 MIN 1 = assert
-1 0 MIN 0 = assert
-2 1 MIN 1 = assert
-0 -1 MIN -1 = assert
-1 -1 MIN -1 = assert
-0 MIN-N MIN MIN-N = assert
-MIN-N MIN-N MIN MIN-N = assert
-MIN-N 0 MIN MIN-N = assert
+t{ 0 1 MIN -> 0 }t
+t{ 1 2 MIN -> 1 }t
+t{ -1 0 MIN -> -1 }t
+t{ -1 1 MIN -> -1 }t
+t{ MIN-N 0 MIN -> MIN-N }t
+t{ MIN-N MAX-N MIN -> MIN-N }t
+t{ 0 MAX-N MIN -> 0 }t
+t{ 0 0 MIN -> 0 }t
+t{ 1 1 MIN -> 1 }t
+t{ 1 0 MIN -> 0 }t
+t{ 2 1 MIN -> 1 }t
+t{ 0 -1 MIN -> -1 }t
+t{ 1 -1 MIN -> -1 }t
+t{ 0 MIN-N MIN -> MIN-N }t
+t{ MIN-N MIN-N MIN -> MIN-N }t
+t{ MIN-N 0 MIN -> MIN-N }t
 test_group_end
 
 .( S" S\\" EVALUATE ) test_group
 : tw_eval_0 EVALUATE ;
 : tw_eval_1 S" 9876" EVALUATE ;
-S" 123" EVALUATE 123 = assert
-S\" 123\n432" EVALUATE 123 432 D= assert
-S" 456" tw_eval_0 456 = assert
-tw_eval_1 9876 = assert
+t{ S" 123" EVALUATE -> 123 }t
+t{ S\" 123\n432" EVALUATE -> 123 432 }t
+t{ S" 456" tw_eval_0 -> 456 }t
+t{ tw_eval_1 -> 9876 }t
 test_group_end
 
 .( <# # #> ) test_group
@@ -520,65 +522,67 @@ test_group_end
 : tw_ifthen_0 IF 123 THEN ;
 : tw_ifthen_1 IF 234 ELSE 345 THEN ;
 : tw_ifthen_2 IF 1 ELSE 2 ELSE 3 ELSE 4 ELSE 5 THEN ;
-377  0 tw_ifthen_0 377 = assert
-377  1 tw_ifthen_0 123 = assert 377 = assert
-377 -1 tw_ifthen_0 123 = assert 377 = assert
- 0 tw_ifthen_1 345 = assert
- 1 tw_ifthen_1 234 = assert
--1 tw_ifthen_1 234 = assert
-FALSE tw_ifthen_2 4 = assert 2 = assert
-TRUE  tw_ifthen_2 5 = assert 3 = assert 1 = assert
+t{ 377  0 tw_ifthen_0 -> 377 }t
+t{ 377  1 tw_ifthen_0 -> 377 123 }t
+t{ 377 -1 tw_ifthen_0 -> 377 123 }t
+t{  0 tw_ifthen_1 -> 345 }t
+t{  1 tw_ifthen_1 -> 234 }t
+t{ -1 tw_ifthen_1 -> 234 }t
+t{ FALSE tw_ifthen_2 -> 2 4 }t
+t{ TRUE  tw_ifthen_2 -> 1 3 5 }t
 test_group_end
 
 .( EXIT ) test_group
 : tw_exit_0 IF 123 EXIT THEN 456 ;
-FALSE tw_exit_0 456 = assert
-TRUE tw_exit_0 123 = assert
+t{ FALSE tw_exit_0 -> 456 }t
+t{ TRUE tw_exit_0  -> 123 }t
 test_group_end
 
 .( PAD C@ C! FILL ) test_group
-'!' PAD C! DEPTH 0= assert
-PAD C@ '!' = assert
-PAD 0 '#' FILL PAD C@ '#' <> assert
-PAD 1 '$' FILL PAD C@ '$' = assert
-PAD 2 '%' FILL PAD C@ '%' = assert PAD CHAR+ C@ '%' = assert
+t{ '!' PAD C! -> }t
+t{ PAD C@ -> '!' }t
+t{ PAD 0 '#' FILL PAD C@ '#' <> -> TRUE }t
+t{ PAD 1 '$' FILL PAD C@ -> '$' }t
+t{ PAD 2 '%' FILL PAD C@ PAD CHAR+ C@ -> '%' '%' }t
 \ Fill the whole PAD
-PAD /PAD '&' FILL
+t{ PAD /PAD '&' FILL -> }t
 \ Check last char in buffer is set and no overflow.
 PAD /PAD 1 - + DUP C@ '&' = assert CHAR+ C@ '&' <> assert
 test_group_end
 
 .( SOURCE ) test_group
 : tw_source_0 S" SOURCE" 2DUP EVALUATE >R SWAP >R = R> R> = ;
-tw_source_0 assert assert
+t{ tw_source_0 -> TRUE TRUE }t
+: tw_source_1 SOURCE >IN ! DROP ;
+t{ tw_source_1 123 456 -> }t
 test_group_end
 
 .( STATE ) test_group
 : tw_state_0 STATE @ ; IMMEDIATE
 : tw_state_1 tw_state_0 LITERAL ;
-tw_state_0 0= assert
-tw_state_1 0= assert_not
+t{ tw_state_0 -> FALSE }t
+t{ tw_state_1 -> TRUE }t
 test_group_end
 
 .( UNTIL ) test_group
 : tw_until_0 BEGIN DUP 1+ DUP 5 > UNTIL ;
-3 tw_until_0 5 6 D= assert 3 4 D= assert
-5 tw_until_0 5 6 D= assert
-6 tw_until_0 6 7 D= assert
+t{ 3 tw_until_0 -> 3 4 5 6 }t
+t{ 5 tw_until_0 -> 5 6 }t
+t{ 6 tw_until_0 -> 6 7 }t
 test_group_end
 
 .( WHILE ) test_group
 : tw_while_0 BEGIN DUP 3 < WHILE DUP 1+ REPEAT ;
-0 tw_while_0 2 3 D= assert 0 1 D= assert
-2 tw_while_0 2 3 D= assert
-3 tw_while_0 3 = assert
-4 tw_while_0 4 = assert
+t{ 0 tw_while_0 -> 0 1 2 3 }t
+t{ 2 tw_while_0 -> 2 3 }t
+t{ 3 tw_while_0 -> 3 }t
+t{ 4 tw_while_0 -> 4 }t
 : tw_while_1 BEGIN DUP 2 > WHILE DUP 5 < WHILE DUP 1+ REPEAT 123 ELSE 345 THEN ;
-1 tw_while_1 1 345 D= assert
-2 tw_while_1 2 345 D= assert
-3 tw_while_1 5 123 D= assert 3 4 D= assert
-4 tw_while_1 5 123 D= assert 4 = assert
-5 tw_while_1 5 123 D= assert
+t{ 1 tw_while_1 -> 1 345 }t
+t{ 2 tw_while_1 -> 2 345 }t
+t{ 3 tw_while_1 -> 3 4 5 123 }t
+t{ 4 tw_while_1 -> 4 5 123 }t
+t{ 5 tw_while_1 -> 5 123 }t
 test_group_end
 
 .( WORD ) test_group
@@ -593,26 +597,25 @@ test_group_end
 .( C" COUNT ) test_group
 : tw_cquote_0 C" " ;
 : tw_cquote_1 C" 123" ;
-377 tw_cquote_0 COUNT EVALUATE 377 = assert
-tw_cquote_1 COUNT EVALUATE 123 = assert
+t{ 377 tw_cquote_0 COUNT EVALUATE -> 377 }t
+t{ tw_cquote_1 COUNT EVALUATE -> 123 }t
 test_group_end
-
 
 .( [ ] ) test_group
 : tw_square_0 [ '@' ] LITERAL ;
-tw_square_0 '@' = assert
+t{ tw_square_0 -> '@' }t
 test_group_end
 
 .( ['] ) test_group
 : tw_square_tick_value 1234 ;
 : tw_square_tick_0 ['] tw_square_tick_value ; IMMEDIATE
-tw_square_tick_0 EXECUTE 1234 = assert
+t{ tw_square_tick_0 EXECUTE -> 1234 }t
 test_group_end
 
 .( ( ) test_group
 : tw_paren_0 ( A comment)1234 ;		\ There is no space either side of the ).
-( A comment)1234			\ There is no space either side of the ).
-tw_paren_0 = assert
+t{ ( A comment)1234			\ There is no space either side of the ).
+   -> tw_paren_0 }t
 test_group_end
 
 .( BUFFER: ) test_group

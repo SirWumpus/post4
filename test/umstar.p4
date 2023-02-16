@@ -24,36 +24,36 @@ test_group_end
 .( M* ) test_group
 cell-bits 64 = [IF]
 \ +ve * +ve = +ve
-0x7fffffffffffffff 0x7fffffffffffffff M*
-0x0000000000000001 0x3fffffffffffffff D= assert
+t{ 0x7fffffffffffffff 0x7fffffffffffffff M*
+-> 0x0000000000000001 0x3fffffffffffffff }t
 
 \ -ve * -ve = +ve
-0x8000000000000000 0x8000000000000000 M*
-0x0000000000000000 0x4000000000000000 D= assert
+t{ 0x8000000000000000 0x8000000000000000 M*
+-> 0x0000000000000000 0x4000000000000000 }t
 
 \ -ve * -ve = +ve
-0xffffffffffffffff 0xffffffffffffffff M*
-0x0000000000000001 0x0000000000000000 D= assert
+t{ 0xffffffffffffffff 0xffffffffffffffff M*
+-> 0x0000000000000001 0x0000000000000000 }t
 
 \ -ve * -ve = +ve
-0xdeadbeefdeadbeef 0xbeefdeadbeefdead M*
-0x3a522ca1ca1e4983 0x0877fbff78abdf1f D= assert
+t{ 0xdeadbeefdeadbeef 0xbeefdeadbeefdead M*
+-> 0x3a522ca1ca1e4983 0x0877fbff78abdf1f }t
 
 \ -ve * -ve = +ve
-0xdeadbeefcafebabe 0xbabecafebeefdead M*
-0x6ea0c1026f76f666 0x0903a85214a96506 D= assert
+t{ 0xdeadbeefcafebabe 0xbabecafebeefdead M*
+-> 0x6ea0c1026f76f666 0x0903a85214a96506 }t
 
 \ -ve * +ve = -ve
-0xdeadbeefdeadbeef 0x7fffffffffffffff M*
-0xa152411021524111 0xef56df77ef56df77 D= assert
+t{ 0xdeadbeefdeadbeef 0x7fffffffffffffff M*
+-> 0xa152411021524111 0xef56df77ef56df77 }t
 
 \ -ve * +ve = -ve
-0xdeadbeefcafebabe 0x7fffffffffffffff M*
-0x2152411035014542 0xef56df77e57f5d5f D= assert
+t{ 0xdeadbeefcafebabe 0x7fffffffffffffff M*
+-> 0x2152411035014542 0xef56df77e57f5d5f }t
 
 \ -ve * +ve = -ve
-0xdeadbeefcafebabe 0x7ee3cafebeefdead M*
-0xe416c1026f76f666 0xef7bdd9e44bcc2d0 D= assert
+t{ 0xdeadbeefcafebabe 0x7ee3cafebeefdead M*
+-> 0xe416c1026f76f666 0xef7bdd9e44bcc2d0 }t
 [THEN]
 
 T{  0  0 M* ->  0 S>D }T
@@ -77,13 +77,13 @@ T{ MAX-INT MAX-INT M* -> 1 MSB 2/ INVERT }T
 test_group_end
 
 .( UM/MOD ) test_group
-0 0 1 UM/MOD 0 0 D= assert
-1 0 1 UM/MOD 0 1 D= assert
-1 0 2 UM/MOD 1 0 D= assert
-3 0 2 UM/MOD 1 1 D= assert
-MAX-U 2 UM* 2 UM/MOD 0 MAX-U D= assert
-MAX-U 2 UM* MAX-U UM/MOD 0 2 D= assert
-MAX-U MAX-U UM* MAX-U UM/MOD 0 MAX-U D= assert
+t{ 0 0 1 UM/MOD -> 0 0 }t
+t{ 1 0 1 UM/MOD -> 0 1 }t
+t{ 1 0 2 UM/MOD -> 1 0 }t
+t{ 3 0 2 UM/MOD -> 1 1 }t
+t{ MAX-U 2 UM* 2 UM/MOD -> 0 MAX-U }t
+t{ MAX-U 2 UM* MAX-U UM/MOD -> 0 2 }t
+t{ MAX-U MAX-U UM* MAX-U UM/MOD -> 0 MAX-U }t
 test_group_end
 
 .( SM/REM ) test_group
@@ -166,123 +166,126 @@ T{ MIN-INT MAX-INT M* MAX-INT FM/MOD -> 0 MIN-INT }T
 T{ MAX-INT MAX-INT M* MAX-INT FM/MOD -> 0 MAX-INT }T
 test_group_end
 
+test_group
 : test/mod >R S>D R> floored IF FM/MOD EXIT THEN SM/REM ;
 
-.( /MOD ) test_group
- 0  1 /MOD  0  1 test/mod D= assert
- 1  1 /MOD  1  1 test/mod D= assert
- 2  1 /MOD  2  1 test/mod D= assert
--1  1 /MOD -1  1 test/mod D= assert
--2  1 /MOD -2  1 test/mod D= assert
- 0 -1 /MOD  0 -1 test/mod D= assert
- 1 -1 /MOD  1 -1 test/mod D= assert
- 2 -1 /MOD  2 -1 test/mod D= assert
--1 -1 /MOD -1 -1 test/mod D= assert
--2 -1 /MOD -2 -1 test/mod D= assert
- 2  2 /MOD  2  2 test/mod D= assert
--1 -1 /MOD -1 -1 test/mod D= assert
--2 -2 /MOD -2 -2 test/mod D= assert
+	.( /MOD ) test_group
+t{  0  1 /MOD ->  0  1 test/mod }t
+t{  1  1 /MOD ->  1  1 test/mod }t
+t{  2  1 /MOD ->  2  1 test/mod }t
+t{ -1  1 /MOD -> -1  1 test/mod }t
+t{ -2  1 /MOD -> -2  1 test/mod }t
+t{  0 -1 /MOD ->  0 -1 test/mod }t
+t{  1 -1 /MOD ->  1 -1 test/mod }t
+t{  2 -1 /MOD ->  2 -1 test/mod }t
+t{ -1 -1 /MOD -> -1 -1 test/mod }t
+t{ -2 -1 /MOD -> -2 -1 test/mod }t
+t{  2  2 /MOD ->  2  2 test/mod }t
+t{ -1 -1 /MOD -> -1 -1 test/mod }t
+t{ -2 -2 /MOD -> -2 -2 test/mod }t
 test_group_end
 
 : test/ test/mod SWAP DROP ;
 
-.( / ) test_group
- 0  1 /  0  1 test/ = assert
- 1  1 /  1  1 test/ = assert
- 2  1 /  2  1 test/ = assert
--1  1 / -1  1 test/ = assert
--2  1 / -2  1 test/ = assert
- 0 -1 /  0 -1 test/ = assert
- 1 -1 /  1 -1 test/ = assert
- 2 -1 /  2 -1 test/ = assert
--1 -1 / -1 -1 test/ = assert
--2 -1 / -2 -1 test/ = assert
- 2  2 /  2  2 test/ = assert
--1 -1 / -1 -1 test/ = assert
--2 -2 / -2 -2 test/ = assert
- 7  3 /  7  3 test/ = assert
- 7 -3 /  7 -3 test/ = assert
--7  3 / -7  3 test/ = assert
--7 -3 / -7 -3 test/ = assert
-MAX-N 1 / MAX-N 1 test/ = assert
-MIN-N 1 / MIN-N 1 test/ = assert
-MAX-N MAX-N / MAX-N MAX-N test/ = assert
-MIN-N MIN-N / MIN-N MIN-N test/ = assert
-test_group_end
+	.( / ) test_group
+t{  0  1 / ->  0  1 test/ }t
+t{  1  1 / ->  1  1 test/ }t
+t{  2  1 / ->  2  1 test/ }t
+t{ -1  1 / -> -1  1 test/ }t
+t{ -2  1 / -> -2  1 test/ }t
+t{  0 -1 / ->  0 -1 test/ }t
+t{  1 -1 / ->  1 -1 test/ }t
+t{  2 -1 / ->  2 -1 test/ }t
+t{ -1 -1 / -> -1 -1 test/ }t
+t{ -2 -1 / -> -2 -1 test/ }t
+t{  2  2 / ->  2  2 test/ }t
+t{ -1 -1 / -> -1 -1 test/ }t
+t{ -2 -2 / -> -2 -2 test/ }t
+t{  7  3 / ->  7  3 test/ }t
+t{  7 -3 / ->  7 -3 test/ }t
+t{ -7  3 / -> -7  3 test/ }t
+t{ -7 -3 / -> -7 -3 test/ }t
+t{ MAX-N 1 / -> MAX-N 1 test/ }t
+t{ MIN-N 1 / -> MIN-N 1 test/ }t
+t{ MAX-N MAX-N / -> MAX-N MAX-N test/ }t
+t{ MIN-N MIN-N / -> MIN-N MIN-N test/ }t
+	test_group_end
 
 : testmod test/mod DROP ;
 
-.( MOD ) test_group
- 0  1 MOD  0  1 testmod = assert
- 1  1 MOD  1  1 testmod = assert
- 2  1 MOD  2  1 testmod = assert
--1  1 MOD -1  1 testmod = assert
--2  1 MOD -2  1 testmod = assert
- 0 -1 MOD  0 -1 testmod = assert
- 1 -1 MOD  1 -1 testmod = assert
- 2 -1 MOD  2 -1 testmod = assert
--1 -1 MOD -1 -1 testmod = assert
--2 -1 MOD -2 -1 testmod = assert
- 2  2 MOD  2  2 testmod = assert
--1 -1 MOD -1 -1 testmod = assert
--2 -2 MOD -2 -2 testmod = assert
- 7  3 MOD  7  3 testmod = assert
- 7 -3 MOD  7 -3 testmod = assert
--7  3 MOD -7  3 testmod = assert
--7 -3 MOD -7 -3 testmod = assert
-MAX-N 1 MOD MAX-N 1 testmod = assert
-MIN-N 1 MOD MIN-N 1 testmod = assert
-MAX-N MAX-N MOD MAX-N MAX-N testmod = assert
-MIN-N MIN-N MOD MIN-N MIN-N testmod = assert
-test_group_end
+	.( MOD ) test_group
+t{  0  1 MOD ->  0  1 testmod }t
+t{  1  1 MOD ->  1  1 testmod }t
+t{  2  1 MOD ->  2  1 testmod }t
+t{ -1  1 MOD -> -1  1 testmod }t
+t{ -2  1 MOD -> -2  1 testmod }t
+t{  0 -1 MOD ->  0 -1 testmod }t
+t{  1 -1 MOD ->  1 -1 testmod }t
+t{  2 -1 MOD ->  2 -1 testmod }t
+t{ -1 -1 MOD -> -1 -1 testmod }t
+t{ -2 -1 MOD -> -2 -1 testmod }t
+t{  2  2 MOD ->  2  2 testmod }t
+t{ -1 -1 MOD -> -1 -1 testmod }t
+t{ -2 -2 MOD -> -2 -2 testmod }t
+t{  7  3 MOD ->  7  3 testmod }t
+t{  7 -3 MOD ->  7 -3 testmod }t
+t{ -7  3 MOD -> -7  3 testmod }t
+t{ -7 -3 MOD -> -7 -3 testmod }t
+t{ MAX-N 1 MOD -> MAX-N 1 testmod }t
+t{ MIN-N 1 MOD -> MIN-N 1 testmod }t
+t{ MAX-N MAX-N MOD -> MAX-N MAX-N testmod }t
+t{ MIN-N MIN-N MOD -> MIN-N MIN-N testmod }t
+	test_group_end
 
 : test*/mod >R M* R> floored IF FM/MOD EXIT THEN SM/REM ;
 
-.( */MOD ) test_group
- 0  2  1 */MOD  0  2  1 test*/mod D= assert
- 1  2  1 */MOD  1  2  1 test*/mod D= assert
- 2  2  1 */MOD  2  2  1 test*/mod D= assert
--1  2  1 */MOD -1  2  1 test*/mod D= assert
--2  2  1 */MOD -2  2  1 test*/mod D= assert
- 0  2 -1 */MOD  0  2 -1 test*/mod D= assert
- 1  2 -1 */MOD  1  2 -1 test*/mod D= assert
- 2  2 -1 */MOD  2  2 -1 test*/mod D= assert
--1  2 -1 */MOD -1  2 -1 test*/mod D= assert
--2  2 -1 */MOD -2  2 -1 test*/mod D= assert
- 2  2  2 */MOD  2  2  2 test*/mod D= assert
--1  2 -1 */MOD -1  2 -1 test*/mod D= assert
--2  2 -2 */MOD -2  2 -2 test*/mod D= assert
- 7  2  3 */MOD  7  2  3 test*/mod D= assert
- 7  2 -3 */MOD  7  2 -3 test*/mod D= assert
--7  2  3 */MOD -7  2  3 test*/mod D= assert
--7  2 -3 */MOD -7  2 -3 test*/mod D= assert
-MAX-N 2 MAX-N */MOD MAX-N 2 MAX-N test*/mod D= assert
-MIN-N 2 MIN-N */MOD MIN-N 2 MIN-N test*/mod D= assert
-test_group_end
+	.( */MOD ) test_group
+t{  0  2  1 */MOD ->  0  2  1 test*/mod }t
+t{  1  2  1 */MOD ->  1  2  1 test*/mod }t
+t{  2  2  1 */MOD ->  2  2  1 test*/mod }t
+t{ -1  2  1 */MOD -> -1  2  1 test*/mod }t
+t{ -2  2  1 */MOD -> -2  2  1 test*/mod }t
+t{  0  2 -1 */MOD ->  0  2 -1 test*/mod }t
+t{  1  2 -1 */MOD ->  1  2 -1 test*/mod }t
+t{  2  2 -1 */MOD ->  2  2 -1 test*/mod }t
+t{ -1  2 -1 */MOD -> -1  2 -1 test*/mod }t
+t{ -2  2 -1 */MOD -> -2  2 -1 test*/mod }t
+t{  2  2  2 */MOD ->  2  2  2 test*/mod }t
+t{ -1  2 -1 */MOD -> -1  2 -1 test*/mod }t
+t{ -2  2 -2 */MOD -> -2  2 -2 test*/mod }t
+t{  7  2  3 */MOD ->  7  2  3 test*/mod }t
+t{  7  2 -3 */MOD ->  7  2 -3 test*/mod }t
+t{ -7  2  3 */MOD -> -7  2  3 test*/mod }t
+t{ -7  2 -3 */MOD -> -7  2 -3 test*/mod }t
+t{ MAX-N 2 MAX-N */MOD -> MAX-N 2 MAX-N test*/mod }t
+t{ MIN-N 2 MIN-N */MOD -> MIN-N 2 MIN-N test*/mod }t
+	test_group_end
 
 : test*/ test*/mod SWAP DROP ;
 
-.( */ ) test_group
- 0  2  1 */  0  2  1 test*/ = assert
- 1  2  1 */  1  2  1 test*/ = assert
- 2  2  1 */  2  2  1 test*/ = assert
--1  2  1 */ -1  2  1 test*/ = assert
--2  2  1 */ -2  2  1 test*/ = assert
- 0  2 -1 */  0  2 -1 test*/ = assert
- 1  2 -1 */  1  2 -1 test*/ = assert
- 2  2 -1 */  2  2 -1 test*/ = assert
--1  2 -1 */ -1  2 -1 test*/ = assert
--2  2 -1 */ -2  2 -1 test*/ = assert
- 2  2  2 */  2  2  2 test*/ = assert
--1  2 -1 */ -1  2 -1 test*/ = assert
--2  2 -2 */ -2  2 -2 test*/ = assert
- 7  2  3 */  7  2  3 test*/ = assert
- 7  2 -3 */  7  2 -3 test*/ = assert
--7  2  3 */ -7  2  3 test*/ = assert
--7  2 -3 */ -7  2 -3 test*/ = assert
-MAX-N 2 MAX-N */ MAX-N 2 MAX-N test*/ = assert
-MIN-N 2 MIN-N */ MIN-N 2 MIN-N test*/ = assert
+	.( */ ) test_group
+t{  0  2  1 */ ->  0  2  1 test*/ }t
+t{  1  2  1 */ ->  1  2  1 test*/ }t
+t{  2  2  1 */ ->  2  2  1 test*/ }t
+t{ -1  2  1 */ -> -1  2  1 test*/ }t
+t{ -2  2  1 */ -> -2  2  1 test*/ }t
+t{  0  2 -1 */ ->  0  2 -1 test*/ }t
+t{  1  2 -1 */ ->  1  2 -1 test*/ }t
+t{  2  2 -1 */ ->  2  2 -1 test*/ }t
+t{ -1  2 -1 */ -> -1  2 -1 test*/ }t
+t{ -2  2 -1 */ -> -2  2 -1 test*/ }t
+t{  2  2  2 */ ->  2  2  2 test*/ }t
+t{ -1  2 -1 */ -> -1  2 -1 test*/ }t
+t{ -2  2 -2 */ -> -2  2 -2 test*/ }t
+t{  7  2  3 */ ->  7  2  3 test*/ }t
+t{  7  2 -3 */ ->  7  2 -3 test*/ }t
+t{ -7  2  3 */ -> -7  2  3 test*/ }t
+t{ -7  2 -3 */ -> -7  2 -3 test*/ }t
+t{ MAX-N 2 MAX-N */ -> MAX-N 2 MAX-N test*/ }t
+t{ MIN-N 2 MIN-N */ -> MIN-N 2 MIN-N test*/ }t
+	test_group_end
 test_group_end
+
 
 .( M*/ ) test_group
 \ To correct the result if the division is floored, only used when

@@ -4,20 +4,20 @@ INCLUDE ../test/assert.p4
 MARKER rm_d0equal_words
 
 .( S>D ) test_group
- 0 S>D  0  0 D= assert
- 1 S>D  1  0 D= assert
- 2 S>D  2  0 D= assert
--1 S>D -1 -1 D= assert
--2 S>D -2 -1 D= assert
-MIN-N S>D MIN-N -1 D= assert
-MAX-N S>D MAX-N  0 D= assert
+t{  0 S>D ->  0  0 }t
+t{  1 S>D ->  1  0 }t
+t{  2 S>D ->  2  0 }t
+t{ -1 S>D -> -1 -1 }t
+t{ -2 S>D -> -2 -1 }t
+t{ MIN-N S>D -> MIN-N -1 }t
+t{ MAX-N S>D -> MAX-N  0 }t
 test_group_end
 
 .( D>S ) test_group
- 1234  0 D>S  1234 = assert
--1234 -1 D>S -1234 = assert
-MAX-N  0 D>S MAX-N = assert
-MIN-N -1 D>S MIN-N = assert
+t{  1234  0 D>S ->  1234 }t
+t{ -1234 -1 D>S -> -1234 }t
+t{ MAX-N  0 D>S -> MAX-N }t
+t{ MIN-N -1 D>S -> MIN-N }t
 test_group_end
 
 .( D0= ) test_group
@@ -41,12 +41,12 @@ T{ MIN-2INT D0< -> TRUE  }T
 test_group_end
 
 .( D= ) test_group
-0 0 0 0 D= assert
-2 1 2 1 D= assert
-2 1 4 3 D= assert_not
--1 -1 -1 -1 D= assert
--2 -1 -2 -1 D= assert
--2 -1 2 1 D= assert_not
+t{  0  0  0  0 D= ->  TRUE }t
+t{  2  1  2  1 D= ->  TRUE }t
+t{  2  1  4  3 D= -> FALSE }t
+t{ -1 -1 -1 -1 D= ->  TRUE }t
+t{ -2 -1 -2 -1 D= ->  TRUE }t
+t{ -2 -1  2  1 D= -> FALSE }t
 
 T{ -1 S>D -1 S>D D= -> TRUE  }T
 T{ -1 S>D  0 S>D D= -> FALSE }T
@@ -172,66 +172,58 @@ MAX-2INT 2/ 2CONSTANT HALF-MAX-D
 MIN-2INT 2/ 2CONSTANT HALF-MIN-D
 
 .( DU< ) test_group
- 1 S>D  1 S>D DU< assert_not
- 1 S>D -1 S>D DU< assert
--1 S>D  1 S>D DU< assert_not
--1 S>D -2 S>D DU< assert_not
-MAX-D HALF-MAX-D DU< assert_not
-HALF-MAX-D MAX-D DU< assert
-MAX-D MIN-D DU< assert
-MIN-D MAX-D DU< assert_not
-MIN-D HALF-MIN-D DU< assert
+t{  1 S>D  1 S>D DU< -> FALSE }t
+t{  1 S>D -1 S>D DU< -> TRUE }t
+t{ -1 S>D  1 S>D DU< -> FALSE }t
+t{ -1 S>D -2 S>D DU< -> FALSE }t
+t{ MAX-D HALF-MAX-D DU< -> FALSE }t
+t{ HALF-MAX-D MAX-D DU< -> TRUE }t
+t{ MAX-D MIN-D DU< -> TRUE }t
+t{ MIN-D MAX-D DU< -> FALSE }t
+t{ MIN-D HALF-MIN-D DU< -> TRUE }t
 test_group_end
 
 .( D< ) test_group
- 0 S>D  1 S>D D< assert
- 0 S>D  0 S>D D< assert_not
- 1 S>D  0 S>D D< assert_not
--1 S>D  1 S>D D< assert
--1 S>D  0 S>D D< assert
--2 S>D -1 S>D D< assert
--1 S>D -2 S>D D< assert_not
--1 S>D MAX-D D< assert
-MIN-D  MAX-D D< assert
-MAX-D 1S S>D D< assert_not
-MAX-D MIN-D  D< assert_not
-MAX-D 2DUP -1 S>D D+ D< assert_not
-MIN-D 2DUP  1 S>D D+ D< assert
+t{  0 S>D  1 S>D D< -> TRUE }t
+t{  0 S>D  0 S>D D< -> FALSE }t
+t{  1 S>D  0 S>D D< -> FALSE }t
+t{ -1 S>D  1 S>D D< -> TRUE }t
+t{ -1 S>D  0 S>D D< -> TRUE }t
+t{ -2 S>D -1 S>D D< -> TRUE }t
+t{ -1 S>D -2 S>D D< -> FALSE }t
+t{ -1 S>D MAX-D D< -> TRUE }t
+t{ MIN-D  MAX-D D< -> TRUE }t
+t{ MAX-D 1S S>D D< -> FALSE }t
+t{ MAX-D MIN-D  D< -> FALSE }t
+t{ MAX-D 2DUP -1 S>D D+ D< -> FALSE }t
+t{ MIN-D 2DUP  1 S>D D+ D< -> TRUE }t
 test_group_end
 
 .( 2DROP ) test_group
-1 2 3 4 2DROP 1 2 D= assert
+t{ 1 2 3 4 2DROP -> 1 2 }t
 test_group_end
 
 .( 2DUP ) test_group
-1 2 2DUP D= assert
+t{ 1 2 2DUP -> 1 2 1 2 }t
 test_group_end
 
 .( 2OVER ) test_group
-100 99 1 2 3 4 2OVER 1 2 D= assert
-3 4 D= assert
-1 2 D= assert
-100 99 D= assert
+t{ 100 99 1 2 3 4 2OVER -> 100 99 1 2 3 4 1 2 }t
 test_group_end
 
 .( 2SWAP ) test_group
-100 99 1 2 3 4 2SWAP 1 2 D= assert
-3 4 D= assert
-100 99 D= assert
+t{ 100 99 1 2 3 4 2SWAP -> 100 99 3 4 1 2 }t
 test_group_end
 
 .( 2ROT ) test_group
 \ :NONAME 2 1 2ROT ; CATCH -4 = assert
 T{ 100 99 2 1 4 3 6 5 2ROT -> 100 99 4 3 6 5 2 1 }T
 T{ MAX-D MIN-D 0xCAFE 0xBABE 2ROT -> MIN-D 0xCAFE 0xBABE MAX-D }T
-[UNDEFINED] _fs cell-bits 64 < AND [IF]
-\ Assumes floats are double cells on the data-stack.
-T{ 1. 2. 3. 2ROT -> 2. 3. 1. }T
-[THEN]
+T{ 1 S>D 2 S>D 3 S>D 2ROT -> 2 S>D 3 S>D 1 S>D }T
 test_group_end
 
 .( 2CONSTANT ) test_group
-0xCAFE 0xBABE 2CONSTANT tv_pair tv_pair 0xCAFE 0xBABE D= assert
+T{ 0xCAFE 0xBABE 2CONSTANT tv_pair tv_pair -> 0xCAFE 0xBABE }T
 T{ 1 2 2CONSTANT tv_2c1 -> }T
 T{ tv_2c1 -> 1 2 }T
 T{ : tw_cd1 tv_2c1 ; -> }T
@@ -244,10 +236,10 @@ T{ : tw_cd6 tv_2c3 2LITERAL ; tw_cd6 -> 4 5 }T
 test_group_end
 
 .( 2VARIABLE 2! 2@ ) test_group
-2VARIABLE var_pair var_pair 2@ D0= assert
-0xCAFE 0xBABE var_pair 2! var_pair 2@ 0xCAFE 0xBABE D= assert
-0xDEAD 0xBEEF var_pair 2! var_pair 2@ 0xCAFE 0xBABE D= assert_not
-var_pair 2@ 0xDEAD 0xBEEF D= assert
+t{ 2VARIABLE var_pair var_pair 2@ -> 0 0 }t
+t{ 0xCAFE 0xBABE var_pair 2! var_pair 2@ -> 0xCAFE 0xBABE }t
+t{ 0xDEAD 0xBEEF var_pair 2! -> }t
+t{ var_pair 2@ -> 0xDEAD 0xBEEF }t
 T{ 2VARIABLE tv_2v1 -> }T
 T{ 0 S>D tv_2v1 2! -> }T
 T{ tv_2v1 2@ -> 0 S>D }T
