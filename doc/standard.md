@@ -1439,11 +1439,6 @@ Store `aaddr` into the return stack pointer.
 Fetch the return stack pointer.
 
 - - -
-#### _stdin
-( -- )  
-Set source to standard input; see `cat.p4` example.
-
-- - -
 #### _window
 ( -- `rows` `cols` )  
 Return the terminal window dimensions.

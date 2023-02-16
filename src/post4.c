@@ -1448,7 +1448,6 @@ p4Repl(P4_Ctx *ctx)
 		P4_WORD("_rsp@",	&&_rsp_get,	0),		// p4
 		P4_WORD("_rsp!",	&&_rsp_put,	0),		// p4
 		P4_WORD("_stack_dump",	&&_stack_dump,	0),		// p4
-		P4_WORD("_stdin",	&&_stdin,	0),		// p4
 		P4_WORD("_window",	&&_window,	0),		// p4
 
 		/* Compiling Words */
@@ -2295,10 +2294,6 @@ _source:	P4_PUSH(ctx->ds, ctx->input.buffer);
 		// ( -- -1 | 0 | fp )
 		// Alias FILE *stdin to NULL.
 _source_id:	P4_PUSH(ctx->ds, (P4_Cell *)(ctx->input.fp == stdin ? NULL : ctx->input.fp));
-		NEXT;
-
-		// ( -- )
-_stdin:		p4SetInput(ctx, stdin);
 		NEXT;
 
 		// ( caddr +n1 -- +n2 )
