@@ -149,7 +149,7 @@ extern "C" {
 #ifdef NDEBUG
 # define MEMSET(p, b, s)
 #else
-# define MEMSET(p, b, s)	memset((void *)(p),(int)(b), (size_t)(s))
+# define MEMSET(p, b, s)	if ((p) != NULL && 0 < (s)) { memset((void *)(p),(int)(b),(size_t)(s)); }
 #endif
 
 #define BYTE_ME		(0x7F)

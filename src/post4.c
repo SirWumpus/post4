@@ -261,7 +261,7 @@ p4LoadFile(P4_Ctx *ctx, const char *file)
 		}
 	}
 	if (path == NULL) {
-		(void) fprintf(stderr, "cannot find file: %s\n", file);
+		(void) fprintf(stderr, "cannot find file: %s\r\n", file);
 	} else {
 		rc = p4EvalFile(ctx, file);
 	}
@@ -520,11 +520,11 @@ p4StackDump(FILE *fp, P4_Cell *base, P4_Uint length)
 		}
 		(void) fprintf(fp, P4_HEX_FMT" ", cell->u);
 		if ((++count & 3) == 0) {
-			(void) fputc('\n', fp);
+			(void) fprintf(fp, crlf);
 		}
 	}
 	if ((count & 3) != 0) {
-		(void) fputc('\n', fp);
+		(void) fprintf(fp, crlf);
 	}
 }
 
@@ -545,7 +545,7 @@ p4MemDump(FILE *fp, P4_Char *addr, P4_Size length)
 			(void) fputc(' ', fp);
 		}
 		if ((count & 0xF) == 0) {
-			fputc(' ', fp);
+			(void) fputc(' ', fp);
 			for ( ; s <= addr; s++) {
 				(void) fputc(isprint(*s) ? *s : '.', fp);
 			}
@@ -554,7 +554,7 @@ p4MemDump(FILE *fp, P4_Char *addr, P4_Size length)
 	}
 	if ((count & 0xF) != 0) {
 		do {
-			(void) fputs("   ", fp);
+			(void) fprintf(fp, "   ");
 			if ((++count & 0x3) == 0) {
 				(void) fputc(' ', fp);
 			}
@@ -1658,13 +1658,13 @@ _repl:
 			}
 		}
 		if (P4_INTERACTIVE(ctx)) {
-			(void) fputs("ok ", stdout);
+			(void) printf("ok ");
 			(void) fflush(stdout);
 		}
 	} while (p4Refill(ctx, &ctx->input));
 
 	if (P4_INTERACTIVE(ctx)) {
-		(void) fputc('\n', stdout);
+		(void) printf(crlf);
 	}
 
 setjmp_cleanup:
@@ -2063,11 +2063,7 @@ _unused:	P4_PUSH(ctx->ds, ctx->end - ctx->here);
 		// ( u -- aaddr ior )
 _allocate:	w = P4_TOP(ctx->ds);
 		x.s = malloc((size_t) w.u);
-#ifndef NDEBUG
-		if (x.s != NULL) {
-			MEMSET(x.s, BYTE_ME, w.u);
-		}
-#endif
+		MEMSET(x.s, BYTE_ME, w.u);
 		P4_TOP(ctx->ds) = x;
 		P4_PUSH(ctx->ds, (P4_Int)(x.s == NULL));
 		NEXT;
@@ -2877,7 +2873,7 @@ p4EvalString(P4_Ctx *ctx, P4_Char *str, size_t len)
 static const char usage[] =
 "usage: post4 [-V][-b file][-c file][-d size][-f size][-i file][-m size]\r\n"
 "             [-r size][script [args ...]]\r\n"
-"\n"
+"\r\n"
 "-b file\t\tblock file; default ./" P4_BLOCK_FILE " or $HOME/" P4_BLOCK_FILE "\r\n"
 "-c file\t\tword definition file; default " P4_CORE_FILE " from $POST4_PATH\r\n"
 "-d size\t\tdata stack size in cells; default " QUOTE(P4_STACK_SIZE) "\r\n"
@@ -2905,12 +2901,12 @@ static P4_Options options = {
 };
 
 static const char p4_build_info[] =
-	P4_NAME "/" P4_VERSION "  " P4_COPYRIGHT "\n\n"
-	"BUILT=\"" P4_BUILT "\"\n"
-	"CFLAGS=\"" P4_CFLAGS "\"\n"
-	"LDFLAGS=\"" P4_LDFLAGS "\"\n"
-	"LIBS=\"" P4_LIBS "\"\n"
-	"POST4_PATH=\"" P4_CORE_PATH "\"\n"
+	P4_NAME "/" P4_VERSION "  " P4_COPYRIGHT "\r\n\r\n"
+	"BUILT=\"" P4_BUILT "\"\r\n"
+	"CFLAGS=\"" P4_CFLAGS "\"\r\n"
+	"LDFLAGS=\"" P4_LDFLAGS "\"\r\n"
+	"LIBS=\"" P4_LIBS "\"\r\n"
+	"POST4_PATH=\"" P4_CORE_PATH "\"\r\n"
 ;
 
 int
@@ -2946,10 +2942,10 @@ main(int argc, char **argv)
 			options.rs_size = strtol(optarg, NULL, 10);
 			break;
 		case 'V':
-			(void) printf("%s", p4_build_info);
 			(void) printf(
-				"\r\nsizeof char=%zu short=%zu int=%zu long=%zu size_t=%zu "
+				"%s\r\nsizeof char=%zu short=%zu int=%zu long=%zu size_t=%zu "
 				"intptr_t=%zu float=%zu double=%zu\r\nvoid *=%zu long long=%zu long double=%zu\r\n",
+				p4_build_info,
 				sizeof (char), sizeof (short), sizeof (int), sizeof (long),
 				sizeof (size_t), sizeof (intptr_t), sizeof (float), sizeof (double),
 				sizeof (void *), sizeof (long long), sizeof (long double)
