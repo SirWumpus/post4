@@ -36,7 +36,6 @@ extern "C" {
 #undef P4_SAFE_PATH
 #undef P4_TRACE
 
-#define USE_FLOAT_STACK			1
 #define USE_STACK_CHECKS		1
 #undef USE_EXCEPTION_STRINGS
 

@@ -2090,9 +2090,8 @@ END-STRUCTURE
 BEGIN-STRUCTURE p4_ctx
 	p4_stack +FIELD ctx.ds	\ see _ds
 	p4_stack +FIELD ctx.rs	\ see _rs
-[DEFINED] floating-stack [IF] floating-stack 0<> [IF]
+[DEFINED] _fs [IF]
 	p4_stack +FIELD ctx.fs	\ see _fs
-[THEN]
 	FIELD: ctx.precision	\ see PRECISION and SET-PRECISION
 [THEN]
 [DEFINED] TRACE [IF]
@@ -2178,11 +2177,8 @@ END-STRUCTURE
 ; IMMEDIATE compile-only
 
 [DEFINED] _fs [IF]
-
-  [DEFINED] _fsp_get [IF]
 ' _fsp_get IS _fsp@
 ' _fsp_put IS _fsp!
-  [THEN]
 
 : FLOATS CELLS ;
 1 FLOATS CONSTANT /FLOAT

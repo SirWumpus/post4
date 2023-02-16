@@ -1157,7 +1157,7 @@ p4Free(P4_Ctx *ctx)
 			p4WordFree(word);
 		}
 		(void) p4BlockClose(ctx->block_fd, &ctx->block);
-#if defined(HAVE_MATH_H) && defined(USE_FLOAT_STACK)
+#if defined(HAVE_MATH_H)
 		free(ctx->fs.base);
 #endif
 		free(ctx->ds.base);
@@ -1207,14 +1207,12 @@ p4Create(P4_Options *opts)
 
 #ifdef HAVE_MATH_H
 	ctx->precision = 6;
-# ifdef USE_FLOAT_STACK
 	if ((ctx->fs.base = malloc((opts->fs_size + 1) * sizeof (*ctx->fs.base))) == NULL) {
 		goto error0;
 	}
 	ctx->fs.base[opts->fs_size].u = P4_SENTINEL;
 	ctx->fs.size = opts->fs_size;
 	P4_RESET(ctx->fs);
-# endif
 #endif
 	if ((ctx->rs.base = malloc((opts->rs_size + 1) * sizeof (*ctx->rs.base))) == NULL) {
 		goto error0;
@@ -1284,7 +1282,7 @@ p4StackCanPopPush(P4_Ctx *ctx, P4_Stack *stack, int pop, int push)
 	if (stack == &ctx->rs) {
 		over = P4_THROW_RS_OVER;
 		under = P4_THROW_RS_UNDER;
-# if defined(HAVE_MATH_H) && defined(USE_FLOAT_STACK)
+# if defined(HAVE_MATH_H)
 	} else if (stack == &ctx->fs) {
 		over = P4_THROW_FS_OVER;
 		under = P4_THROW_FS_UNDER;
@@ -1382,10 +1380,8 @@ p4Repl(P4_Ctx *ctx)
 //		P4_WORD("min-float",	&&_min_float,	0),		// p4
 		P4_WORD("max-float",	&&_max_float,	0),		// p4
 		P4_WORD("_fs",		&&_fs,		0),		// p4
-# ifdef USE_FLOAT_STACK
 		P4_WORD("_fsp_get",	&&_fsp_get,	0),		// p4
 		P4_WORD("_fsp_put",	&&_fsp_put,	0),		// p4
-# endif
 		P4_WORD(">FLOAT",	&&_to_float,	0),
 		P4_WORD("FROUND",	&&_f_round,	0),
 		P4_WORD("FTRUNC",	&&_f_trunc,	0),
@@ -1575,7 +1571,7 @@ p4Repl(P4_Ctx *ctx)
 		case P4_THROW_ABORT_MSG:
 		case P4_THROW_DS_OVER:
 		case P4_THROW_DS_UNDER:
-#if defined(HAVE_MATH_H) && defined(USE_FLOAT_STACK)
+#if defined(HAVE_MATH_H)
 			P4_RESET(ctx->fs);
 #endif
 			P4_RESET(ctx->ds);
@@ -1745,7 +1741,7 @@ _rsp_put:	w = P4_POP(ctx->ds);
 		ctx->rs.top = w.p;
 		NEXT;
 
-#if defined(HAVE_MATH_H) && defined(USE_FLOAT_STACK)
+#if defined(HAVE_MATH_H)
 		// ( -- aaddr )
 _fsp_get:	w.p = ctx->fs.top;
 		P4_PUSH(ctx->ds, w);
@@ -2554,7 +2550,6 @@ _max_float:	P4_PUSH(ctx->P4_FLOAT_STACK, (P4_Float) MAX_FLOAT);
 //_min_float:	P4_PUSH(ctx->P4_FLOAT_STACK, MIN_FLOAT);
 //		NEXT;
 
-# ifdef USE_FLOAT_STACK
 		// ( -- aaddr n s )
 _fs:		w.n = P4_LENGTH(ctx->fs);
 		P4_PUSH(ctx->ds, ctx->fs.base);
@@ -2572,15 +2567,7 @@ _f_store:	w = P4_POP(ctx->ds);
 		x = P4_POP(ctx->P4_FLOAT_STACK);
 		*w.p = x;
 		NEXT;
-# else
-_fs:		P4_PUSH(ctx->ds, (P4_Int)0);
-		P4_PUSH(ctx->ds, (P4_Int)0);
-		P4_PUSH(ctx->ds, (P4_Int)0);
-		NEXT;
 
-_f_fetch:	goto _fetch;
-_f_store:	goto _store;
-# endif
 		// (x -- )(R: -- x )
 _fs_to_rs:	w = P4_POP(ctx->P4_FLOAT_STACK);
 		p4StackCanPopPush(ctx, &ctx->rs, 0, 1);
@@ -2884,12 +2871,6 @@ static const char usage[] =
 "-V\t\tbuild and version information\r\n\r\n"
 "If script is \"-\", read it from standard input.\r\n"
 ;
-
-#ifndef USE_FLOAT_STACK
-# undef P4_FLOAT_STACK_SIZE
-# define P4_FLOAT_STACK_SIZE	0
-#endif
-
 
 static P4_Options options = {
 	.ds_size = P4_STACK_SIZE,

@@ -352,9 +352,7 @@ struct p4_ctx {
 	P4_Stack	ds;		/* Data stack */
 	P4_Stack	rs;		/* Return stack */
 #ifdef HAVE_MATH_H
-# ifdef USE_FLOAT_STACK
 	P4_Stack	fs;		/* Float stack */
-# endif
 	P4_Int		precision;
 #endif
 #ifdef P4_TRACE
@@ -375,11 +373,7 @@ struct p4_ctx {
 	JMP_BUF		on_throw;
 };
 
-#ifdef USE_FLOAT_STACK
-# define P4_FLOAT_STACK	fs
-#else
-# define P4_FLOAT_STACK	ds
-#endif
+#define P4_FLOAT_STACK	fs
 
 /***********************************************************************
  *** Exceptions
