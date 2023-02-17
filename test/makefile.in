@@ -35,23 +35,6 @@ BUILT		:= `date +'%a, %d %b %Y %H:%M:%S %z'`
 
 #######################################################################
 
-#%$O : %.c
-.c$O :
-	$(CC) $(CFLAGS) -c $<
-
-#%$E : %.c
-.c$E :
-	$(CC) $(CFLAGS) $(LDFLAGS) $(CC_E)$*$E $< $(LIBS)
-
-#%$E : %$O
-$O$E :
-	$(LD) $(LDFLAGS) $(CC_E)$*$E $*$O $(LIBS)
-
-.c.i:
-	${CC} -E ${CFLAGS} $*.c >$*.i
-
-#######################################################################
-
 .MAIN : build
 
 all: build
@@ -74,19 +57,5 @@ title :
 	@echo '***************************************************************'
 	@echo
 
-install: build
-	install -p -o root -g 0 -d ${libdir}
-	install -p -o root -g 0 post4.p4 ${libdir}
-	install -p -o root -g 0 post4$E ${bindir}
-
-post4$O : config.h post4.h post4.c
-	${CC} ${CFLAGS} -DP4_BUILT="\"${BUILT}\"" -c post4.c
-
-post4$E : config.h post4.h post4.c
-	${CC} ${CFLAGS} ${LDFLAGS} -DTEST -DP4_BUILT="\"${BUILT}\"" -o post4$E post4.c ${LIBS}
-
-post4.i : config.h post4.h post4.c
-	${CC} -E ${CFLAGS} -DTEST -DP4_BUILT="\"${BUILT}\"" post4.c >$*.i
-
-test : post4$E
-	./post4 ../test/units.p4
+test : ../src/post4$E
+	cd ../src; ${MAKE} $@

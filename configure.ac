@@ -24,6 +24,7 @@ AC_CONFIG_SRCDIR(src/post4.c)
 
 AC_CONFIG_FILES(makefile)
 AC_CONFIG_FILES(src/makefile)
+AC_CONFIG_FILES(test/makefile)
 AC_CONFIG_FILES(src/config.h.in)
 AC_CONFIG_HEADERS(src/config.h)
 

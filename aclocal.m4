@@ -653,10 +653,9 @@ AC_DEFUN(SNERT_OPTION_ENABLE_DEBUG,[
 	dnl annoying when you want the default to no debugging.
 	CFLAGS="${CFLAGS}"
 
-	AC_ARG_ENABLE(debug,[AS_HELP_STRING([--enable-debug],[enable compiler debug option])],[
-		AS_IF([test $enable_debug = 'yes'],[
-			CFLAGS="-g -O0${CFLAGS:+ $CFLAGS}"
-		])
+	AC_ARG_ENABLE(debug,[AS_HELP_STRING([--enable-debug],[enable compiler debug option])])
+	AS_IF([test $enable_debug = 'yes'],[
+		CFLAGS="-g -O0${CFLAGS:+ $CFLAGS}"
 	],[
 		AC_DEFINE(NDEBUG,[1],[Disable debug code])
 		CFLAGS="-Os${CFLAGS:+ $CFLAGS}"
