@@ -1,5 +1,11 @@
 INCLUDE ../test/assert.p4
 
+[UNDEFINED] _fs [IF]
+
+.( Float support disabled. ) CR
+
+[ELSE]
+
 .( F0= ) test_group
 t{  0.0 F0= -> TRUE }t
 t{  1.0 F0= -> FALSE }t
@@ -186,3 +192,5 @@ t{ -Inf -Inf FATAN2 -> -3pi/4 }t
 t{ +Inf +Inf FATAN2 ->  pi/4 }t
 t{ -Inf +Inf FATAN2 -> -pi/4 }t
 test_group_end
+
+[THEN]

@@ -2259,8 +2259,6 @@ END-STRUCTURE
 	['] fto EXECUTE
 ; IMMEDIATE
 
-\ [THEN]
-
 \ (F: f1 f2 -- ) (S: -- bool)
 : F< F- F0< ;
 

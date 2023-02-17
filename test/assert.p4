@@ -61,8 +61,17 @@ VARIABLE tc_ds_expect
 VARIABLE tc_fs_start
 VARIABLE tc_fs_expect
 
-: tc_ds_drop BEGIN DEPTH tc_ds_start @ > WHILE DROP REPEAT ;
+[UNDEFINED] _fs [IF]
+\ No float support.
+: FDEPTH 0 ;
+: FDROP ;
+: FPICK ;
+: FSWAP ;
+: F= FALSE ;
+[THEN]
+
 : tc_fs_drop BEGIN FDEPTH tc_fs_start @ > WHILE FDROP REPEAT ;
+: tc_ds_drop BEGIN DEPTH tc_ds_start @ > WHILE DROP REPEAT ;
 : tc_drop_all tc_ds_drop tc_fs_drop ;
 
 : xt{ ( xt -- )
@@ -139,31 +148,41 @@ VARIABLE tc_fs_expect
 ;
 
 test_suite
-.( Test case stack check ) test_group
+.( Data stack checks. ) test_group
+\ Must pass.
 t{ -> }t
 t{ 1 -> 1 }t
 t{ 1 2 -> 1 2 }t
 t{ 1 2 3 -> 1 2 3 }t
 
-t{ 1e0 -> 1e0 }t
-t{ 1e0 2e0 -> 1e0 2e0 }t
-t{ 1e0 2e0 3e0 -> 1e0 2e0 3e0 }t
-
-t{ 1 2e0 -> 1 2e0 }t
-t{ 1 2e0 3 4.0 -> 1 2e0 3 4.0 }t
-t{ 1 2e0 3e0 4 5.0 -> 1 2e0 3e0 4 5.0 }t
-
+\ Must fail (skip)
 ts{ -> 377 }t
 ts{ 377 -> }t
 ts{ 377 -> 377 33 }t
 ts{ 377 33 -> 33 }t
+test_group_end
 
+[DEFINED] _fs [IF]
+.( Float and data stack checks ) test_group
+\ Just float stack.  Must pass.
+t{ 1e0 -> 1e0 }t
+t{ 1e0 2e0 -> 1e0 2e0 }t
+t{ 1e0 2e0 3e0 -> 1e0 2e0 3e0 }t
+
+\ Mix float and data stacks.  Must pass.
+t{ 1 2e0 -> 1 2e0 }t
+t{ 1 2e0 3 4.0 -> 1 2e0 3 4.0 }t
+t{ 1 2e0 3e0 4 5.0 -> 1 2e0 3e0 4 5.0 }t
+
+\ Mix float and data stacks.  Must fail (skip).
 ts{ -> 123.45 }t
 ts{ 123.45 -> }t
 ts{ 377 -> 377 33.0 }t
 ts{ 33.0 -> 377 33.0 }t
 ts{ 377 33.0 -> 33.0 }t
 test_group_end
+[THEN]
+
 test_suite_end
 
           0 INVERT CONSTANT 1S		\ 1111...1111
