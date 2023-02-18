@@ -915,7 +915,7 @@ p4Refill(P4_Ctx *ctx, P4_Input *input)
  ***********************************************************************/
 
 int
-p4BlockGrow(P4_Int fd, P4_Uint block)
+p4BlockGrow(int fd, P4_Uint block)
 {
 	size_t n;
 	struct stat sb;
@@ -955,7 +955,7 @@ p4BlockGrow(P4_Int fd, P4_Uint block)
 }
 
 int
-p4BlockRead(P4_Int fd, P4_Uint blk_num, P4_Block *block)
+p4BlockRead(int fd, P4_Uint blk_num, P4_Block *block)
 {
 	if (fd <= 0 || blk_num == 0 || block == NULL) {
 		return -1;
@@ -973,7 +973,7 @@ p4BlockRead(P4_Int fd, P4_Uint blk_num, P4_Block *block)
 }
 
 int
-p4BlockWrite(P4_Int fd, P4_Block *block)
+p4BlockWrite(int fd, P4_Block *block)
 {
 	if (fd <= 0 || block == NULL) {
 		return -1;
@@ -989,42 +989,25 @@ p4BlockWrite(P4_Int fd, P4_Block *block)
 	return 0;
 }
 
-P4_Int
+int
 p4BlockOpen(const char *file)
 {
-	int cwd;
-	P4_Int fd = -1;
+	int fd;
 
-	if ((cwd = open(".", O_RDONLY)) < 0) {
-		goto error0;
+	if (file == NULL || *file == '\0') {
+		return -1;
 	}
 	if ((fd = open(file, O_CREAT|O_RDWR, S_IRWXU|S_IRWXG|S_IRWXO)) < 0 || flock(fd, LOCK_EX|LOCK_NB)) {
-		if (errno == EAGAIN) {
-			warn("%s already in use", file);
-			goto error1;
-		}
-		const char *home = getenv("HOME");
-		if (home == NULL || chdir(home)) {
-			goto error1;
-		}
-		if ((fd = open(file, O_CREAT|O_RDWR, S_IRWXU|S_IRWXG|S_IRWXO)) < 0 || flock(fd, LOCK_EX|LOCK_NB)) {
-			if (errno == EAGAIN) {
-				warn("%s already in use", file);
-			}
-			goto error1;
-		}
+		warn("%s", file);
 	}
-error1:
-	(void) fchdir(cwd);
-	(void) close(cwd);
-error0:
+
 	return fd;
 }
 
 int
-p4BlockClose(P4_Int fd, P4_Block *block)
+p4BlockClose(int fd, P4_Block *block)
 {
-	if (block->state == P4_BLOCK_DIRTY && p4BlockWrite(fd, block)) {
+	if (fd < 0 || block->state == P4_BLOCK_DIRTY && p4BlockWrite(fd, block)) {
 		return -1;
 	}
 	block->state = P4_BLOCK_FREE;
@@ -1523,6 +1506,8 @@ p4Repl(P4_Ctx *ctx)
 		P4_WORD("ACCEPT",	&&_accept,	0),
 		P4_WORD("BLK",		&&_blk,		0),
 		P4_WORD("BLOCK",	&&_block,	0),
+		P4_WORD("block-open",	&&_block_open,	0),		// p4
+		P4_WORD("block-close",	&&_block_close,	0),		// p4
 		P4_WORD("blocks",	&&_blocks, 	0),		// p4
 		P4_WORD("BUFFER",	&&_buffer,	0),
 		P4_WORD("DUMP",		&&_dump,	0),
@@ -2369,6 +2354,18 @@ _block:		w = P4_TOP(ctx->ds);
 		P4_TOP(ctx->ds).s = ctx->block.buffer;
 		NEXT;
 
+		// ( caddr u -- bool )
+_block_open:	w = P4_POP(ctx->ds);
+		x = P4_TOP(ctx->ds);
+		(void) p4BlockClose(ctx->block_fd, &ctx->block);
+		ctx->block_fd = p4BlockOpen(x.s);
+		P4_TOP(ctx->ds).n = P4_BOOL(0 < ctx->block_fd);
+		NEXT;
+
+		// ( -- )
+_block_close:	(void) p4BlockClose(ctx->block_fd, &ctx->block);
+		NEXT;
+
 	{	// ( -- u )
 		struct stat sb;
 _blocks:	if (fstat(ctx->block_fd, &sb) != 0) {
@@ -2386,6 +2383,7 @@ _buffer:	w = P4_TOP(ctx->ds);
 
 		// ( -- )
 _empty_buffers:	ctx->block.state = P4_BLOCK_FREE;
+		/*@fallthrough@*/
 
 		// ( -- )
 _save_buffers:	if (ctx->block.state == P4_BLOCK_DIRTY && p4BlockWrite(ctx->block_fd, &ctx->block)) {
@@ -2866,7 +2864,7 @@ static const char usage[] =
 "usage: post4 [-V][-b file][-c file][-d size][-f size][-i file][-m size]\r\n"
 "             [-r size][script [args ...]]\r\n"
 "\r\n"
-"-b file\t\tblock file; default ./" P4_BLOCK_FILE " or $HOME/" P4_BLOCK_FILE "\r\n"
+"-b file\t\topen a block file\r\n"
 "-c file\t\tword definition file; default " P4_CORE_FILE " from $POST4_PATH\r\n"
 "-d size\t\tdata stack size in cells; default " QUOTE(P4_STACK_SIZE) "\r\n"
 "-f size\t\tfloat stack size; default " QUOTE(P4_FLOAT_STACK_SIZE) "\r\n"
@@ -2883,7 +2881,7 @@ static P4_Options options = {
 	.fs_size = P4_FLOAT_STACK_SIZE,
 	.mem_size = P4_MEM_SIZE,
 	.core_file = P4_CORE_FILE,
-	.block_file = P4_BLOCK_FILE,
+	.block_file = NULL,
 };
 
 static const char p4_build_info[] =

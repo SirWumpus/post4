@@ -12,7 +12,7 @@ Post4 is a hosted indirect threaded Forth dialect written in C, based on the ["F
         usage: post4 [-V][-b file][-c file][-d size][-f size][-i file][-m size]
                      [-r size][script [args ...]]
 
-        -b file         block file; default ./.post4.blk or $HOME/.post4.blk
+        -b file         open a block file
         -c file         word definition file; default post4.p4 from $POST4_PATH
         -d size         data stack size in cells; default 64
         -f size         float stack size; default 6
@@ -26,7 +26,7 @@ Post4 is a hosted indirect threaded Forth dialect written in C, based on the ["F
 
 The environment variable `POST4_PATH` provides a colon separated search path for the `post4.p4` core word definitions file and include files.  If `POST4_PATH` is undefined, then an OS specific default path is used.  A specific word definition file can be specified with `-c`.
 
-By default a user block file, `.post4.blk`, is opened from the current directory or user's `HOME` directory.  This can be overridden with the `-b` option.  To skip the block file, specify an empty filepath, eg. `-b ''`.
+By default no block file is opened.  Use `-b file` to open a block file at start-up; otherwise see [BLOCK-OPEN](./doc/block.md) and [BLOCK-CLOSE](./doc/block.md) words.
 
 Post4 reads input from standard input and writes to standard output, which can be redirected:
 
@@ -144,7 +144,7 @@ There are actually three block editor word sets:
 
 NOTE: that `EDIT` and `ED` are hard coded with ANSI terminal escape sequences.
 
-        $ post4 -i ed.p4
+        $ post4 -b .post4.blk -i ed.p4
         Type ED to start editor.
         ok ED
 

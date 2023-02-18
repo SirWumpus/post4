@@ -64,6 +64,20 @@ Mark the current block as dirty.
 
 ### Post4 Specific Words
 
+#### block-close
+( -- )  
+First save any dirty blocks, then close the block file.
+
+- - -
+#### block-open
+( `caddr` `u` -- `bool` )  
+First close the current block file, if any, then open the file path given by `caddr` `u` and return true on success.
+
+        ok S" .post4.blk" BLOCK-OPEN
+        ok BLOCKS .
+        3 ok
+
+- - -
 #### blocks
 ( -- `u` )  
 Number of blocks `u` currently in the block file, one (1) through to `u`.  The block file can be extended by writing to block `u'`, the file will be extended with intervening blank blocks from the current end up to but not including block `u'`, which the actual block write of `u'` will fill.
