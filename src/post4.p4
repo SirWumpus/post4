@@ -2012,7 +2012,10 @@ VARIABLE SCR
 : [ELSE] ( -- )
 	1 BEGIN 				\ level
 	  BEGIN PARSE-NAME DUP WHILE		\ level adr len
-	    2DUP S" [IF]" COMPARE 0= IF		\ level adr len
+	    2DUP S" \" COMPARE 0= IF
+	      \ Ignore remainder of comment line.
+	      2DROP POSTPONE \
+	    ELSE 2DUP S" [IF]" COMPARE 0= IF		\ level adr len
 	      2DROP 1+				\ level'
 	    ELSE				\ level adr len
 	      2DUP S" [ELSE]" COMPARE 0= IF	\ level adr len
@@ -2024,7 +2027,7 @@ VARIABLE SCR
 	          1-				\ level'
 	        THEN
 	      THEN
-	    THEN
+	    THEN THEN
 	    ?DUP 0= IF EXIT THEN		\ level'
 	  REPEAT 2DROP				\ level
 	REFILL 0= UNTIL				\ level

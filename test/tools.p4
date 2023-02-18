@@ -128,4 +128,29 @@ T{ <T> [IF] 1 <T> [IF] 2 [ELSE] 3 [THEN] [ELSE] 4 [THEN] -> 1 2 }T
 T{ <F> [IF] 1 <T> [IF] 2 [ELSE] 3 [THEN] [ELSE] 4 [THEN] -> 4 }T
 T{ <T> [IF] 1 <F> [IF] 2 [ELSE] 3 [THEN] [ELSE] 4 [THEN] -> 1 3 }T
 T{ <F> [IF] 1 <F> [IF] 2 [ELSE] 3 [THEN] [ELSE] 4 [THEN] -> 4 }T
+
+\ Multiline with single line comment of [IF] [ELSE] [THEN] words, ie.
+\ developer is futzing around with code and temorarily comments words.
+T{ TRUE [IF]
+    \ TRUE [IF]
+        1
+    \ [ELSE]
+        2
+    [ELSE]
+        3
+    \ [THEN]
+        4
+    [THEN] -> 1 2 }T
+
+T{ FALSE [IF]
+        1
+    \ [ELSE]
+        2
+    [ELSE]
+    \ TRUE [IF}
+        3
+    \ [THEN]
+        4
+    [THEN] -> 3 4 }T
+
 test_group_end
