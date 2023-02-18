@@ -2930,7 +2930,11 @@ main(int argc, char **argv)
 			options.ds_size = strtol(optarg, NULL, 10);
 			break;
 		case 'f':
+#ifdef HAVE_MATH_H
 			options.fs_size = strtol(optarg, NULL, 10);
+#else
+			(void) warnx("float support disabled");
+#endif
 			break;
 		case 'i':
 			// Ignore for now.
