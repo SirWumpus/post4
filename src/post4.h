@@ -476,11 +476,6 @@ struct p4_ctx {
 extern void p4Init(void);
 
 /**
- * Finalise the global environment.
- */
-extern void p4Fini(void);
-
-/**
  * Create a new interpreter context.
  *
  * @param opts

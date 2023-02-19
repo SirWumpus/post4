@@ -161,7 +161,7 @@ sig_winch(int signum)
 #endif
 }
 
-void
+static void
 p4Fini(void)
 {
 #ifdef HAVE_TCSETATTR
@@ -178,6 +178,8 @@ p4Init(void)
 {
 	char *p;
 	unsigned i;
+
+	(void) atexit(p4Fini);
 
 	signal(SIGINT, sig_int);
 	signal(SIGFPE, sig_int);
@@ -2893,7 +2895,6 @@ main(int argc, char **argv)
 	P4_Ctx *ctx;
 
 	p4Init();
-	(void) atexit(p4Fini);
 
 	while ((ch = getopt(argc, argv, "b:c:d:f:i:m:r:V")) != -1) {
 		switch (ch) {
