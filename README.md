@@ -30,7 +30,17 @@ By default no block file is opened.  Use `-b file` to open a block file at start
 
 Post4 reads input from standard input and writes to standard output, which can be redirected:
 
+**Example 1 - pipe input**  
+
         echo "123 69 + ." | post4
+
+**Example 2 - here document**  
+
+        post4 - hey babe <<EOF
+        include dumpargs.p4
+        args .s dropall cr
+        s\" Hello world (again)!\r\n" type
+        EOF
 
 Post4 cell size is equivalent to C's `intptr_t`, which for most current systems are 64 bits.
 
@@ -55,7 +65,7 @@ Post4 is written in ISO C11 using only one extension, `Labels As Values`, which 
 
         $ ./configure --help
         $ ./configure
-        $ make
+        $ make test
         $ sudo make install
         $ post4
 
