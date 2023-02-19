@@ -1283,58 +1283,6 @@ p4StackCanPopPush(P4_Ctx *ctx, P4_Stack *stack, int pop, int push)
 }
 #endif
 
-/* Display exception message when there is no catch-frame.
- *
- * @param ctx
- *	The Forth machine context.
- *
- * @param code
- *	A THROW code.
- *
- * @See
- *	3.4.4 Possible actions on an ambiguous condition.
- */
-static int
-p4Exception(P4_Ctx *ctx, int code)
-{
-	switch (code) {
-	case P4_THROW_ABORT_MSG:
-		/* Displays its own message. */
-	case P4_THROW_ABORT:
-	case P4_THROW_QUIT:
-		/* Historically no message, simply return to REPL. */
-	case P4_THROW_OK:
-		return code;
-	}
-#ifdef USE_EXCEPTION_STRINGS
-	(void) printf("%d thrown: %s", code, P4_THROW_future <= code && code < 0 ? p4_exceptions[-code] : "?");
-#else
-	(void) printf("%d thrown", code);
-#endif
-	/* Cannot not rely on ctx->state for compilation state, since
-	 * its possible to temporarily change states in the middle of
-	 * compiling a word, eg : word [ 123 ;
-	 */
-	if (P4_WORD_IS_HIDDEN(ctx->words)) {
-		/* A thrown error while compiling a word leaves the
-		 * definition in an incomplete state; discard it.
-		 */
-		P4_Word *word = ctx->words;
-		(void) printf(
-			" while compiling \"%s\"",
-			word->name.length == 0 ? ":NONAME" : (char *)word->name.string
-		);
-		ctx->state = P4_STATE_INTERPRET;
-		ctx->words = word->prev;
-		/* Rewind HERE, does not free ALLOCATE data. */
-		ctx->here = (P4_Char *) word->data;
-		p4WordFree(word);
-	}
-	(void) printf(crlf);
-	(void) fflush(stdout);
-	return code;
-}
-
 int
 p4Repl(P4_Ctx *ctx)
 {
@@ -1550,16 +1498,64 @@ p4Repl(P4_Ctx *ctx)
 	SETJMP_PUSH(ctx->on_throw);
 	if ((rc = SETJMP(ctx->on_throw)) != 0) {
 		switch (rc) {
+		case P4_THROW_ABORT_MSG:
+			/* Displays its own message. */
+		case P4_THROW_ABORT:
+		case P4_THROW_QUIT:
+			/* Historically no message, simply return to REPL. */
+			break;
+		default:
+#ifdef USE_EXCEPTION_STRINGS
+			(void) printf("%d thrown: %s", rc, P4_THROW_future <= rc && rc < 0 ? p4_exceptions[-rc] : "?");
+#else
+			(void) printf("%d thrown", rc);
+#endif
+		}
+
+		/* Cannot not rely on ctx->state for compilation state, since
+		 * its possible to temporarily change states in the middle of
+		 * compiling a word, eg : word [ 123 ;
+		 */
+		if (P4_WORD_IS_HIDDEN(ctx->words)) {
+			/* A thrown error while compiling a word leaves the
+			 * definition in an incomplete state; discard it.
+			 */
+			P4_Word *word = ctx->words;
+			(void) printf(
+				" while compiling \"%s\"",
+				word->name.length == 0 ? ":NONAME" : (char *)word->name.string
+			);
+			ctx->state = P4_STATE_INTERPRET;
+			ctx->words = word->prev;
+			/* Rewind HERE, does not free ALLOCATE data. */
+			ctx->here = (P4_Char *) word->data;
+			p4WordFree(word);
+		}
+		switch (rc) {
+		case P4_THROW_ABORT_MSG:
+			/* Displays its own message. */
+		case P4_THROW_ABORT:
+		case P4_THROW_QUIT:
+			/* Historically no message, simply return to REPL. */
+			break;
+		default:
+			(void) printf(crlf);
+			(void) fflush(stdout);
+		}
+
+		switch (rc) {
 		case P4_THROW_ABORT:
 		case P4_THROW_ABORT_MSG:
 		case P4_THROW_DS_OVER:
 		case P4_THROW_DS_UNDER:
-#if defined(HAVE_MATH_H)
-			P4_RESET(ctx->fs);
-#endif
 			P4_RESET(ctx->ds);
 			/*@fallthrough@*/
-
+#if defined(HAVE_MATH_H)
+		case P4_THROW_FS_OVER:
+		case P4_THROW_FS_UNDER:
+			P4_RESET(ctx->fs);
+			/*@fallthrough@*/
+#endif
 		case P4_THROW_QUIT:
 		case P4_THROW_SIGSEGV:		/* Retain data stack. */
 		case P4_THROW_RS_OVER:
@@ -2796,7 +2792,6 @@ p4Eval(P4_Ctx *ctx)
 	int rc;
 
 	while ((rc = p4Repl(ctx)) != P4_THROW_OK) {
-		(void) p4Exception(ctx, rc);
 		p4SetInput(ctx, stdin);
 	}
 
@@ -2815,7 +2810,7 @@ p4EvalFile(P4_Ctx *ctx, const char *file)
 	if ((ctx->input.fp = fopen(file, "r")) != NULL) {
 		p4ResetInput(ctx);
 		ctx->state = P4_STATE_INTERPRET;
-		rc = p4Exception(ctx, p4Repl(ctx));
+		rc = p4Repl(ctx);
 		(void) fclose(ctx->input.fp);
 	}
 
@@ -2840,7 +2835,7 @@ p4EvalString(P4_Ctx *ctx, const P4_Char *str, size_t len)
 	ctx->input.length = len;
 	ctx->input.offset = 0;
 
-	rc = p4Exception(ctx, p4Repl(ctx));
+	rc = p4Repl(ctx);
 
 	P4_INPUT_POP(&ctx->input);
 	ctx->state = state_save;
