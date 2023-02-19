@@ -22,11 +22,15 @@ AC_CONFIG_SRCDIR(src/post4.c)
 #	Auxliary files to be modified later
 #######################################################################
 
-AC_CONFIG_FILES(makefile)
-AC_CONFIG_FILES(src/makefile)
-AC_CONFIG_FILES(test/makefile)
-AC_CONFIG_FILES(src/config.h.in)
 AC_CONFIG_HEADERS(src/config.h)
+
+AC_CONFIG_FILES([
+	makefile
+	jni/makefile
+	src/makefile
+	test/makefile
+	src/config.h.in
+])
 
 #######################################################################
 #	Configuration options: settings
@@ -57,12 +61,35 @@ AC_PROG_LN_S
 AC_PROG_RANLIB
 AC_PROG_MAKE_SET
 
-dnl AS_IF([test $GCC_MAJOR -ge 4],[CFLAGS="-Wno-pointer-sign $CFLAGS"])
 SNERT_TAR_SETTINGS
+
+dnl Tradional cc options.
+dnl NOTE SunOS as(1) _wants_ a space between -o and its argument.
+CC_E='-o'
+CC_E_NAME='-o $@'
+CC_O='-o'
+CC_O_NAME='-o $''*$O'
+LD=$CC
+
+AC_SUBST(CC_E)
+AC_SUBST(CC_E_NAME)
+AC_SUBST(CC_O)
+AC_SUBST(CC_O_NAME)
+
+AC_CHECK_SIZEOF(short)
+AC_CHECK_SIZEOF(int)
+AC_CHECK_SIZEOF(long)
+AC_CHECK_SIZEOF(size_t)
+AC_CHECK_SIZEOF(off_t)
+AC_CHECK_SIZEOF(double)
+AC_CHECK_SIZEOF(long double)
+AC_CHECK_SIZEOF(long long int)
 
 #######################################################################
 #	Check for library, header, and function families.
 #######################################################################
+
+AC_CHECK_HEADERS([ctype.h errno.h inttypes.h limits.h stdarg.h stddef.h stdint.h stdio.h unistd.h sys/ioctl.h])
 
 SNERT_ANSI_TIME
 SNERT_ANSI_STRING
@@ -74,7 +101,18 @@ SNERT_POSIX_IO
 SNERT_FILE_LOCKS
 SNERT_TERMIOS
 
-AC_CHECK_HEADERS([ctype.h errno.h inttypes.h limits.h stddef.h stdint.h stdio.h unistd.h sys/ioctl.h])
+AS_IF([test -n "${JAVA_HOME}"],[
+	JNI_DIR=$(dirname $(find $JAVA_HOME/include -name jni.h))
+	JNI_DIR=$(echo "$JNI_DIR" | sed -e "s,${JAVA_HOME},\\\${JAVA_HOME},")
+
+	JNI_MD_DIR=$(dirname $(find $JAVA_HOME/include -name jni_md.h))
+	JNI_MD_DIR=$(echo "$JNI_MD_DIR" | sed -e "s,${JAVA_HOME},\\\${JAVA_HOME},")
+
+	JNI_CFLAGS="-I${JNI_MD_DIR} -I${JNI_DIR}${JNI_CFLAGS:+ $JNI_CFLAGS}"
+
+	AC_SUBST(JNI_CFLAGS)
+	AC_SUBST(JFLAGS)
+])
 
 #######################################################################
 #	Check for types.
@@ -93,7 +131,7 @@ AC_TYPE_SSIZE_T
 AC_TYPE_UID_T
 AC_TYPE_INTPTR_T
 AC_TYPE_UINTPTR_T
-dnl AC_CHECK_TYPES([gid_t, time_t])
+AC_CHECK_TYPES([time_t])
 
 #######################################################################
 #	Check for library functions
@@ -107,6 +145,8 @@ AC_FUNC_MALLOC
 AC_FUNC_REALLOC
 AC_LIBOBJ(malloc)
 
+AC_CHECK_FUNCS(atexit getenv putenv toupper tolower)
+
 #######################################################################
 #	Generate output.
 #######################################################################
@@ -118,6 +158,8 @@ AS_ECHO("Generating files...")
 AS_ECHO()
 AC_OUTPUT()
 SNERT_SUMMARY
+AC_MSG_RESULT([  JNI_CFLAGS.....: $JNI_CFLAGS])
+AC_MSG_RESULT([  JFLAGS.........: $JFLAGS])
 AS_ECHO()
 
 #######################################################################

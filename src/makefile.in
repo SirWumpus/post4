@@ -65,8 +65,6 @@ clean : title
 distclean: clean
 	-rm -f config.h config.h.in makefile
 
-realclean: distclean
-
 title :
 	@echo
 	@echo '***************************************************************'

@@ -1,0 +1,106 @@
+#
+# @package_copyright@
+#
+# @configure_input@
+#
+
+.POSIX :
+
+.SUFFIXES :
+A = .jar
+C = .class
+J = .java
+L = .so
+O = .@OBJEXT@
+.SUFFIXES : .c $J .i $O $C $L $A
+
+LIBNAME		= libpost4jni$L
+MAIN		= post4.jni.Post4
+
+top_srcdir 	= @top_srcdir@
+abs_srcdir 	= @abs_srcdir@
+
+prefix 		= @prefix@
+exec_prefix 	= @exec_prefix@
+bindir 		= @bindir@
+libdir 		= @libdir@/post4
+
+CC		= @CC@
+CC_E		= @CC_E@
+CC_O		= @CC_O@
+CPPFLAGS	= @CPPFLAGS@
+CFLAGS		= @JNI_CFLAGS@ @CFLAGS@
+LDFLAGS		= @LDFLAGS@
+JFLAGS		= -Xlint:deprecation @JFLAGS@
+LIBS		= @LIBS@
+
+BUILT		:= `date +'%a, %d %b %Y %H:%M:%S %z'`
+CPU		:= `uname -p`
+OS		:= `uname -s`
+
+#######################################################################
+
+#%$O : %.c
+.c$O :
+	$(CC) $(CFLAGS) -fPIC -c $<
+
+#%$E : %.c
+.c$E :
+	$(CC) $(CFLAGS) $(LDFLAGS) $(CC_E)$*$E $< $(LIBS)
+
+#%$E : %$O
+$O$E :
+	$(LD) $(LDFLAGS) $(CC_E)$*$E $*$O $(LIBS)
+
+.c.i:
+	${CC} -E ${CFLAGS} $*.c >$*.i
+
+.java.class :
+	javac ${JFLAGS} -cp ../.. $?
+
+#######################################################################
+
+.MAIN : build
+
+all: build
+
+clean: title
+	-rm *.i *$O *.class *.core *.log
+
+distclean: clean
+	-rm -rf *$L *$A makefile ./post4
+
+build: title ${LIBNAME} Post4Exception$C Post4Options$C Post4$C
+
+title :
+	@echo
+	@echo '***************************************************************'
+	@echo '==> '${abs_srcdir}
+	@echo '***************************************************************'
+	@echo
+
+install: build
+	install -p -o root -g 0 -d ${libdir}
+	install -p -o root -g 0 ${LIBNAME} ${libdir}
+
+# See also
+# https://stackoverflow.com/questions/2937406/how-to-bundle-a-native-library-and-a-jni-library-inside-a-jar
+Post4$A: build
+	mkdir -p ./post4/jni/${OS}/${CPU}
+	cp -p *.class ./post4/jni
+	cp -p ${LIBNAME} ./post4/jni/${OS}/${CPU}
+	jar -v -c -f $@ -e ${MAIN} post4/ -C ../src/ post4.p4
+	rm -rf post4
+
+${LIBNAME}: Post4$O ../src/post4$O
+	${CC} -shared -o $@ ../src/post4$O Post4$O ${LIBS}
+
+../src/post4$O : ../src/post4.h ../src/post4.c
+	cd ../src; ${MAKE} post4$O
+
+run: build
+	POST4_PATH=".:../src" java -Djava.library.path="$${POST4_PATH}" -cp ../.. ${MAIN}
+
+testjar: Post4$A
+	POST4_PATH=".:../src" java -Djava.library.path="$${POST4_PATH}" -jar Post4$A
+
