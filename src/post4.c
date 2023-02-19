@@ -22,7 +22,7 @@ static struct termios tty_saved;
 static struct termios *tty_mode;
 #endif
 
-struct winsize window = {
+static struct winsize window = {
 	.ws_row = 24,
 	.ws_col = 80,
 };
@@ -126,8 +126,6 @@ static const char *p4_exceptions[] = {
 #endif
 
 static const char crlf[] = "\r\n";
-
-static int p4Repl(P4_Ctx *ctx);
 
 /***********************************************************************
  *** Context
@@ -256,7 +254,7 @@ p4LoadFile(P4_Ctx *ctx, const char *file)
 		}
 	}
 	if (path == NULL) {
-		(void) fprintf(stderr, "cannot find file: %s\r\n", file);
+		warn("%s", file);
 	} else {
 		rc = p4EvalFile(ctx, file);
 	}
@@ -415,9 +413,9 @@ p4StrNum(P4_String str, P4_Uint base, P4_Cell *out, int *is_float)
  ***********************************************************************/
 
 P4_String
-p4Parse(P4_Input *input, P4_Uint delim, P4_Uint escape)
+p4Parse(P4_Input *input, int delim, int escape)
 {
-	P4_Int ch;
+	int ch;
 	P4_Uint offset;
 	P4_String parsed;
 
@@ -1337,7 +1335,7 @@ p4Exception(P4_Ctx *ctx, int code)
 	return code;
 }
 
-static int
+int
 p4Repl(P4_Ctx *ctx)
 {
 	int rc;
@@ -2828,7 +2826,7 @@ p4EvalFile(P4_Ctx *ctx, const char *file)
 }
 
 int
-p4EvalString(P4_Ctx *ctx, P4_Char *str, size_t len)
+p4EvalString(P4_Ctx *ctx, const P4_Char *str, size_t len)
 {
 	int rc;
 	P4_Int state_save;
@@ -2838,8 +2836,8 @@ p4EvalString(P4_Ctx *ctx, P4_Char *str, size_t len)
 
 	ctx->state = P4_STATE_INTERPRET;
 	ctx->input.fp = (FILE *) -1;
+	ctx->input.buffer = (P4_Char *) str;
 	ctx->input.length = len;
-	ctx->input.buffer = str;
 	ctx->input.offset = 0;
 
 	rc = p4Exception(ctx, p4Repl(ctx));
@@ -2943,7 +2941,7 @@ main(int argc, char **argv)
 	options.argv = argv + optind;
 
 	if ((ctx = p4Create(&options)) == NULL) {
-		err(EXIT_FAILURE, NULL);
+		return EXIT_FAILURE;
 	}
 
 	optind = 1;

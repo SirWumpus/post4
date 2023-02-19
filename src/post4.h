@@ -497,6 +497,15 @@ extern void p4Free(P4_Ctx *ctx);
  *	A pointer to an allocated P4_Ctx structure.
  *
  * @return
+ *	Zero on success, otherwise an exception code.
+ */
+extern int p4Repl(P4_Ctx *ctx);
+
+/**
+ * @param ctx
+ *	A pointer to an allocated P4_Ctx structure.
+ *
+ * @return
  *	Zero on success, otherwise an exception code other than BYE.
  */
 extern int p4Eval(P4_Ctx *ctx);
@@ -527,7 +536,7 @@ extern int p4EvalFile(P4_Ctx *ctx, const char *filepath);
  * @return
  *	Zero on success, otherwise an exception code other than BYE.
  */
-extern int p4EvalString(P4_Ctx *ctx, P4_Char *string, size_t length);
+extern int p4EvalString(P4_Ctx *ctx, const P4_Char *string, size_t length);
 
 /***********************************************************************
  *** Utility Functions
@@ -594,7 +603,7 @@ extern P4_Int p4Accept(P4_Input *source, P4_Char *buffer, P4_Size size);
  *
  * @standard ANS-Forth 1994, extended
  */
-extern P4_String p4Parse(P4_Input *input, P4_Uint delim, P4_Uint escape);
+extern P4_String p4Parse(P4_Input *input, int delim, int escape);
 
 /**
  * Handles parsing of "<space>ccc<space>", skipping leading occurences of <char>.

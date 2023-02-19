@@ -37,7 +37,7 @@ BUILT		:= `date +'%a, %d %b %Y %H:%M:%S %z'`
 
 #%$O : %.c
 .c$O :
-	$(CC) $(CFLAGS) -c $<
+	$(CC) $(CFLAGS) -fPIC -c $<
 
 #%$E : %.c
 .c$E :
@@ -80,7 +80,7 @@ install: build
 	install -p -o root -g 0 post4$E ${bindir}
 
 post4$O : config.h post4.h post4.c
-	${CC} ${CFLAGS} -DP4_BUILT="\"${BUILT}\"" -c post4.c
+	${CC} ${CFLAGS} -fPIC -DP4_BUILT="\"${BUILT}\"" -c post4.c
 
 post4$E : config.h post4.h post4.c
 	${CC} ${CFLAGS} ${LDFLAGS} -DTEST -DP4_BUILT="\"${BUILT}\"" -o post4$E post4.c ${LIBS}
