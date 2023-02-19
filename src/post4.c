@@ -2787,18 +2787,6 @@ _f_pow:		w = P4_POP(ctx->P4_FLOAT_STACK);
 }
 
 int
-p4Eval(P4_Ctx *ctx)
-{
-	int rc;
-
-	while ((rc = p4Repl(ctx)) != P4_THROW_OK) {
-		p4SetInput(ctx, stdin);
-	}
-
-	return rc;
-}
-
-int
 p4EvalFile(P4_Ctx *ctx, const char *file)
 {
 	P4_Int state_save;
@@ -2947,7 +2935,9 @@ main(int argc, char **argv)
 	}
 
 	if (argc <= optind || (argv[optind][0] == '-' && argv[optind][1] == '\0')) {
-		rc = p4Eval(ctx);
+		while ((rc = p4Repl(ctx)) != P4_THROW_OK) {
+			;
+		}
 	} else if (optind < argc && (rc = p4EvalFile(ctx, argv[optind]))) {
 		err(EXIT_FAILURE, "%s", argv[optind]);
 	}

@@ -123,15 +123,6 @@ Java_post4_jni_Post4_repl(JNIEnv *env, jobject self)
 }
 
 JNIEXPORT void JNICALL
-Java_post4_jni_Post4_eval(JNIEnv *env, jobject self)
-{
-	int rc = p4Eval(getCtx(env, self));
-	if (rc != P4_THROW_OK) {
-		(*env)->Throw(env, post4Exception(env, rc));
-	}
-}
-
-JNIEXPORT void JNICALL
 Java_post4_jni_Post4_evalFile(JNIEnv *env, jobject self, jstring fpath)
 {
 	const char *path = (*env)->GetStringUTFChars(env, fpath, NULL);

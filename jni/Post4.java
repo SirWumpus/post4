@@ -45,16 +45,23 @@ public final class Post4
 			Post4Options opts = new Post4Options();
 			opts.argv = args;
 			Post4 p4 = new Post4(opts);
+
 			try {
-				p4.evalString("$cafebabe .s hex . CR blocks");
+				p4.evalString("$cafebabe hex U. decimal CR");
 			} catch (Post4Exception e) {
+				// You goofed.
 				System.err.println(e);
 			}
-//			try {
-				p4.eval();
-//			} catch (Post4Exception e) {
-//				System.err.println(e);
-//			}
+
+			try {
+				int rc;
+				while ((rc = p4.repl()) != Post4Exception.THROW_OK) {
+					; // Remain in the REPL until EOF or BYE.
+				}
+			} catch (Exception e) {
+				// Something else happened on this day, lost in time.
+				System.err.println(e);
+			}
 	}
 
 	private native static void init();
@@ -62,7 +69,6 @@ public final class Post4
 	private native static long p4Create(Post4Options opts);
 
 	private native int repl();
-	private native void eval(); // throws Post4Exception;
 	private native void evalFile(String fpath) throws Post4Exception;
 	private native void evalString(String string) throws Post4Exception;
 }
