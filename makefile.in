@@ -54,10 +54,9 @@ O = .@OBJEXT@
 E = @EXEEXT@
 .SUFFIXES : .c $O $E
 
-# Build JNI support separately for now, since OpenJDK might not be installed.
-# TODO add ./configure --with-jni to do clever shit.
 BUILD_DIRS = \
-	${TOPDIR}/src
+	${TOPDIR}/src \
+	@EXTRA_BUILDS@
 
 CLEAN_DIRS = \
 	${TOPDIR}/examples \
@@ -70,10 +69,10 @@ build :
 	@for i in $(BUILD_DIRS); do ( cd $$i; ${MAKE} ${MAKEFLAGS} $@ ); done
 
 clean : title _clean
-	@for i in $(BUILD_DIRS) ${TOPDIR}/jni; do ( cd $$i; ${MAKE} ${MAKEFLAGS} $@ ); done
+	@for i in $(BUILD_DIRS); do ( cd $$i; ${MAKE} ${MAKEFLAGS} $@ ); done
 
 distclean : title _distclean
-	@for i in $(BUILD_DIRS) ${TOPDIR}/jni; do ( cd $$i; ${MAKE} ${MAKEFLAGS} $@ ); done
+	@for i in $(BUILD_DIRS); do ( cd $$i; ${MAKE} ${MAKEFLAGS} $@ ); done
 
 test : build
 	@cd src; $(MAKE) $@

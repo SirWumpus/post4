@@ -47,6 +47,11 @@ dnl SNERT_OPTION_ENABLE_MINGW
 #	Configuration options: packages
 #######################################################################
 
+AC_ARG_WITH(java,[AS_HELP_STRING([--with-java],[build Jave Native Interface support])])
+AS_IF(
+	[test $with_java = 'no'],[unset JAVA_HOME],
+	[test $with_java != 'yes'],[export JAVA_HOME="$with_java"]
+)
 
 #######################################################################
 #	Check for programs
@@ -101,7 +106,7 @@ SNERT_POSIX_IO
 SNERT_FILE_LOCKS
 SNERT_TERMIOS
 
-AS_IF([test -n "${JAVA_HOME}"],[
+AS_IF([test -d "${JAVA_HOME}/include"],[
 	JNI_DIR=$(dirname $(find $JAVA_HOME/include -name jni.h))
 	JNI_DIR=$(echo "$JNI_DIR" | sed -e "s,${JAVA_HOME},\\\${JAVA_HOME},")
 
@@ -109,10 +114,11 @@ AS_IF([test -n "${JAVA_HOME}"],[
 	JNI_MD_DIR=$(echo "$JNI_MD_DIR" | sed -e "s,${JAVA_HOME},\\\${JAVA_HOME},")
 
 	JNI_CFLAGS="-I${JNI_MD_DIR} -I${JNI_DIR}${JNI_CFLAGS:+ $JNI_CFLAGS}"
-
-	AC_SUBST(JNI_CFLAGS)
-	AC_SUBST(JFLAGS)
+	EXTRA_BUILDS='${TOPDIR}/jni'${EXTRA_BUILDS:+ EXTRA_BUILDS}
 ])
+AC_SUBST(EXTRA_BUILDS)
+AC_SUBST(JNI_CFLAGS)
+AC_SUBST(JFLAGS)
 
 #######################################################################
 #	Check for types.

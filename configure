@@ -655,6 +655,7 @@ ac_func_c_list=
 ac_subst_vars='LTLIBOBJS
 JFLAGS
 JNI_CFLAGS
+EXTRA_BUILDS
 EGREP
 GREP
 CPP
@@ -736,6 +737,7 @@ enable_option_checking
 enable_64bit
 enable_debug
 enable_math
+with_java
 '
       ac_precious_vars='build_alias
 host_alias
@@ -1371,6 +1373,11 @@ Optional Features:
   --enable-64bit          enable compile & link options for 64-bit
   --enable-debug          enable compiler debug option
   --disable-math          disable libm support
+
+Optional Packages:
+  --with-PACKAGE[=ARG]    use PACKAGE [ARG=yes]
+  --without-PACKAGE       do not use PACKAGE (same as --with-PACKAGE=no)
+  --with-java             build Jave Native Interface support
 
 Some influential environment variables:
   CC          C compiler command
@@ -4633,6 +4640,21 @@ fi
 #	Configuration options: packages
 #######################################################################
 
+
+# Check whether --with-java was given.
+if test ${with_java+y}
+then :
+  withval=$with_java;
+fi
+
+if test $with_java = 'no'
+then :
+  unset JAVA_HOME
+elif test $with_java != 'yes'
+then :
+  export JAVA_HOME="$with_java"
+
+fi
 
 #######################################################################
 #	Check for programs
@@ -8250,7 +8272,7 @@ fi
 
 
 
-if test -n "${JAVA_HOME}"
+if test -d "${JAVA_HOME}/include"
 then :
 
 	JNI_DIR=$(dirname $(find $JAVA_HOME/include -name jni.h))
@@ -8260,11 +8282,12 @@ then :
 	JNI_MD_DIR=$(echo "$JNI_MD_DIR" | sed -e "s,${JAVA_HOME},\\\${JAVA_HOME},")
 
 	JNI_CFLAGS="-I${JNI_MD_DIR} -I${JNI_DIR}${JNI_CFLAGS:+ $JNI_CFLAGS}"
-
-
-
+	EXTRA_BUILDS='${TOPDIR}/jni'${EXTRA_BUILDS:+ EXTRA_BUILDS}
 
 fi
+
+
+
 
 #######################################################################
 #	Check for types.
