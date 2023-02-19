@@ -10,7 +10,6 @@
  *** Globals
  ***********************************************************************/
 
-static void *p4_program_end;
 static P4_Word *p4_builtin_words;
 static P4_Ctx * volatile signal_ctx;
 
@@ -194,12 +193,6 @@ p4Init(void)
 	setvbuf(stdout, NULL, _IOLBF, 0);
 	setvbuf(stderr, NULL, _IOLBF, 0);
 #endif
-
-	/* Remember the split between the program and its static
-	 * data and data dynamically allocated later.  This can be
-	 * used to distinguish between built-in and loaded words.
-	 */
-	p4_program_end = sbrk(0);
 
 #ifdef HAVE_TCGETATTR
 # ifdef HAVE_CTERMID
@@ -1135,7 +1128,7 @@ p4Free(P4_Ctx *ctx)
 	P4_Word *word, *prev;
 
 	if (ctx != NULL) {
-		for (word = ctx->words; p4_program_end <= (void *)word; word = prev) {
+		for (word = ctx->words; p4_builtin_words != word; word = prev) {
 			prev = word->prev;
 			p4WordFree(word);
 		}
@@ -2476,7 +2469,7 @@ _seext:		word = P4_POP(ctx->ds).xt;
 			(void) printf("\"%.*s\" ", (int)str.length, str.string);
 			LONGJMP(ctx->on_throw, P4_THROW_UNDEFINED);
 		}
-		if ((void *) word < p4_program_end) {
+		if (word <= p4_builtin_words) {
 			(void) printf(": %.*s ( builtin ) ;\r\n", (int)word->name.length, word->name.string);
 			NEXT;
 		}
