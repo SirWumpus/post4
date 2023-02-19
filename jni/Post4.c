@@ -12,6 +12,8 @@
 #define POST4_CLASS	"post4/jni/Post4"
 #define ERROR_CLASS	"post4/jni/Post4Exception"
 
+static const char *empty_argv[] = { NULL };
+
 static P4_Ctx *
 getCtx(JNIEnv *env, jobject self)
 {
@@ -39,9 +41,16 @@ Java_post4_jni_Post4_init(JNIEnv *env, jobject self)
 }
 
 JNIEXPORT void JNICALL
-Java_post4_jni_Post4_p4Free(JNIEnv *env, jobject self, jlong ctx)
+Java_post4_jni_Post4_p4Free(JNIEnv *env, jobject self, jlong xtc)
 {
-	p4Free((P4_Ctx *) ctx);
+	P4_Ctx *ctx = (P4_Ctx *) xtc;
+	if (ctx->argv != (char **) empty_argv) {
+		for (int argi = 0; argi < ctx->argc; argi++) {
+			free(ctx->argv[argi]);
+		}
+		free(ctx->argv);
+	}
+	p4Free(ctx);
 }
 
 JNIEXPORT jlong JNICALL
@@ -53,9 +62,6 @@ Java_post4_jni_Post4_p4Create(JNIEnv *env, jobject self, jobject opts)
 
 	/* Map from object to struct. */
 	jclass clazz = (*env)->GetObjectClass(env, opts);
-
-	p4_opts.argc = 0;
-	p4_opts.argv = NULL;
 
 	fid = (*env)->GetFieldID(env, clazz, "ds_size", "I");
 	p4_opts.ds_size = (unsigned)(*env)->GetIntField(env, opts, fid);
@@ -76,6 +82,24 @@ Java_post4_jni_Post4_p4Create(JNIEnv *env, jobject self, jobject opts)
 	fid = (*env)->GetFieldID(env, clazz, "block_file", "Ljava/lang/String;");
 	jstring jblock_file = (*env)->GetObjectField(env, opts, fid);
 	p4_opts.block_file = (*env)->GetStringUTFChars(env, jblock_file, NULL);
+
+	fid = (*env)->GetFieldID(env, clazz, "argv", "[Ljava/lang/String;");
+	jobjectArray jargv = (*env)->GetObjectField(env, opts, fid);
+	p4_opts.argc = (int) (*env)->GetArrayLength(env, jargv);
+	if ((p4_opts.argv = malloc((p4_opts.argc + 1) * sizeof (*p4_opts.argv))) == NULL) {
+		p4_opts.argv = (char **) empty_argv;
+		p4_opts.argc = 0;
+	} else {
+		p4_opts.argv[p4_opts.argc] = NULL;
+		for (int argi = 0; argi < p4_opts.argc; argi++) {
+			jstring jstr = (*env)->GetObjectArrayElement(env, jargv, argi);
+			const char *str = (*env)->GetStringUTFChars(env, jstr, NULL);
+			p4_opts.argv[argi] = strdup(str);
+			(*env)->ReleaseStringUTFChars(env, jstr, str);
+			(*env)->DeleteLocalRef(env, jstr);
+		}
+	}
+	(*env)->DeleteLocalRef(env, jargv);
 
 	/* Create Post4 context. */
 	ctx = p4Create(&p4_opts);

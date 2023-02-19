@@ -42,7 +42,9 @@ public final class Post4
 
 	public static void main(String[] args)
 	{
-			Post4 p4 = new Post4();
+			Post4Options opts = new Post4Options();
+			opts.argv = args;
+			Post4 p4 = new Post4(opts);
 			try {
 				p4.evalString("$cafebabe .s hex . CR blocks");
 			} catch (Post4Exception e) {
