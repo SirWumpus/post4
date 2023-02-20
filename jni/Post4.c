@@ -35,7 +35,7 @@ post4Exception(JNIEnv *env, int code)
 }
 
 JNIEXPORT void JNICALL
-Java_post4_jni_Post4_init(JNIEnv *env, jobject self)
+Java_post4_jni_Post4_p4Init(JNIEnv *env, jobject self)
 {
 	p4Init();
 }
@@ -116,10 +116,44 @@ Java_post4_jni_Post4_p4Create(JNIEnv *env, jobject self, jobject opts)
 	return (jlong) ctx;
 }
 
+static jobject getStacks(JNIEnv *env, P4_Ctx *ctx)
+{
+	jsize size;
+
+	size = P4_LENGTH(ctx->ds);
+	jlongArray longs = (*env)->NewLongArray(env, size);
+	jlong tmp_long[size];
+	for (int i = 0; i < size; i++) {
+		tmp_long[i] = P4_PICK(ctx->ds, i).n;
+	}
+	(*env)->SetLongArrayRegion(env, longs, 0, size, tmp_long);
+
+	size = P4_LENGTH(ctx->fs);
+	jdoubleArray doubles = (*env)->NewDoubleArray(env, size);
+	jdouble tmp_double[size];
+	for (int i = 0; i < size; i++) {
+		tmp_double[i] = P4_PICK(ctx->fs, i).f;
+	}
+	(*env)->SetDoubleArrayRegion(env, doubles, 0, size, tmp_double);
+
+	jclass stacks = (*env)->FindClass(env, "post4/jni/Post4Stacks");
+	jmethodID mid = (*env)->GetMethodID(env, stacks, "<init>", "([J[D)V");
+	jobject results = (*env)->NewObject(env, stacks, mid, longs, doubles);
+	(*env)->DeleteLocalRef(env, stacks);
+
+	return results;
+}
+
 JNIEXPORT jint JNICALL
 Java_post4_jni_Post4_repl(JNIEnv *env, jobject self)
 {
 	return p4Repl(getCtx(env, self));
+}
+
+JNIEXPORT jobject JNICALL
+Java_post4_jni_Post4_stacks(JNIEnv *env, jobject self)
+{
+	return getStacks(env, getCtx(env, self));
 }
 
 JNIEXPORT void JNICALL

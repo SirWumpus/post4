@@ -70,7 +70,7 @@ clean: title
 distclean: clean
 	-rm -rf *$L *$A makefile ./post4
 
-build: title ${LIBNAME} Post4Exception$C Post4Options$C Post4$C
+build: title ${LIBNAME} Post4Exception$C Post4Options$C Post4Stacks$C Post4$C
 
 title :
 	@echo

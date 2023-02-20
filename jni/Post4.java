@@ -13,7 +13,7 @@ public final class Post4
 	static
 	{
 		System.loadLibrary("post4jni");
-		init();
+		p4Init();
 	}
 
 	public Post4()
@@ -47,7 +47,25 @@ public final class Post4
 			Post4 p4 = new Post4(opts);
 
 			try {
-				p4.evalString("$cafebabe hex U. decimal CR");
+				p4.evalString(
+"""
+$cafebabe hex U. decimal CR
+41 377 3.14159 2.71828 6.62607015e-34
+"""
+				);
+				Post4Stacks results = p4.stacks();
+
+				System.out.print(String.format("ds[%d] ", results.ds.length));
+				for (long l : results.ds) {
+					System.out.print(String.format("%d ", l));
+				}
+				System.out.println();
+
+				System.out.print(String.format("fs[%d] ", results.fs.length));
+				for (double d : results.fs) {
+					System.out.print(String.format("%.6e ", d));
+				}
+				System.out.println();
 			} catch (Post4Exception e) {
 				// You goofed.
 				System.err.println(e);
@@ -64,11 +82,12 @@ public final class Post4
 			}
 	}
 
-	private native static void init();
+	private native static void p4Init();
 	private native static void p4Free(long ctx);
 	private native static long p4Create(Post4Options opts);
 
 	private native int repl();
+	private native Post4Stacks stacks();
 	private native void evalFile(String fpath) throws Post4Exception;
 	private native void evalString(String string) throws Post4Exception;
 }
