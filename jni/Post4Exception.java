@@ -13,8 +13,10 @@ public class Post4Exception extends Exception
 
 	private int code = THROW_GENERIC;
 
-	public final static int THROW_GENERIC		= 1;		/* Unknown, generic, WTF. */
 	public final static int THROW_OK			= (0);		/* No error. */
+
+	/* -255..-1 reserved by the standard. */
+
 	public final static int THROW_ABORT			= (-1);		/* ABORT */
 	public final static int THROW_ABORT_MSG		= (-2);		/* ABORT" */
 	public final static int THROW_DS_OVER		= (-3);		/* stack overflow */
@@ -95,6 +97,10 @@ public class Post4Exception extends Exception
 	public final static int THROW__78			= (-78);	/* SUBSTITUTE */
 	public final static int THROW__79			= (-79);	/* REPLACES */
 	public final static int THROW_future		= (-80);	/* -80 .. -4096 reserved for future assignment */
+
+	/* -4095..-256 reserved for the system (that's us). */
+
+	public final static int THROW_GENERIC		= (-4095);	/* Unknown, generic, WTF. */
 
 	private final static String[] messages = {
 		"ok",

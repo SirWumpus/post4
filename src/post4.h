@@ -464,7 +464,9 @@ struct p4_ctx {
 #define P4_THROW__79		(-79)	/* REPLACES */
 #define P4_THROW_future		(-80)	/* -80 .. -255 reserved for future assignment */
 
-/* -4095..-256 reserved for system assignment. */
+/* -4095..-256 reserved for the system (that's us). */
+
+#define P4_THROW_GENERIC	(-4095)
 
 /***********************************************************************
  *** API
