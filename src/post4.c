@@ -375,9 +375,14 @@ p4StrNum(P4_String str, P4_Uint base, P4_Cell *out, int *is_float)
 		return 0;
 	}
 
-	if (offset < str.length && str.string[offset] == '-') {
-		negate = 1;
-		offset++;
+	if (offset < str.length) {
+		switch (str.string[offset]) {
+		case '-':
+			negate = 1;
+			/*@fallthrough@*/
+		case '+':
+			offset++;
+		}
 	}
 	for (num.n = 0; offset < str.length; offset++) {
 		int digit = p4Base36(str.string[offset]);
