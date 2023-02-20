@@ -89,40 +89,34 @@ The default numeric input/output base is decimal (base 10).  Setting variable `B
 
 Regardless of the current value of `BASE`, it is possible to input numbers in one of the four common bases without having to change the value of `BASE`.  Prefixing a number with `%`, `0` (zero), `#`, `$` or `0x` can set a binary, octal, decimal, or hex value; an optional minus sign given after the prefix to indicate a negative number.  For example:
 
-        %1111111 = #127 = 0177 = $7f = 0x7f = $000000000000007f
+        %1111111  = #127  = 0177  = $7f  = 0x7f  = $000000000000007f
         %-1111111 = #-127 = 0-177 = $-7f = 0x-7f = $ffffffffffffff81
 
 When current `BASE` is ten (10) its possible to input floating point numbers (provided support is enabled) with a decimal point and/or scientific notation.  For example:
 
-        0.0 = 0. = 0E0 = 0e0
-        1.0 = 1. = 1E0 = 1e0 = +1.E0
-        -0.123 = -123e-3
-        12.3 = 123E-1
+         0.0    =  0.  =  0E0  =  0e0
+         1.0    =  1.  =  1E0  =  1e0  =  +1.E0
+         12.3   =  123E-1
+        -0.123  = -123e-3
 
 Floating point numbers are placed on the float stack, which is separate from the data and return stacks.  Also the float stack is small, though at least six (6) deep.  See [Floating-Point Words](./doc/float.md), in particular words [f.](./doc/float.md) and [fs.](./doc/float.md) to start with.  Note the input notation, eg. `123E`, where there is no value following the exponent is not supported.
 
 It is also possible to input a character constant or backslash escape character.  Simple use single-quotes around the character or backslash-escape string (see also `CHAR` and `[CHAR]`).  For example:
 
-        'A'     ASCII upper case A.
-        'b'     ASCII lower case B.
+        'A'     ASCII upper case A.             '_'     ASCII underscore.
+        'b'     ASCII lower case B.             '\n'    ASCII linefeed.
         '9'     ASCII digit 9.
-        '_'     ASCII underscore.
-        '\n'    ASCII linefeed.
+
 
 The following C-style backslash escapes are supported:
 
-        \?      delete
-        \\      backslash
-        \a      bell
-        \b      backspace
-        \e      escape
-        \f      formfeed
-        \n      linefeed
-        \r      carriage-return
-        \s      space
-        \t      tab
-        \v      vertical tab
-        \0      nul
+        \?      delete                          \n      linefeed
+        \\      backslash                       \r      carriage-return
+        \a      bell                            \s      space
+        \b      backspace                       \t      tab
+        \e      escape                          \v      vertical tab
+        \f      formfeed                        \0      nul
+
 
 Because Forth uses whitespace for input delimiters, in particular space (ASCII 32), the only way to input a literal space character is with:
 
