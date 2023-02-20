@@ -1,6 +1,6 @@
 [UNDEFINED] cell-bits [IF]
 	.( Assumes Post4 ) CR
-[ELSE] cell-bits 64 <> [IF]
+[ELSE] cell-bits #64 <> [IF]
 	.( Test suite assumes 64b cell size. ) CR
 [ELSE]
 	.( Post4 Unit Tests ) CR
