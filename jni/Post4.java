@@ -86,8 +86,8 @@ $cafebabe hex U. decimal CR
 	private native static void p4Free(long ctx);
 	private native static long p4Create(Post4Options opts);
 
-	private native int repl();
-	private native Post4Stacks stacks();
-	private native void evalFile(String fpath) throws Post4Exception;
-	private native void evalString(String string) throws Post4Exception;
+	public native int repl();
+	public native Post4Stacks stacks();
+	public native void evalFile(String fpath) throws Post4Exception;
+	public native void evalString(String string) throws Post4Exception;
 }

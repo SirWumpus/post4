@@ -70,6 +70,12 @@ Post4 is written in ISO C11 using only one extension, `Labels As Values`, which 
         $ post4
 
 
+Java Native Interface
+---------------------
+
+JNI support is availble.  See the [JNI documentation](./jni/README.md) about building, API, and examples.
+
+
 Interactive Usage
 -----------------
 

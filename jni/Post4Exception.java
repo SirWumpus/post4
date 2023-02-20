@@ -11,7 +11,7 @@ package post4.jni;
 public class Post4Exception extends Exception
 {
 
-	private int code = THROW_GENERIC;
+	public final int code;
 
 	public final static int THROW_OK			= (0);		/* No error. */
 
@@ -217,9 +217,4 @@ public class Post4Exception extends Exception
 //			}
 //		}
 //	}
-
-	public int getCode()
-	{
-		return code;
-	}
 }
