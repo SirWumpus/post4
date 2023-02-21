@@ -531,11 +531,11 @@ p4MemDump(FILE *fp, P4_Char *addr, P4_Size length)
 	s = addr;
 	for (count = 0; count < length; addr++) {
 		if ((count & 0xF) == 0) {
-			(void) fprintf(fp, P4_PTR_FMT" ", (long)addr);
+			(void) fprintf(fp, P4_PTR_FMT"  ", (long)addr);
 			s = addr;
 		}
-		(void) fprintf(fp, " %.2x", (unsigned char) *addr);
-		if ((++count & 0x3) == 0) {
+		(void) fprintf(fp, "%.2x", (unsigned char) *addr);
+		if ((++count & 0x1) == 0) {
 			(void) fputc(' ', fp);
 		}
 		if ((count & 0xF) == 0) {
@@ -548,8 +548,8 @@ p4MemDump(FILE *fp, P4_Char *addr, P4_Size length)
 	}
 	if ((count & 0xF) != 0) {
 		do {
-			(void) fprintf(fp, "   ");
-			if ((++count & 0x3) == 0) {
+			(void) fprintf(fp, "  ");
+			if ((++count & 0x1) == 0) {
 				(void) fputc(' ', fp);
 			}
 		} while ((count & 0xF) != 0);
