@@ -1346,10 +1346,8 @@ p4Repl(P4_Ctx *ctx)
 		P4_WORD("TRACE",	&&_trace,	0),		// p4
 #endif
 		/* Constants. */
-		P4_WORD("/hold",		&&_pic_size,	0),	// p4
 		P4_WORD("/pad",			&&_pad_size,	0),	// p4
 		P4_WORD("address-unit-bits",	&&_char_bit,	0),	// p4
-		P4_WORD("floored",		&&_floored,	0),	// p4
 
 		/* Internal support. */
 		P4_WORD("_bp",		&&_bp,		P4_BIT_IMM),	// p4
@@ -1750,11 +1748,6 @@ _lit:		w = *ip++;
 _char_bit:	P4_PUSH(ctx->ds, (P4_Uint) P4_CHAR_BIT);
 		NEXT;
 
-		// ( -- flag )
-		// C11 defines symmetric division, not floored.
-_floored:	P4_PUSH(ctx->ds, (P4_Int) P4_FALSE);
-		NEXT;
-
 		// ( n1 -- n2 )
 _chars:		P4_TOP(ctx->ds).n *= sizeof (P4_Char);
 		NEXT;
@@ -1971,10 +1964,6 @@ _base:		P4_PUSH(ctx->ds, (P4_Cell *) &ctx->radix);
 
 		// ( -- u )
 _pad_size:	P4_PUSH(ctx->ds, (P4_Uint) P4_PAD_SIZE);
-		NEXT;
-
-		// ( -- u )
-_pic_size:	P4_PUSH(ctx->ds, P4_PIC_SIZE);
 		NEXT;
 
 		// ( -- rows cols )

@@ -105,7 +105,10 @@ FALSE INVERT CONSTANT TRUE
 \
 '\s' CONSTANT BL
 
+
 \ ( -- u )
+-3 2 / -2 - 0= CONSTANT floored
+2 CELLS address-unit-bits * 2 + CONSTANT /hold
 1 CELLS address-unit-bits * CONSTANT cell-bits
 1 address-unit-bits LSHIFT 1 - CONSTANT MAX-CHAR
 0 INVERT 1 RSHIFT CONSTANT MAX-N
