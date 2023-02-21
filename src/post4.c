@@ -181,13 +181,9 @@ p4Init(void)
 
 	signal(SIGINT, sig_int);
 	signal(SIGFPE, sig_int);
-	signal(SIGWINCH, sig_winch);
-#ifdef NDEBUG
-/* When debugging with gdb can be helpful to see actual error
- * location; otherwise catch it.
- */
 	signal(SIGSEGV, sig_int);
-#endif
+	signal(SIGWINCH, sig_winch);
+
 	is_tty = isatty(fileno(stdin));
 #ifdef ASSERT_LINE_BUFFERING
 	setvbuf(stdout, NULL, _IOLBF, 0);
