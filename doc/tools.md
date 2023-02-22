@@ -155,8 +155,8 @@ Terminate and return to the host OS an exit code; zero (0) for normal/success, n
 
 - - -
 #### _bp
-( -- ) immediate  
-Breakpoint.
+( -- )  
+Breakpoint.  Display current source buffer position.  Intended as convenient function, with no side effects, to set a breakpoint while debugging.
 
 - - -
 #### .fs

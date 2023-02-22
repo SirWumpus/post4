@@ -1350,7 +1350,7 @@ p4Repl(P4_Ctx *ctx)
 		P4_WORD("address-unit-bits",	&&_char_bit,	0),	// p4
 
 		/* Internal support. */
-		P4_WORD("_bp",		&&_bp,		P4_BIT_IMM),	// p4
+		P4_WORD("_bp",		&&_bp,		0),		// p4
 		P4_WORD("_branch",	&&_branch,	P4_BIT_COMPILE), // p4
 		P4_WORD("_branchz",	&&_branchz,	P4_BIT_COMPILE), // p4
 		P4_WORD("_call",	&&_call,	P4_BIT_COMPILE), // p4

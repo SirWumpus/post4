@@ -709,8 +709,6 @@ DEFER _fsp!
 	['] COMPILE, COMPILE,
 ; IMMEDIATE compile-only
 
-: [_bp] POSTPONE _bp ;
-
 \ ...  [CHAR]  ...
 \
 \  (C: <spaces>name -- ) \ (S: -- char )
