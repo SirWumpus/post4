@@ -4645,14 +4645,24 @@ fi
 if test ${with_java+y}
 then :
   withval=$with_java;
-fi
-
-if test $with_java = 'no'
+	if test $with_java = 'no'
 then :
   unset JAVA_HOME
 elif test $with_java != 'yes'
 then :
   export JAVA_HOME="$with_java"
+
+fi
+
+else $as_nop
+
+	with_java='yes'
+
+fi
+
+if test $with_java != 'no'
+then :
+  printf "%s\n" "#define WITH_JAVA \"$with_java\"" >>confdefs.h
 
 fi
 

@@ -47,11 +47,15 @@ dnl SNERT_OPTION_ENABLE_MINGW
 #	Configuration options: packages
 #######################################################################
 
-AC_ARG_WITH(java,[AS_HELP_STRING([--with-java],[build Jave Native Interface support])])
-AS_IF(
-	[test $with_java = 'no'],[unset JAVA_HOME],
-	[test $with_java != 'yes'],[export JAVA_HOME="$with_java"]
-)
+AC_ARG_WITH(java,[AS_HELP_STRING([--with-java],[build Jave Native Interface support])],[
+	AS_IF(
+		[test $with_java = 'no'],[unset JAVA_HOME],
+		[test $with_java != 'yes'],[export JAVA_HOME="$with_java"]
+	)
+],[
+	with_java='yes'
+])
+AS_IF([test $with_java != 'no'],[AC_DEFINE_UNQUOTED(WITH_JAVA, ["$with_java"])])
 
 #######################################################################
 #	Check for programs
