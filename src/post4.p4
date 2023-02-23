@@ -112,7 +112,7 @@ FALSE INVERT CONSTANT TRUE
 2 CELLS address-unit-bits * 2 + CONSTANT /hold
 1 address-unit-bits LSHIFT 1 - CONSTANT MAX-CHAR
 0 INVERT 1 RSHIFT CONSTANT MAX-N	\ 0x7fff...ffff
-MAX-N INVERT CONSTANT min-n		\ 0x8000...0000
+MAX-N INVERT CONSTANT MIN-N		\ 0x8000...0000
 0 INVERT CONSTANT MAX-U			\ 0xffff...ffff
 
 _rs CONSTANT return-stack-cells DROP DROP
@@ -1957,15 +1957,15 @@ VARIABLE SCR
 \ (C: <spaces>name -- aaddr 0 ) (S: -- size )
 \
 : BEGIN-STRUCTURE
-	0 VALUE
-	HERE 2 CELLS - 0	\ C: aaddr 0
+	CREATE HERE 0 0 ,	\ C: aaddr 0
+	DOES> @			\ S: size
 ;
 
 \ ... END-STRUCTURE ...
 \
 \ (C: aaddr size -- )
 \
-: END-STRUCTURE SWAP n! ;
+: END-STRUCTURE SWAP ! ;
 
 \ ... +FIELD name ...
 \

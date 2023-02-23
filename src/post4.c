@@ -322,6 +322,17 @@ p4Base36(int digit)
 }
 
 int
+p4IsPrintable(const char *str, size_t u)
+{
+	for ( ; u < 0; u--) {
+		if (!isprint(*str++)) {
+			return 0;
+		}
+	}
+	return 1;
+}
+
+int
 p4StrNum(P4_String str, P4_Uint base, P4_Cell *out, int *is_float)
 {
 	P4_Cell num;
@@ -1101,7 +1112,7 @@ error0:
 void
 p4WordAppend(P4_Ctx *ctx, P4_Cell data)
 {
-	(void) p4Allot(ctx, P4_ALIGN_BY(ctx->words->ndata));
+	(void) p4Allot(ctx, P4_ALIGN_BY((P4_Uint) ctx->here));
 	P4_Cell *here = p4Allot(ctx, sizeof (data));
 	CHECK_ADDR(here);
 	*here = data;
@@ -1295,8 +1306,8 @@ p4Repl(P4_Ctx *ctx)
 
 	static P4_Word words[] = {
 		P4_WORD("_repl",	&&_repl,	0),
-		P4_WORD("EXIT",		&&_exit,	P4_BIT_COMPILE),
 		P4_WORD("LIT",		&&_lit,		0),		// historic
+		P4_WORD(";",		&&_exit,	P4_BIT_HIDDEN), // _seext
 #ifdef HAVE_MATH_H
 //		P4_WORD("min-float",	&&_min_float,	0),		// p4
 		P4_WORD("max-float",	&&_max_float,	0),		// p4
@@ -1376,6 +1387,7 @@ p4Repl(P4_Ctx *ctx)
 		P4_WORD("DOES>",	&&_does,	P4_BIT_COMPILE),
 		P4_WORD("EVALUATE",	&&_evaluate,	0),
 		P4_WORD("EXECUTE",	&&_execute,	0),
+		P4_WORD("EXIT",		&&_exit,	P4_BIT_COMPILE),
 		P4_WORD("IMMEDIATE",	&&_immediate,	P4_BIT_IMM),
 		P4_WORD("immediate?",	&&_is_immediate, 0),		// p4
 		P4_WORD("MARKER",	&&_marker,	0),
@@ -1439,7 +1451,7 @@ p4Repl(P4_Ctx *ctx)
 		P4_WORD("args",		&&_args,	0),		// p4
 		P4_WORD("bye-code",	&&_bye_code,	0),		// p4
 		P4_WORD("env",		&&_env,		0),		// p4
-		P4_WORD("_SEEXT",	&&_seext,	0),		// p4
+		P4_WORD("_seext",	&&_seext,	0),		// p4
 
 		/* I/O */
 		P4_WORD(">IN",		&&_input_offset,0),
@@ -1471,9 +1483,9 @@ p4Repl(P4_Ctx *ctx)
 		P4_WORD(NULL,		NULL,		0),
 	};
 
-#define w_repl	words[0]
-#define w_exit	words[1]
-#define w_lit	words[2]
+#define w_repl	words[0]	// See exec[].
+#define w_lit	words[1]
+#define w_semi	words[2]	// See _seext.
 
 	/* When the REPL executes a word, it puts the XT of the word here
 	 * and starts the machine with the IP pointed to exec[].  When the
@@ -1791,7 +1803,7 @@ _semicolon:	w = P4_POP(ctx->ds);
 			);
 			LONGJMP(ctx->on_throw, P4_THROW_BAD_CONTROL);
 		}
-		p4WordAppend(ctx, (P4_Cell) &w_exit);
+		p4WordAppend(ctx, (P4_Cell) &w_semi);
 		P4_WORD_CLEAR_HIDDEN(ctx->words);
 		ctx->state = P4_STATE_INTERPRET;
 		if (ctx->words->name.length == 0) {
@@ -1878,6 +1890,13 @@ _does:		word = ctx->words;
 			LONGJMP(ctx->on_throw, P4_THROW_NOT_CREATED);
 		}
 		word->code = &&_do_does;
+		/*** If we change (again) how a P4_Word and data are
+		 *** stored in memory, then most likely need to fix
+		 *** this and _seext.
+		 ***/
+		// Save defining word's xt for _seext.
+		x = P4_TOP(ctx->rs);
+		p4WordAppend(ctx, *--x.p);
 		// Append the IP of the words following DOES> of the defining
 		// word after the data of the current word being defined.
 		//
@@ -1926,7 +1945,7 @@ _allot:		w = P4_POP(ctx->ds);
 		NEXT;
 
 		// ( -- )
-_align:		(void) p4Allot(ctx, P4_ALIGN_BY(ctx->words->ndata));
+_align:		(void) p4Allot(ctx, P4_ALIGN_BY((P4_Uint) ctx->here));
 		NEXT;
 
 		/*
@@ -2451,23 +2470,25 @@ _dump:		x = P4_POP(ctx->ds);
 
 		// ( xt -- )
 _seext:		word = P4_POP(ctx->ds).xt;
-		if (word == NULL) {
-			(void) printf("\"%.*s\" ", (int)str.length, str.string);
-			LONGJMP(ctx->on_throw, P4_THROW_UNDEFINED);
-		}
-		if (word <= p4_builtin_words) {
-			(void) printf(": %.*s ( builtin ) ;\r\n", (int)word->name.length, word->name.string);
-			NEXT;
-		}
+		/* If xt is bogus address, then possible SIGSEGV here.
+		 * Test: 123 _seext
+		 */
 		if (word->code == &&_enter) {
+			/* Test most words, eg. SEE IF SEE ['] SEE \ */
 			(void) printf(
 				word->name.length == 0 ? ":NONAME " : ": %.*s ",
 				(int) word->name.length, word->name.string
 			);
-			for (w.p = word->data; w.p->xt != &w_exit; w.p++) {
+			for (w.p = word->data; w.p->xt != &w_semi; w.p++) {
 				x = *w.p;
 				if (x.w->code == &&_lit) {
-					(void) printf("[ "P4_INT_FMT" ] LITERAL ", (*++w.p).n);
+					x = *++w.p;
+					if (x.w != NULL && words <= x.w
+					&& p4IsPrintable(x.w->name.string, x.w->name.length)) {
+						(void) printf("[ ' %.*s ] LITERAL ", x.w->name.length, x.w->name.string);
+					} else {
+						(void) printf("[ "P4_INT_FMT" ] LITERAL ", x.n);
+					}
 				} else if (strncmp(x.w->name.string, "_slit", STRLEN("_slit")) == 0) {
 					(void) printf("S\" %s\" ", &w.p[2]);
 					w.u += P4_CELL + P4_CELL_ALIGN(w.p[1].u + 1);
@@ -2482,36 +2503,44 @@ _seext:		word = P4_POP(ctx->ds).xt;
 					}
 				}
 			}
-			(void) printf(";%s", P4_WORD_IS_IMM(word) ? " IMMEDIATE" : "");
-			(void) printf("%s", P4_WORD_IS_COMPILE(word) ? " compile-only" : "");
-			(void) printf(crlf);
+			(void) printf(";%s%s\r\n",
+				P4_WORD_IS_IMM(word) ? " IMMEDIATE" : "",
+				P4_WORD_IS_COMPILE(word) ? " compile-only" : ""
+			);
 		} else if (word->code == &&_do_does) {
-			// Dump word's data.
-			for (w.u = 0, x.u = P4_CELL; x.u < word->ndata - P4_CELL; x.u += P4_CELL, w.u++) {
-				(void) printf(P4_HEX_FMT" ", word->data[w.u].u);
+			/* Test: 123 VALUE x SEE x */
+			/*** If we change (again) how a P4_Word and data are
+			 *** stored in memory, then most likely need to fix
+			 *** this and DOES>.
+			 ***/
+			/* Dump word's data. data[0] = pointer to DOES>,
+			 * data[n-1] = xt of defining word, see _does.
+			 * data[1..n-2] is the actual data.
+			 */
+			w.s = (P4_Char *)word->data + word->ndata - sizeof (*word->data);
+			for (x.p = word->data + 1; x.p < w.p; x.p++) {
+				(void) printf(P4_HEX_FMT" ", *x.p);
 			}
-			// Search back for code field with _enter.
-			for (w.p = word->data[0].p; w.p->xt != &&_enter; w.p--) {
-				;
-			}
-			// Find defining word.
-			w.w = (P4_Word *)(w.s - offsetof(P4_Word, code));
+			/* Print the defining word, eg. VALUE, and new word name. */
+			w = *w.p;
 			(void) printf(
 				"%.*s %.*s\r\n",
 				(int) w.w->name.length, w.w->name.string,
 				(int) word->name.length, word->name.string
 			);
 		} else if (word->code == &&_data_field) {
-			P4_Uint stop;
+			/* Test: CREATE y 1 , 2 , 3 , SEE y */
 			(void) printf(
 				"CREATE %.*s ( size %zu )\r\n",
 				(int) word->name.length, word->name.string, word->ndata - P4_CELL
 			);
 			p4MemDump(stdout, (P4_Char *)(word->data + 1), word->ndata - P4_CELL);
 		} else {
+			/* Builtins or libraries.  Test: SEE LIT SEE CREATE */
 			(void) printf(
-				": %.*s ( unknown code ) 0x%p\r\n",
-				(int)word->name.length, word->name.string, word->code
+				": %.*s ( code address %#lx ) ;\r\n",
+				(int) word->name.length, word->name.string,
+				word->code
 			);
 		}
 		NEXT;
@@ -2926,7 +2955,7 @@ main(int argc, char **argv)
 
 	if (argc <= optind || (argv[optind][0] == '-' && argv[optind][1] == '\0')) {
 		while ((rc = p4Repl(ctx)) != P4_THROW_OK) {
-			;
+			; // Remain in the REPL until EOF or BYE.
 		}
 	} else if (optind < argc && (rc = p4EvalFile(ctx, argv[optind]))) {
 		err(EXIT_FAILURE, "%s", argv[optind]);
