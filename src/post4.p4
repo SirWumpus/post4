@@ -108,12 +108,12 @@ FALSE INVERT CONSTANT TRUE
 
 \ ( -- u )
 -3 2 / -2 - 0= CONSTANT floored
-2 CELLS address-unit-bits * 2 + CONSTANT /hold
 1 CELLS address-unit-bits * CONSTANT cell-bits
+2 CELLS address-unit-bits * 2 + CONSTANT /hold
 1 address-unit-bits LSHIFT 1 - CONSTANT MAX-CHAR
-0 INVERT 1 RSHIFT CONSTANT MAX-N
-MAX-N INVERT CONSTANT MIN-N
-0 INVERT CONSTANT MAX-U
+0 INVERT 1 RSHIFT CONSTANT MAX-N	\ 0x7fff...ffff
+MAX-N INVERT CONSTANT min-n		\ 0x8000...0000
+0 INVERT CONSTANT MAX-U			\ 0xffff...ffff
 
 _rs CONSTANT return-stack-cells DROP DROP
 _ds CONSTANT stack-cells DROP DROP
@@ -1484,9 +1484,6 @@ VARIABLE _>pic
 	>R >R >R		\ S: i1  R: l1 i1 l2 i2 ip
 ; compile-only
 
--1 1 RSHIFT CONSTANT int_max	\ 0x7F...FF
-int_max INVERT CONSTANT int_min	\ 0x80...00
-
 \ ... limit first DO ... LOOP ...
 \
 \ (S: n -- flag ) (R: limit index ip -- limit index' ip )
@@ -1499,9 +1496,9 @@ int_max INVERT CONSTANT int_min	\ 0x80...00
 
 	\ Has index crossed (limit-1) and limit boundary?
 	\ ie. (INT_MIN - limit) & INT_MIN != (INT_MIN - limit + index) & INT_MIN
-	SWAP int_min SWAP -	\ S: ip x' l'  R: l x'
-	DUP int_min AND		\ S: ip x' l' sign  R: l x'
-	>R + int_min AND R>	\ S: ip cross sign  R: l x'
+	SWAP MIN-N SWAP -	\ S: ip x' l'  R: l x'
+	DUP MIN-N AND		\ S: ip x' l' sign  R: l x'
+	>R + MIN-N AND R>	\ S: ip cross sign  R: l x'
 	<> SWAP >R		\ S: flag  R: l x' ip
 ;
 
