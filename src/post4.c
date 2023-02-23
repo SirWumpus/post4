@@ -2425,7 +2425,7 @@ _ms:		w = P4_POP(ctx->ds);
 		struct tm *now;
 _time_date:	(void) time(&w.t);
 		now = localtime(&w.t);
-		p4StackCanPopPush(ctx, &ctx->rs, 0, 6);
+		p4StackCanPopPush(ctx, &ctx->ds, 0, 6);
 		P4_PUSH(ctx->ds, (P4_Int) now->tm_sec);
 		P4_PUSH(ctx->ds, (P4_Int) now->tm_min);
 		P4_PUSH(ctx->ds, (P4_Int) now->tm_hour);
