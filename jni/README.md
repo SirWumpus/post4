@@ -75,7 +75,7 @@ The read-only `THROW` code that generated this exception.
 - - -
 #### Class Post4Options
 
-* public Post4()
+* public Post4Options()
 
 Create an options object with the system defaults, which can then be modified before creating `Post4` instance.
 
@@ -109,6 +109,11 @@ An array of strings that can be used as arguments.  See [args](../doc/standard.m
 - - -
 #### Class Post4Stacks
 
+* private Post4Stacks()
+
+Cannot be created directly.  See `Post4.stacks()` above.
+
+- - -
 * public final long[] ds
 * public final double[] fs
 
