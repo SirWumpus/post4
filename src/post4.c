@@ -2085,7 +2085,7 @@ _dup:		w = P4_TOP(ctx->ds);
 		// 0 PICK == DUP, 1 PICK == OVER
 _pick:		w = P4_POP(ctx->ds);
 		/* Check stack depth. */
-		p4StackCanPopPush(ctx, &ctx->ds, w.u+1, w.u+2);
+		p4StackCanPopPush(ctx, &ctx->ds, w.u+1, 0);
 		x = P4_PICK(ctx->ds, w.u);
 		P4_PUSH(ctx->ds, x);
 		NEXT;
@@ -2098,6 +2098,18 @@ _swap:		w = P4_POP(ctx->ds);
 		P4_PUSH(ctx->ds, x);
 		NEXT;
 
+		// ( xu xu-1 ... x0 u –– xu-1 ... x0 xu )
+		// 0 ROLL == noop, 1 ROLL == SWAP, 2 ROLL == ROT
+_roll:		w = P4_POP(ctx->ds);
+		/* Check stack depth. */
+		p4StackCanPopPush(ctx, &ctx->ds, w.n+1, 0);
+		x = P4_PICK(ctx->ds, w.n);
+		for ( ; 0 < w.u; w.u--) {
+			P4_PICK(ctx->ds, w.n) = P4_PICK(ctx->ds, w.n-1);
+		}
+		P4_TOP(ctx->ds) = x;
+		NEXT;
+
 		// (x -- )(R: -- x )
 _to_rs:		w = P4_POP(ctx->ds);
 		p4StackCanPopPush(ctx, &ctx->rs, 0, 1);
@@ -2108,16 +2120,6 @@ _to_rs:		w = P4_POP(ctx->ds);
 _from_rs:	p4StackCanPopPush(ctx, &ctx->rs, 1, 0);
 		w = P4_POP(ctx->rs);
 		P4_PUSH(ctx->ds, w);
-		NEXT;
-
-		// ( xu xu-1 ... x0 u –– xu-1 ... x0 xu )
-		// 0 ROLL == noop, 1 ROLL == SWAP, 2 ROLL == ROT
-_roll:		w = P4_POP(ctx->ds);
-		/* Check stack depth. */
-		p4StackCanPopPush(ctx, &ctx->ds, w.n+1, 0);
-		x = P4_PICK(ctx->ds, w.n);
-		(void) memmove(ctx->ds.top - w.n, ctx->ds.top - w.n + 1, w.n * P4_CELL);
-		P4_TOP(ctx->ds) = x;
 		NEXT;
 
 		/*
