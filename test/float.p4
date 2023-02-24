@@ -193,4 +193,14 @@ t{ +Inf +Inf FATAN2 ->  pi/4 }t
 t{ -Inf +Inf FATAN2 -> -pi/4 }t
 test_group_end
 
+.( FFIELD: FLOATS ) test_group
+t{ 0 FFIELD: tv_field_0 CONSTANT tv_struct_0 -> }t
+t{ tv_struct_0 -> 1 FLOATS }t
+t{ 0 tv_field_0 -> 0 }t
+t{ 0 FFIELD: tv_field_a FFIELD: tv_field_b FFIELD: tv_field_c CONSTANT tv_struct_1 -> }t
+t{ tv_struct_1 0 tv_field_a 0 tv_field_b 0 tv_field_c -> 3 FLOATS 0 1 FLOATS 2 FLOATS }t
+t{ 0 FFIELD: tv_field_d FIELD: tv_field_e FFIELD: tv_field_f CONSTANT tv_struct_2 -> }t
+t{ tv_struct_2 0 tv_field_d 0 tv_field_e 0 tv_field_f -> 2 FLOATS CELL+ 0 1 FLOATS 1 FLOATS CELL+ }t
+test_group_end
+
 [THEN]
