@@ -1667,26 +1667,22 @@ MAX-CHAR CONSTANT /COUNTED-STRING
 \	3.3.3.4 Text-literal regions
 \	A.6.1.2165 S"
 \
-2 CONSTANT _str_buf_max
+4 /PAD CHARS * CONSTANT _str_buf_max
 
 _str_buf_max 1- CONSTANT _str_buf_mask
 
 \ Transient string buffers of size /PAD.
-/PAD CHARS _str_buf_max * BUFFER: _str_bufs
+_str_buf_max BUFFER: _str_bufs
 
-\ Offset of last used buffer.
-VARIABLE _str_buf_index
+\ Last used buffer.
+VARIABLE _str_buf_curr
 
-\ Next string buffer address.
-\
 \ ( -- caddr )
-\
 : _str_buf_next
-	_str_buf_index @	\ S: u
-	1+ _str_buf_mask AND	\ S: u'
-	DUP _str_buf_index !	\ S: u'
-	/PAD CHARS *		\ S: offset
-	_str_bufs +		\ S: caddr
+	_str_buf_curr @ /PAD CHARS +
+	_str_buf_mask AND DUP
+	_str_buf_curr !
+	_str_bufs +
 ;
 
 \ ... _slit ...
