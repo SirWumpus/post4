@@ -232,6 +232,25 @@ t{ MAX-N MIN-N > -> TRUE }t
 t{ MAX-N 0 > -> TRUE }t
 test_group_end
 
+.( WITHIN ) test_group
+t{  0  0  0 WITHIN -> FALSE }t
+t{  0  0  1 WITHIN -> TRUE  }t
+t{  1  0  0 WITHIN -> FALSE }t
+t{  1  0  1 WITHIN -> FALSE }t
+t{  1  0  2 WITHIN -> TRUE  }t
+t{ -1 -1  0 WITHIN -> TRUE  }t
+t{ -2 -1  0 WITHIN -> FALSE }t
+t{  0  0  MAX-N WITHIN -> TRUE }t
+t{  0  0  MAX-U WITHIN -> TRUE }t
+t{ MAX-N 1 - 0 MAX-N WITHIN -> TRUE }t
+t{ MAX-U 1 - 0 MAX-U WITHIN -> TRUE }t
+t{ MIN-N MIN-N 0 WITHIN -> TRUE }t
+t{ MAX-N MIN-N MAX-N WITHIN FALSE }t
+t{ MAX-N MIN-N MAX-N 1 + WITHIN FALSE }t
+t{ MAX-N 0 MAX-U WITHIN -> TRUE }t
+t{ MAX-U 0 MAX-U WITHIN -> FALSE }t
+test_group_end
+
 .( DROP ) test_group
 t{ 12 34 DROP -> 12 }t
 test_group_end
