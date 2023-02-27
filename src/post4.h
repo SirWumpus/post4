@@ -255,7 +255,6 @@ typedef struct {
 	P4_Size		length;		/* Length of input in buffer. */
 	P4_Size		offset;		/* Offset of unconsumed input. */
 	P4_Char *	buffer;
-	P4_Int		unget;
 } P4_Input;
 
 #define P4_INPUT_IS_BLK(input)	((input).fp == (FILE *) -1 && (input).blk > 0)
@@ -366,6 +365,7 @@ struct p4_ctx {
 	P4_Char *	here;		/* Next unused data space. */
 	P4_Char *	end;		/* End of data space memory. */
 	P4_Char	*	mem;		/* Fixed, do not resize. */
+	P4_Int		unkey;		/* KEY and KEY? */
 	P4_Input	input;
 	P4_Block	block;
 	P4_Int		block_fd;

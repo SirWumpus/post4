@@ -875,6 +875,13 @@ p4Accept(P4_Input *input, P4_Char *buf, P4_Size size)
 	if (input->fp == (FILE *) -1 || size-- <= 1) {
 		return 0;
 	}
+#ifdef HAVE_TCSETATTR
+	/* For a terminal restore original line input and echo settings. */
+	if (is_tty && tty_mode != &tty_saved) {
+		(void) tcsetattr(tty_fd, TCSADRAIN, &tty_saved);
+		tty_mode = &tty_saved;
+	}
+#endif
 	for (ptr = buf; ptr - buf < size; ) {
 		if ((ch = p4GetC(input)) == EOF) {
 			if (ptr - buf == 0) {
@@ -899,13 +906,6 @@ p4Refill(P4_Ctx *ctx, P4_Input *input)
 	if (P4_INPUT_IS_STR(ctx->input)) {
 		return P4_FALSE;
 	}
-#ifdef HAVE_TCSETATTR
-	/* For a terminal restore original line input and echo settings. */
-	if (is_tty && tty_mode != &tty_saved) {
-		(void) tcsetattr(tty_fd, TCSADRAIN, &tty_saved);
-		tty_mode = &tty_saved;
-	}
-#endif
 	if ((n = p4Accept(&ctx->input, ctx->input.buffer, ctx->input.size)) < 0) {
 		return P4_FALSE;
 	}
@@ -1160,7 +1160,6 @@ p4ResetInput(P4_Ctx *ctx)
 {
 	ctx->input.size = sizeof (ctx->tty);
 	ctx->input.buffer = ctx->tty;
-	ctx->input.unget = EOF;
 	ctx->input.length = 0;
 	ctx->input.offset = 0;
 	ctx->input.blk = 0;
@@ -1182,6 +1181,7 @@ p4Create(P4_Options *opts)
 		goto error0;
 	}
 	ctx->radix = 10;
+	ctx->unkey = EOF;
 	p4SetInput(ctx, stdin);
 	ctx->argc = opts->argc;
 	ctx->argv = opts->argv;
@@ -2292,37 +2292,38 @@ _refill:	w.n = p4Refill(ctx, &ctx->input);
 
 		// ( -- n )
 _key:		(void) fflush(stdout);
-		if (ctx->input.unget != EOF) {
-			P4_PUSH(ctx->ds, ctx->input.unget);
-			ctx->input.unget = EOF;
-			NEXT;
-		}
+		if (ctx->unkey == EOF) {
 #ifdef HAVE_TCSETATTR
-		if (is_tty && tty_mode != &tty_raw) {
-			(void) tcsetattr(tty_fd, TCSANOW, &tty_raw);
-			tty_mode = &tty_raw;
-		}
+			if (is_tty && tty_mode != &tty_raw) {
+				(void) tcsetattr(tty_fd, TCSANOW, &tty_raw);
+				tty_mode = &tty_raw;
+			}
 #endif
-		P4_PUSH(ctx->ds, p4ReadByte(tty_fd));
+			x.n = p4ReadByte(tty_fd);
+		} else {
+			x.n = ctx->unkey;
+			ctx->unkey = EOF;
+		}
+		P4_PUSH(ctx->ds, x.n);
 		NEXT;
 
 		// ( -- flag )
 _key_ready:	(void) fflush(stdout);
-		if (ctx->input.unget == EOF) {
+		if (ctx->unkey == EOF) {
 #ifdef HAVE_TCSETATTR
 			if (is_tty && tty_mode != &tty_raw_nb) {
 				(void) tcsetattr(tty_fd, TCSANOW, &tty_raw_nb);
 				tty_mode = &tty_raw_nb;
 			}
-			ctx->input.unget = p4ReadByte(tty_fd);
+			ctx->unkey = p4ReadByte(tty_fd);
 #else
 			if (p4SetNonBlocking(tty_fd, 1) == 0) {
-				ctx->input.unget = p4ReadByte(tty_fd);
+				ctx->unkey = p4ReadByte(tty_fd);
 				(void) p4SetNonBlocking(tty_fd, 0);
 			}
 #endif
 		}
-		P4_PUSH(ctx->ds, (P4_Uint) P4_BOOL(ctx->input.unget != EOF));
+		P4_PUSH(ctx->ds, (P4_Uint) P4_BOOL(ctx->unkey != EOF));
 		NEXT;
 
 		// ( c -- )

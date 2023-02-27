@@ -79,7 +79,7 @@ CHAR . CONSTANT off
 		life1d_curr life1d_next life1d_size MOVE
 		life1d_transition life1d_swap
 		life1d_curr life1d_size TYPE CR
-		KEY? IF KEY DROP '\a' EMIT LEAVE THEN
+		KEY? IF KEY DROP CR LEAVE THEN
 	LOOP
 	life1d_curr FREE DROP
 	life1d_next FREE DROP

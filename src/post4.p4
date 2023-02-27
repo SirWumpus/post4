@@ -2071,7 +2071,6 @@ BEGIN-STRUCTURE p4_input
 	FIELD: in.length
 	FIELD: in.offset
 	FIELD: in.buffer	\ pointer
-	FIELD: in.unget
 END-STRUCTURE
 
 \ Example
@@ -2099,6 +2098,7 @@ BEGIN-STRUCTURE p4_ctx
 	FIELD: ctx.here		\ see HERE
 	FIELD: ctx.end		\ see UNUSED
 	FIELD: ctx.mem		\ current data space
+	FIELD: ctx.unkey	\ KEY and KEY?
 	p4_input +FIELD ctx.input
 	p4_block +FIELD ctx.block
 	FIELD: ctx.block_fd

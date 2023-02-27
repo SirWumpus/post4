@@ -155,7 +155,7 @@ screen1 VALUE screen_next
 		generation
 		screen_swap
 		screen_curr .screen
-		KEY? IF KEY DROP '\a' EMIT LEAVE THEN
+		KEY? IF KEY DROP CR LEAVE THEN
 		#250 MS
 	LOOP
 ;
