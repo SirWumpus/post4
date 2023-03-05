@@ -54,11 +54,6 @@ MARKER rm_core_words
 : PARSE 0 _parse ;
 : parse-escape 1 _parse ;
 
-
-\ ( spaces>name -- )
-\
-: SEE ' _seext ;
-
 \ (C: xu ... x1 x0 u -- xu ... x1 x0 xu )
 : CS-PICK PICK ; compile-only
 
@@ -2033,6 +2028,11 @@ VARIABLE SCR
 ; IMMEDIATE
 
 : [THEN] ( -- ) ; IMMEDIATE
+
+[DEFINED] _seext [IF]
+\ ( <spaces>name -- )
+: SEE ' _seext ;
+[THEN]
 
 [DEFINED] _fs [IF]
 _fs CONSTANT floating-stack DROP DROP

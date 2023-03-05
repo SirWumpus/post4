@@ -43,6 +43,13 @@ SNERT_OPTION_ENABLE_MATH
 dnl Needs updating since much changed on Cygwin WRT mingw.
 dnl SNERT_OPTION_ENABLE_MINGW
 
+AC_ARG_ENABLE(see,[AS_HELP_STRING([--disable-see],[disable support for SEE])],[
+	:
+],[
+	enable_see='yes'
+])
+AS_IF([test $enable_see = 'yes'],[AC_DEFINE(HAVE_SEE)])
+
 #######################################################################
 #	Configuration options: packages
 #######################################################################

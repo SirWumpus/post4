@@ -37,6 +37,7 @@ extern "C" {
 #undef P4_TRACE
 
 #undef WITH_JAVA
+#undef HAVE_SEE
 #define USE_STACK_CHECKS		1
 #undef USE_EXCEPTION_STRINGS
 

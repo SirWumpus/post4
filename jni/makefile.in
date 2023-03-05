@@ -93,7 +93,7 @@ Post4$A: build
 	rm -rf post4
 
 ${LIBNAME}: Post4$O ../src/post4$O
-	${CC} -shared -o $@ ../src/post4$O Post4$O ${LIBS}
+	${CC} -shared -o $@ ../src/*$O Post4$O ${LIBS}
 
 ../src/post4$O : ../src/post4.h ../src/post4.c
 	cd ../src; ${MAKE} post4$O

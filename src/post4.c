@@ -1451,7 +1451,9 @@ p4Repl(P4_Ctx *ctx)
 		P4_WORD("args",		&&_args,	0),		// p4
 		P4_WORD("bye-code",	&&_bye_code,	0),		// p4
 		P4_WORD("env",		&&_env,		0),		// p4
+#ifdef HAVE_SEE
 		P4_WORD("_seext",	&&_seext,	0),		// p4
+#endif
 
 		/* I/O */
 		P4_WORD(">IN",		&&_input_offset,0),
@@ -1891,6 +1893,7 @@ _does:		word = ctx->words;
 			LONGJMP(ctx->on_throw, P4_THROW_NOT_CREATED);
 		}
 		word->code = &&_do_does;
+#ifdef HAVE_SEE
 		/*** If we change (again) how a P4_Word and data are
 		 *** stored in memory, then most likely need to fix
 		 *** this and _seext.
@@ -1898,6 +1901,7 @@ _does:		word = ctx->words;
 		// Save defining word's xt for _seext.
 		x = P4_TOP(ctx->rs);
 		p4WordAppend(ctx, *--x.p);
+#endif
 		// Append the IP of the words following DOES> of the defining
 		// word after the data of the current word being defined.
 		//
@@ -2472,6 +2476,7 @@ _dump:		x = P4_POP(ctx->ds);
 		p4MemDump(stdout, w.s, x.u);
 		NEXT;
 
+#ifdef HAVE_SEE
 		// ( xt -- )
 _seext:		word = P4_POP(ctx->ds).xt;
 		/* If xt is bogus address, then possible SIGSEGV here.
@@ -2548,6 +2553,7 @@ _seext:		word = P4_POP(ctx->ds).xt;
 			);
 		}
 		NEXT;
+#endif
 
 #ifdef HAVE_MATH_H
 # if defined(FLT_EVAL_METHOD) == 0
