@@ -373,6 +373,11 @@ struct p4_ctx {
 	JMP_BUF		on_throw;
 };
 
+typedef struct {
+	char *name;
+	void (*func)(P4_Ctx *);
+} P4_Hook;
+
 #define P4_FLOAT_STACK	fs
 
 /***********************************************************************
@@ -530,6 +535,9 @@ extern int p4EvalFile(P4_Ctx *ctx, const char *filepath);
  *	Zero on success, otherwise an exception code other than BYE.
  */
 extern int p4EvalString(P4_Ctx *ctx, const P4_Char *string, size_t length);
+
+extern int p4HookInit(P4_Ctx *ctx);
+extern int p4HookAdd(P4_Ctx *ctx, const char *name, void (*func)(P4_Ctx *ctx));
 
 /***********************************************************************
  *** Utility Functions

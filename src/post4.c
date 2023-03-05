@@ -1368,6 +1368,8 @@ p4Repl(P4_Ctx *ctx)
 		P4_WORD("_ds",		&&_ds,		0),		// p4
 		P4_WORD("_dsp@",	&&_dsp_get,	0),		// p4
 		P4_WORD("_dsp!",	&&_dsp_put,	0),		// p4
+		P4_WORD("_hook_add",	&&_hook_add,	0),		// p4
+		P4_WORD("_hook_call",	&&_hook_call,	0),		// p4
 		P4_WORD("_longjmp",	&&_longjmp,	0),		// p4
 		P4_WORD("_rs",		&&_rs,		0),		// p4
 		P4_WORD("_rsp@",	&&_rsp_get,	0),		// p4
@@ -1712,6 +1714,18 @@ _branch:	w = *ip;
 _branchz:	w = *ip;
 		x = P4_POP(ctx->ds);
 		ip = (P4_Cell *)((P4_Char *) ip + (x.u == 0 ? w.n : P4_CELL));
+		NEXT;
+
+		// ( func `<spaces>name` -- )
+_hook_add:	str = p4ParseName(&ctx->input);
+		p4WordCreate(ctx, str.string, str.length, &&_hook_call);
+		w = P4_POP(ctx->ds);
+		p4WordAppend(ctx, w);
+		NEXT;
+
+		// ( i*x -- j*y )
+_hook_call:	x = w.w->data[0];
+		(*(void (*)(P4_Ctx *)) x.p)(ctx);
 		NEXT;
 
 		// ( -- aaddr )
@@ -2955,6 +2969,7 @@ main(int argc, char **argv)
 	if ((ctx = p4Create(&options)) == NULL) {
 		return EXIT_FAILURE;
 	}
+	(void) p4HookInit(ctx);
 
 	optind = 1;
 	while ((ch = getopt(argc, argv, "b:c:d:f:i:m:r:V")) != -1) {

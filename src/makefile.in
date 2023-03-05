@@ -41,11 +41,11 @@ BUILT		:= `date +'%a, %d %b %Y %H:%M:%S %z'`
 
 #%$E : %.c
 .c$E :
-	$(CC) $(CFLAGS) $(LDFLAGS) $(CC_E)$*$E $< $(LIBS)
+	$(CC) $(CFLAGS) $(LDFLAGS) $(CC_E)$@ $< $(LIBS)
 
 #%$E : %$O
 $O$E :
-	$(LD) $(LDFLAGS) $(CC_E)$*$E $*$O $(LIBS)
+	$(LD) $(LDFLAGS) $(CC_E)$@ $*$O $(LIBS)
 
 .c.i:
 	${CC} -E ${CFLAGS} $*.c >$*.i
@@ -59,7 +59,7 @@ all: build
 build: title post4$E
 
 clean : title
-	-rm -f *.o *.obj *.i *.map *.tds *.TR2 *.stackdump core *.core core.* *.log
+	-rm -f *.o *.obj *.i *.gch *.map *.tds *.TR2 *.stackdump *.core *.log
 	-rm -f a.out$E post4$E
 
 distclean: clean
@@ -77,11 +77,12 @@ install: build
 	install -p -o root -g 0 post4.p4 ${libdir}
 	install -p -o root -g 0 post4$E ${bindir}
 
-post4$O : config.h post4.h post4.c
-	${CC} ${CFLAGS} -fPIC -DP4_BUILT="\"${BUILT}\"" -c post4.c
+hooks$O : config.h post4.h hooks.c
 
-post4$E : config.h post4.h post4.c
-	${CC} ${CFLAGS} ${LDFLAGS} -DTEST -DP4_BUILT="\"${BUILT}\"" -o post4$E post4.c ${LIBS}
+post4$O : config.h post4.h post4.c hooks$O
+
+post4$E : config.h post4.h hooks.c post4.c
+	${CC} ${CFLAGS} ${LDFLAGS} -DTEST -DP4_BUILT="\"${BUILT}\"" -o $@ post4.c hooks.c ${LIBS}
 
 post4.i : config.h post4.h post4.c
 	${CC} -E ${CFLAGS} -DTEST -DP4_BUILT="\"${BUILT}\"" post4.c >$*.i
