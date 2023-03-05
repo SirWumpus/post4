@@ -2103,6 +2103,9 @@ BEGIN-STRUCTURE p4_ctx
 	p4_block +FIELD ctx.block
 	FIELD: ctx.block_fd
 	/PAD +FIELD ctx.tty	\ buffer, see SOURCE
+[DEFINED] jcall [IF]
+	FIELD: jenv
+[THEN]
 	0 +FIELD ctx.on_throw	\ size varies by host OS
 END-STRUCTURE
 

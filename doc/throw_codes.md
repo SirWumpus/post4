@@ -16,6 +16,7 @@ This is a list of `THROW` codes used internally by Post4.
 * -6 return stack underflow
 * -9 invalid memory address (`SIGSEGV`)
 * -10 division by zero
+* -12 argument type mismatch
 * -13 undefined word
 * -14 interpreting a compile-only word
 * -17 pictured numeric output string overflow

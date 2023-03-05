@@ -285,6 +285,7 @@ union p4_cell {
 	P4_Cell	*	p;
 	P4_Char *	s;
 	P4_Word *	w;
+	void *		v;
 	P4_Xt		xt;
 };
 
@@ -370,6 +371,9 @@ struct p4_ctx {
 	P4_Block	block;
 	P4_Int		block_fd;
 	P4_Char		tty[P4_INPUT_SIZE];
+#ifdef WITH_JAVA
+	void *		jenv;
+#endif
 	JMP_BUF		on_throw;
 };
 

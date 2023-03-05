@@ -7,7 +7,8 @@ Copyright 2007, 2023 Anthony Howe.  All rights reserved.
 Java Native Interface
 ---------------------
 
-Using the Java Native Interface (JNI), it is possible to create Post4 instances and execute words.  Currently the support is some what one way (and should improve).
+Using the Java Native Interface (JNI), it is possible to create Post4 instances and execute words.
+
 
 #### Building
 
@@ -132,3 +133,101 @@ Given a `Post4Stacks` instance, examine copies of the data stack `.ds` and float
             System.out.print(String.format("%.6e ", d));
         }
         System.out.println();
+
+
+- - -
+### Java Words
+
+These words provide a low level interface that allows Post4 to query Java object fields and call methods.  They essentially wrap the [JNI](https://docs.oracle.com/en/java/javase/17/docs/specs/jni/index.html).  It is still a work in progress and subject to change.
+
+- - -
+#### jBoxString
+( caddr u -- jstr )  
+
+- - -
+#### jCall
+( x*i obj method m signature s -- y | )  
+
+- - -
+#### jDeleteLocalRef
+( obj -- class )  
+
+- - -
+#### jField
+( obj field f signature s -- x )  
+
+- - -
+#### jFindClass
+( name u -- class )  
+
+- - -
+#### jObjectClass
+( obj -- class )  
+
+- - -
+#### jPushLocalFrame
+( n -- )  
+
+- - -
+#### jPopLocalFrame
+( -- )  
+
+- - -
+#### jSetField
+( x obj field f signature s -- )  
+
+- - -
+#### jSetLocalCapacity
+( n -- )  
+
+- - -
+#### jUnboxString
+( jstr -- caddr u )  
+
+- - -
+### java.lang.System Words
+
+        ok INCLUDE java.lang.System.p4
+        ok S" Bonjour le monde! " jprints
+
+- - -
+#### jprints
+( caddr u -- )  
+
+- - -
+#### jprintn
+( n -- )  
+
+- - -
+#### jprintd
+( F: f  -- )  
+
+- - -
+### java.lang.Thread Words
+
+        ok INCLUDE java.lang.thread.p4
+        ok jCurrentThread DUP jThreadName TYPE SPACE jDeleteLocalRef
+
+- - - 
+#### jCurrentThread
+( -- thread )  
+
+- - -
+#### jDumpStack
+( -- )  
+
+- - -
+#### jMilliSleep
+( ms -- )  
+
+- - -
+#### jNanoSleep
+( ms ns -- )  
+
+- - -
+#### jThreadId
+( thread -- n )  
+
+- - -
+#### jThreadName
+( thread -- caddr u )  
