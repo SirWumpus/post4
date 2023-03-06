@@ -101,15 +101,17 @@ VARIABLE tc_fs_expect
 	R> DROP FALSE
 ;
 : }t_fs
-	FDEPTH tc_fs_expect @ - DUP >R
+	FDEPTH tc_fs_expect @ - DUP 1- >R
 	tc_fs_expect @ tc_fs_start @ -
 	<> IF R> DROP TRUE EXIT THEN
-	R@ BEGIN
+	R@ 1+ BEGIN
 	  ?DUP
 	WHILE
 	  1-
-	  R@ FPICK FSWAP
-	  F= 0= IF R> 2DROP TRUE EXIT THEN
+	  \ Float stack is typically small (6) size, so need
+	  \ to juggle and compare using the data stck.
+	  fs>ds R@ FPICK fs>ds
+	  <> IF R> 2DROP TRUE EXIT THEN
 	REPEAT
 	R> DROP FALSE
 ;

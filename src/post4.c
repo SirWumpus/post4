@@ -1664,6 +1664,7 @@ _bp:		p4Bp(ctx);
 		// Indirect threading.
 		/* Check data stack bounds. */
 _next:		p4StackCanPopPush(ctx, &ctx->ds, 0, 0);
+		p4StackCanPopPush(ctx, &ctx->fs, 0, 0);
 		w = *ip++;
 		p4Trace(ctx, w.xt);
 		goto *w.xt->code;
