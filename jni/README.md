@@ -29,9 +29,10 @@ The `./configure` script will by default attempt to build the JNI support, assum
 #### Class Post4
 
 * public Post4()
+* public Post4(String[])
 * public Post4(Post4Options)
 
-Create a new Post4 machine.  If a `Post4Options` object is given, they are used to alter the Post4 configuration.
+Create a new Post4 machine.  If a `String[]` is given, its intended to pass something like command-line arguments.  Otherwise when a `Post4Options` object is given, they are used to alter the Post4 configuration.
 
 - - -
 * public int repl()

@@ -70,7 +70,7 @@ clean: title
 distclean: clean
 	-rm -rf *$L *$A makefile ./post4
 
-build: title ${LIBNAME} Post4Exception$C Post4Options$C Post4Stacks$C Post4$C
+build: title ${LIBNAME} Post4Exception$C Post4Options$C Post4Stacks$C Post4$C Demo$C
 
 title :
 	@echo
@@ -100,6 +100,9 @@ ${LIBNAME}: Post4$O ../src/post4$O
 
 run: build
 	POST4_PATH=".:../src" java -Djava.library.path="$${POST4_PATH}" -cp ../.. ${MAIN}
+
+demo: build
+	POST4_PATH=".:../src" java -Djava.library.path="$${POST4_PATH}" -cp ../.. post4.jni.Demo
 
 testjar: Post4$A
 	POST4_PATH=".:../src" java -Djava.library.path="$${POST4_PATH}" -jar Post4$A
