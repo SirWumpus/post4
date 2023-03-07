@@ -38,6 +38,7 @@ extern "C" {
 
 #undef WITH_JAVA
 #undef HAVE_SEE
+#undef HAVE_HOOKS
 #define USE_STACK_CHECKS		1
 #undef USE_EXCEPTION_STRINGS
 

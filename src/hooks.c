@@ -6,7 +6,9 @@
 
 #include "post4.h"
 
-#ifdef USE_HOOK_SHELL
+#ifdef HAVE_HOOKS
+
+# ifdef USE_HOOK_SHELL
 /*
  * SH ( `input` -- )
  */
@@ -30,9 +32,9 @@ p4SystemString(P4_Ctx *ctx)
 	// Assumes caddr NUL terminated.
 	P4_TOP(ctx->ds).n = system(s);
 }
-#endif
+# endif
 
-#ifdef USE_HOOK_PRIMATIVES
+# ifdef USE_HOOK_PRIMATIVES
 /* Examples of how some words, in particular those calling libc
  * or other library functions can be isolated as hooks.
  */
@@ -74,21 +76,17 @@ p4TimeDate(P4_Ctx *ctx)
 	P4_PUSH(ctx->ds, (P4_Int) now->tm_mon+1);
 	P4_PUSH(ctx->ds, (P4_Int) now->tm_year+1900);
 }
-#endif
-
-#ifdef OFF
-extern int post4Call(P4_Ctx *ctx, jobject obj, const char *cls_name, const char *method, const char *sig);
-#endif
+# endif
 
 static P4_Hook p4_hooks[] = {
-#ifdef USE_HOOK_SHELL
+# ifdef USE_HOOK_SHELL
 	{ "SH", p4System },
 	{ "SHELL", p4SystemString },
-#endif
-#ifdef USE_HOOK_PRIMATIVES
+# endif
+# ifdef USE_HOOK_PRIMATIVES
 	{ "MOVE", p4Move },
 	{ "TIME&DATE", p4STimeDate },
-#endif
+# endif
 	{ NULL, NULL }
 };
 
@@ -119,3 +117,5 @@ p4HookInit(P4_Ctx *ctx)
 
 	return 0;
 }
+
+#endif /* HAVE_HOOKS */

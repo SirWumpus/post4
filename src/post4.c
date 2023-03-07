@@ -1368,8 +1368,10 @@ p4Repl(P4_Ctx *ctx)
 		P4_WORD("_ds",		&&_ds,		0),		// p4
 		P4_WORD("_dsp@",	&&_dsp_get,	0),		// p4
 		P4_WORD("_dsp!",	&&_dsp_put,	0),		// p4
+#ifdef HAVE_HOOKS
 		P4_WORD("_hook_add",	&&_hook_add,	0),		// p4
 		P4_WORD("_hook_call",	&&_hook_call,	0),		// p4
+#endif
 		P4_WORD("_longjmp",	&&_longjmp,	0),		// p4
 		P4_WORD("_rs",		&&_rs,		0),		// p4
 		P4_WORD("_rsp@",	&&_rsp_get,	0),		// p4

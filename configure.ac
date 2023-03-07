@@ -50,6 +50,13 @@ AC_ARG_ENABLE(see,[AS_HELP_STRING([--disable-see],[disable support for SEE])],[
 ])
 AS_IF([test $enable_see = 'yes'],[AC_DEFINE(HAVE_SEE)])
 
+AC_ARG_ENABLE(hooks,[AS_HELP_STRING([--disable-hooks],[disable support for hooks])],[
+	:
+],[
+	enable_hooks='yes'
+])
+AS_IF([test $enable_hooks = 'yes'],[AC_DEFINE(HAVE_HOOKS)])
+
 #######################################################################
 #	Configuration options: packages
 #######################################################################

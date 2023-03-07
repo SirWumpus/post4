@@ -14,6 +14,7 @@
 
 static const char *empty_argv[] = { NULL };
 
+#ifdef HAVE_HOOKS
 static void jSetLocalCapacity(P4_Ctx *);
 static void jDeleteLocalRef(P4_Ctx *);
 static void jObjectClass(P4_Ctx *);
@@ -63,6 +64,7 @@ post4HookInit(P4_Ctx *ctx)
 
 	return 0;
 }
+#endif
 
 static P4_Ctx *
 getCtx(JNIEnv *env, jobject self)
@@ -195,7 +197,9 @@ Java_post4_jni_Post4_p4Create(JNIEnv *env, jobject self, jobject opts)
 		(*env)->Throw(env, (*env)->FindClass(env, "java/lang/OutOfMemory"));
 	}
 
+#ifdef HAVE_HOOKS
 	(void) post4HookInit(ctx);
+#endif
 
 	// https://stackoverflow.com/questions/1632367/passing-pointers-between-c-and-java-through-jni
 	return (jlong) ctx;
@@ -271,8 +275,9 @@ Java_post4_jni_Post4_evalString(JNIEnv *env, jobject self, jstring string)
 	}
 }
 
-#define	BEGIN		{
-#define END		}
+#ifdef HAVE_HOOKS
+# define BEGIN		{
+# define END		}
 
 /*
  * Return the arity given a function signature.
@@ -834,3 +839,4 @@ error1:
 error0:
 	LONGJMP(ctx->on_throw, P4_THROW_EINVAL);
 }
+#endif
