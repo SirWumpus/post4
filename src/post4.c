@@ -2834,21 +2834,18 @@ _f_pow:		w = P4_POP(ctx->P4_FLOAT_STACK);
 int
 p4EvalFile(P4_Ctx *ctx, const char *file)
 {
-	P4_Int state_save;
 	int rc = P4_THROW_EIO;
 
-	state_save = ctx->state;
+	/* Do not save STATE, see A.6.1.2250 STATE. */
 	P4_INPUT_PUSH(&ctx->input);
 
 	if ((ctx->input.fp = fopen(file, "r")) != NULL) {
 		p4ResetInput(ctx);
-		ctx->state = P4_STATE_INTERPRET;
 		rc = p4Repl(ctx);
 		(void) fclose(ctx->input.fp);
 	}
 
 	P4_INPUT_POP(&ctx->input);
-	ctx->state = state_save;
 
 	return rc;
 }
@@ -2857,12 +2854,10 @@ int
 p4EvalString(P4_Ctx *ctx, const P4_Char *str, size_t len)
 {
 	int rc;
-	P4_Int state_save;
 
-	state_save = ctx->state;
+	/* Do not save STATE, see A.6.1.2250 STATE. */
 	P4_INPUT_PUSH(&ctx->input);
 
-	ctx->state = P4_STATE_INTERPRET;
 	ctx->input.fp = (FILE *) -1;
 	ctx->input.buffer = (P4_Char *) str;
 	ctx->input.length = len;
@@ -2871,7 +2866,6 @@ p4EvalString(P4_Ctx *ctx, const P4_Char *str, size_t len)
 	rc = p4Repl(ctx);
 
 	P4_INPUT_POP(&ctx->input);
-	ctx->state = state_save;
 
 	return rc;
 }

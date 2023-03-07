@@ -471,10 +471,29 @@ test_group_end
 .( S" S\\" EVALUATE ) test_group
 : tw_eval_0 EVALUATE ;
 : tw_eval_1 S" 9876" EVALUATE ;
+
 t{ S" 123" EVALUATE -> 123 }t
 t{ S\" 123\n432" EVALUATE -> 123 432 }t
 t{ S" 456" tw_eval_0 -> 456 }t
 t{ tw_eval_1 -> 9876 }t
+
+\ See F.6.1.1360
+: tw_eval_2 S" 123" ; IMMEDIATE
+: tw_eval_3 S" 123 1+" ; IMMEDIATE
+: tw_eval_4 S" : tw_eval_5 345 ;" ;
+: tw_eval_6 EVALUATE ; IMMEDIATE
+
+\ Test evaluate in interpreter state.
+t{ tw_eval_2 EVALUATE -> 123 }t
+t{ tw_eval_3 EVALUATE -> 124 }t
+t{ tw_eval_4 EVALUATE ->     }t
+t{ tw_eval_5          -> 345 }t
+
+\ Test evaluate in compiler state.
+t{ : tw_eval_7 tw_eval_2 tw_eval_6 ; -> }t
+t{   tw_eval_7        -> 123 }t
+t{ : tw_eval_8 tw_eval_3 tw_eval_6 ; -> }t
+t{   tw_eval_8        -> 124 }t
 test_group_end
 
 .( <# # #> ) test_group
