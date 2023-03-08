@@ -1542,7 +1542,6 @@ p4Repl(P4_Ctx *ctx)
 				" while compiling \"%s\"",
 				word->name.length == 0 ? ":NONAME" : (char *)word->name.string
 			);
-			ctx->state = P4_STATE_INTERPRET;
 			ctx->words = word->prev;
 			/* Rewind HERE, does not free ALLOCATE data. */
 			ctx->here = (P4_Char *) word->data;
