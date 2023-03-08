@@ -338,10 +338,10 @@ typedef struct {
 # define P4_TOP(stack)			(*(stack).top)
 # define P4_POP(stack)			(*(stack).top--)
 # define P4_PUSH(stack, x)		(*++(stack).top = (P4_Cell)(x))
-# define P4_RESET(stack)		((stack).top = (stack).base - 1)
 # define P4_LENGTH(stack)		((stack).top + 1 - (stack).base)
 # define P4_DROP(stack, n)		((stack).top -= (n))
-# define P4_PUSH_CSTR(stack, s)		(P4_PUSH(stack, s), P4_PUSH(stack, strlen(s)))
+# define P4_SET(stack, n)		((stack).top = (stack).base + (n) - 1)
+# define P4_RESET(stack)		P4_SET(stack, 0)
 
 typedef enum {
 	P4_STATE_INTERPRET,

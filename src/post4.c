@@ -1382,7 +1382,6 @@ p4Repl(P4_Ctx *ctx)
 		/* Compiling Words */
 		P4_WORD("compile-only",		&&_compile_only,	P4_BIT_IMM),	// p4
 		P4_WORD("compile-only?",	&&_is_compile,		P4_BIT_COMPILE),// p4
-		P4_WORD("'",		&&_tick,	0),
 		P4_WORD(":NONAME",	&&_noname,	0),
 		P4_WORD(":",		&&_colon,	0),
 		P4_WORD(";",		&&_semicolon,	P4_BIT_IMM|P4_BIT_COMPILE),
@@ -1944,19 +1943,6 @@ _body:		w = P4_POP(ctx->ds);
 		// ( -- addr )
 		// w contains xt loaded by _next or _execute.;
 _data_field:	P4_PUSH(ctx->ds, w.xt->data + 1);
-		NEXT;
-
-		/*
-		 * Compiling
-		 */
-		// ( -- xt )
-_tick:		str = p4ParseName(&ctx->input);
-		word = p4FindName(ctx, str.string, str.length);
-		if (word == NULL) {
-			p4Bp(ctx);
-			LONGJMP(ctx->on_throw, P4_THROW_UNDEFINED);
-		}
-		P4_PUSH(ctx->ds, word);
 		NEXT;
 
 		// ( n -- )

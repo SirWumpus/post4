@@ -496,6 +496,10 @@ MAX-U MAX-N 2CONSTANT MAX-D
 \
 : CHAR PARSE-NAME DROP C@ ;
 
+\ ( -- xt | 0 )
+\ xt is also an nt.
+: ' PARSE-NAME FIND-NAME ;
+
 \ Compile LIT xt into the current word, which pushes xt when run.
 \ (C: <spaces>name -- ) (S: -- xt )
 : ['] LIT [ ' LIT COMPILE, ] COMPILE, ' COMPILE, ; IMMEDIATE compile-only
