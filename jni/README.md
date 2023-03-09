@@ -136,53 +136,62 @@ Given a `Post4Stacks` instance, examine copies of the data stack `.ds` and float
 
 
 - - -
-### Java Words
+### Java Native Interface Words
 
-These words provide a low level interface that allows Post4 to query Java object fields and call methods.  They essentially wrap the [JNI](https://docs.oracle.com/en/java/javase/17/docs/specs/jni/index.html).  It is still a work in progress and subject to change.
+These words provide a low level interface that allows Post4 to access Java object fields and call methods.  They essentially wrap the [JNI](https://docs.oracle.com/en/java/javase/17/docs/specs/jni/index.html).  It is still a work in progress and subject to change.
 
 - - -
 #### jBoxString
-( caddr u -- jstr )  
+( `caddr` `u` -- `jstr` )  
+Convert a string `caddr` `u` into a Java String object `jstr`, which must eventually be reclaimed (see `jDeleteLocalRef` or `jPopLocalFrame`).
 
 - - -
 #### jCall
-( x*i obj method m signature s -- y | )  
+( `x*i` `obj` `method` `m` `signature` `s` -- `y` | )  
+Given a Java object or class reference, `obj`, invoke the given static or instance method denoted by strings `method` `m` `signature` `s`, passing arguments `x*i` based on the signature.  Return either a primitive value or object reference `y` from a non-void method.
+
+Note that arguments `x*i` are in reverse order to that of the method's signature, eg. left most argument is on top of the stack and right most towards the bottom of the stack.  Arguments to strings or arrays must have been already "boxed".
 
 - - -
 #### jDeleteLocalRef
-( obj -- class )  
+( `obj` -- )  
+Release a local object reference previously obtained from `jFindClass`, `jBoxString`, `jField`, or `jCall`.  See also `jPushLocalFrame` and `jPopLocalFrame`.
 
 - - -
 #### jField
-( obj field f signature s -- x )  
+( `obj` `field` `f` `signature` `s` -- `x` )  
+Given a Java object or class reference, `obj`, fetch the primitive value or object `x` denoted by strings `field` `f` `signature` `s`.  Note that if `x` is a local object reference, it eventually needs to be reclaimed by `jDeleteLocalRef` or `jPopLocalFrame`.
 
 - - -
 #### jFindClass
-( name u -- class )  
-
-- - -
-#### jObjectClass
-( obj -- class )  
+( `name` `u` -- `class` )  
+Given a class name `name` `u`, return a local object reference `class`  or zero (0) if not found.
 
 - - -
 #### jPushLocalFrame
-( n -- )  
+( `n` -- )  
+Create a new local object reference frame with capacity `n`.  The frame and outstanding object references are reclaimed by `jPopLocalFrame`.
 
 - - -
 #### jPopLocalFrame
 ( -- )  
+End the local frame reclaiming any outstanding local object references.
 
 - - -
 #### jSetField
-( x obj field f signature s -- )  
+( `x` `obj` `field` `f` `signature` `s` -- )  
+Given a Java object or class reference, `obj`, store a primitive value or object `x` denoted  by strings `field` `f` `signature` `s`.
 
 - - -
 #### jSetLocalCapacity
-( n -- )  
+( `n` -- )  
+Enlarge the local object reference capacity to hold `n` references.  Before a native method (`evalFile()`, `evalString()`, or `repl()`) is called, the Java VM ensures at least 16 local references can be created.  See [JNI EnsureLocalCapacity()](https://docs.oracle.com/en/java/javase/17/docs/specs/jni/functions.html#ensurelocalcapacity).
 
 - - -
 #### jUnboxString
-( jstr -- caddr u )  
+( `jstr` -- `caddr` `u` )  
+Given a Java String object `jstr`, return `u` bytes of allocate memory `caddr` containing a copy of the string.  The caller must eventually `FREE` the allocated memory `caddr`.
+
 
 - - -
 ### java.lang.System Words
@@ -192,15 +201,18 @@ These words provide a low level interface that allows Post4 to query Java object
 
 - - -
 #### jprints
-( caddr u -- )  
+( `caddr` `u` -- )  
+Print the string `caddr` `u` using `java.lang.System.out.print(String)`.  See also `TYPE`.
 
 - - -
 #### jprintn
-( n -- )  
+( `n` -- )  
+Print signed integer `n` using `java.lang.System.out.print(long)`.  See also `.`.
 
 - - -
 #### jprintd
-( F: f  -- )  
+( F: `f`  -- )  
+Print double precision float `f` using `java.lang.System.out.print(double)`.  See also `F.` and `FS.`.
 
 - - -
 ### java.lang.Thread Words
@@ -210,24 +222,30 @@ These words provide a low level interface that allows Post4 to query Java object
 
 - - - 
 #### jCurrentThread
-( -- thread )  
+( -- `thread` )  
+Return a reference to the current Java Thread.
 
 - - -
 #### jDumpStack
 ( -- )  
+Dump the current Thread's stack.
 
 - - -
 #### jMilliSleep
-( ms -- )  
+( `ms` -- )  
+Sleep the current thread for `ms` milliseconds using `java.lang.Thread.sleep(long)`.
 
 - - -
 #### jNanoSleep
-( ms ns -- )  
+( `ns` `ms` -- )  
+Sleep the current thread for `ms` milliseconds then `ns` nanoseconds [0, 999999] using `java.lang.Thread.sleep(long, int)`.
 
 - - -
 #### jThreadId
-( thread -- n )  
+( `thread` -- `n` )  
+Given a `thread` reference, return the thread's ID number `n`.
 
 - - -
 #### jThreadName
-( thread -- caddr u )  
+( `thread` -- `caddr` `u` )  
+Given a `thread` reference, return the thread's name via a transient string buffer.

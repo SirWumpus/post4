@@ -81,6 +81,8 @@ title :
 
 install: build
 	install -p -o root -g 0 -d ${libdir}
+	install -p -o root -g 0 *.p4 ${libdir}
+	install -p -o root -g 0 Post4$A ${libdir}
 	install -p -o root -g 0 ${LIBNAME} ${libdir}
 
 # See also
@@ -89,7 +91,7 @@ Post4$A: build
 	mkdir -p ./post4/jni/${OS}/${CPU}
 	cp -p *.class ./post4/jni
 	cp -p ${LIBNAME} ./post4/jni/${OS}/${CPU}
-	jar -v -c -f $@ -e ${MAIN} post4/ -C ../src/ post4.p4
+	jar -v -c -f $@ -e ${MAIN} post4/ -C ../src/ post4.p4 -C ./ *.p4
 	rm -rf post4
 
 ${LIBNAME}: Post4$O ../src/post4$O

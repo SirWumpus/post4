@@ -17,9 +17,9 @@ static const char *empty_argv[] = { NULL };
 #ifdef HAVE_HOOKS
 static void jSetLocalCapacity(P4_Ctx *);
 static void jDeleteLocalRef(P4_Ctx *);
-static void jObjectClass(P4_Ctx *);
 static void jFindClass(P4_Ctx *);
 #ifdef HMM
+static void jObjectClass(P4_Ctx *);
 static void jMethodID(P4_Ctx *);
 static void jFieldID(P4_Ctx *);
 #endif
@@ -34,9 +34,9 @@ static void jCall(P4_Ctx *);
 static P4_Hook jHooks[] = {
 	{ "jSetLocalCapacity", jSetLocalCapacity },
 	{ "jDeleteLocalRef", jDeleteLocalRef },
-	{ "jObjectClass", jObjectClass },
 	{ "jFindClass", jFindClass },
 #ifdef HMM
+	{ "jObjectClass", jObjectClass },
 	{ "jMethodID", jMethodID },
 	{ "jFieldID", jFieldID },
 #endif
@@ -356,22 +356,6 @@ jFindClass(P4_Ctx *ctx)
 }
 
 /*
- * jObjectClass ( obj -- cls )
- */
-static void
-jObjectClass(P4_Ctx *ctx)
-{
-	JNIEnv *env = ctx->jenv;
-	jobject obj = P4_TOP(ctx->ds).v;
-	jclass cls = (*env)->GetObjectClass(env, obj);
-	if (cls == NULL) {
-		(*env)->ExceptionDescribe(env);
-		LONGJMP(ctx->on_throw, P4_THROW_EINVAL);
-	}
-	P4_TOP(ctx->ds).v = cls;
-}
-
-/*
  * jBoxString ( caddr u -- jstr )
  */
 static void
@@ -429,6 +413,22 @@ jPopLocalFrame(P4_Ctx *ctx)
 }
 
 #ifdef HMM
+/*
+ * jObjectClass ( obj -- cls )
+ */
+static void
+jObjectClass(P4_Ctx *ctx)
+{
+	JNIEnv *env = ctx->jenv;
+	jobject obj = P4_TOP(ctx->ds).v;
+	jclass cls = (*env)->GetObjectClass(env, obj);
+	if (cls == NULL) {
+		(*env)->ExceptionDescribe(env);
+		LONGJMP(ctx->on_throw, P4_THROW_EINVAL);
+	}
+	P4_TOP(ctx->ds).v = cls;
+}
+
 /*
  * jMethodID ( cls method u signature u -- mid is_static )
  */
@@ -537,7 +537,7 @@ jCall(P4_Ctx *ctx)
 
 	jvalue jargs[arity];
 	for (int i = 0; i < arity; i++) {
-		jargs[arity - i - 1].j = P4_PICK(ctx->ds, i).n;
+		jargs[i].j = P4_PICK(ctx->ds, i).n;
 	}
 	P4_DROP(ctx->ds, arity);
 

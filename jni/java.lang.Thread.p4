@@ -10,7 +10,7 @@ MARKER rm_java_lang_thread
     jdeleteLocalRef
 ;
 
-: jnanosleep ( ms ns -- )
+: jnanosleep ( ns ms -- )
     java.lang.Thread ROT ROT 2 PICK
     S" sleep" S" (JI)V" jCall
     jDeleteLocalRef
