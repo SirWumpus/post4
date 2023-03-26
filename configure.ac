@@ -61,7 +61,7 @@ AS_IF([test $enable_hooks = 'yes'],[AC_DEFINE(HAVE_HOOKS)])
 #	Configuration options: packages
 #######################################################################
 
-AC_ARG_WITH(java,[AS_HELP_STRING([--with-java],[build Jave Native Interface support])],[
+AC_ARG_WITH(java,[AS_HELP_STRING([--with-java],[build Java Native Interface support])],[
 	AS_IF(
 		[test $with_java = 'no'],[unset JAVA_HOME],
 		[test $with_java != 'yes'],[export JAVA_HOME="$with_java"]

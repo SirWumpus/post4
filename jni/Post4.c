@@ -27,6 +27,8 @@ static void jPushLocalFrame(P4_Ctx *);
 static void jPopLocalFrame(P4_Ctx *);
 static void jUnboxString(P4_Ctx *);
 static void jBoxString(P4_Ctx *);
+static void jUnboxArray(P4_Ctx *);
+static void jBoxArray(P4_Ctx *);
 static void jSetField(P4_Ctx *);
 static void jField(P4_Ctx *);
 static void jCall(P4_Ctx *);
@@ -43,7 +45,9 @@ static P4_Hook jHooks[] = {
 	{ "jPushLocalFrame", jPushLocalFrame },
 	{ "jPopLocalFrame", jPopLocalFrame },
 	{ "jUnboxString", jUnboxString },
+	{ "jUnboxArray", jUnboxArray },
 	{ "jBoxString", jBoxString },
+	{ "jBoxArray", jBoxArray },
 	{ "jSetField", jSetField },
 	{ "jField", jField },
 	{ "jCall", jCall },
@@ -353,6 +357,59 @@ jFindClass(P4_Ctx *ctx)
 	const char *str = P4_TOP(ctx->ds).s;
 	jclass cls = (*env)->FindClass(env, str);
 	P4_TOP(ctx->ds).v = cls;
+}
+
+/*
+ * jBoxArray ( x*i i -- jarray )
+ */
+static void
+jBoxArray(P4_Ctx *ctx)
+{
+	JNIEnv *env = ctx->jenv;
+	jsize size = (jsize) P4_POP(ctx->ds).z;
+	jlongArray arr = (*env)->NewLongArray(env, size);
+	if (arr == NULL) {
+		LONGJMP(ctx->on_throw, P4_THROW_ALLOCATE);
+	}
+	for (jsize i = 0; i < size; i++) {
+		jlong item = (jlong) P4_POP(ctx->ds).n;
+		(*env)->SetLongArrayRegion(env, arr, i, 1, &item);
+
+	}
+	P4_PUSH(ctx->ds, (void *) arr);
+}
+
+/*
+ * jUnboxArray ( jarray -- x*i i )
+ */
+static void
+jUnboxArray(P4_Ctx *ctx)
+{
+	JNIEnv *env = ctx->jenv;
+	size_t ds_depth = P4_LENGTH(ctx->ds);
+	jarray arr = (jarray) P4_POP(ctx->ds).v;
+	jsize size = (*env)->GetArrayLength(env, arr);
+	/* Enough stack space to hold array items? */
+	if (ctx->ds.size <= ds_depth + size + 1) {
+		/* Grow data stack with some extra work space. */
+		size_t ds_size = ds_depth + size + P4_STACK_SIZE;
+		P4_Cell *ds_base = realloc(ctx->ds.base, ds_size);
+		if (ds_base == NULL) {
+			/* Frick'n'ell. */
+			LONGJMP(ctx->on_throw, P4_THROW_DS_OVER);
+		}
+		ctx->ds.base = ds_base;
+		ctx->ds.size = ds_size - 1;
+		ctx->ds.base[ds_size - 1].u = P4_SENTINEL;
+		P4_SET(ctx->ds, ds_depth);
+	}
+	/* Get each array item and push. */
+	for (jsize i = size - 1; 0 <= i; i--) {
+		jlong item;
+		(*env)->GetLongArrayRegion(env, arr, i, 1, &item);
+		P4_PUSH(ctx->ds, (P4_Int) item);
+	}
+	P4_PUSH(ctx->ds, (P4_Size) size);
 }
 
 /*

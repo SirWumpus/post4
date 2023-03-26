@@ -141,6 +141,11 @@ Given a `Post4Stacks` instance, examine copies of the data stack `.ds` and float
 These words provide a low level interface that allows Post4 to access Java object fields and call methods.  They essentially wrap the [JNI](https://docs.oracle.com/en/java/javase/17/docs/specs/jni/index.html).  It is still a work in progress and subject to change.
 
 - - -
+#### jBoxArray
+( `xi-1` ... `x0` `i` -- `jarray` )  
+Convert `i` stack items into a Java Array object `jarray`.
+
+- - -
 #### jBoxString
 ( `caddr` `u` -- `jstr` )  
 Convert a string `caddr` `u` into a Java String object `jstr`, which must eventually be reclaimed (see `jDeleteLocalRef` or `jPopLocalFrame`).
@@ -186,6 +191,11 @@ Given a Java object or class reference, `obj`, store a primitive value or object
 #### jSetLocalCapacity
 ( `n` -- )  
 Enlarge the local object reference capacity to hold `n` references.  Before a native method (`evalFile()`, `evalString()`, or `repl()`) is called, the Java VM ensures at least 16 local references can be created.  See [JNI EnsureLocalCapacity()](https://docs.oracle.com/en/java/javase/17/docs/specs/jni/functions.html#ensurelocalcapacity).
+
+- - -
+#### jUnboxArray
+( `jarray` -- `xi-1` ... `x0` `i` )  
+Given a Java Array object `jarray`, return `i` items on the stack.
 
 - - -
 #### jUnboxString
