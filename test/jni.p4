@@ -66,4 +66,24 @@ t{ caddr @ FREE -> 0 }t
 jPopLocalFrame
 test_group_end
 
+.( jCall ) test_group
+VARIABLE jobj
+
+VARIABLE jlong
+t{ 2 jPushLocalFrame -> }t
+t{ S" java/lang/Long" jFindClass DUP jobj ! 0<> -> TRUE }t
+t{ 377 jobj @ S" valueOf" S" (J)Ljava/lang/Long;" jCall DUP jlong ! 0<> -> TRUE }t
+t{ jlong @ S" longValue" S" ()J" jCall -> 377 }t
+t{ jPopLocalFrame -> }t
+
+VARIABLE jstr
+VARIABLE caddr
+t{ 2 jPushLocalFrame -> }t
+t{ S" java/lang/System" jFindClass DUP jobj ! 0<> -> TRUE }t
+t{ jobj @ S" lineSeparator" S" ()Ljava/lang/String;" jCall DUP jstr ! 0<> -> TRUE }t
+t{ jstr @ jUnboxString OVER caddr ! TYPE -> }t
+t{ caddr @ FREE -> 0 }t
+t{ jPopLocalFrame -> }t
+test_group_end
+
 [THEN]
