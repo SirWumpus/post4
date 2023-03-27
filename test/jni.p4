@@ -43,4 +43,27 @@ t{ jarr @ jUnboxArray -> 12 34 56 3 }t
 t{ jarr @ jDeleteLocalRef -> }t
 test_group_end
 
+.( jBoxString jUnboxString jStringByteLength ) test_group
+VARIABLE jstr
+VARIABLE caddr
+2 jPushLocalFrame
+
+: tw_empty S" " ;
+: tw_ello S" 'ello" ;
+
+t{ tw_empty jBoxString DUP jstr ! 0<> -> TRUE }t
+t{ jstr @ jStringByteLength -> 0 }t
+t{ jstr @ jUnboxString SWAP caddr ! -> 0 }t
+t{ caddr @ 0 tw_empty COMPARE -> 0 }t
+t{ caddr @ FREE -> 0 }t
+
+t{ tw_ello jBoxString DUP jstr ! 0<> -> TRUE }t
+t{ jstr @ jStringByteLength -> 5 }t
+t{ jstr @ jUnboxString SWAP caddr ! -> 5 }t
+t{ caddr @ 5 tw_ello COMPARE -> 0 }t
+t{ caddr @ FREE -> 0 }t
+
+jPopLocalFrame
+test_group_end
+
 [THEN]

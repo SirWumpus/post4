@@ -25,6 +25,7 @@ static void jFieldID(P4_Ctx *);
 #endif
 static void jPushLocalFrame(P4_Ctx *);
 static void jPopLocalFrame(P4_Ctx *);
+static void jStringByteLength(P4_Ctx *);
 static void jUnboxString(P4_Ctx *);
 static void jBoxString(P4_Ctx *);
 static void jArrayLength(P4_Ctx *);
@@ -45,6 +46,7 @@ static P4_Hook jHooks[] = {
 #endif
 	{ "jPushLocalFrame", jPushLocalFrame },
 	{ "jPopLocalFrame", jPopLocalFrame },
+	{ "jStringByteLength", jStringByteLength },
 	{ "jUnboxString", jUnboxString },
 	{ "jArrayLength", jArrayLength },
 	{ "jUnboxArray", jUnboxArray },
@@ -424,6 +426,18 @@ jUnboxArray(P4_Ctx *ctx)
 		P4_PUSH(ctx->ds, (P4_Int) item);
 	}
 	P4_PUSH(ctx->ds, (P4_Size) size);
+}
+
+/*
+ * jStringByteLength ( jstr -- length )
+ */
+static void
+jStringByteLength(P4_Ctx *ctx)
+{
+	JNIEnv *env = ctx->jenv;
+	jstring str = (jstring) P4_TOP(ctx->ds).v;
+	jsize size = (*env)->GetStringUTFLength(env, str);
+	P4_TOP(ctx->ds).n = size;
 }
 
 /*
