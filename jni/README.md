@@ -141,6 +141,11 @@ Given a `Post4Stacks` instance, examine copies of the data stack `.ds` and float
 These words provide a low level interface that allows Post4 to access Java object fields and call methods.  They essentially wrap the [JNI](https://docs.oracle.com/en/java/javase/17/docs/specs/jni/index.html).  It is still a work in progress and subject to change.
 
 - - -
+#### jArrayLength
+( `jarray` -- `length` )  
+Return the `length` of Java Array object `jarray`.
+
+- - -
 #### jBoxArray
 ( `xi-1` ... `x0` `i` -- `jarray` )  
 Convert `i` stack items into a Java Array object `jarray`.
@@ -160,7 +165,7 @@ Note that arguments `x*i` are in reverse order to that of the method's signature
 - - -
 #### jDeleteLocalRef
 ( `obj` -- )  
-Release a local object reference previously obtained from `jFindClass`, `jBoxString`, `jField`, or `jCall`.  See also `jPushLocalFrame` and `jPopLocalFrame`.
+Release a local object reference previously obtained from `jFindClass`, `jBoxArray`, `jBoxString`, `jField`, or `jCall`.  See also `jPushLocalFrame` and `jPopLocalFrame`.
 
 - - -
 #### jField
@@ -173,14 +178,14 @@ Given a Java object or class reference, `obj`, fetch the primitive value or obje
 Given a class name `name` `u`, return a local object reference `class`  or zero (0) if not found.
 
 - - -
-#### jPushLocalFrame
-( `n` -- )  
-Create a new local object reference frame with capacity `n`.  The frame and outstanding object references are reclaimed by `jPopLocalFrame`.
-
-- - -
 #### jPopLocalFrame
 ( -- )  
 End the local frame reclaiming any outstanding local object references.
+
+- - -
+#### jPushLocalFrame
+( `u` -- )  
+Create a new local object reference frame with capacity `u` greater than zero (0).  The frame and outstanding object references are reclaimed by `jPopLocalFrame`.  Note some JVM implementations may limit the maximum capacity.
 
 - - -
 #### jSetField
@@ -191,6 +196,11 @@ Given a Java object or class reference, `obj`, store a primitive value or object
 #### jSetLocalCapacity
 ( `n` -- )  
 Enlarge the local object reference capacity to hold `n` references.  Before a native method (`evalFile()`, `evalString()`, or `repl()`) is called, the Java VM ensures at least 16 local references can be created.  See [JNI EnsureLocalCapacity()](https://docs.oracle.com/en/java/javase/17/docs/specs/jni/functions.html#ensurelocalcapacity).
+
+- - -
+#### jStringByteLength
+( `jstr` -- `length` )  
+Return the byte `length` of Java String object `jstr`.
 
 - - -
 #### jUnboxArray
