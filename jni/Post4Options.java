@@ -15,4 +15,5 @@ public class Post4Options
 	public String core_file = "post4.p4";
 	public String block_file = "";
 	public String[] argv = {};
+	public int argc = 0;
 }

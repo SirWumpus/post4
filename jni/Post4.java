@@ -24,6 +24,7 @@ public class Post4
 	public Post4(String[] args)
 	{
 		Post4Options opts = new Post4Options();
+		opts.argc = args.length;
 		opts.argv = args;
 		ctx = p4Create(opts);
 	}
