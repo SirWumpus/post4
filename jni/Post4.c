@@ -27,6 +27,7 @@ static void jPushLocalFrame(P4_Ctx *);
 static void jPopLocalFrame(P4_Ctx *);
 static void jUnboxString(P4_Ctx *);
 static void jBoxString(P4_Ctx *);
+static void jArrayLength(P4_Ctx *);
 static void jUnboxArray(P4_Ctx *);
 static void jBoxArray(P4_Ctx *);
 static void jSetField(P4_Ctx *);
@@ -45,6 +46,7 @@ static P4_Hook jHooks[] = {
 	{ "jPushLocalFrame", jPushLocalFrame },
 	{ "jPopLocalFrame", jPopLocalFrame },
 	{ "jUnboxString", jUnboxString },
+	{ "jArrayLength", jArrayLength },
 	{ "jUnboxArray", jUnboxArray },
 	{ "jBoxString", jBoxString },
 	{ "jBoxArray", jBoxArray },
@@ -357,6 +359,18 @@ jFindClass(P4_Ctx *ctx)
 	const char *str = P4_TOP(ctx->ds).s;
 	jclass cls = (*env)->FindClass(env, str);
 	P4_TOP(ctx->ds).v = cls;
+}
+
+/*
+ * jArrayLength ( jarray -- length )
+ */
+static void
+jArrayLength(P4_Ctx *ctx)
+{
+	JNIEnv *env = ctx->jenv;
+	jarray arr = (jarray) P4_TOP(ctx->ds).v;
+	jsize size = (*env)->GetArrayLength(env, arr);
+	P4_TOP(ctx->ds).n = size;
 }
 
 /*
