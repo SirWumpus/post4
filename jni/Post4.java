@@ -50,10 +50,21 @@ public class Post4
 
 	public static void main(String[] args)
 	{
+		int rc;
 		Post4 p4 = new Post4(args);
 
+		if (0 < args.length) {
+			try {
+				p4.evalFile(args[0]);
+				System.exit(0);
+			} catch (Exception e) {
+				// Something else happened on this day, lost in time.
+				System.err.println(e);
+				System.exit(1);
+			}
+		}
+
 		try {
-			int rc;
 			while ((rc = p4.repl()) != Post4Exception.THROW_OK) {
 				; // Remain in the REPL until EOF or BYE.
 			}

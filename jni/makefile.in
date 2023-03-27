@@ -106,6 +106,9 @@ run: build
 demo: build
 	POST4_PATH=".:../src" java -Djava.library.path="$${POST4_PATH}" -cp ../.. post4.jni.Demo
 
+test: build
+	POST4_PATH=".:../src" java -Djava.library.path="$${POST4_PATH}" -cp ../.. ${MAIN} ../test/units.p4
+
 testjar: Post4$A
 	POST4_PATH=".:../src" java -Djava.library.path="$${POST4_PATH}" -jar Post4$A
 
