@@ -467,7 +467,7 @@ jPushLocalFrame(P4_Ctx *ctx)
 	JNIEnv *env = ctx->jenv;
 	jint capacity = (jint) P4_POP(ctx->ds).n;
 	jint rc = (*env)->PushLocalFrame(env, capacity);
-	if (rc != 0) {
+	if (rc != JNI_OK) {
 		(*env)->ExceptionDescribe(env);
 		LONGJMP(ctx->on_throw, P4_THROW_ALLOCATE);
 	}
@@ -480,7 +480,7 @@ static void
 jPopLocalFrame(P4_Ctx *ctx)
 {
 	JNIEnv *env = ctx->jenv;
-	(*env)->PopLocalFrame(env, NULL);
+	(void) (*env)->PopLocalFrame(env, NULL);
 }
 
 #ifdef HMM
