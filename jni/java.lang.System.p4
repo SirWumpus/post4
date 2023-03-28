@@ -4,18 +4,20 @@
 
 MARKER rm_java_lang_system
 
+: java.lang.System ( -- obj )
+    S" java/lang/System" jFindClass
+;
+
 : java.lang.System.out ( -- obj )
-    S" java/lang/System" jFindClass DUP
+    java.lang.System DUP
     S" out" S" Ljava/io/PrintStream;" jField
     SWAP jDeleteLocalRef
 ;
 
-: jprints ( caddr u -- )
-    8 jPushLocalFrame
-    jBoxString
-    java.lang.System.out
+: jprints ( jstr -- )
+    java.lang.System.out TUCK
     S" print" S" (Ljava/lang/String;)V" jCall
-    jPopLocalFrame
+    jDeleteLocalRef
 ;
 
 : jprintn ( n -- )
@@ -28,4 +30,16 @@ MARKER rm_java_lang_system
     fs>ds java.lang.System.out TUCK
     S" print" S" (D)V" jCall
     jDeleteLocalRef
+;
+
+: jNewline ( -- jstr )
+    java.lang.System DUP
+    S" lineSeparator" S" ()Ljava/lang/String;" jCall
+    SWAP jDeleteLocalRef
+;
+
+: print ( caddr u -- )
+    4 jPushLocalFrame
+    jBoxString jprints
+    jPopLocalFrame
 ;

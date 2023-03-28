@@ -157,10 +157,10 @@ Convert a string `caddr` `u` into a Java String object `jstr`, which must eventu
 
 - - -
 #### jCall
-( `x*i` `obj` `method` `m` `signature` `s` -- `y` | )  
-Given a Java object or class reference, `obj`, invoke the given static or instance method denoted by strings `method` `m` `signature` `s`, passing arguments `x*i` based on the signature.  Return either a primitive value or object reference `y` from a non-void method.
+( `x*i` `obj` `method` `m` `signature` `s` -- `y` | _ )  
+Given a Java object or class reference, `obj`, invoke the given static or instance method denoted by strings `method` `m` `signature` `s`, passing arguments `x*i` based on the signature.  Return either a primitive value or object reference `y` from a non-void method or nothing in the case of a void return.
 
-Note that arguments `x*i` are in reverse order to that of the method's signature, eg. left most argument is on top of the stack and right most towards the bottom of the stack.  Arguments to strings or arrays must have been already "boxed".
+Note that arguments `x*i` are in reverse order to that of the method's signature, eg. left most argument is on top of the stack and right most towards the bottom of the stack.  String or array arguments must have been already "boxed" into objects.
 
 - - -
 #### jDeleteLocalRef
@@ -187,6 +187,10 @@ End the local frame reclaiming any outstanding local object references.
 ( `u` -- )  
 Create a new local object reference frame with capacity `u` greater than zero (0).  The frame and outstanding object references are reclaimed by `jPopLocalFrame`.  Note some JVM implementations may limit the maximum capacity.
 
+Using `jPushLocalFrame` and `jPopLocalFrame` can help reduce release management of individual object references using `jDeleteLocalRef`.  Only concern is making a rough guess-timate as to how many local references will be assigned in the frame.
+
+There is no JNI function to query available capacity.
+
 - - -
 #### jSetField
 ( `x` `obj` `field` `f` `signature` `s` -- )  
@@ -196,6 +200,8 @@ Given a Java object or class reference, `obj`, store a primitive value or object
 #### jSetLocalCapacity
 ( `n` -- )  
 Enlarge the local object reference capacity to hold `n` references.  Before a native method (`evalFile()`, `evalString()`, or `repl()`) is called, the Java VM ensures at least 16 local references can be created.  See [JNI EnsureLocalCapacity()](https://docs.oracle.com/en/java/javase/17/docs/specs/jni/functions.html#ensurelocalcapacity).
+
+There is no JNI function to query available capacity.
 
 - - -
 #### jStringByteLength
@@ -212,17 +218,16 @@ Given a Java Array object `jarray`, return `i` items on the stack.
 ( `jstr` -- `caddr` `u` )  
 Given a Java String object `jstr`, return `u` bytes of allocate memory `caddr` containing a copy of the string.  The caller must eventually `FREE` the allocated memory `caddr`.
 
-
 - - -
 ### java.lang.System Words
 
         ok INCLUDE java.lang.System.p4
-        ok S" Bonjour le monde! " jprints
+        ok S" Bonjour le monde! " print jNewline jprints
 
 - - -
-#### jprints
-( `caddr` `u` -- )  
-Print the string `caddr` `u` using `java.lang.System.out.print(String)`.  See also `TYPE`.
+#### jprintd
+( F: `f`  -- )  
+Print double precision float `f` using `java.lang.System.out.print(double)`.  See also `F.` and `FS.`.
 
 - - -
 #### jprintn
@@ -230,9 +235,14 @@ Print the string `caddr` `u` using `java.lang.System.out.print(String)`.  See al
 Print signed integer `n` using `java.lang.System.out.print(long)`.  See also `.`.
 
 - - -
-#### jprintd
-( F: `f`  -- )  
-Print double precision float `f` using `java.lang.System.out.print(double)`.  See also `F.` and `FS.`.
+#### jprints
+( `jstr` -- )  
+Print the Java String object using `java.lang.System.out.print(String)`.
+
+- - -
+#### print
+( `caddr` `u` -- )  
+Print the string `caddr` `u` using `java.lang.System.out.print(String)` by first "boxing" the string into an object.  See also `TYPE`.
 
 - - -
 ### java.lang.Thread Words
