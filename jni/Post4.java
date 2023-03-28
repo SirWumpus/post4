@@ -65,6 +65,17 @@ public class Post4
 		}
 
 		try {
+			// Quick basic sanity test.
+			p4.evalString(
+"""
+$cafebabe HEX U. DECIMAL
+.( Monaco ) 377 .
+.( e ) 2.71828 F.
+.( PI ) 3.14159 F.
+.( Planck's ) 6.62607015e-34 FS. CR
+"""
+			);
+
 			while ((rc = p4.repl()) != Post4Exception.THROW_OK) {
 				; // Remain in the REPL until EOF or BYE.
 			}
