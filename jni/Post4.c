@@ -14,66 +14,6 @@
 
 static const char *empty_argv[] = { NULL };
 
-#ifdef HAVE_HOOKS
-static void jSetLocalCapacity(P4_Ctx *);
-static void jDeleteLocalRef(P4_Ctx *);
-static void jFindClass(P4_Ctx *);
-#ifdef HMM
-static void jObjectClass(P4_Ctx *);
-static void jMethodID(P4_Ctx *);
-static void jFieldID(P4_Ctx *);
-#endif
-static void jPushLocalFrame(P4_Ctx *);
-static void jPopLocalFrame(P4_Ctx *);
-static void jStringByteLength(P4_Ctx *);
-static void jUnboxString(P4_Ctx *);
-static void jBoxString(P4_Ctx *);
-static void jArrayLength(P4_Ctx *);
-static void jUnboxArray(P4_Ctx *);
-static void jBoxArray(P4_Ctx *);
-static void jSetField(P4_Ctx *);
-static void jField(P4_Ctx *);
-static void jCall(P4_Ctx *);
-
-static P4_Hook jHooks[] = {
-	{ "jSetLocalCapacity", jSetLocalCapacity },
-	{ "jDeleteLocalRef", jDeleteLocalRef },
-	{ "jFindClass", jFindClass },
-#ifdef HMM
-	{ "jObjectClass", jObjectClass },
-	{ "jMethodID", jMethodID },
-	{ "jFieldID", jFieldID },
-#endif
-	{ "jPushLocalFrame", jPushLocalFrame },
-	{ "jPopLocalFrame", jPopLocalFrame },
-	{ "jStringByteLength", jStringByteLength },
-	{ "jUnboxString", jUnboxString },
-	{ "jArrayLength", jArrayLength },
-	{ "jUnboxArray", jUnboxArray },
-	{ "jBoxString", jBoxString },
-	{ "jBoxArray", jBoxArray },
-	{ "jSetField", jSetField },
-	{ "jField", jField },
-	{ "jCall", jCall },
-	{ NULL, NULL }
-};
-
-static int
-post4HookInit(P4_Ctx *ctx)
-{
-	int rc;
-	P4_Hook *h;
-
-	for (h = jHooks; h->name != NULL; h++) {
-		if ((rc = p4HookAdd(ctx, h->name, h->func)) != P4_THROW_OK) {
-			errx(EXIT_FAILURE, "hook %s fail %d", h->name, rc);
-		}
-	}
-
-	return 0;
-}
-#endif
-
 static P4_Ctx *
 getCtx(JNIEnv *env, jobject self)
 {
@@ -144,73 +84,6 @@ Java_post4_jni_Post4_p4Free(JNIEnv *env, jobject self, jlong xtc)
 		free(ctx->argv);
 	}
 	p4Free(ctx);
-}
-
-JNIEXPORT jlong JNICALL
-Java_post4_jni_Post4_p4Create(JNIEnv *env, jobject self, jobject opts)
-{
-	P4_Ctx *ctx;
-	jfieldID fid;
-	P4_Options p4_opts;
-
-	/* Map from object to struct. */
-	jclass clazz = (*env)->GetObjectClass(env, opts);
-
-	fid = (*env)->GetFieldID(env, clazz, "ds_size", "I");
-	p4_opts.ds_size = (unsigned)(*env)->GetIntField(env, opts, fid);
-	fid = (*env)->GetFieldID(env, clazz, "fs_size", "I");
-	p4_opts.fs_size = (unsigned)(*env)->GetIntField(env, opts, fid);
-	fid = (*env)->GetFieldID(env, clazz, "rs_size", "I");
-	p4_opts.rs_size = (unsigned)(*env)->GetIntField(env, opts, fid);
-	fid = (*env)->GetFieldID(env, clazz, "mem_size", "I");
-	p4_opts.mem_size = (unsigned)(*env)->GetIntField(env, opts, fid);
-
-	fid = (*env)->GetFieldID(env, clazz, "core_file", "Ljava/lang/String;");
-	jstring jcore_file = (*env)->GetObjectField(env, opts, fid);
-	p4_opts.core_file = (*env)->GetStringUTFChars(env, jcore_file, NULL);
-	if (p4_opts.core_file == NULL) {
-		p4_opts.core_file = P4_CORE_FILE;
-	}
-
-	fid = (*env)->GetFieldID(env, clazz, "block_file", "Ljava/lang/String;");
-	jstring jblock_file = (*env)->GetObjectField(env, opts, fid);
-	p4_opts.block_file = (*env)->GetStringUTFChars(env, jblock_file, NULL);
-
-	fid = (*env)->GetFieldID(env, clazz, "argv", "[Ljava/lang/String;");
-	jobjectArray jargv = (*env)->GetObjectField(env, opts, fid);
-	p4_opts.argc = (int) (*env)->GetArrayLength(env, jargv);
-	if ((p4_opts.argv = malloc((p4_opts.argc + 1) * sizeof (*p4_opts.argv))) == NULL) {
-		p4_opts.argv = (char **) empty_argv;
-		p4_opts.argc = 0;
-	} else {
-		p4_opts.argv[p4_opts.argc] = NULL;
-		for (int argi = 0; argi < p4_opts.argc; argi++) {
-			jstring jstr = (*env)->GetObjectArrayElement(env, jargv, argi);
-			const char *str = (*env)->GetStringUTFChars(env, jstr, NULL);
-			p4_opts.argv[argi] = strdup(str);
-			(*env)->ReleaseStringUTFChars(env, jstr, str);
-			(*env)->DeleteLocalRef(env, jstr);
-		}
-	}
-	(*env)->DeleteLocalRef(env, jargv);
-
-	/* Create Post4 context. */
-	ctx = p4Create(&p4_opts);
-
-	(*env)->ReleaseStringUTFChars(env, jcore_file, p4_opts.core_file);
-	(*env)->ReleaseStringUTFChars(env, jblock_file, p4_opts.block_file);
-	(*env)->DeleteLocalRef(env, clazz);
-
-	if (ctx == NULL) {
-		(*env)->Throw(env, (*env)->FindClass(env, "java/lang/OutOfMemory"));
-	}
-
-#ifdef HAVE_HOOKS
-	(void) post4HookInit(ctx);
-#endif
-
-	// https://stackoverflow.com/questions/1632367/passing-pointers-between-c-and-java-through-jni
-	return (jlong) ctx;
 }
 
 static jobject
@@ -924,4 +797,109 @@ error1:
 error0:
 	LONGJMP(ctx->on_throw, P4_THROW_EINVAL);
 }
+
+static P4_Hook jHooks[] = {
+	{ "jSetLocalCapacity", jSetLocalCapacity },
+	{ "jDeleteLocalRef", jDeleteLocalRef },
+	{ "jFindClass", jFindClass },
+#ifdef HMM
+	{ "jObjectClass", jObjectClass },
+	{ "jMethodID", jMethodID },
+	{ "jFieldID", jFieldID },
 #endif
+	{ "jPushLocalFrame", jPushLocalFrame },
+	{ "jPopLocalFrame", jPopLocalFrame },
+	{ "jStringByteLength", jStringByteLength },
+	{ "jUnboxString", jUnboxString },
+	{ "jArrayLength", jArrayLength },
+	{ "jUnboxArray", jUnboxArray },
+	{ "jBoxString", jBoxString },
+	{ "jBoxArray", jBoxArray },
+	{ "jSetField", jSetField },
+	{ "jField", jField },
+	{ "jCall", jCall },
+	{ NULL, NULL }
+};
+
+static int
+post4HookInit(P4_Ctx *ctx)
+{
+	int rc;
+	P4_Hook *h;
+
+	for (h = jHooks; h->name != NULL; h++) {
+		if ((rc = p4HookAdd(ctx, h->name, h->func)) != P4_THROW_OK) {
+			errx(EXIT_FAILURE, "hook %s fail %d", h->name, rc);
+		}
+	}
+
+	return 0;
+}
+#endif
+
+JNIEXPORT jlong JNICALL
+Java_post4_jni_Post4_p4Create(JNIEnv *env, jobject self, jobject opts)
+{
+	P4_Ctx *ctx;
+	jfieldID fid;
+	P4_Options p4_opts;
+
+	/* Map from object to struct. */
+	jclass clazz = (*env)->GetObjectClass(env, opts);
+
+	fid = (*env)->GetFieldID(env, clazz, "ds_size", "I");
+	p4_opts.ds_size = (unsigned)(*env)->GetIntField(env, opts, fid);
+	fid = (*env)->GetFieldID(env, clazz, "fs_size", "I");
+	p4_opts.fs_size = (unsigned)(*env)->GetIntField(env, opts, fid);
+	fid = (*env)->GetFieldID(env, clazz, "rs_size", "I");
+	p4_opts.rs_size = (unsigned)(*env)->GetIntField(env, opts, fid);
+	fid = (*env)->GetFieldID(env, clazz, "mem_size", "I");
+	p4_opts.mem_size = (unsigned)(*env)->GetIntField(env, opts, fid);
+
+	fid = (*env)->GetFieldID(env, clazz, "core_file", "Ljava/lang/String;");
+	jstring jcore_file = (*env)->GetObjectField(env, opts, fid);
+	p4_opts.core_file = (*env)->GetStringUTFChars(env, jcore_file, NULL);
+	if (p4_opts.core_file == NULL) {
+		p4_opts.core_file = P4_CORE_FILE;
+	}
+
+	fid = (*env)->GetFieldID(env, clazz, "block_file", "Ljava/lang/String;");
+	jstring jblock_file = (*env)->GetObjectField(env, opts, fid);
+	p4_opts.block_file = (*env)->GetStringUTFChars(env, jblock_file, NULL);
+
+	fid = (*env)->GetFieldID(env, clazz, "argv", "[Ljava/lang/String;");
+	jobjectArray jargv = (*env)->GetObjectField(env, opts, fid);
+	p4_opts.argc = (int) (*env)->GetArrayLength(env, jargv);
+	if ((p4_opts.argv = malloc((p4_opts.argc + 1) * sizeof (*p4_opts.argv))) == NULL) {
+		p4_opts.argv = (char **) empty_argv;
+		p4_opts.argc = 0;
+	} else {
+		p4_opts.argv[p4_opts.argc] = NULL;
+		for (int argi = 0; argi < p4_opts.argc; argi++) {
+			jstring jstr = (*env)->GetObjectArrayElement(env, jargv, argi);
+			const char *str = (*env)->GetStringUTFChars(env, jstr, NULL);
+			p4_opts.argv[argi] = strdup(str);
+			(*env)->ReleaseStringUTFChars(env, jstr, str);
+			(*env)->DeleteLocalRef(env, jstr);
+		}
+	}
+	(*env)->DeleteLocalRef(env, jargv);
+
+	/* Create Post4 context. */
+	ctx = p4Create(&p4_opts);
+
+	(*env)->ReleaseStringUTFChars(env, jcore_file, p4_opts.core_file);
+	(*env)->ReleaseStringUTFChars(env, jblock_file, p4_opts.block_file);
+	(*env)->DeleteLocalRef(env, clazz);
+
+	if (ctx == NULL) {
+		(*env)->Throw(env, (*env)->FindClass(env, "java/lang/OutOfMemory"));
+	}
+
+#ifdef HAVE_HOOKS
+	(void) post4HookInit(ctx);
+#endif
+
+	// https://stackoverflow.com/questions/1632367/passing-pointers-between-c-and-java-through-jni
+	return (jlong) ctx;
+}
