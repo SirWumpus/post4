@@ -516,6 +516,18 @@ extern int p4Repl(P4_Ctx *ctx);
  * @param ctx
  *	A pointer to an allocated P4_Ctx structure.
  *
+ * @param fp
+ *	An open FILE * for reading.
+ *
+ * @return
+ *	Zero on success, otherwise an exception code other than BYE.
+ */
+extern int p4EvalFp(P4_Ctx *ctx, FILE *fp);
+
+/**
+ * @param ctx
+ *	A pointer to an allocated P4_Ctx structure.
+ *
  * @param filepath
  *	A C string of a file path name to interpret.
  *	If NULL, then standard input will be read.

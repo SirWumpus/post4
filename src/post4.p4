@@ -2038,6 +2038,14 @@ VARIABLE SCR
 : SEE ' _seext ;
 [THEN]
 
+[DEFINED] WRITE-FILE [IF]
+\ ( caddr u fid -- ior )
+: WRITE-LINE
+	DUP >R WRITE-FILE DROP
+	S\" \r\n" R> WRITE-FILE
+;
+[THEN]
+
 [DEFINED] _fs [IF]
 _fs CONSTANT floating-stack DROP DROP
 [THEN]

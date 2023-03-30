@@ -16,6 +16,7 @@
 	INCLUDE ../test/string.p4
 	INCLUDE ../test/tools.p4
 	INCLUDE ../test/facility.p4
+	INCLUDE ../test/file.p4
 	INCLUDE ../test/exceptions.p4
 	test_suite_end
 

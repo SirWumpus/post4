@@ -1165,13 +1165,6 @@ p4ResetInput(P4_Ctx *ctx)
 	ctx->input.blk = 0;
 }
 
-static void
-p4SetInput(P4_Ctx *ctx, FILE *fp)
-{
-	ctx->input.fp = fp;
-	p4ResetInput(ctx);
-}
-
 P4_Ctx *
 p4Create(P4_Options *opts)
 {
@@ -1182,7 +1175,8 @@ p4Create(P4_Options *opts)
 	}
 	ctx->radix = 10;
 	ctx->unkey = EOF;
-	p4SetInput(ctx, stdin);
+	ctx->input.fp = stdin;
+	p4ResetInput(ctx);
 	ctx->argc = opts->argc;
 	ctx->argv = opts->argv;
 	ctx->state = P4_STATE_INTERPRET;
@@ -1352,6 +1346,24 @@ p4Repl(P4_Ctx *ctx)
 		P4_WORD("S>F",		&&_s_to_f,	0),		// p4
 		P4_WORD("fs>rs",	&&_fs_to_rs,	0),		// p4
 		P4_WORD("rs>fs",	&&_rs_to_fs,	0),		// p4
+#endif
+#ifdef P4_FILE_ACCESS
+		P4_WORD("BIN",			&&_fa_bin,	0),
+		P4_WORD("R/O",			&&_fa_ro,	0),
+		P4_WORD("R/W",			&&_fa_rw,	0),
+		P4_WORD("W/O",			&&_fa_wo,	0),
+		P4_WORD("CLOSE-FILE",		&&_fa_close,	0),
+		P4_WORD("CREATE-FILE",		&&_fa_create,	0),
+		P4_WORD("DELETE-FILE",		&&_fa_delete,	0),
+		P4_WORD("FILE-POSITION",	&&_fa_tell,	0),
+//		P4_WORD("FILE-SIZE",		&&_fa_fsize,	0),
+		P4_WORD("FLUSH-FILE",		&&_fa_flush,	0),
+		P4_WORD("INCLUDE-FILE",		&&_fa_include,	0),
+		P4_WORD("OPEN-FILE",		&&_fa_open,	0),
+		P4_WORD("READ-FILE",		&&_fa_read,	0),
+//		P4_WORD("READ-LINE",		&&_fa_rline,	0),
+		P4_WORD("REPOSITION-FILE",	&&_fa_seek,	0),
+		P4_WORD("WRITE-FILE",		&&_fa_write,	0),
 #endif
 #ifdef P4_TRACE
 		P4_WORD("TRACE",	&&_trace,	0),		// p4
@@ -2477,6 +2489,88 @@ _dump:		x = P4_POP(ctx->ds);
 		p4MemDump(stdout, w.s, x.u);
 		NEXT;
 
+#ifdef P4_FILE_ACCESS
+	{
+		FILE *fp;
+		static char *fmodes[] = {
+			"a+",  "r", "w", "w+", "ab+", "rb", "wb", "wb+"
+		};
+
+_fa_ro:		P4_PUSH(ctx->ds, (P4_Uint) 1);
+		NEXT;
+
+_fa_wo:		P4_PUSH(ctx->ds, (P4_Uint) 2);
+		NEXT;
+
+_fa_rw:		P4_PUSH(ctx->ds, (P4_Uint) 3);
+		NEXT;
+
+_fa_bin:	x = P4_TOP(ctx->ds);
+		P4_TOP(ctx->ds).u = x.u | 4;
+		NEXT;
+
+_fa_close:	errno = 0;
+		(void) fclose(P4_TOP(ctx->ds).v);
+		P4_TOP(ctx->ds).n = errno;
+		NEXT;
+
+_fa_delete:	errno = 0;
+		P4_DROP(ctx->ds, 1);
+		w = P4_TOP(ctx->ds);
+		x.n = unlink(w.s);
+		P4_TOP(ctx->ds).n = errno;
+		NEXT;
+
+_fa_create:
+_fa_open:	errno = 0;
+		x = P4_POP(ctx->ds);
+		P4_DROP(ctx->ds, 1);
+		w = P4_TOP(ctx->ds);
+		fp = fopen((const char *) w.s, fmodes[x.u]);
+		P4_TOP(ctx->ds).v = fp;
+		P4_PUSH(ctx->ds, (P4_Int) errno);
+		NEXT;
+
+_fa_read:	fp = P4_POP(ctx->ds).v;
+		x = P4_POP(ctx->ds);
+		w = P4_POP(ctx->ds);
+		w.u = fread(w.v, 1, x.u, fp);
+		P4_PUSH(ctx->ds, w);
+		P4_PUSH(ctx->ds, P4_BOOL(ferror(fp)));
+		NEXT;
+
+_fa_flush:	errno = 0;
+		(void) fflush(P4_TOP(ctx->ds).v);
+		P4_TOP(ctx->ds).n = errno;
+		NEXT;
+
+_fa_write:	fp = P4_POP(ctx->ds).v;
+		x = P4_POP(ctx->ds);
+		w = P4_POP(ctx->ds);
+		w.u = fwrite(w.v, 1, x.u, fp);
+		P4_PUSH(ctx->ds, P4_BOOL(ferror(fp)));
+		NEXT;
+
+_fa_include:	x.n = p4EvalFp(ctx, P4_TOP(ctx->ds).v);
+		P4_TOP(ctx->ds) = x;
+		NEXT;
+
+_fa_seek:	errno = 0;
+		fp = P4_POP(ctx->ds).v;
+		P4_DROP(ctx->ds, 1);
+		x = P4_POP(ctx->ds);
+		(void) fseek(fp, x.n, SEEK_SET);
+		P4_PUSH(ctx->ds, (P4_Int) errno);
+		NEXT;
+
+_fa_tell:	errno = 0;
+		x.u = ftell(P4_TOP(ctx->ds).v);
+		P4_TOP(ctx->ds) = x;
+		P4_PUSH(ctx->ds, (P4_Uint) 0);
+		P4_PUSH(ctx->ds, (P4_Int) errno);
+		NEXT;
+	}
+#endif
 #ifdef HAVE_SEE
 		// ( xt -- )
 _seext:		word = P4_POP(ctx->ds).xt;
@@ -2817,20 +2911,30 @@ _f_pow:		w = P4_POP(ctx->P4_FLOAT_STACK);
 }
 
 int
-p4EvalFile(P4_Ctx *ctx, const char *file)
+p4EvalFp(P4_Ctx *ctx, FILE *fp)
 {
-	int rc = P4_THROW_EIO;
+	int rc;
 
 	/* Do not save STATE, see A.6.1.2250 STATE. */
 	P4_INPUT_PUSH(&ctx->input);
-
-	if ((ctx->input.fp = fopen(file, "r")) != NULL) {
-		p4ResetInput(ctx);
-		rc = p4Repl(ctx);
-		(void) fclose(ctx->input.fp);
-	}
-
+	ctx->input.fp = fp;
+	p4ResetInput(ctx);
+	rc = p4Repl(ctx);
 	P4_INPUT_POP(&ctx->input);
+
+	return rc;
+}
+
+int
+p4EvalFile(P4_Ctx *ctx, const char *file)
+{
+	FILE *fp;
+	int rc = P4_THROW_EIO;
+
+	if ((fp = fopen(file, "r")) != NULL) {
+		rc = p4EvalFp(ctx, fp);
+		(void) fclose(fp);
+	}
 
 	return rc;
 }
