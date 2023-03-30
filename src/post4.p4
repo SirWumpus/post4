@@ -658,7 +658,7 @@ DEFER _fsp!
 	R> catch_frame !	\ S: --   R: ip ds fs
 	2R> 2DROP 		\ S: --   R: ip
 	0			\ S: 0    R: ip
-; compile-only
+;
 
 \ ... THROW ...
 \
@@ -680,7 +680,7 @@ DEFER _fsp!
 	  _dsp!			\ S: xt   R: ip n
 	  DROP R>		\ S: n    R: ip
 	THEN
-; compile-only
+;
 
 \ ( xt -- )
 : execute-compiling
