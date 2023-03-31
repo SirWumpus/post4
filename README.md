@@ -51,6 +51,7 @@ Glossary
 * [Standard Core Words](./doc/standard.md)
 * [Block File Words](./doc/block.md)
 * [Double-Cell Words](./doc/double.md)
+* [File Access Words](./doc/file.md)
 * [Floating-Point Words](./doc/float.md)
 * [Memory Words](./doc/memory.md)
 * [String Words](./doc/string.md)
