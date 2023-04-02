@@ -1520,11 +1520,13 @@ p4Repl(P4_Ctx *ctx)
 		ctx->words = p4_builtin_words;
 	}
 
-#define NEXT	goto _next
+#define NEXT		goto _next
+#define THROW(x)	{ rc = (x); goto _thrown; }
 
 	signal_ctx = ctx;
 	SETJMP_PUSH(ctx->on_throw);
 	if ((rc = SETJMP(ctx->on_throw)) != 0) {
+_thrown:
 		switch (rc) {
 		case P4_THROW_ABORT_MSG:
 			/* Displays its own message. */
@@ -1636,7 +1638,7 @@ _repl:
 					 * so the stacks can remain untouched. See Forth 200x
 					 * Draft 19.1 section 3.4 d.
 					 */
-					LONGJMP(ctx->on_throw, P4_THROW_UNDEFINED);
+					THROW(P4_THROW_UNDEFINED);
 				}
 				if (ctx->state == P4_STATE_COMPILE) {
 					p4WordAppend(ctx, (P4_Cell) &w_lit);
@@ -1774,7 +1776,7 @@ _fsp_put:	w = P4_POP(ctx->ds);
 
 		// ( n -- )
 _longjmp:	w = P4_POP(ctx->ds);
-		LONGJMP(ctx->on_throw, (int) w.n);
+		THROW((int) w.n);
 
 		// ( -- x )
 		// : lit r> dup cell+ >r @ ;
@@ -1805,7 +1807,7 @@ _noname:	str.string = "";
 		goto _do_colon;
 
 _colon:		if (ctx->state == P4_STATE_COMPILE) {
-			LONGJMP(ctx->on_throw, P4_THROW_COMPILING);
+			THROW(P4_THROW_COMPILING);
 		}
 		str = p4ParseName(&ctx->input);
 		goto _do_colon;
@@ -1830,7 +1832,7 @@ _semicolon:	w = P4_POP(ctx->ds);
 				w.u, (w.u & 0xFF), (w.u >> CHAR_BIT),
 				x.u, P4_LENGTH(ctx->ds), P4_LENGTH(ctx->rs)
 			);
-			LONGJMP(ctx->on_throw, P4_THROW_BAD_CONTROL);
+			THROW(P4_THROW_BAD_CONTROL);
 		}
 		p4WordAppend(ctx, (P4_Cell) &w_semi);
 		P4_WORD_CLEAR_HIDDEN(ctx->words);
@@ -1916,7 +1918,7 @@ _create:	str = p4ParseName(&ctx->input);
 		// DOES>
 _does:		word = ctx->words;
 		if (!P4_WORD_WAS_CREATED(word)) {
-			LONGJMP(ctx->on_throw, P4_THROW_NOT_CREATED);
+			THROW(P4_THROW_NOT_CREATED);
 		}
 		word->code = &&_do_does;
 #ifdef HAVE_SEE
@@ -1948,7 +1950,7 @@ _do_does:	P4_PUSH(ctx->ds, w.xt->data + 1);
 		// ( xt -- addr )
 _body:		w = P4_POP(ctx->ds);
 		if (!P4_WORD_WAS_CREATED(w.w)) {
-			LONGJMP(ctx->on_throw, P4_THROW_NOT_CREATED);
+			THROW(P4_THROW_NOT_CREATED);
 		}
 		/* fallthrough */
 
@@ -2161,7 +2163,7 @@ _mul:		w = P4_POP(ctx->ds);
 		// ( n1 n2 -- n3 )
 _div:		w = P4_POP(ctx->ds);
 		if (w.n == 0) {
-			LONGJMP(ctx->on_throw, P4_THROW_DIV_ZERO);
+			THROW(P4_THROW_DIV_ZERO);
 		}
 		P4_TOP(ctx->ds).n /= w.n;
 		NEXT;
@@ -2196,7 +2198,7 @@ _sm_div_rem:	d = P4_POP(ctx->ds);
 		w = P4_POP(ctx->ds);
 		x = P4_TOP(ctx->ds);
 		if (d.n == 0) {
-			LONGJMP(ctx->on_throw, P4_THROW_DIV_ZERO);
+			THROW(P4_THROW_DIV_ZERO);
 		}
 		w.n = p4Divs(x.n, w.n, d.n, &x.n);
 		P4_TOP(ctx->ds).n = x.n;
@@ -2208,7 +2210,7 @@ _um_div_mod:	d = P4_POP(ctx->ds);
 		w = P4_POP(ctx->ds);
 		x = P4_TOP(ctx->ds);
 		if (d.n == 0) {
-			LONGJMP(ctx->on_throw, P4_THROW_DIV_ZERO);
+			THROW(P4_THROW_DIV_ZERO);
 		}
 		w.u = p4Divu(x.u, w.u, d.u, &x.u);
 		P4_TOP(ctx->ds).u = x.u;
@@ -2218,7 +2220,7 @@ _um_div_mod:	d = P4_POP(ctx->ds);
 		// ( n1 n2 -- n3 )
 _mod:		w = P4_POP(ctx->ds);
 		if (w.n == 0) {
-			LONGJMP(ctx->on_throw, P4_THROW_DIV_ZERO);
+			THROW(P4_THROW_DIV_ZERO);
 		}
 		P4_TOP(ctx->ds).n %= w.n;
 		NEXT;
@@ -2353,7 +2355,7 @@ _emit:		w = P4_POP(ctx->ds);
 _included:	w = P4_POP(ctx->ds);
 		x = P4_POP(ctx->ds);
 		if ((cstr = strndup(x.s, w.u)) == NULL) {
-			LONGJMP(ctx->on_throw, P4_THROW_ALLOCATE);
+			THROW(P4_THROW_ALLOCATE);
 		}
 		(void) p4LoadFile(ctx, cstr);
 		free(cstr);
@@ -2388,7 +2390,7 @@ _block_close:	(void) p4BlockClose(ctx->block_fd, &ctx->block);
 	{	// ( -- u )
 		struct stat sb;
 _blocks:	if (fstat(ctx->block_fd, &sb) != 0) {
-			LONGJMP(ctx->on_throw, P4_THROW_EIO);
+			THROW(P4_THROW_EIO);
 		}
 		w.u = sb.st_size / P4_BLOCK_SIZE;
 		P4_PUSH(ctx->ds, w);
@@ -2406,7 +2408,7 @@ _empty_buffers:	ctx->block.state = P4_BLOCK_FREE;
 
 		// ( -- )
 _save_buffers:	if (ctx->block.state == P4_BLOCK_DIRTY && p4BlockWrite(ctx->block_fd, &ctx->block)) {
-			LONGJMP(ctx->on_throw, P4_THROW_BLOCK_WR);
+			THROW(P4_THROW_BLOCK_WR);
 		}
 		NEXT;
 
@@ -2711,7 +2713,7 @@ _to_float:	errno = 0;
 
 		// (F: f -- )
 _f_dot:		if (ctx->radix != 10) {
-			LONGJMP(ctx->on_throw, P4_THROW_BAD_BASE);
+			THROW(P4_THROW_BAD_BASE);
 		}
 		p4StackCanPopPush(ctx, &ctx->P4_FLOAT_STACK, 1, 0);
 		w = P4_POP(ctx->P4_FLOAT_STACK);
@@ -2720,7 +2722,7 @@ _f_dot:		if (ctx->radix != 10) {
 
 		// (F: f -- )
 _f_sdot:	if (ctx->radix != 10) {
-			LONGJMP(ctx->on_throw, P4_THROW_BAD_BASE);
+			THROW(P4_THROW_BAD_BASE);
 		}
 		p4StackCanPopPush(ctx, &ctx->P4_FLOAT_STACK, 1, 0);
 		w = P4_POP(ctx->P4_FLOAT_STACK);
@@ -2746,7 +2748,7 @@ _f_mul:		w = P4_POP(ctx->P4_FLOAT_STACK);
 _f_div:		w = P4_POP(ctx->P4_FLOAT_STACK);
 // With floating point, divide by zero doesn't generate SIGFPE.
 //		if (w.f == 0) {
-//			LONGJMP(ctx->on_throw, P4_THROW_DIV_ZERO);
+//			THROW(P4_THROW_DIV_ZERO);
 //		}
 		P4_TOP(ctx->P4_FLOAT_STACK).f /= w.f;
 		NEXT;
