@@ -34,7 +34,7 @@ extern "C" {
 #undef P4_STACK_SIZE
 #undef P4_STRING_SIZE
 #undef P4_SAFE_PATH
-#undef P4_FILE_ACCESS
+#define P4_FILE_ACCESS
 #undef P4_TRACE
 
 #undef WITH_JAVA
