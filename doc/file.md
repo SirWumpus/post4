@@ -58,7 +58,7 @@ Set file access read-write `mode`.
 - - -
 #### READ-FILE
 ( `caddr` `u1` `fid` -- `u2` `ior` )  
-Read at most `u1` bytes into the buffer `caddr` from file `fid`.  Return the number of bytes `u2` actually read and `ior` with zero on success or non-zero on error.
+Read at most `u1` characters into the buffer `caddr` from file `fid`.  Return the number of characters `u2` actually read and `ior` with zero on success or non-zero on error.
 
 - - -
 #### REPOSITION-FILE
@@ -73,4 +73,4 @@ Set file access write-only `mode`.
 - - -
 #### WRITE-FILE
 ( `caddr` `u` `fid` -- `ior` )  
-Write `u` bytes from address `caddr` to the file `fid` and return `ior` with zero on success or non-zero on error.
+Write `u` characters from address `caddr` to the file `fid` and return `ior` with zero on success or non-zero on error.

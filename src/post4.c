@@ -2534,7 +2534,7 @@ _fa_open:	errno = 0;
 _fa_read:	fp = P4_POP(ctx->ds).v;
 		x = P4_POP(ctx->ds);
 		w = P4_POP(ctx->ds);
-		w.u = fread(w.v, 1, x.u, fp);
+		w.u = fread(w.s, sizeof (*w.s), x.u, fp);
 		P4_PUSH(ctx->ds, w);
 		P4_PUSH(ctx->ds, P4_BOOL(ferror(fp)));
 		NEXT;
@@ -2547,7 +2547,7 @@ _fa_flush:	errno = 0;
 _fa_write:	fp = P4_POP(ctx->ds).v;
 		x = P4_POP(ctx->ds);
 		w = P4_POP(ctx->ds);
-		w.u = fwrite(w.v, 1, x.u, fp);
+		w.u = fwrite(w.s, sizeof (*w.s), x.u, fp);
 		P4_PUSH(ctx->ds, P4_BOOL(ferror(fp)));
 		NEXT;
 
