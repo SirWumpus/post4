@@ -1020,29 +1020,30 @@ p4BlockClose(int fd, P4_Block *block)
 	return close(fd);
 }
 
-void
+int
 p4BlockBuffer(P4_Ctx *ctx, P4_Uint blk_num, int with_read)
 {
 	if (ctx->block_fd <= 0) {
-		LONGJMP(ctx->on_throw, P4_THROW_EIO);
+		return P4_THROW_EIO;
 	}
 	if (blk_num == 0) {
-		LONGJMP(ctx->on_throw, P4_THROW_BLOCK_BAD);
+		return P4_THROW_BLOCK_BAD;
 	}
 	if (blk_num == ctx->block.number) {
-		return;
+		return P4_THROW_OK;
 	}
 	/* Current there is no block buffer assignment strategy beyond
 	 * a single buffer per context.  Might add one day.
 	 */
 	if (ctx->block.state == P4_BLOCK_DIRTY && p4BlockWrite(ctx->block_fd, &ctx->block)) {
-		LONGJMP(ctx->on_throw, P4_THROW_BLOCK_WR);
+		return P4_THROW_BLOCK_WR;
 	}
 	if (with_read && p4BlockRead(ctx->block_fd, blk_num, &ctx->block)) {
-		LONGJMP(ctx->on_throw, P4_THROW_BLOCK_RD);
+		return P4_THROW_BLOCK_RD;
 	}
 	ctx->block.state = P4_BLOCK_CLEAN;
 	ctx->block.number = blk_num;
+	return P4_THROW_OK;
 }
 
 /***********************************************************************
@@ -1063,13 +1064,13 @@ p4Allot(P4_Ctx *ctx, P4_Int n)
 {
 	if (ctx->end <= ctx->here + n) {
 		/* Attempt to reserve more data space than available. */
-		LONGJMP(ctx->on_throw, P4_THROW_ALLOCATE);
+		return NULL;
 	}
 	if (ctx->here + n < (P4_Char *) ctx->words->data) {
 		/* Attempt to release data space below the most recently
 		 * created word.
 		 */
-		LONGJMP(ctx->on_throw, P4_THROW_RESIZE);
+		return NULL;
 	}
 	void *start = ctx->here;
 	MEMSET(start, BYTE_ME, n);
@@ -1961,11 +1962,15 @@ _data_field:	P4_PUSH(ctx->ds, w.xt->data + 1);
 
 		// ( n -- )
 _allot:		w = P4_POP(ctx->ds);
-		(void) p4Allot(ctx, w.n);
+		if (p4Allot(ctx, w.n) == NULL) {
+			THROW(P4_THROW_ALLOCATE);
+		}
 		NEXT;
 
 		// ( -- )
-_align:		(void) p4Allot(ctx, P4_ALIGN_BY((P4_Uint) ctx->here));
+_align:		if (p4Allot(ctx, P4_ALIGN_BY((P4_Uint) ctx->here)) == NULL) {
+			THROW(P4_THROW_ALLOCATE);
+		}
 		NEXT;
 
 		/*
@@ -2371,7 +2376,9 @@ _blk:		P4_PUSH(ctx->ds, (P4_Cell *) &ctx->input.blk);
 
 		// ( u -- aaddr )
 _block:		w = P4_TOP(ctx->ds);
-		p4BlockBuffer(ctx, w.u, 1);
+		if ((rc = p4BlockBuffer(ctx, w.u, 1)) != P4_THROW_OK) {
+			THROW(rc);
+		}
 		P4_TOP(ctx->ds).s = ctx->block.buffer;
 		NEXT;
 
@@ -2398,7 +2405,9 @@ _blocks:	if (fstat(ctx->block_fd, &sb) != 0) {
 	}
 		// ( u -- aaddr )
 _buffer:	w = P4_TOP(ctx->ds);
-		p4BlockBuffer(ctx, w.u, 0);
+		if ((rc = p4BlockBuffer(ctx, w.u, 0)) != P4_THROW_OK) {
+			THROW(rc);
+		}
 		P4_TOP(ctx->ds).s = ctx->block.buffer;
 		NEXT;
 
