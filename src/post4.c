@@ -132,20 +132,6 @@ static const char crlf[] = "\r\n";
  ***********************************************************************/
 
 static void
-sig_int(int signum)
-{
-	if (signal_ctx != NULL) {
-		switch (signum) {
-		case SIGINT: signum = P4_THROW_SIGINT; break;
-		case SIGFPE: signum = P4_THROW_SIGFPE; break;
-		case SIGSEGV: signum = P4_THROW_SIGSEGV; break;
-		}
-		LONGJMP(signal_ctx->on_throw, signum);
-	}
-	abort();
-}
-
-static void
 sig_winch(int signum)
 {
 #if defined(HAVE_TCGETWINSIZE)
@@ -179,9 +165,6 @@ p4Init(void)
 
 	(void) atexit(p4Fini);
 
-	signal(SIGINT, sig_int);
-	signal(SIGFPE, sig_int);
-	signal(SIGSEGV, sig_int);
 	signal(SIGWINCH, sig_winch);
 
 	is_tty = isatty(fileno(stdin));
@@ -3008,6 +2991,17 @@ static const char p4_build_info[] =
 	"POST4_PATH=\"" P4_CORE_PATH "\"\r\n"
 ;
 
+static void
+sig_int(int signum)
+{
+	switch (signum) {
+	case SIGINT: signum = P4_THROW_SIGINT; break;
+	case SIGFPE: signum = P4_THROW_SIGFPE; break;
+	case SIGSEGV: signum = P4_THROW_SIGSEGV; break;
+	}
+	LONGJMP(signal_ctx->on_throw, signum);
+}
+
 int
 main(int argc, char **argv)
 {
@@ -3015,6 +3009,10 @@ main(int argc, char **argv)
 	P4_Ctx *ctx;
 
 	p4Init();
+
+	signal(SIGINT, sig_int);
+	signal(SIGFPE, sig_int);
+	signal(SIGSEGV, sig_int);
 
 	while ((ch = getopt(argc, argv, "b:c:d:f:i:m:r:V")) != -1) {
 		switch (ch) {
