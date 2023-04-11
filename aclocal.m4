@@ -654,7 +654,7 @@ AC_DEFUN(SNERT_OPTION_ENABLE_DEBUG,[
 	CFLAGS="${CFLAGS}"
 
 	AC_ARG_ENABLE(debug,[AS_HELP_STRING([--enable-debug],[enable compiler debug option])])
-	AS_IF([test $enable_debug = 'yes'],[
+	AS_IF([test ${enable_debug:-no} = 'yes'],[
 		CFLAGS="-g -O0${CFLAGS:+ $CFLAGS}"
 	],[
 		AC_DEFINE(NDEBUG,[1],[Disable debug code])
@@ -692,7 +692,7 @@ AC_DEFUN(SNERT_OPTION_ENABLE_MATH,[
 	AC_ARG_ENABLE(math,
 		[AS_HELP_STRING([--disable-math ],[disable libm support])],
 		[
-			AS_IF([test $enable_math = 'yes'],[
+			AS_IF([test ${enable_math:-no} = 'yes'],[
 				AC_CHECK_HEADERS([math.h],[LIBS="${LIBS:+$LIBS }-lm"])
 			])
 		],
