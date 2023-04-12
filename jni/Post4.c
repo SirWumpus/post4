@@ -4,8 +4,14 @@
  * Copyright 2023 by Anthony Howe.  All rights reserved.
  */
 
-#include <jni.h>
 #include <stdlib.h>
+#include <stdint.h>
+
+#ifdef __GNUC__
+typedef int64_t __int64
+#endif
+
+#include <jni.h>
 
 #include "../src/post4.h"
 
