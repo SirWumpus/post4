@@ -8,7 +8,7 @@
 #include <stdint.h>
 
 #ifdef __GNUC__
-typedef int64_t __int64
+typedef int64_t __int64;
 #endif
 
 #include <jni.h>
