@@ -283,6 +283,25 @@ struct winsize {
 
 #undef HAVE_SYS_IOCTL_H
 
+/*
+ * Extra Stdio Functions
+ */
+#undef HAVE_IO_H
+#undef HAVE_GETDELIM
+#undef HAVE_GETLINE
+
+#undef HAVE_GETPROGNAME
+#undef HAVE_SETPROGNAME
+#undef HAVE_ERR_H
+#undef HAVE_ERR
+#undef HAVE_ERRX
+#undef HAVE_WARN
+#undef HAVE_WARNX
+#undef HAVE_VERR
+#undef HAVE_VERRX
+#undef HAVE_VWARN
+#undef HAVE_VWARNX
+
 /***********************************************************************
  *** END
  ***********************************************************************/

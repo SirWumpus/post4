@@ -3558,7 +3558,7 @@ then :
   enableval=$enable_debug;
 fi
 
-	if test $enable_debug = 'yes'
+	if test ${enable_debug:-no} = 'yes'
 then :
 
 		CFLAGS="-g -O0${CFLAGS:+ $CFLAGS}"
@@ -4605,7 +4605,7 @@ fi
 if test ${enable_math+y}
 then :
   enableval=$enable_math;
-			if test $enable_math = 'yes'
+			if test ${enable_math:-no} = 'yes'
 then :
 
 				       for ac_header in math.h
@@ -7152,6 +7152,163 @@ printf "%s\n" "#define HAVE_DOPRNT 1" >>confdefs.h
 fi
 
 fi
+
+
+	echo
+	echo "Check for supplemental stdio support..."
+	echo
+
+	ac_ext=c
+CC_E='-o '
+ac_cpp='$CPP $CPPFLAGS'
+ac_compile='$CC -c $CFLAGS $CPPFLAGS conftest.$ac_ext >&5'
+ac_link='$CC ${CC_E}conftest$ac_exeext $CFLAGS $CPPFLAGS $LDFLAGS conftest.$ac_ext $LIBS >&5'
+ac_compiler_gnu=$ac_cv_c_compiler_gnu
+
+	{ printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking for __CYGWIN__" >&5
+printf %s "checking for __CYGWIN__... " >&6; }
+if test ${ac_cv_define___CYGWIN__+y}
+then :
+  printf %s "(cached) " >&6
+else $as_nop
+
+		if test "$cross_compiling" = yes
+then :
+  { { printf "%s\n" "$as_me:${as_lineno-$LINENO}: error: in \`$ac_pwd':" >&5
+printf "%s\n" "$as_me: error: in \`$ac_pwd':" >&2;}
+as_fn_error $? "cannot run test program while cross compiling
+See \`config.log' for more details" "$LINENO" 5; }
+else $as_nop
+  cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+
+
+int main()
+{
+#ifdef __CYGWIN__
+	return 0;
+#else
+	return 1;
+#endif
+}
+
+
+_ACEOF
+if ac_fn_c_try_run "$LINENO"
+then :
+  ac_cv_define___CYGWIN__=yes
+else $as_nop
+  ac_cv_define___CYGWIN__=no
+fi
+rm -f core *.core core.conftest.* gmon.out bb.out conftest$ac_exeext \
+  conftest.$ac_objext conftest.beam conftest.$ac_ext
+fi
+
+
+fi
+{ printf "%s\n" "$as_me:${as_lineno-$LINENO}: result: $ac_cv_define___CYGWIN__" >&5
+printf "%s\n" "$ac_cv_define___CYGWIN__" >&6; }
+	ac_ext=c
+CC_E='-o '
+ac_cpp='$CPP $CPPFLAGS'
+ac_compile='$CC -c $CFLAGS $CPPFLAGS conftest.$ac_ext >&5'
+ac_link='$CC ${CC_E}conftest$ac_exeext $CFLAGS $CPPFLAGS $LDFLAGS conftest.$ac_ext $LIBS >&5'
+ac_compiler_gnu=$ac_cv_c_compiler_gnu
+
+	if test $ac_cv_define___CYGWIN__ = 'yes'
+then :
+
+		printf "%s\n" "#define HAVE_MACRO___CYGWIN__ 1" >>confdefs.h
+
+
+fi
+
+	ac_fn_c_check_header_compile "$LINENO" "io.h" "ac_cv_header_io_h" "$ac_includes_default"
+if test "x$ac_cv_header_io_h" = xyes
+then :
+  printf "%s\n" "#define HAVE_IO_H 1" >>confdefs.h
+
+fi
+ac_fn_c_check_header_compile "$LINENO" "err.h" "ac_cv_header_err_h" "$ac_includes_default"
+if test "x$ac_cv_header_err_h" = xyes
+then :
+  printf "%s\n" "#define HAVE_ERR_H 1" >>confdefs.h
+
+fi
+
+	ac_fn_c_check_func "$LINENO" "getdelim" "ac_cv_func_getdelim"
+if test "x$ac_cv_func_getdelim" = xyes
+then :
+  printf "%s\n" "#define HAVE_GETDELIM 1" >>confdefs.h
+
+fi
+ac_fn_c_check_func "$LINENO" "getline" "ac_cv_func_getline"
+if test "x$ac_cv_func_getline" = xyes
+then :
+  printf "%s\n" "#define HAVE_GETLINE 1" >>confdefs.h
+
+fi
+ac_fn_c_check_func "$LINENO" "getprogname" "ac_cv_func_getprogname"
+if test "x$ac_cv_func_getprogname" = xyes
+then :
+  printf "%s\n" "#define HAVE_GETPROGNAME 1" >>confdefs.h
+
+fi
+ac_fn_c_check_func "$LINENO" "setprogname" "ac_cv_func_setprogname"
+if test "x$ac_cv_func_setprogname" = xyes
+then :
+  printf "%s\n" "#define HAVE_SETPROGNAME 1" >>confdefs.h
+
+fi
+ac_fn_c_check_func "$LINENO" "err" "ac_cv_func_err"
+if test "x$ac_cv_func_err" = xyes
+then :
+  printf "%s\n" "#define HAVE_ERR 1" >>confdefs.h
+
+fi
+ac_fn_c_check_func "$LINENO" "errx" "ac_cv_func_errx"
+if test "x$ac_cv_func_errx" = xyes
+then :
+  printf "%s\n" "#define HAVE_ERRX 1" >>confdefs.h
+
+fi
+ac_fn_c_check_func "$LINENO" "warn" "ac_cv_func_warn"
+if test "x$ac_cv_func_warn" = xyes
+then :
+  printf "%s\n" "#define HAVE_WARN 1" >>confdefs.h
+
+fi
+ac_fn_c_check_func "$LINENO" "warnx" "ac_cv_func_warnx"
+if test "x$ac_cv_func_warnx" = xyes
+then :
+  printf "%s\n" "#define HAVE_WARNX 1" >>confdefs.h
+
+fi
+ac_fn_c_check_func "$LINENO" "verr" "ac_cv_func_verr"
+if test "x$ac_cv_func_verr" = xyes
+then :
+  printf "%s\n" "#define HAVE_VERR 1" >>confdefs.h
+
+fi
+ac_fn_c_check_func "$LINENO" "verrx" "ac_cv_func_verrx"
+if test "x$ac_cv_func_verrx" = xyes
+then :
+  printf "%s\n" "#define HAVE_VERRX 1" >>confdefs.h
+
+fi
+ac_fn_c_check_func "$LINENO" "vwarn" "ac_cv_func_vwarn"
+if test "x$ac_cv_func_vwarn" = xyes
+then :
+  printf "%s\n" "#define HAVE_VWARN 1" >>confdefs.h
+
+fi
+ac_fn_c_check_func "$LINENO" "vwarnx" "ac_cv_func_vwarnx"
+if test "x$ac_cv_func_vwarnx" = xyes
+then :
+  printf "%s\n" "#define HAVE_VWARNX 1" >>confdefs.h
+
+fi
+
 
 
 	echo

@@ -1192,7 +1192,9 @@ AC_DEFUN(SNERT_EXTRA_STDIO,[
 	echo
 	echo "Check for supplemental stdio support..."
 	echo
-	AC_CHECK_FUNCS(getdelim getline)
+	SNERT_CHECK_PREDEFINE(__CYGWIN__)
+	AC_CHECK_HEADERS([io.h err.h])
+	AC_CHECK_FUNCS(getdelim getline getprogname setprogname err errx warn warnx verr verrx vwarn vwarnx)
 ])
 
 dnl

@@ -78,7 +78,6 @@ extern "C" {
  *** No configuration below this point.
  ***********************************************************************/
 
-#include <err.h>
 #include <ctype.h>
 #include <errno.h>
 #include <assert.h>
@@ -92,6 +91,13 @@ extern "C" {
 #include <setjmp.h>
 #include <signal.h>
 #include <time.h>
+
+
+#ifdef HAVE_ERR_H
+# include <err.h>
+#else
+# include "err.h"
+#endif
 
 #ifdef HAVE_SYS_TYPES_H
 # include <sys/types.h>
