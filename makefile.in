@@ -37,6 +37,12 @@ datarootdir	:= @datarootdir@/post4
 TOPDIR	 	= @abs_top_srcdir@
 TARDIR   	= ${TOPDIR}/../
 
+CC		= @CC@
+CC_E		= @CC_E@
+CC_O		= @CC_O@
+CPPFLAGS	= @CPPFLAGS@
+CFLAGS		= @CFLAGS@ -Wno-unused-label -funsigned-char -Wno-unused-const-variable
+
 TARNAME 	= @PACKAGE_TARNAME@
 MD5SUM		= @MD5SUM@
 AUTOCONF	= @AUTOCONF@
@@ -112,6 +118,9 @@ configure : configure.ac aclocal.m4
 
 makefile: makefile.in config.status
 	./config.status makefile
+
+predefines:
+	${CC} ${CPPFLAGS} -dM -E -xc /dev/null
 
 list:
 	git ls-tree --full-tree -r --name-only HEAD
