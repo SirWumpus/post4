@@ -13,11 +13,12 @@ jobs:
 
     steps:
     - uses: actions/checkout@v4
-    - uses: actions/setup-java@v3
+    - uses: actions/setup-java@v4
       with:
         distribution: 'temurin'
-        java-version: '17    # The OpenJDK version to make available on the path
+        java-version: '17'
         architecture: 'x64'
+    - name: configure
       run: ./configure
     - name: make
       run: make
