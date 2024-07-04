@@ -7,7 +7,7 @@ AC_INIT(post4, 0.8.0, [Anthony Howe <achowe@snert.com>])
 dnl The autoconf version I learned to deal with.
 AC_PREREQ(2.59)
 
-SNERT_INIT([P4], [Copyright 2007, 2023 by Anthony Howe. All rights reserved.])
+SNERT_INIT([P4], [Copyright 2007, 2024 by Anthony Howe. All rights reserved.])
 AC_DEFINE_UNQUOTED(P4_PLATFORM, [["${platform}"]])
 
 #######################################################################
@@ -36,6 +36,7 @@ AC_CONFIG_FILES([
 #	Configuration options: settings
 #######################################################################
 
+SNERT_OPTION_ENABLE_32BIT
 SNERT_OPTION_ENABLE_64BIT
 SNERT_OPTION_ENABLE_DEBUG
 SNERT_OPTION_ENABLE_MATH
@@ -99,6 +100,8 @@ AC_SUBST(CC_E_NAME)
 AC_SUBST(CC_O)
 AC_SUBST(CC_O_NAME)
 
+AC_CHECK_HEADERS([ctype.h errno.h inttypes.h limits.h stdarg.h stddef.h stdint.h stdio.h unistd.h sys/ioctl.h])
+
 AC_CHECK_SIZEOF(short)
 AC_CHECK_SIZEOF(int)
 AC_CHECK_SIZEOF(long)
@@ -107,12 +110,11 @@ AC_CHECK_SIZEOF(off_t)
 AC_CHECK_SIZEOF(double)
 AC_CHECK_SIZEOF(long double)
 AC_CHECK_SIZEOF(long long int)
+AC_CHECK_SIZEOF(intptr_t)
 
 #######################################################################
 #	Check for library, header, and function families.
 #######################################################################
-
-AC_CHECK_HEADERS([ctype.h errno.h inttypes.h limits.h stdarg.h stddef.h stdint.h stdio.h unistd.h sys/ioctl.h])
 
 SNERT_ANSI_TIME
 SNERT_ANSI_STRING

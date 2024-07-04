@@ -664,25 +664,31 @@ AC_DEFUN(SNERT_OPTION_ENABLE_DEBUG,[
 ])
 
 AC_DEFUN(SNERT_OPTION_ENABLE_64BIT,[
-	AC_ARG_ENABLE(64bit,
-		[AS_HELP_STRING([--enable-64bit ],[enable compile & link options for 64-bit])],
-		[
-			CFLAGS="-m64 ${CFLAGS}"
-			LDFLAGS="-m64 ${LDFLAGS}"
-		],[
-			dnl Option not specified, then choose based on CPU.
-			case `uname -m` in
-			x86_64|amd64)
-				CFLAGS="-m64 ${CFLAGS}"
-				LDFLAGS="-m64 ${LDFLAGS}"
-				;;
-			i386)
-				CFLAGS="-m32 ${CFLAGS}"
-				LDFLAGS="-m32 ${LDFLAGS}"
-				;;
-			esac
-		]
-	)
+	dnl Assert that CFLAGS is defined. When AC_PROC_CC is called to
+	dnl check the compiler and CC == gcc is found and CFLAGS is
+	dnl undefined, then it gets assigned "-g -O2", which is just
+	dnl annoying when you want the default to no debugging.
+	CFLAGS="${CFLAGS}"
+	LDFLAGS="${LDFLAGS}"
+	AC_ARG_ENABLE(64bit,[AS_HELP_STRING([--enable-64bit],[enable compile & link options for 64-bit])])
+	AS_IF([test ${enable_64bit:-no} = 'yes'],[
+		CFLAGS="-m64 ${CFLAGS}"
+dnl		LDFLAGS="-m64 ${LDFLAGS}"
+	])
+])
+
+AC_DEFUN(SNERT_OPTION_ENABLE_32BIT,[
+	dnl Assert that CFLAGS is defined. When AC_PROC_CC is called to
+	dnl check the compiler and CC == gcc is found and CFLAGS is
+	dnl undefined, then it gets assigned "-g -O2", which is just
+	dnl annoying when you want the default to no debugging.
+	CFLAGS="${CFLAGS}"
+	LDFLAGS="${LDFLAGS}"
+	AC_ARG_ENABLE(32bit,[AS_HELP_STRING([--enable-32bit],[enable compile & link options for 32-bit])])
+	AS_IF([test ${enable_32bit:-no} = 'yes'],[
+		CFLAGS="-m32 ${CFLAGS}"
+dnl		LDFLAGS="-m32 ${LDFLAGS}"
+	])
 ])
 
 dnl
@@ -1231,9 +1237,14 @@ AC_DEFUN(SNERT_TERMIOS,[
 	echo
 	AC_CHECK_HEADERS([termios.h],[
 		AC_CHECK_FUNCS(tcgetattr tcsetattr tcgetwinsize tcsetwinsize ctermid)
-	])
-	AC_CHECK_TYPES([struct winsize],[],[],[
+		AC_CHECK_TYPES([struct winsize],[],[],[
 #include <termios.h>
+		])
+	])
+	AC_CHECK_HEADERS([sys/ioctl.h],[
+		AC_CHECK_TYPES([struct winsize],[],[],[
+#include <sys/ioctl.h>
+		])
 	])
 ])
 
