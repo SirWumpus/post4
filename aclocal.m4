@@ -1237,11 +1237,13 @@ AC_DEFUN(SNERT_TERMIOS,[
 	echo
 	AC_CHECK_HEADERS([termios.h],[
 		AC_CHECK_FUNCS(tcgetattr tcsetattr tcgetwinsize tcsetwinsize ctermid)
+		unset ac_cv_type_struct_winsize
 		AC_CHECK_TYPES([struct winsize],[],[],[
 #include <termios.h>
 		])
 	])
 	AC_CHECK_HEADERS([sys/ioctl.h],[
+		unset ac_cv_type_struct_winsize
 		AC_CHECK_TYPES([struct winsize],[],[],[
 #include <sys/ioctl.h>
 		])

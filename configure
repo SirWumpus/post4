@@ -8368,6 +8368,7 @@ then :
 
 fi
 
+		unset ac_cv_type_struct_winsize
 		ac_fn_c_check_type "$LINENO" "struct winsize" "ac_cv_type_struct_winsize" "
 #include <termios.h>
 
@@ -8391,6 +8392,7 @@ if test "x$ac_cv_header_sys_ioctl_h" = xyes
 then :
   printf "%s\n" "#define HAVE_SYS_IOCTL_H 1" >>confdefs.h
 
+		unset ac_cv_type_struct_winsize
 		ac_fn_c_check_type "$LINENO" "struct winsize" "ac_cv_type_struct_winsize" "
 #include <sys/ioctl.h>
 
