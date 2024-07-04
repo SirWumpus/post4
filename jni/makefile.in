@@ -26,11 +26,14 @@ exec_prefix 	= @exec_prefix@
 bindir 		= @bindir@
 libdir 		= @libdir@/post4
 
+# Override from the command-line, eg. make DBG='-O0 -g'
+DBG		:= -DNDEBUG
+
 CC		= @CC@
 CC_E		= @CC_E@
 CC_O		= @CC_O@
 CPPFLAGS	= @CPPFLAGS@
-CFLAGS		= @JNI_CFLAGS@ @CFLAGS@
+CFLAGS		= @JNI_CFLAGS@ @CFLAGS@ ${DBG}
 LDFLAGS		= @LDFLAGS@
 JFLAGS		= -Xlint:deprecation @JFLAGS@
 LIBS		= @LIBS@
@@ -96,7 +99,7 @@ Post4$A: build
 	rm -rf post4
 
 ${LIBNAME}: Post4$O ../src/post4$O
-	${CC} -shared -o $@ ../src/*$O Post4$O ${LIBS}
+	${CC} ${CFLAGS} -shared -o $@ ../src/*$O Post4$O ${LIBS}
 
 ../src/post4$O : ../src/post4.h ../src/post4.c
 	cd ../src; ${MAKE} post4$O

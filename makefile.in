@@ -37,11 +37,15 @@ datarootdir	:= @datarootdir@/post4
 TOPDIR	 	= @abs_top_srcdir@
 TARDIR   	= ${TOPDIR}/../
 
+# Override from the command-line, eg. make DBG='-O0 -g'
+DBG		:= -DNDEBUG
+
 CC		= @CC@
 CC_E		= @CC_E@
 CC_O		= @CC_O@
 CPPFLAGS	= @CPPFLAGS@
-CFLAGS		= @CFLAGS@ -Wno-unused-label -funsigned-char -Wno-unused-const-variable
+CWARNINGS	= -Wno-unused-label -funsigned-char -Wno-unused-const-variable
+CFLAGS		= @CFLAGS@ ${DBG}
 
 TARNAME 	= @PACKAGE_TARNAME@
 MD5SUM		= @MD5SUM@

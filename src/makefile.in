@@ -23,11 +23,15 @@ exec_prefix 	= @exec_prefix@
 bindir 		= @bindir@
 libdir 		= @libdir@/post4
 
+# Override from the command-line, eg. make DBG='-O0 -g'
+DBG		:= -DNDEBUG
+
 CC		= @CC@
 CC_E		= @CC_E@
 CC_O		= @CC_O@
 CPPFLAGS	= @CPPFLAGS@
-CFLAGS		= @CFLAGS@ -Wno-unused-label -funsigned-char -Wno-unused-const-variable
+CWARNINGS	= -Wno-unused-label -funsigned-char -Wno-unused-const-variable
+CFLAGS		= @CFLAGS@ -std=c11 ${CWARNINGS} ${DBG}
 LDFLAGS		= @LDFLAGS@
 LIBS		= @LIBS@
 
