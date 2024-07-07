@@ -10213,6 +10213,8 @@ printf "%s\n" "  LDFLAGS........: $LDFLAGS" >&6; }
 	{ printf "%s\n" "$as_me:${as_lineno-$LINENO}: result:   LIBS...........: $LIBS" >&5
 printf "%s\n" "  LIBS...........: $LIBS" >&6; }
 
+{ printf "%s\n" "$as_me:${as_lineno-$LINENO}: result:   JAVA_HOME......: $JAVA_HOME" >&5
+printf "%s\n" "  JAVA_HOME......: $JAVA_HOME" >&6; }
 { printf "%s\n" "$as_me:${as_lineno-$LINENO}: result:   JNI_CFLAGS.....: $JNI_CFLAGS" >&5
 printf "%s\n" "  JNI_CFLAGS.....: $JNI_CFLAGS" >&6; }
 { printf "%s\n" "$as_me:${as_lineno-$LINENO}: result:   JFLAGS.........: $JFLAGS" >&5

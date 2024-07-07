@@ -15,6 +15,15 @@ extern "C" {
  *** Configurables
  ***********************************************************************/
 
+#define _DEFAULT_SOURCE			1
+#define _XOPEN_SOURCE			700
+
+#ifdef __NetBSD__
+# define _NETBSD_SOURCE			1
+#else
+# define ECHOCTL			0
+#endif
+
 #include "config.h"
 
 #ifndef P4_MEM_SIZE
@@ -172,6 +181,16 @@ extern "C" {
 # define CHECK_ADDR(a)
 #else
 # define CHECK_ADDR(a)		if (((P4_Uint)(a) & 1) == 1) { raise(SIGBUS); }
+#endif
+
+#ifndef LONG_BIT
+# if LONG_MAX == 0x7FFFFFFFL
+#  define LONG_BIT	32
+# elif LONG_MAX == 0x7FFFFFFFFFFFFFFFL
+#  define LONG_BIT	64
+# else
+#  error "Unexpected sizeof long."
+# endif
 #endif
 
 /***********************************************************************
