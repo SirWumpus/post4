@@ -730,6 +730,8 @@ enable_debug
 enable_math
 enable_see
 enable_hooks
+enable_stack_checks
+enable_exception_strings
 with_java
 '
       ac_precious_vars='build_alias
@@ -1368,6 +1370,9 @@ Optional Features:
   --disable-math          disable libm support
   --disable-see           disable support for SEE
   --disable-hooks         disable support for hooks
+  --disable-stack-checks  disable stack depth checks
+  --enable-exception-strings
+                          enable exception strings in messages
 
 Optional Packages:
   --with-PACKAGE[=ARG]    use PACKAGE [ARG=yes]
@@ -4714,6 +4719,39 @@ fi
 if test $enable_hooks = 'yes'
 then :
   printf "%s\n" "#define HAVE_HOOKS 1" >>confdefs.h
+
+fi
+
+# Check whether --enable-stack-checks was given.
+if test ${enable_stack_checks+y}
+then :
+  enableval=$enable_stack_checks;
+	:
+
+else case e in #(
+  e)
+	enable_stack_checks='yes'
+ ;;
+esac
+fi
+
+if test $enable_stack_checks = 'yes'
+then :
+  printf "%s\n" "#define USE_STACK_CHECKS 1" >>confdefs.h
+
+fi
+
+# Check whether --enable-exception-strings was given.
+if test ${enable_exception_strings+y}
+then :
+  enableval=$enable_exception_strings;
+	enable_exception_strings='yes'
+
+fi
+
+if test $enable_exception_strings = 'yes'
+then :
+  printf "%s\n" "#define USE_EXCEPTION_STRINGS 1" >>confdefs.h
 
 fi
 

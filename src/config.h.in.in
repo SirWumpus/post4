@@ -40,7 +40,7 @@ extern "C" {
 #undef WITH_JAVA
 #undef HAVE_SEE
 #undef HAVE_HOOKS
-#define USE_STACK_CHECKS		1
+#undef USE_STACK_CHECKS
 #undef USE_EXCEPTION_STRINGS
 
 /*
@@ -67,18 +67,6 @@ extern "C" {
 #undef HAVE_STDINT_H
 #undef HAVE_INTPTR_T
 #undef HAVE_UINTPTR_T
-
-/*
- * POSIX Types
- */
-#undef HAVE_GID_T
-#undef HAVE_MODE_T
-#undef HAVE_OFF_T
-#undef HAVE_PID_T
-#undef HAVE_UID_T
-#undef HAVE_SIZE_T
-#undef HAVE_SSIZE_T
-#undef HAVE_TIME_T
 
 /*
  * ANSI String Functions
@@ -135,6 +123,7 @@ extern "C" {
 /*
  * ANSI & POSIX Time Functions
  */
+#undef HAVE_TIME_T
 #undef HAVE_CTIME_H
 #undef HAVE_TIME_H
 #undef HAVE_SYS_TIME_H
