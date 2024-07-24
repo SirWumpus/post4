@@ -38,7 +38,7 @@ TOPDIR	 	= @abs_top_srcdir@
 TARDIR   	= ${TOPDIR}/../
 
 # Override from the command-line, eg. make DBG='-O0 -g'
-DBG		:= -DNDEBUG
+DBG		:=
 
 CC		= @CC@
 CC_E		= @CC_E@

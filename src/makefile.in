@@ -24,7 +24,7 @@ bindir 		= @bindir@
 libdir 		= @libdir@/post4
 
 # Override from the command-line, eg. make DBG='-O0 -g'
-DBG		:= -DNDEBUG
+DBG		:=
 
 CC		= @CC@
 CC_E		= @CC_E@
