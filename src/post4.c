@@ -1790,40 +1790,39 @@ _noname:	str.string = "";
 		str.length = 0;
 		goto _do_colon;
 
-_colon:		if (ctx->state == P4_STATE_COMPILE) {
-			THROW(P4_THROW_COMPILING);
-		}
-		str = p4ParseName(&ctx->input);
+_colon:		str = p4ParseName(&ctx->input);
 		goto _do_colon;
 
 		// (C: -- colon) (R: -- ip)
 		// Save the current lengths so we can check for imbalance.
-_do_colon:	w.u = ((char)P4_LENGTH(ctx->rs) << CHAR_BIT) | (char)P4_LENGTH(ctx->ds);
+_do_colon:	ctx->state = P4_STATE_COMPILE;
+#ifdef USE_STACK_CHECKS
+		/* Save stack lengths for control imbalance test below. */
+		w.u = P4_LENGTH(ctx->ds);
 		P4_PUSH(ctx->ds, w);
-		ctx->state = P4_STATE_COMPILE;
+#endif
 		word = p4WordCreate(ctx, str.string, str.length, &&_enter);
+		/* Keep new word hidden while compiling. */
 		P4_WORD_SET_HIDDEN(word);
 		NEXT;
 
 		// (C: colon -- ) (R: ip -- )
-_semicolon:	w = P4_POP(ctx->ds);
-		x.u = ((char)P4_LENGTH(ctx->rs) << CHAR_BIT) | (char)P4_LENGTH(ctx->ds);
-		if (w.u != x.u) {
+_semicolon:	ctx->state = P4_STATE_INTERPRET;
+#ifdef USE_STACK_CHECKS
+		w = P4_POP(ctx->ds);
+		if (w.u != P4_LENGTH(ctx->ds)) {
 			/* Control structure imbalance.  Did we match
 			 * all the IF-THEN, BEGIN-REPEAT, etc.
 			 */
-			warnx("before "P4_HEX_FMT" ds=%u rs=%u, after "P4_HEX_FMT" ds=%u rs=%u",
-				w.u, (w.u & 0xFF), (w.u >> CHAR_BIT),
-				x.u, P4_LENGTH(ctx->ds), P4_LENGTH(ctx->rs)
-			);
 			THROW(P4_THROW_BAD_CONTROL);
 		}
+#endif
 		p4WordAppend(ctx, (P4_Cell) &w_semi);
-		P4_WORD_CLEAR_HIDDEN(ctx->words);
-		ctx->state = P4_STATE_INTERPRET;
 		if (ctx->words->name.length == 0) {
 			/* :NONAME leaves xt on stack. */
 			P4_PUSH(ctx->ds, ctx->words);
+		} else {
+			P4_WORD_CLEAR_HIDDEN(ctx->words);
 		}
 		NEXT;
 

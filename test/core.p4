@@ -385,6 +385,20 @@ t{ :NONAME 1234 ; tw_var_1 ! -> }t
 t{ :NONAME 9876 ; tw_var_2 ! -> }t
 t{ tw_var_1 @ EXECUTE -> 1234 }t
 t{ tw_var_2 @ EXECUTE -> 9876 }t
+
+\ GH-4
+\ https://github.com/ForthHub/discussion/discussions/159
+\ https://rosettacode.org/wiki/Function_composition#Forth
+\
+t{ : tw_compose ( xt1 xt2 -- xt3 )
+  >R >R :NONAME
+    R> COMPILE,
+    R> COMPILE,
+    POSTPONE ;
+; -> }t
+t{ : tw_f1 5 + ; -> }t
+t{ : tw_f2 20 - ; -> }t
+t{ 10 ' tw_f1 ' tw_f2 tw_compose execute -> -5 }t
 test_group_end
 
 .( COMPILE, ) test_group

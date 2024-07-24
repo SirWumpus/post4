@@ -2170,9 +2170,6 @@ END-STRUCTURE
 \ (C: quotation-sys colon-sys -- )(S: -- xt )
 \
 : ;]				\ C: q-sys c-sys
-	\ Bump the saved RS length to account for ;] return IP
-	\ in order to pass the stack depth checks.
-	$100 +
 	\ End current nested definition.
 	POSTPONE ; ]		\ C: q-sys xt
 	>R			\ C: q-sys  R: xt
