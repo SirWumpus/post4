@@ -525,7 +525,10 @@ p4MemDump(FILE *fp, P4_Char *addr, P4_Size length)
 	s = addr;
 	for (count = 0; count < length; addr++) {
 		if ((count & 0xF) == 0) {
-			(void) fprintf(fp, P4_PTR_FMT"  ", (long)addr);
+			/* Format with fixed width hex string, instead
+			 * of as pointer to maintain the dump layout.
+			 */
+			(void) fprintf(fp, P4_HEX_FMT"  ", (long)addr);
 			s = addr;
 		}
 		(void) fprintf(fp, "%.2x", (unsigned char) *addr);
