@@ -96,7 +96,7 @@ p4HookAdd(P4_Ctx *ctx, const char *name, void (*func)(P4_Ctx *))
 	size_t len;
 	char buf[P4_INPUT_SIZE];
 
-	len = snprintf(buf, sizeof (buf), "$%lx _hook_add %s", func, name);
+	len = snprintf(buf, sizeof (buf), P4_PTR_FMT " _hook_add %s", func, name);
 	if (len < sizeof (buf)) {
 		return p4EvalString(ctx, buf, len);
 	}

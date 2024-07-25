@@ -2582,12 +2582,12 @@ _seext:		word = P4_POP(ctx->ds).xt;
 					x = *++w.p;
 					if (x.w != NULL && words <= x.w
 					&& p4IsPrintable(x.w->name.string, x.w->name.length)) {
-						(void) printf("[ ' %.*s ] LITERAL ", x.w->name.length, x.w->name.string);
+						(void) printf("[ ' %.*s ] LITERAL ", (int) x.w->name.length, x.w->name.string);
 					} else {
 						(void) printf("[ "P4_INT_FMT" ] LITERAL ", x.n);
 					}
 				} else if (strncmp(x.w->name.string, "_slit", STRLEN("_slit")) == 0) {
-					(void) printf("S\" %s\" ", &w.p[2]);
+					(void) printf("S\" %s\" ", (char *) &w.p[2]);
 					w.u += P4_CELL + P4_CELL_ALIGN(w.p[1].u + 1);
 				} else {
 					(void) printf("%.*s ", (int) x.w->name.length, x.w->name.string);
@@ -2616,7 +2616,7 @@ _seext:		word = P4_POP(ctx->ds).xt;
 			 */
 			w.s = (P4_Char *)word->data + word->ndata - sizeof (*word->data);
 			for (x.p = word->data + 1; x.p < w.p; x.p++) {
-				(void) printf(P4_HEX_FMT" ", *x.p);
+				(void) printf(P4_HEX_FMT" ", x.p->u);
 			}
 			/* Print the defining word, eg. VALUE, and new word name. */
 			w = *w.p;
@@ -2635,7 +2635,7 @@ _seext:		word = P4_POP(ctx->ds).xt;
 		} else {
 			/* Builtins or libraries.  Test: SEE LIT SEE CREATE */
 			(void) printf(
-				": %.*s ( code address %#lx ) ;\r\n",
+				": %.*s ( code address "P4_PTR_FMT" ) ;\r\n",
 				(int) word->name.length, word->name.string,
 				word->code
 			);

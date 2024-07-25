@@ -214,7 +214,7 @@ typedef struct {
 
 typedef void *P4_Code;			/* Address of labels, eg. ptr = &&label; */
 typedef void *P4_Ptr;
-#define P4_PTR_FMT "%lx"
+#define P4_PTR_FMT "%p"
 
 typedef unsigned char	P4_Char;
 typedef uintptr_t 	P4_Uint;
