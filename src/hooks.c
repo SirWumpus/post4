@@ -1,7 +1,7 @@
 /*
  * hooks.c
  *
- * Copyright 2023 by Anthony Howe. All rights reserved.
+ * Copyright 2023, 2004 by Anthony Howe. All rights reserved.
  */
 
 #include "post4.h"
