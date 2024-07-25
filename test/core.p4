@@ -482,6 +482,27 @@ t{ MIN-N MIN-N MIN -> MIN-N }t
 t{ MIN-N 0 MIN -> MIN-N }t
 test_group_end
 
+.( IMMEDIATE ) test_group
+T{ 123 CONSTANT tw_iw1 IMMEDIATE tw_iw1 -> 123 }T
+T{ : tw_iw2 tw_iw1 LITERAL ; tw_iw2 -> 123 }T
+
+T{ VARIABLE tw_iw3 IMMEDIATE 234 tw_iw3 ! tw_iw3 @ -> 234 }T
+T{ : tw_iw4 tw_iw3 [ @ ] LITERAL ; tw_iw4 -> 234 }T
+
+T{ :NONAME [ 345 ] tw_iw3 [ ! ] ; DROP tw_iw3 @ -> 345 }T
+T{ CREATE tw_iw5 456 , IMMEDIATE -> }T
+T{ :NONAME tw_iw5 [ @ tw_iw3 ! ] ; DROP tw_iw3 @ -> 456 }T
+
+T{ : tw_iw6 CREATE , IMMEDIATE DOES> @ 1+ ; -> }T
+T{ 111 tw_iw6 tw_iw7 tw_iw7 -> 112 }T
+T{ : tw_iw8 tw_iw7 LITERAL 1+ ; tw_iw8 -> 113 }T
+
+T{ : tw_iw9 CREATE , DOES> @ 2 + IMMEDIATE ; -> }T
+T{ : tw_find_iw BL WORD FIND NIP ; -> }T
+T{ 222 tw_iw9 tw_iw10 tw_find_iw tw_iw10 -> -1 }T	\ tw_iw10 is not immediate
+T{ tw_iw10 tw_find_iw tw_iw10 -> 224 1 }T		\ tw_iw10 becomes immediate
+test_group_end
+
 .( S" S\\" EVALUATE ) test_group
 : tw_eval_0 EVALUATE ;
 : tw_eval_1 S" 9876" EVALUATE ;

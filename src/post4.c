@@ -1387,7 +1387,7 @@ p4Repl(P4_Ctx *ctx)
 		P4_WORD("EVALUATE",	&&_evaluate,	0),
 		P4_WORD("EXECUTE",	&&_execute,	0),
 		P4_WORD("EXIT",		&&_exit,	P4_BIT_COMPILE),
-		P4_WORD("IMMEDIATE",	&&_immediate,	P4_BIT_IMM),
+		P4_WORD("IMMEDIATE",	&&_immediate,	0),
 		P4_WORD("immediate?",	&&_is_immediate, 0),		// p4
 		P4_WORD("MARKER",	&&_marker,	0),
 		P4_WORD("STATE",	&&_state,	0),
