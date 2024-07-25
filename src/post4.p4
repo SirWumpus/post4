@@ -2,7 +2,7 @@ MARKER rm_core_words
 
 : \ '\n' 0 _parse DROP DROP ; IMMEDIATE
 
-\ Post4 Copyright 2007, 2023 by Anthony Howe.  All rights reserved.
+\ Post4 Copyright 2007, 2024 by Anthony Howe.  All rights reserved.
 
 \ ... BYE ...
 \

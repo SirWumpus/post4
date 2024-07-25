@@ -1,7 +1,7 @@
 Post4 (Post-Forth)
 ==================
 
-Copyright 2007, 2023 Anthony Howe.  All rights reserved.
+Copyright 2007, 2024 Anthony Howe.  All rights reserved.
 
 
 ### String Words

@@ -1,7 +1,7 @@
 /*
  * Post4Exception.java
  *
- * Copyright 2023 by Anthony Howe.  All rights reserved.
+ * Copyright 2023, 2024 by Anthony Howe.  All rights reserved.
  */
 
 package post4.jni;
