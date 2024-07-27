@@ -17,23 +17,11 @@ on:
     paths:
       - 'src'
       - 'jni'
-    paths-ignore:
-      - '**/*.md'
-      - '**/*.p4'
-      - '.gitignore'
-      - '.gitattributes'
-      - 'reference/**'
   pull_request:
     branches: [ "master" ]
     paths:
       - 'src'
       - 'jni'
-    paths-ignore:
-      - '**/*.md'
-      - '**/*.p4'
-      - '.gitignore'
-      - '.gitattributes'
-      - 'reference/**'
   schedule:
     - cron: '43 20 * * 2'
 
