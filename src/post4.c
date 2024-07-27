@@ -1171,6 +1171,8 @@ p4Create(P4_Options *opts)
 	if ((ctx->mem = malloc(opts->mem_size * 1024)) == NULL) {
 		goto error0;
 	}
+	/* GH-5 Subdue valgrind uninitialised values with BYTE_ME. */
+	MEMSET(ctx->mem, BYTE_ME, opts->mem_size * 1024);
 	ctx->end = ctx->mem + opts->mem_size * 1024;
 	ctx->here = ctx->mem;
 
@@ -2056,10 +2058,23 @@ _unused:	P4_PUSH(ctx->ds, ctx->end - ctx->here);
 		 */
 		// ( u -- aaddr ior )
 _allocate:	w = P4_TOP(ctx->ds);
+		/* GH-5 Check for possibly negative size.  A size_t is a positive
+		 * value so -1 would be 0xFFFF...FFFF and technically allowed
+		 * but so large as to be impractical and possibly a type error,
+		 * conversion error, or some size miscalculation.  So -1024..-1
+		 * is reserved for trapping this possible error.  Not perfect,
+		 * but should be handle most cases.
+		 */
+		if (w.n < 0 && -1024 <= w.n) {
+			P4_TOP(ctx->ds) = w;
+			P4_PUSH(ctx->ds, (P4_Int) ENOMEM);
+			NEXT;
+		}
+		errno = 0;
 		x.s = malloc((size_t) w.u);
 		MEMSET(x.s, BYTE_ME, w.u);
 		P4_TOP(ctx->ds) = x;
-		P4_PUSH(ctx->ds, (P4_Int)(x.s == NULL));
+		P4_PUSH(ctx->ds, (P4_Int) errno);
 		NEXT;
 
 		// ( aaddr -- ior )
@@ -2071,9 +2086,16 @@ _free:		w = P4_TOP(ctx->ds);
 		// ( aaddr1 u -- aaddr2 ior )
 _resize:	w = P4_POP(ctx->ds);
 		x = P4_TOP(ctx->ds);
+		/* GH-5 Check for possibly negative size.  See above. */
+		if (w.n < 0 && -1024 <= w.n) {
+			P4_TOP(ctx->ds) = x;
+			P4_PUSH(ctx->ds, (P4_Int) ENOMEM);
+			NEXT;
+		}
+		errno = 0;
 		w.s = realloc(x.s, (size_t) w.u);
 		P4_TOP(ctx->ds) = w.s == NULL ? x : w;
-		P4_PUSH(ctx->ds, (P4_Int)(w.s == NULL));
+		P4_PUSH(ctx->ds, (P4_Int) errno);
 		NEXT;
 
 
