@@ -700,7 +700,7 @@ If `bool` is zero (0) (`FALSE`), continue execution following the matching `ELSE
 
 - - -
 #### IMMEDIATE
-( -- ) immediate  
+( -- )  
 Make the most recent definition an immediate word.
 
 - - -
