@@ -1257,7 +1257,7 @@ Size of a cell in bits.
 
 - - -
 #### compile-only
-( -- ) immediate  
+( -- )  
 Make the most recent definition as compile-only.  See [NAME>INTERPRET](./tools.md).
 
 - - -

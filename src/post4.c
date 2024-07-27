@@ -1381,7 +1381,7 @@ p4Repl(P4_Ctx *ctx)
 		P4_WORD("_window",	&&_window,	0),		// p4
 
 		/* Compiling Words */
-		P4_WORD("compile-only",		&&_compile_only,	P4_BIT_IMM),	// p4
+		P4_WORD("compile-only",		&&_compile_only,	0),	// p4
 		P4_WORD("compile-only?",	&&_is_compile,		P4_BIT_COMPILE),// p4
 		P4_WORD(":NONAME",	&&_noname,	0),
 		P4_WORD(":",		&&_colon,	0),
