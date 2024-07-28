@@ -15,19 +15,19 @@ on:
   push:
     branches: [ "master" ]
     paths:
-      - 'src'
-      - 'jni'
+      - 'src/**'
+      - 'jni/**'
   pull_request:
     branches: [ "master" ]
     paths:
-      - 'src'
-      - 'jni'
+      - 'src/**'
+      - 'jni/**'
   # Manual trigger from Actions
   workflow_dispatch:
     branches: [ "master" ]
     paths:
-      - 'src'
-      - 'jni'
+      - 'src/**'
+      - 'jni/**'
   schedule:
     - cron: '43 20 * * 2'
 
