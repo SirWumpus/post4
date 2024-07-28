@@ -43,7 +43,7 @@ p4SystemString(P4_Ctx *ctx)
  * MOVE ( src dst u -- )
  */
 static void
-p4Memmove(P4_Ctx *ctx)
+p4Move(P4_Ctx *ctx)
 {
 	P4_Cell len = P4_POP(ctx->ds);
 	P4_Cell dst = P4_POP(ctx->ds);
