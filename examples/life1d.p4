@@ -50,7 +50,7 @@ CHAR . CONSTANT off
 ;
 
 : life1d_transition ( -- )
-	life1d_size 1- 0 DO
+	life1d_size 1- 1 DO
 		I life1d_curr_state		\ value
 		I life1d_next_state		\ --
 	LOOP
