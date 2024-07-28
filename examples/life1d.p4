@@ -2,6 +2,9 @@
 \
 \ https://en.wikipedia.org/wiki/Cellular_automaton
 \
+\ Scientific America, Computer Recreations, May 1985, pg. 18-30
+\ Glider Gun Guidelines, Stephen Wolfram, March 1985
+\
 
 MARKER rm_life1d
 
@@ -47,7 +50,7 @@ CHAR . CONSTANT off
 ;
 
 : life1d_transition ( -- )
-	life1d_size 1 DO
+	life1d_size 1- 0 DO
 		I life1d_curr_state		\ value
 		I life1d_next_state		\ --
 	LOOP
