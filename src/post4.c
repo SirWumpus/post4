@@ -1168,10 +1168,13 @@ p4Create(P4_Options *opts)
 	ctx->argv = opts->argv;
 	ctx->state = P4_STATE_INTERPRET;
 
-	if ((ctx->mem = malloc(opts->mem_size * 1024)) == NULL) {
+	/* GH-5 Clear initial memory space to placate Valgrind. */
+	if ((ctx->mem = calloc(1, opts->mem_size * 1024)) == NULL) {
 		goto error0;
 	}
-	/* GH-5 Subdue valgrind uninitialised values with BYTE_ME. */
+	/* GH-5 Setting memory to something other than zero can
+	 * help debug possible memory use before initialising.
+	 */
 	MEMSET(ctx->mem, BYTE_ME, opts->mem_size * 1024);
 	ctx->end = ctx->mem + opts->mem_size * 1024;
 	ctx->here = ctx->mem;
