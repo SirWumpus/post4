@@ -79,13 +79,16 @@ test_group_end
 .( [: ;] ) test_group
 T{ : tw_q1 [: 1 ;] ; tw_q1 EXECUTE -> 1 }T
 T{ : tw_q2 [: [: 2 ;] ;] ; tw_q2 EXECUTE EXECUTE -> 2 }T
-\ Locals not supported.
-\ T{ : tw_q3 {: a :} [: {: a b :} b a ;] ; 1 2 3 tw_q3 EXECUTE -> 2 1 }T
+
+[DEFINED] {: [IF]
+T{ : tw_q3 {: a :} [: {: a b :} b a ;] ; 1 2 3 tw_q3 EXECUTE -> 2 1 }T
 T{ : tw_q4 [: DUP IF DUP 1- RECURSE THEN ;] ; 3 tw_q4 EXECUTE -> 3 2 1 0 }T
 T{ : tw_q5 [: DOES> DROP 4 ;] 5 SWAP ; CREATE tw_x tw_q5 EXECUTE tw_x -> 5 4 }T
-\ T{ : tw_q6 {: a :} [: {: a b :} b a ;] a 1+ ; 1 2 tw_q6 SWAP EXECUTE -> 3 1 }T
-\ T{ 1 2 tw_q6 tw_q6 SWAP EXECUTE EXECUTE -> 4 1 }T
-\ T{ 1 2 3 tw_q3 SWAP tw_q6 SWAP EXECUTE EXECUTE -> 3 1 }T
+
+T{ : tw_q6 {: a :} [: {: a b :} b a ;] a 1+ ; 1 2 tw_q6 SWAP EXECUTE -> 3 1 }T
+T{ 1 2 tw_q6 tw_q6 SWAP EXECUTE EXECUTE -> 4 1 }T
+T{ 1 2 3 tw_q3 SWAP tw_q6 SWAP EXECUTE EXECUTE -> 3 1 }T
+[THEN]
 test_group_end
 
 .( N>R NR> ) test_group
