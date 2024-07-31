@@ -62,7 +62,7 @@ Glossary
 Building
 --------
 
-Post4 is written in ISO C11 using only one extension, `Labels As Values`, which is supported by `gcc` and `clang` compilers.  Post4 has been built and tested on NetBSD, Cygwin, and Alpine Linux.
+Post4 is written in ISO C11 using only one extension, `Labels As Values`, which is supported by `gcc` and `clang` compilers.  Post4 has been built and tested on [NetBSD](https://netbsd.org/), [Cygwin](https://www.cygwin.com/), [Alpine Linux](https://alpinelinux.org/), and [Rocky Linux](https://rockylinux.org).
 
         $ ./configure --help
         $ ./configure
@@ -124,6 +124,18 @@ Because Forth uses whitespace for input delimiters, in particular space (ASCII 3
         32      ASCII numeric value.
         '\s'    Backslash escape.
         BL      Forth word, short for blank.
+
+Forth has strings: counted and length prefixed.  Counted strings are a carry-over from historical Forth, where the string stored in memory, is prefixed by a length octet, limiting the string length to 255 ASCII octets.  The standard Forth character string, when stored in memory, is prefixed with an unsigned numeric length cell.  As a Post4 extension, character strings are always NUL terminated as a convenience for interacting with the C library and host OS API.
+
+Some examples of words using strings.  Note that the whitespace character (space, tab, newline) immediately after the word, eg. `S\"`, delimits the word from the text that follows and is not part of the text:
+
+        ." some text"                       Print some text at runtime.
+        C" counted text"                    Define a counted string.
+        ."  <- space printed"               Print textt with leading space.
+        S" some text"                       Store some text.
+        S\" escaped text"                   Store some escaped text.
+        .( lots of text)                    Show some text (now).
+        ABORT" text message"                What I do wrong now?
 
 
 Examples
