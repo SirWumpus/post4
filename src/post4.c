@@ -1606,6 +1606,8 @@ _thrown:
 		 * - set interpretation state and begin text interpretation;
 		 */
 		default:
+			/* Flush the current input buffer. */
+			ctx->input.offset = ctx->input.length = 0;
 			ctx->state = P4_STATE_INTERPRET;
 		}
 
