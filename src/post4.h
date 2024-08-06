@@ -229,6 +229,7 @@ typedef double		P4_Float;
 # define P4_HEX_FMT 	"$%.16lx"
 # define DIV		ldiv
 # define DIV_T		ldiv_t
+# define P4_SENTINEL	((P4_Uint)0xdeadbeefcafebabeL)
 #elif P4_UINT_BITS == 32
 typedef uint16_t	P4_Uint_Half;
 typedef float		P4_Float;
@@ -238,6 +239,7 @@ typedef float		P4_Float;
 # define P4_FLOAT_FMT	"%lE"
 # define DIV		div
 # define DIV_T		div_t
+# define P4_SENTINEL	((P4_Uint)0xdeadbeefL)
 #else
 # error "Unsupported cell size."
 #endif
@@ -245,8 +247,6 @@ typedef float		P4_Float;
 #define P4_UINT_MSB	(~(~(P4_Uint)0 >> 1))
 #define P4_HALF_SHIFT	(P4_UINT_BITS >> 1)
 #define P4_LOWER_MASK	(~(P4_Uint)0 >> P4_HALF_SHIFT)
-
-#define P4_SENTINEL	((P4_Uint)0xdeadbeefcafebabeL)
 
 typedef size_t P4_Size;
 #define P4_SIZE_FMT "%zu"
@@ -368,6 +368,7 @@ typedef struct {
 # define P4_DROP(stack, n)		((stack).top -= (n))
 # define P4_SET(stack, n)		((stack).top = (stack).base + (n) - 1)
 # define P4_RESET(stack)		P4_SET(stack, 0)
+# define P4_GUARD_CELLS			4
 
 typedef enum {
 	P4_STATE_INTERPRET,

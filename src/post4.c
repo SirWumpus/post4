@@ -1131,10 +1131,10 @@ p4Free(P4_Ctx *ctx)
 		}
 		(void) p4BlockClose(ctx->block_fd, &ctx->block);
 #if defined(HAVE_MATH_H)
-		free(ctx->fs.base);
+		free(ctx->fs.base - P4_GUARD_CELLS/2);
 #endif
-		free(ctx->ds.base);
-		free(ctx->rs.base);
+		free(ctx->ds.base - P4_GUARD_CELLS/2);
+		free(ctx->rs.base - P4_GUARD_CELLS/2);
 		free(ctx->mem);
 		free(ctx);
 	}
@@ -1148,6 +1148,21 @@ p4ResetInput(P4_Ctx *ctx)
 	ctx->input.length = 0;
 	ctx->input.offset = 0;
 	ctx->input.blk = 0;
+}
+
+static int
+p4CreateStack(P4_Stack *stk, int size)
+{
+	if ((stk->base = calloc(size + P4_GUARD_CELLS, sizeof (*stk->base))) == NULL) {
+		return -1;
+	}
+	/* Adjust base for underflow gurard. */
+	stk->base += P4_GUARD_CELLS/2;
+	stk->base[size].u = P4_SENTINEL;
+	stk->base[-1].u = P4_SENTINEL;
+	stk->top = stk->base - 1;
+	stk->size = size;
+	return 0;
 }
 
 P4_Ctx *
@@ -1179,26 +1194,16 @@ p4Create(P4_Options *opts)
 
 #ifdef HAVE_MATH_H
 	ctx->precision = 6;
-	if ((ctx->fs.base = malloc((opts->fs_size + 1) * sizeof (*ctx->fs.base))) == NULL) {
+	if (p4CreateStack(&ctx->fs, opts->fs_size)) {
 		goto error0;
 	}
-	ctx->fs.base[opts->fs_size].u = P4_SENTINEL;
-	ctx->fs.size = opts->fs_size;
-	P4_RESET(ctx->fs);
 #endif
-	if ((ctx->rs.base = malloc((opts->rs_size + 1) * sizeof (*ctx->rs.base))) == NULL) {
+	if (p4CreateStack(&ctx->rs, opts->rs_size)) {
 		goto error0;
 	}
-	ctx->rs.base[opts->rs_size].u = P4_SENTINEL;
-	ctx->rs.size = opts->rs_size;
-	P4_RESET(ctx->rs);
-
-	if ((ctx->ds.base = malloc((opts->ds_size + 1) * sizeof (*ctx->ds.base))) == NULL) {
+	if (p4CreateStack(&ctx->ds, opts->ds_size)) {
 		goto error0;
 	}
-	ctx->ds.base[opts->ds_size].u = P4_SENTINEL;
-	ctx->ds.size = opts->ds_size;
-	P4_RESET(ctx->ds);
 
 	ctx->block_fd = p4BlockOpen(opts->block_file);
 
