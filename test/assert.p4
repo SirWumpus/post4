@@ -68,6 +68,7 @@ VARIABLE tc_fs_expect
 : FPICK ;
 : FSWAP ;
 : F= FALSE ;
+: fs>ds ;
 [THEN]
 
 : tc_fs_drop BEGIN FDEPTH tc_fs_start @ > WHILE FDROP REPEAT ;

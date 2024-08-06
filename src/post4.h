@@ -169,14 +169,6 @@ extern "C" {
 
 #define BYTE_ME		(0x7F)
 
-#ifndef P4_TRACE
-# define p4Trace(c, xt)
-#endif
-
-#ifndef USE_STACK_CHECKS
-# define p4StackCanPopPush(c, s, pop, push)
-#endif
-
 #ifdef NDEBUG
 # define CHECK_ADDR(a)
 #else
@@ -345,13 +337,22 @@ struct p4_word {
 #define P4_WORD_SET_COMPILE(w)		((w)->bits |= P4_BIT_COMPILE)
 #define P4_WORD_CLEAR_COMPILE(w)	((w)->bits &= ~P4_BIT_COMPILE)
 
+	P4_Uint		poppush;
+
+#define P4_FS_CAN_POP(w)		(((w)->poppush >> 20) & 0x0F)
+#define P4_FS_CAN_PUSH(w)		(((w)->poppush >> 16) & 0x0F)
+#define P4_RS_CAN_POP(w)		(((w)->poppush >> 12) & 0x0F)
+#define P4_RS_CAN_PUSH(w)		(((w)->poppush >>  8) & 0x0F)
+#define P4_DS_CAN_POP(w)		(((w)->poppush >>  4) & 0x0F)
+#define P4_DS_CAN_PUSH(w)		(((w)->poppush      ) & 0x0F)
+
 	/* Body */
 	P4_Code		code;		/* Code field points of primative. */
 	P4_Size		ndata;		/* Size of data[] in bytes. */
 	P4_Cell *	data;		/* Word grows by data cells. */
 };
 
-#define P4_WORD(name, code, bits)	{ NULL, { STRLEN(name), name }, bits, code, 0 }
+#define P4_WORD(name, code, bits, pp)	{ NULL, { STRLEN(name), name }, bits, pp, code, 0 }
 
 typedef struct {
 	P4_Size		size;		/* Size of table in cells. */

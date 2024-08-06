@@ -2059,6 +2059,7 @@ BEGIN-STRUCTURE p4_word
 	FIELD: w.prev		\ pointer previous word
 	p4_string +FIELD w.name
 	FIELD: w.bits
+    FIELD: w.poppush
 	FIELD: w.code		\ pointer
 	FIELD: w.ndata		\ data length
 	FIELD: w.data		\ pointer to data cells

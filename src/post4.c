@@ -1070,15 +1070,13 @@ p4WordCreate(P4_Ctx *ctx, const char *name, size_t length, P4_Code code)
 {
 	P4_Word *word;
 
-	if ((word = malloc(sizeof (*word))) == NULL) {
+	if ((word = calloc(1, sizeof (*word))) == NULL) {
 		goto error0;
 	}
 	/* Make sure new word starts with aligned data. */
 	(void) p4Allot(ctx, P4_ALIGN_BY((P4_Uint) ctx->here));
 	word->data = (P4_Cell *) ctx->here;
 	CHECK_ADDR(word->data);
-	word->ndata = 0;
-	word->bits = 0;
 
 	if ((word->name.string = strndup(name, length)) == NULL) {
 		goto error1;
@@ -1248,15 +1246,17 @@ p4Trace(P4_Ctx *ctx, P4_Xt xt)
 		(void) printf("%#lx %.*s\tdepth=%ld\r\n", xt, (int)xt->name.length, xt->name.string, depth);
 	}
 }
+#else
+# define p4Trace(c, xt)
 #endif
 
 #ifdef USE_STACK_CHECKS
 static void
-p4StackCanPopPush(P4_Ctx *ctx, P4_Stack *stack, int pop, int push)
+p4StackCanPopPush(P4_Ctx *ctx, P4_Stack *stack, unsigned pop, unsigned push)
 {
 	int over = P4_THROW_DS_OVER;
 	int under = P4_THROW_DS_UNDER;
-	int length = (stack->top + 1 - stack->base);
+	unsigned length = (stack->top + 1 - stack->base);
 
 	if (stack == &ctx->rs) {
 		over = P4_THROW_RS_OVER;
@@ -1279,6 +1279,8 @@ p4StackCanPopPush(P4_Ctx *ctx, P4_Stack *stack, int pop, int push)
 		LONGJMP(ctx->on_throw, over);
 	}
 }
+#else
+# define p4StackCanPopPush(c, s, pop, push)
 #endif
 
 int
@@ -1291,205 +1293,204 @@ p4Repl(P4_Ctx *ctx)
 	P4_Cell w, x, *ip;
 
 	static P4_Word words[] = {
-		P4_WORD("_repl",	&&_repl,	0),
-		P4_WORD("LIT",		&&_lit,		0),		// historic
-		P4_WORD(";",		&&_exit,	P4_BIT_HIDDEN), // _seext
+		P4_WORD("_repl",	&&_repl,	0, 0),
+		P4_WORD("LIT",		&&_lit,		0, 0x01),		// historic
+		P4_WORD(";",		&&_exit,	P4_BIT_HIDDEN, 0), // _seext
 #ifdef HAVE_MATH_H
-//		P4_WORD("min-float",	&&_min_float,	0),		// p4
-		P4_WORD("max-float",	&&_max_float,	0),		// p4
-		P4_WORD("_fs",		&&_fs,		0),		// p4
-		P4_WORD("_fsp_get",	&&_fsp_get,	0),		// p4
-		P4_WORD("_fsp_put",	&&_fsp_put,	0),		// p4
-		P4_WORD(">FLOAT",	&&_to_float,	0),
-		P4_WORD("FROUND",	&&_f_round,	0),
-		P4_WORD("FTRUNC",	&&_f_trunc,	0),
-		P4_WORD("FLOOR",	&&_f_floor,	0),
-		P4_WORD("FSQRT",	&&_f_sqr,	0),
-		P4_WORD("FATAN2",	&&_f_atan2,	0),
-		P4_WORD("FACOSH",	&&_f_acosh,	0),
-		P4_WORD("FASINH",	&&_f_asinh,	0),
-		P4_WORD("FATANH",	&&_f_atanh,	0),
-		P4_WORD("FACOS",	&&_f_acos,	0),
-		P4_WORD("FASIN",	&&_f_asin,	0),
-		P4_WORD("FATAN",	&&_f_atan,	0),
-		P4_WORD("FCOSH",	&&_f_cosh,	0),
-		P4_WORD("FSINH",	&&_f_sinh,	0),
-		P4_WORD("FTANH",	&&_f_tanh,	0),
-		P4_WORD("FCOS",		&&_f_cos,	0),
-		P4_WORD("FSIN",		&&_f_sin,	0),
-		P4_WORD("FTAN",		&&_f_tan,	0),
-		P4_WORD("FLN",		&&_f_ln,	0),
-		P4_WORD("FLOG",		&&_f_log,	0),
-		P4_WORD("FEXP",		&&_f_exp,	0),
-		P4_WORD("FMAX",		&&_f_max,	0),
-		P4_WORD("FMIN",		&&_f_min,	0),
-		P4_WORD("F**",		&&_f_pow,	0),
-		P4_WORD("F!",		&&_f_store,	0),
-		P4_WORD("F@",		&&_f_fetch,	0),
-		P4_WORD("F+",		&&_f_add,	0),
-		P4_WORD("F-",		&&_f_sub,	0),
-		P4_WORD("F*",		&&_f_mul,	0),
-		P4_WORD("F/",		&&_f_div,	0),
-		P4_WORD("F0<",		&&_f_lt0,	0),
-		P4_WORD("F0=",		&&_f_eq0,	0),
-		P4_WORD("FS.",		&&_f_sdot,	0),
-		P4_WORD("F.",		&&_f_dot,	0),
-		P4_WORD("F>S",		&&_f_to_s,	0),		// p4
-		P4_WORD("S>F",		&&_s_to_f,	0),		// p4
-		P4_WORD("fs>rs",	&&_fs_to_rs,	0),		// p4
-		P4_WORD("rs>fs",	&&_rs_to_fs,	0),		// p4
+//		P4_WORD("min-float",	&&_min_float,	0, 0x01),	// p4
+		P4_WORD("max-float",	&&_max_float,	0, 0x01),	// p4
+		P4_WORD("_fs",		&&_fs,		0, 0x03),	// p4
+		P4_WORD("_fsp_get",	&&_fsp_get,	0, 0x01),	// p4
+		P4_WORD("_fsp_put",	&&_fsp_put,	0, 0x10),	// p4
+		P4_WORD(">FLOAT",	&&_to_float,	0, 0x010021),
+		P4_WORD("FROUND",	&&_f_round,	0, 0x110000),
+		P4_WORD("FTRUNC",	&&_f_trunc,	0, 0x110000),
+		P4_WORD("FLOOR",	&&_f_floor,	0, 0x110000),
+		P4_WORD("FSQRT",	&&_f_sqr,	0, 0x110000),
+		P4_WORD("FATAN2",	&&_f_atan2,	0, 0x210000),
+		P4_WORD("FACOSH",	&&_f_acosh,	0, 0x110000),
+		P4_WORD("FASINH",	&&_f_asinh,	0, 0x110000),
+		P4_WORD("FATANH",	&&_f_atanh,	0, 0x110000),
+		P4_WORD("FACOS",	&&_f_acos,	0, 0x110000),
+		P4_WORD("FASIN",	&&_f_asin,	0, 0x110000),
+		P4_WORD("FATAN",	&&_f_atan,	0, 0x110000),
+		P4_WORD("FCOSH",	&&_f_cosh,	0, 0x110000),
+		P4_WORD("FSINH",	&&_f_sinh,	0, 0x110000),
+		P4_WORD("FTANH",	&&_f_tanh,	0, 0x110000),
+		P4_WORD("FCOS",		&&_f_cos,	0, 0x110000),
+		P4_WORD("FSIN",		&&_f_sin,	0, 0x110000),
+		P4_WORD("FTAN",		&&_f_tan,	0, 0x110000),
+		P4_WORD("FLN",		&&_f_ln,	0, 0x110000),
+		P4_WORD("FLOG",		&&_f_log,	0, 0x110000),
+		P4_WORD("FEXP",		&&_f_exp,	0, 0x110000),
+		P4_WORD("FMAX",		&&_f_max,	0, 0x210000),
+		P4_WORD("FMIN",		&&_f_min,	0, 0x210000),
+		P4_WORD("F**",		&&_f_pow,	0, 0x210000),
+		P4_WORD("F!",		&&_f_store,	0, 0x100010),
+		P4_WORD("F@",		&&_f_fetch,	0, 0x010010),
+		P4_WORD("F+",		&&_f_add,	0, 0x210000),
+		P4_WORD("F-",		&&_f_sub,	0, 0x210000),
+		P4_WORD("F*",		&&_f_mul,	0, 0x210000),
+		P4_WORD("F/",		&&_f_div,	0, 0x210000),
+		P4_WORD("F0<",		&&_f_lt0,	0, 0x110000),
+		P4_WORD("F0=",		&&_f_eq0,	0, 0x110000),
+		P4_WORD("FS.",		&&_f_sdot,	0, 0x100000),
+		P4_WORD("F.",		&&_f_dot,	0, 0x100000),
+		P4_WORD("F>S",		&&_f_to_s,	0, 0x100001),	// p4
+		P4_WORD("S>F",		&&_s_to_f,	0, 0x010010),	// p4
+		P4_WORD("fs>rs",	&&_fs_to_rs,	0, 0x100100),	// p4
+		P4_WORD("rs>fs",	&&_rs_to_fs,	0, 0x011000),	// p4
 #endif
 #ifdef P4_FILE_ACCESS
-		P4_WORD("BIN",			&&_fa_bin,	0),
-		P4_WORD("R/O",			&&_fa_ro,	0),
-		P4_WORD("R/W",			&&_fa_rw,	0),
-		P4_WORD("W/O",			&&_fa_wo,	0),
-		P4_WORD("CLOSE-FILE",		&&_fa_close,	0),
-		P4_WORD("CREATE-FILE",		&&_fa_create,	0),
-		P4_WORD("DELETE-FILE",		&&_fa_delete,	0),
-		P4_WORD("FILE-POSITION",	&&_fa_tell,	0),
-//		P4_WORD("FILE-SIZE",		&&_fa_fsize,	0),
-		P4_WORD("FLUSH-FILE",		&&_fa_flush,	0),
-		P4_WORD("INCLUDE-FILE",		&&_fa_include,	0),
-		P4_WORD("OPEN-FILE",		&&_fa_open,	0),
-		P4_WORD("READ-FILE",		&&_fa_read,	0),
-//		P4_WORD("READ-LINE",		&&_fa_rline,	0),
-		P4_WORD("REPOSITION-FILE",	&&_fa_seek,	0),
-		P4_WORD("WRITE-FILE",		&&_fa_write,	0),
+		P4_WORD("BIN",			&&_fa_bin,	0, 0x01),
+		P4_WORD("R/O",			&&_fa_ro,	0, 0x01),
+		P4_WORD("R/W",			&&_fa_rw,	0, 0x01),
+		P4_WORD("W/O",			&&_fa_wo,	0, 0x01),
+		P4_WORD("CLOSE-FILE",		&&_fa_close,	0, 0x11),
+		P4_WORD("CREATE-FILE",		&&_fa_create,	0, 0x22),
+		P4_WORD("DELETE-FILE",		&&_fa_delete,	0, 0x21),
+		P4_WORD("FILE-POSITION",	&&_fa_tell,	0, 0x12),
+//		P4_WORD("FILE-SIZE",		&&_fa_fsize,	0, 0x12),
+		P4_WORD("FLUSH-FILE",		&&_fa_flush,	0, 0x11),
+		P4_WORD("INCLUDE-FILE",		&&_fa_include,	0, 0x10),
+		P4_WORD("OPEN-FILE",		&&_fa_open,	0, 0x22),
+		P4_WORD("READ-FILE",		&&_fa_read,	0, 0x32),
+//		P4_WORD("READ-LINE",		&&_fa_rline,	0, 0x33),
+		P4_WORD("REPOSITION-FILE",	&&_fa_seek,	0, 0x21),
+		P4_WORD("WRITE-FILE",		&&_fa_write,	0, 0x31),
 #endif
 #ifdef P4_TRACE
-		P4_WORD("TRACE",	&&_trace,	0),		// p4
+		P4_WORD("TRACE",		&&_trace,	0, 0x01),	// p4
 #endif
 		/* Constants. */
-		P4_WORD("/pad",			&&_pad_size,	0),	// p4
-		P4_WORD("address-unit-bits",	&&_char_bit,	0),	// p4
+		P4_WORD("/pad",			&&_pad_size,	0, 0x01),	// p4
+		P4_WORD("address-unit-bits",	&&_char_bit,	0, 0x01),	// p4
 
 		/* Internal support. */
-		P4_WORD("_bp",		&&_bp,		0),		// p4
-		P4_WORD("_branch",	&&_branch,	P4_BIT_COMPILE), // p4
-		P4_WORD("_branchz",	&&_branchz,	P4_BIT_COMPILE), // p4
-		P4_WORD("_call",	&&_call,	P4_BIT_COMPILE), // p4
-		P4_WORD("_ds",		&&_ds,		0),		// p4
-		P4_WORD("_dsp@",	&&_dsp_get,	0),		// p4
-		P4_WORD("_dsp!",	&&_dsp_put,	0),		// p4
+		P4_WORD("_bp",		&&_bp,		0, 0),		// p4
+		P4_WORD("_branch",	&&_branch,	P4_BIT_COMPILE, 0),	// p4
+		P4_WORD("_branchz",	&&_branchz,	P4_BIT_COMPILE, 0x10),	// p4
+		P4_WORD("_call",	&&_call,	P4_BIT_COMPILE, 0x0100),// p4
+		P4_WORD("_ds",		&&_ds,		0, 0x03),	// p4
+		P4_WORD("_dsp@",	&&_dsp_get,	0, 0x01),	// p4
+		P4_WORD("_dsp!",	&&_dsp_put,	0, 0x10),	// p4
 #ifdef HAVE_HOOKS
-		P4_WORD("_hook_add",	&&_hook_add,	0),		// p4
-		P4_WORD("_hook_call",	&&_hook_call,	0),		// p4
+		P4_WORD("_hook_add",	&&_hook_add,	0, 0),		// p4
+		P4_WORD("_hook_call",	&&_hook_call,	0, 0),		// p4
 #endif
-		P4_WORD("_longjmp",	&&_longjmp,	0),		// p4
-		P4_WORD("_rs",		&&_rs,		0),		// p4
-		P4_WORD("_rsp@",	&&_rsp_get,	0),		// p4
-		P4_WORD("_rsp!",	&&_rsp_put,	0),		// p4
-		P4_WORD("_stack_dump",	&&_stack_dump,	0),		// p4
-		P4_WORD("_window",	&&_window,	0),		// p4
+		P4_WORD("_longjmp",	&&_longjmp,	0, 0x10),	// p4
+		P4_WORD("_rs",		&&_rs,		0, 0x03),	// p4
+		P4_WORD("_rsp@",	&&_rsp_get,	0, 0x01),	// p4
+		P4_WORD("_rsp!",	&&_rsp_put,	0, 0x10),	// p4
+		P4_WORD("_stack_dump",	&&_stack_dump,	0, 0x20),	// p4
+		P4_WORD("_window",	&&_window,	0, 0x02),	// p4
 
 		/* Compiling Words */
-		P4_WORD("compile-only",		&&_compile_only,	0),	// p4
-		P4_WORD("compile-only?",	&&_is_compile,		P4_BIT_COMPILE),// p4
-		P4_WORD(":NONAME",	&&_noname,	0),
-		P4_WORD(":",		&&_colon,	0),
-		P4_WORD(";",		&&_semicolon,	P4_BIT_IMM|P4_BIT_COMPILE),
-		P4_WORD(">BODY",	&&_body,	0),
-		P4_WORD("CREATE",	&&_create,	0),
-		P4_WORD("DOES>",	&&_does,	P4_BIT_COMPILE),
-		P4_WORD("EVALUATE",	&&_evaluate,	0),
-		P4_WORD("EXECUTE",	&&_execute,	0),
-		P4_WORD("EXIT",		&&_exit,	P4_BIT_COMPILE),
-		P4_WORD("IMMEDIATE",	&&_immediate,	0),
-		P4_WORD("immediate?",	&&_is_immediate, 0),		// p4
-		P4_WORD("MARKER",	&&_marker,	0),
-		P4_WORD("STATE",	&&_state,	0),
+		P4_WORD("compile-only",	&&_compile_only,0, 0),		// p4
+		P4_WORD("compile-only?",&&_is_compile,	P4_BIT_COMPILE, 0),// p4
+		P4_WORD(":NONAME",	&&_noname,	0, 0),
+		P4_WORD(":",		&&_colon,	0, 0),
+		P4_WORD(";",		&&_semicolon,	P4_BIT_IMM|P4_BIT_COMPILE, 0),
+		P4_WORD(">BODY",	&&_body,	0, 0x01),
+		P4_WORD("CREATE",	&&_create,	0, 0x01),
+		P4_WORD("DOES>",	&&_does,	P4_BIT_COMPILE, 0),
+		P4_WORD("EVALUATE",	&&_evaluate,	0, 0x20),
+		P4_WORD("EXECUTE",	&&_execute,	0, 0x10),
+		P4_WORD("EXIT",		&&_exit,	P4_BIT_COMPILE, 0),
+		P4_WORD("IMMEDIATE",	&&_immediate,	0, 0),
+		P4_WORD("immediate?",	&&_is_immediate,0, 0x01),	// p4
+		P4_WORD("MARKER",	&&_marker,	0, 0),
+		P4_WORD("STATE",	&&_state,	0, 0x01),
 
 		/* Data Space - Alignment */
-		P4_WORD("CELLS",	&&_cells,	0),
-		P4_WORD("CHARS",	&&_chars,	0),
-		P4_WORD("ALIGN",	&&_align,	0),
-		P4_WORD("ALLOT",	&&_allot,	0),
-		P4_WORD("HERE",		&&_here_addr,	0),
-		P4_WORD(">here",	&&_here_offset,	0),		// p4
-		P4_WORD("UNUSED",	&&_unused,	0),
+		P4_WORD("CELLS",	&&_cells,	0, 0x11),
+		P4_WORD("CHARS",	&&_chars,	0, 0x11),
+		P4_WORD("ALIGN",	&&_align,	0, 0),
+		P4_WORD("ALLOT",	&&_allot,	0, 0x10),
+		P4_WORD("HERE", 	&&_here_addr,	0, 0x01),
+		P4_WORD(">here",	&&_here_offset,	0, 0x01),	// p4
+		P4_WORD("UNUSED",	&&_unused,	0, 0x01),
 
 		/* Data Space - Access */
-		P4_WORD("_ctx",		&&_ctx,		0),		// p4
-		P4_WORD("!",		&&_store,	0),
-		P4_WORD(">R",		&&_to_rs,	0),		// allow interpret
-		P4_WORD("@",		&&_fetch,	0),
-		P4_WORD("C!",		&&_cstore,	0),
-		P4_WORD("C@",		&&_cfetch,	0),
-		P4_WORD("DROP",		&&_drop,	0),
-		P4_WORD("DUP",		&&_dup,		0),
-		P4_WORD("MOVE",		&&_move,	0),
-		P4_WORD("PICK",		&&_pick,	0),
-		P4_WORD("R>",		&&_from_rs,	0),		// allow interpret
-		P4_WORD("ROLL",		&&_roll,	0),
-		P4_WORD("SWAP",		&&_swap,	0),
-		P4_WORD("BASE",		&&_base,	0),
+		P4_WORD("_ctx",		&&_ctx,		0, 0x01),	// p4
+		P4_WORD("!",		&&_store,	0, 0x20),
+		P4_WORD(">R",		&&_to_rs,	0, 0x0110),	// allow interpret
+		P4_WORD("@",		&&_fetch,	0, 0x11),
+		P4_WORD("C!",		&&_cstore,	0, 0x20),
+		P4_WORD("C@",		&&_cfetch,	0, 0x11),
+		P4_WORD("DROP",		&&_drop,	0, 0x10),
+		P4_WORD("DUP",		&&_dup,		0, 0x12),
+		P4_WORD("MOVE",		&&_move,	0, 0x30),
+		P4_WORD("PICK",		&&_pick,	0, 0),
+		P4_WORD("R>",		&&_from_rs,	0, 0x1001),	// allow interpret
+		P4_WORD("ROLL",		&&_roll,	0, 0),
+		P4_WORD("SWAP",		&&_swap,	0, 0x22),
+		P4_WORD("BASE",		&&_base,	0, 0x01),
 
 		/* Dynamic Memory */
-		P4_WORD("ALLOCATE",	&&_allocate,	0),
-		P4_WORD("FREE",		&&_free,	0),
-		P4_WORD("RESIZE",	&&_resize,	0),
+		P4_WORD("ALLOCATE",	&&_allocate,	0, 0x12),
+		P4_WORD("FREE",	&&_free,	0, 0x11),
+		P4_WORD("RESIZE",	&&_resize,	0, 0x22),
 
 		/* Operators */
-		P4_WORD("BASE",         &&_base,        0),
-		P4_WORD("*",		&&_mul,		0),
-		P4_WORD("+",		&&_add,		0),
-		P4_WORD("-",		&&_sub,		0),
-		P4_WORD("/",		&&_div,		0),
-		P4_WORD("AND",		&&_and,		0),
-		P4_WORD("INVERT",	&&_not,		0),
-		P4_WORD("LSHIFT",	&&_lshift,	0),
-		P4_WORD("M*",		&&_mstar,	0),
-		P4_WORD("MOD",		&&_mod,		0),
-		P4_WORD("OR",		&&_or,		0),
-		P4_WORD("RSHIFT",	&&_rshift,	0),
-		P4_WORD("SM/REM",	&&_sm_div_rem,	0),
-		P4_WORD("UM*",		&&_umstar,	0),
-		P4_WORD("UM/MOD",	&&_um_div_mod,	0),
-		P4_WORD("XOR",		&&_xor,		0),
+		P4_WORD("*",		&&_mul,		0, 0x21),
+		P4_WORD("+",		&&_add,		0, 0x21),
+		P4_WORD("-",		&&_sub,		0, 0x21),
+		P4_WORD("/",		&&_div,		0, 0x21),
+		P4_WORD("AND",		&&_and,		0, 0x21),
+		P4_WORD("INVERT",	&&_not,		0, 0x11),
+		P4_WORD("LSHIFT",	&&_lshift,	0, 0x21),
+		P4_WORD("M*",		&&_mstar,	0, 0x22),
+		P4_WORD("MOD",		&&_mod,		0, 0x21),
+		P4_WORD("OR",		&&_or,		0, 0x21),
+		P4_WORD("RSHIFT",	&&_rshift,	0, 0x21),
+		P4_WORD("SM/REM",	&&_sm_div_rem,	0, 0x21),
+		P4_WORD("UM*",		&&_umstar,	0, 0x22),
+		P4_WORD("UM/MOD",	&&_um_div_mod,	0, 0x21),
+		P4_WORD("XOR",		&&_xor,		0, 0x21),
 
 		/* Comparisons */
-		P4_WORD("0=",		&&_eq0,		0),
-		P4_WORD("0<",		&&_lt0,		0),
-		P4_WORD("U<",		&&_u_lt,	0),
-		P4_WORD("<",		&&_lt,		0),
+		P4_WORD("0=",		&&_eq0,		0, 0x11),
+		P4_WORD("0<",		&&_lt0,		0, 0x11),
+		P4_WORD("U<",		&&_u_lt,	0, 0x21),
+		P4_WORD("<",		&&_lt,		0, 0x21),
 
 		/* Tools*/
-		P4_WORD("args",		&&_args,	0),		// p4
-		P4_WORD("bye-code",	&&_bye_code,	0),		// p4
-		P4_WORD("env",		&&_env,		0),		// p4
+		P4_WORD("args",		&&_args,	0, 0x02),	// p4
+		P4_WORD("bye-code",	&&_bye_code,	0, 0x10),	// p4
+		P4_WORD("env",		&&_env,		0, 0x22),	// p4
 #ifdef HAVE_SEE
-		P4_WORD("_seext",	&&_seext,	0),		// p4
+		P4_WORD("_seext",	&&_seext,	0, 0x10),	// p4
 #endif
 
 		/* I/O */
-		P4_WORD(">IN",		&&_input_offset,0),
-		P4_WORD("ACCEPT",	&&_accept,	0),
-		P4_WORD("BLK",		&&_blk,		0),
-		P4_WORD("BLOCK",	&&_block,	0),
-		P4_WORD("block-open",	&&_block_open,	0),		// p4
-		P4_WORD("block-close",	&&_block_close,	0),		// p4
-		P4_WORD("blocks",	&&_blocks, 	0),		// p4
-		P4_WORD("BUFFER",	&&_buffer,	0),
-		P4_WORD("DUMP",		&&_dump,	0),
-		P4_WORD("EMIT",		&&_emit,	0),
-		P4_WORD("EMPTY-BUFFERS", &&_empty_buffers, 0),
-		P4_WORD("epoch-seconds", &&_epoch_seconds, 0),		// p4
-		P4_WORD("FIND-NAME",	&&_find_name,	0),
-		P4_WORD("INCLUDED",	&&_included,	0),
-		P4_WORD("KEY",		&&_key,		0),
-		P4_WORD("KEY?",		&&_key_ready,	0),
-		P4_WORD("MS",		&&_ms,		0),
-		P4_WORD("_parse",	&&_parse,	0),		// p4
-		P4_WORD("PARSE-NAME",	&&_parse_name,	0),
-		P4_WORD("REFILL",	&&_refill,	0),
-		P4_WORD("SAVE-BUFFERS",	&&_save_buffers, 0),
-		P4_WORD("SOURCE",	&&_source,	0),
-		P4_WORD("SOURCE-ID",	&&_source_id,	0),
-		P4_WORD("TIME&DATE",	&&_time_date,	0),
-		P4_WORD("UPDATE",	&&_update,	0),
+		P4_WORD(">IN",		&&_input_offset,0, 0x01),
+		P4_WORD("ACCEPT",	&&_accept,	0, 0),
+		P4_WORD("BLK",		&&_blk,		0, 0),
+		P4_WORD("BLOCK",	&&_block,	0, 0),
+		P4_WORD("block-open",	&&_block_open,	0, 0),		// p4
+		P4_WORD("block-close",	&&_block_close,	0, 0),		// p4
+		P4_WORD("blocks",	&&_blocks, 	0, 0),		// p4
+		P4_WORD("BUFFER",	&&_buffer,	0, 0),
+		P4_WORD("DUMP",		&&_dump,	0, 0x20),
+		P4_WORD("EMIT",		&&_emit,	0, 0x10),
+		P4_WORD("EMPTY-BUFFERS", &&_empty_buffers, 0, 0),
+		P4_WORD("epoch-seconds", &&_epoch_seconds, 0, 0x01),	// p4
+		P4_WORD("FIND-NAME",	&&_find_name,	0, 0x21),
+		P4_WORD("INCLUDED",	&&_included,	0, 0x20),
+		P4_WORD("KEY",		&&_key,		0, 0x01),
+		P4_WORD("KEY?",		&&_key_ready,	0, 0x01),
+		P4_WORD("MS",		&&_ms,		0, 0x10),
+		P4_WORD("_parse",	&&_parse,	0, 0x22),	// p4
+		P4_WORD("PARSE-NAME",	&&_parse_name,	0, 0x02),
+		P4_WORD("REFILL",	&&_refill,	0, 0x01),
+		P4_WORD("SAVE-BUFFERS",	&&_save_buffers, 0, 0),
+		P4_WORD("SOURCE",	&&_source,	0, 0x02),
+		P4_WORD("SOURCE-ID",	&&_source_id,	0, 0),
+		P4_WORD("TIME&DATE",	&&_time_date,	0, 0x06),
+		P4_WORD("UPDATE",	&&_update,	0, 0),
 
-		P4_WORD(NULL,		NULL,		0),
+		P4_WORD(NULL,		NULL,		0, 0),
 	};
 
 #define w_repl	words[0]	// See exec[].
@@ -1672,11 +1673,14 @@ _bp:		p4Bp(ctx);
 		/*@fallthrough@*/
 
 		// Indirect threading.
-		/* Check data stack bounds. */
-_next:		p4StackCanPopPush(ctx, &ctx->ds, 0, 0);
-		p4StackCanPopPush(ctx, &ctx->fs, 0, 0);
-		w = *ip++;
+_next:		w = *ip++;
 		p4Trace(ctx, w.xt);
+		/* Check data stack bounds. */
+		p4StackCanPopPush(ctx, &ctx->ds, P4_DS_CAN_POP(w.w), P4_DS_CAN_PUSH(w.w));
+		p4StackCanPopPush(ctx, &ctx->rs, P4_RS_CAN_POP(w.w), P4_RS_CAN_PUSH(w.w));
+#ifdef HAVE_MATH_H
+		p4StackCanPopPush(ctx, &ctx->P4_FLOAT_STACK, P4_FS_CAN_POP(w.w), P4_FS_CAN_PUSH(w.w));
+#endif
 		goto *w.xt->code;
 
 		// ( xt -- )
@@ -1706,7 +1710,6 @@ _ctx:		P4_PUSH(ctx->ds, (P4_Cell *) ctx);
 
 		// ( -- )
 _call:		w = *ip;
-		p4StackCanPopPush(ctx, &ctx->rs, 0, 1);
 		P4_PUSH(ctx->rs, ip + 1);
 		ip = (P4_Cell *)((P4_Char *) ip + w.n);
 		NEXT;
@@ -1722,6 +1725,7 @@ _branchz:	w = *ip;
 		ip = (P4_Cell *)((P4_Char *) ip + (x.u == 0 ? w.n : P4_CELL));
 		NEXT;
 
+#ifdef HAVE_HOOKS
 		// ( func `<spaces>name` -- )
 _hook_add:	str = p4ParseName(&ctx->input);
 		p4WordCreate(ctx, str.string, str.length, &&_hook_call);
@@ -1733,6 +1737,7 @@ _hook_add:	str = p4ParseName(&ctx->input);
 _hook_call:	x = w.w->data[0];
 		(*(void (*)(P4_Ctx *)) x.p)(ctx);
 		NEXT;
+#endif
 
 		// ( -- aaddr )
 _dsp_get:	w.p = ctx->ds.top;
@@ -2147,13 +2152,11 @@ _roll:		w = P4_POP(ctx->ds);
 
 		// (x -- )(R: -- x )
 _to_rs:		w = P4_POP(ctx->ds);
-		p4StackCanPopPush(ctx, &ctx->rs, 0, 1);
 		P4_PUSH(ctx->rs, w);
 		NEXT;
 
 		// (R: x -- )
-_from_rs:	p4StackCanPopPush(ctx, &ctx->rs, 1, 0);
-		w = P4_POP(ctx->rs);
+_from_rs:	w = P4_POP(ctx->rs);
 		P4_PUSH(ctx->ds, w);
 		NEXT;
 
@@ -2467,7 +2470,6 @@ _ms:		w = P4_POP(ctx->ds);
 		struct tm *now;
 _time_date:	(void) time(&w.t);
 		now = localtime(&w.t);
-		p4StackCanPopPush(ctx, &ctx->ds, 0, 6);
 		P4_PUSH(ctx->ds, (P4_Int) now->tm_sec);
 		P4_PUSH(ctx->ds, (P4_Int) now->tm_min);
 		P4_PUSH(ctx->ds, (P4_Int) now->tm_hour);
@@ -2694,7 +2696,7 @@ _fs:		w.n = P4_LENGTH(ctx->fs);
 		P4_PUSH(ctx->ds, ctx->fs.size);
 		NEXT;
 
-		// ( aaddr -- ) (F: -- f_
+		// ( aaddr -- ) (F: -- f )
 _f_fetch:	w = P4_POP(ctx->ds);
 		P4_PUSH(ctx->P4_FLOAT_STACK, *w.p);
 		NEXT;
@@ -2707,13 +2709,11 @@ _f_store:	w = P4_POP(ctx->ds);
 
 		// (x -- )(R: -- x )
 _fs_to_rs:	w = P4_POP(ctx->P4_FLOAT_STACK);
-		p4StackCanPopPush(ctx, &ctx->rs, 0, 1);
 		P4_PUSH(ctx->rs, w);
 		NEXT;
 
 		// (R: x -- )
-_rs_to_fs:	p4StackCanPopPush(ctx, &ctx->rs, 1, 0);
-		w = P4_POP(ctx->rs);
+_rs_to_fs:	w = P4_POP(ctx->rs);
 		P4_PUSH(ctx->P4_FLOAT_STACK, w);
 		NEXT;
 	{
@@ -2734,7 +2734,6 @@ _to_float:	errno = 0;
 _f_dot:		if (ctx->radix != 10) {
 			THROW(P4_THROW_BAD_BASE);
 		}
-		p4StackCanPopPush(ctx, &ctx->P4_FLOAT_STACK, 1, 0);
 		w = P4_POP(ctx->P4_FLOAT_STACK);
 		(void) printf("%.*lF ", (int) ctx->precision, w.f);
 		NEXT;
@@ -2743,7 +2742,6 @@ _f_dot:		if (ctx->radix != 10) {
 _f_sdot:	if (ctx->radix != 10) {
 			THROW(P4_THROW_BAD_BASE);
 		}
-		p4StackCanPopPush(ctx, &ctx->P4_FLOAT_STACK, 1, 0);
 		w = P4_POP(ctx->P4_FLOAT_STACK);
 		(void) printf("%.*lE ", (int) ctx->precision, w.f);
 		NEXT;
@@ -2905,7 +2903,7 @@ _s_to_f:	w = P4_POP(ctx->ds);
 		P4_PUSH(ctx->P4_FLOAT_STACK, (P4_Float) w.n);
 		NEXT;
 
-		// (S: n -- )(F: -- f )
+		// (S: -- n)(F: f -- )
 		// : F>S F>D D>S ;
 _f_to_s:	w = P4_POP(ctx->P4_FLOAT_STACK);
 		P4_PUSH(ctx->ds, (P4_Int) w.f);
