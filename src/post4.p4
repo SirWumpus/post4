@@ -1334,9 +1334,23 @@ VARIABLE _>pic
 	DROP
 ; IMMEDIATE
 
-: .. ( x -- )
+\ ... ? ...
+\
+\ (S: aaddr -- )
+\
+: ?
 	BASE @ >R
-	DUP HEX [CHAR] 0 EMIT [CHAR] x EMIT U. SPACE
+	DUP HEX [CHAR] $ EMIT . SPACE @
+	DUP HEX [CHAR] $ EMIT . SPACE
+	DUP DECIMAL [CHAR] # EMIT . SPACE
+	    OCTAL [CHAR] 0 EMIT . SPACE
+	CR R> BASE !
+;
+
+\ (S: caddr -- )
+: C?
+	BASE @ >R
+	DUP HEX [CHAR] $ EMIT . SPACE C@
 	DUP HEX [CHAR] $ EMIT . SPACE
 	DUP DECIMAL [CHAR] # EMIT . SPACE
 	DUP OCTAL [CHAR] 0 EMIT . SPACE
@@ -1345,15 +1359,9 @@ VARIABLE _>pic
 	CR R> BASE !
 ;
 
-\ ... ? ...
-\
-\ (S: aaddr -- )
-\
-: ? BASE @ SWAP HEX [CHAR] $ EMIT DUP . @ SPACE BASE ! .. ;
-
 \ ... N>R ...
 \
-\ (S: i*x n –– ) (R: –– i*x n )
+\ (S: i*x n -- ) (R: -- i*x n )
 \
 : N>R				\  S: i*x n R: ip
 	R> SWAP DUP		\  S: i*x ip n n R:

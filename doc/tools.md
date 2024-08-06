@@ -20,7 +20,7 @@ Dump the data stack.
 - - -
 #### ?
 ( `aaddr` -- )  
-Display the value stored at `aaddr`.
+Display the cell value stored at `aaddr`.
 
 - - -
 #### AHEAD
@@ -144,15 +144,16 @@ List defined words
 
 ### Post4 Specific Words
 
-#### ..
-( `x` -- )  
-Display value `x` in several bases.
-
 - - -
 #### bye-code
 ( `exit_code` -- )  
 Terminate and return to the host OS an exit code; zero (0) for normal/success, non-zero an error occurred.
 
+#### C?
+( `caddr` -- )  
+Display the character value stored at `caddr`.
+
+- - -
 - - -
 #### _bp
 ( -- )  
