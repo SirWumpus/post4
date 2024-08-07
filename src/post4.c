@@ -1575,6 +1575,7 @@ _thrown:
 		case P4_THROW_ABORT_MSG:
 		case P4_THROW_DS_OVER:
 		case P4_THROW_DS_UNDER:
+		case P4_THROW_UNDEFINED:
 			P4_RESET(ctx->ds);
 			/*@fallthrough@*/
 #if defined(HAVE_MATH_H)
@@ -1587,7 +1588,6 @@ _thrown:
 		case P4_THROW_SIGSEGV:		/* Retain data stack. */
 		case P4_THROW_RS_OVER:
 		case P4_THROW_RS_UNDER:
-		case P4_THROW_UNDEFINED:	/* Retain data stack. */
 		case P4_THROW_LOOP_DEPTH:
 			P4_RESET(ctx->rs);
 			/* Normally at this point one would reset input
@@ -1606,7 +1606,7 @@ _thrown:
 		 * - set interpretation state and begin text interpretation;
 		 */
 		default:
-			/* Flush the current input buffer. */
+			/* Discard the current input buffer. */
 			ctx->input.offset = ctx->input.length = 0;
 			ctx->state = P4_STATE_INTERPRET;
 		}
@@ -1630,14 +1630,6 @@ _repl:
 				if (p4StrNum(str, ctx->radix, &x, &is_float) != str.length) {
 					/* Not a word, not a number. */
 					(void) printf("\"%.*s\" ", (int)str.length, str.string);
-					/* An earlier version treated most exceptions like ABORT
-					 * which would empty the stack, which is annoying when
-					 * interactive as this could upset work in progress.
-					 *
-					 * An undefined word does not need to behave like ABORT,
-					 * so the stacks can remain untouched. See Forth 200x
-					 * Draft 19.1 section 3.4 d.
-					 */
 					THROW(P4_THROW_UNDEFINED);
 				}
 				if (ctx->state == P4_STATE_COMPILE) {
