@@ -708,6 +708,14 @@ DEFER _fsp!
 	['] COMPILE, COMPILE,
 ; IMMEDIATE compile-only
 
+\ ( -- xt )
+\ Redefine now that we can THROW for an undefined word.
+: ' ' DUP 0= -13 AND THROW ;
+
+\ (C: <spaces>name -- ) (S: -- xt )
+\ Redefine now that ' can THROW on undefined word.
+: ['] LIT [ ' LIT COMPILE, ] COMPILE, ' COMPILE, ; IMMEDIATE compile-only
+
 \ ...  [CHAR]  ...
 \
 \  (C: <spaces>name -- ) \ (S: -- char )
