@@ -1355,12 +1355,12 @@ p4Repl(P4_Ctx *ctx)
 		P4_WORD("CREATE-FILE",		&&_fa_create,	0, 0x22),
 		P4_WORD("DELETE-FILE",		&&_fa_delete,	0, 0x21),
 		P4_WORD("FILE-POSITION",	&&_fa_tell,	0, 0x12),
-//		P4_WORD("FILE-SIZE",		&&_fa_fsize,	0, 0x12),
+		P4_WORD("FILE-SIZE",		&&_fa_fsize,	0, 0x12),
 		P4_WORD("FLUSH-FILE",		&&_fa_flush,	0, 0x11),
 		P4_WORD("INCLUDE-FILE",		&&_fa_include,	0, 0x10),
 		P4_WORD("OPEN-FILE",		&&_fa_open,	0, 0x22),
 		P4_WORD("READ-FILE",		&&_fa_read,	0, 0x32),
-//		P4_WORD("READ-LINE",		&&_fa_rline,	0, 0x33),
+		P4_WORD("READ-LINE",		&&_fa_rline,	0, 0x33),
 		P4_WORD("REPOSITION-FILE",	&&_fa_seek,	0, 0x21),
 		P4_WORD("WRITE-FILE",		&&_fa_write,	0, 0x31),
 #endif
@@ -2514,6 +2514,7 @@ _dump:		x = P4_POP(ctx->ds);
 #ifdef P4_FILE_ACCESS
 	{
 		FILE *fp;
+		struct stat sb;
 		static char *fmodes[] = {
 			"a+",  "r", "w", "w+", "ab+", "rb", "wb", "wb+"
 		};
@@ -2558,7 +2559,21 @@ _fa_read:	fp = P4_POP(ctx->ds).v;
 		w = P4_POP(ctx->ds);
 		w.u = fread(w.s, sizeof (*w.s), x.u, fp);
 		P4_PUSH(ctx->ds, w);
-		P4_PUSH(ctx->ds, P4_BOOL(ferror(fp)));
+		P4_PUSH(ctx->ds, (P4_Int) errno);
+		NEXT;
+
+_fa_rline:	errno = 0;
+		fp = P4_POP(ctx->ds).v;
+		x = P4_POP(ctx->ds);
+		w = P4_POP(ctx->ds);
+		(void) fgets(w.s, (int) x.n, fp);
+		x.z = strlen(w.s);
+		if (0 < x.z && w.s[x.z-1] == '\n') {
+			x.z -= 0 < --x.z && w.s[x.z-1] == '\r';
+		}
+		P4_PUSH(ctx->ds, x.z);
+		P4_PUSH(ctx->ds, P4_BOOL(errno == 0));
+		P4_PUSH(ctx->ds, (P4_Int) errno);
 		NEXT;
 
 _fa_flush:	errno = 0;
@@ -2566,11 +2581,19 @@ _fa_flush:	errno = 0;
 		P4_TOP(ctx->ds).n = errno;
 		NEXT;
 
-_fa_write:	fp = P4_POP(ctx->ds).v;
+_fa_fsize:	errno = 0;
+		(void) fstat(fileno(P4_TOP(ctx->ds).v), &sb);
+		P4_TOP(ctx->ds).n = sb.st_size;
+		P4_PUSH(ctx->ds, (P4_Uint) 0);
+		P4_PUSH(ctx->ds, (P4_Int) errno);
+		NEXT;
+
+_fa_write:	errno = 0;
+		fp = P4_POP(ctx->ds).v;
 		x = P4_POP(ctx->ds);
-		w = P4_POP(ctx->ds);
+		w = P4_TOP(ctx->ds);
 		w.u = fwrite(w.s, sizeof (*w.s), x.u, fp);
-		P4_PUSH(ctx->ds, P4_BOOL(ferror(fp)));
+		P4_TOP(ctx->ds).n = errno;
 		NEXT;
 
 _fa_include:	x.n = p4EvalFp(ctx, P4_TOP(ctx->ds).v);
