@@ -1155,7 +1155,7 @@ Enter interpretation state.
 - - -
 #### [']
 ( `<spaces>name` -- `xt` ) immediate  
-Place name's execution token xt on the stack.
+Place name's execution token xt on the stack.  Throw undefined word (-13) if not found.
 
 - - -
 #### [CHAR] ccc
