@@ -1896,6 +1896,17 @@ VARIABLE SCR
 \
 : LOAD BLK @ >R DUP BLK ! BLOCK 1024 ['] EVALUATE CATCH R> BLK ! THROW ;
 
+\ ... EVALUATE ...
+\
+\ ( i*x caddr u -- j*x )
+\
+\ Redefine in order to set BLK to zero _after_ implementing LOAD.
+\
+\ @see
+\	https://forth-standard.org/standard/block/EVALUATE
+\
+: EVALUATE BLK @ >R 0 BLK ! ['] EVALUATE CATCH R> BLK ! THROW ;
+
 \ ... THRU ...
 \
 \ (S: start end -- )
