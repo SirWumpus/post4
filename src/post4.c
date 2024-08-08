@@ -2566,13 +2566,14 @@ _fa_rline:	errno = 0;
 		fp = P4_POP(ctx->ds).v;
 		x = P4_POP(ctx->ds);
 		w = P4_POP(ctx->ds);
+		int eof = feof(fp);
 		(void) fgets(w.s, (int) x.n, fp);
 		x.z = strlen(w.s);
 		if (0 < x.z && w.s[x.z-1] == '\n') {
 			x.z -= 0 < --x.z && w.s[x.z-1] == '\r';
 		}
 		P4_PUSH(ctx->ds, x.z);
-		P4_PUSH(ctx->ds, P4_BOOL(errno == 0));
+		P4_PUSH(ctx->ds, P4_BOOL(!eof));
 		P4_PUSH(ctx->ds, (P4_Int) errno);
 		NEXT;
 
