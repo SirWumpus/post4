@@ -100,7 +100,10 @@ When current `BASE` is ten (10) its possible to input floating point numbers (pr
          12.3   =  123E-1
         -0.123  = -123e-3
 
-Floating point numbers are placed on the float stack, which is separate from the data and return stacks.  Also the float stack is small, though at least six (6) deep.  See [Floating-Point Words](./doc/float.md), in particular words [f.](./doc/float.md) and [fs.](./doc/float.md) to start with.  Note the input notation, eg. `123E`, where there is no value following the exponent is not supported.
+Floating point numbers are placed on the float stack, which is separate from the data and return stacks.  Also the float stack is small, though at least six (6) deep.  See [Floating-Point Words](./doc/float.md), in particular words [f.](./doc/float.md) and [fs.](./doc/float.md) to start with.
+
+- *Note the double-cell input notation, `1234.` (equivalent to `1234 0`), is not supported.*
+- *Note the input notation, `123E`, where there is no value following the exponent is not supported.*
 
 It is also possible to input a character constant or backslash escape character.  Simple use single-quotes around the character or backslash-escape string (see also `CHAR` and `[CHAR]`).  For example:
 
