@@ -2387,12 +2387,18 @@ _blk:		P4_PUSH(ctx->ds, (P4_Cell *) &ctx->input.blk);
 		NEXT;
 
 		// ( u -- aaddr )
-_block:		w = P4_TOP(ctx->ds);
-		if ((rc = p4BlockBuffer(ctx, w.u, 1)) != P4_THROW_OK) {
+_block:		x.u = 1;
+
+_block_buffer:	w = P4_TOP(ctx->ds);
+		if ((rc = p4BlockBuffer(ctx, w.u, x.u)) != P4_THROW_OK) {
 			THROW(rc);
 		}
 		P4_TOP(ctx->ds).s = ctx->block.buffer;
 		NEXT;
+
+		// ( u -- aaddr )
+_buffer:	x.u = 0;
+		goto _block_buffer;
 
 		// ( caddr u -- bool )
 _block_open:	w = P4_POP(ctx->ds);
@@ -2415,14 +2421,6 @@ _blocks:	if (fstat(ctx->block_fd, &sb) != 0) {
 		P4_PUSH(ctx->ds, w);
 		NEXT;
 	}
-		// ( u -- aaddr )
-_buffer:	w = P4_TOP(ctx->ds);
-		if ((rc = p4BlockBuffer(ctx, w.u, 0)) != P4_THROW_OK) {
-			THROW(rc);
-		}
-		P4_TOP(ctx->ds).s = ctx->block.buffer;
-		NEXT;
-
 		// ( -- )
 _empty_buffers:	ctx->block.state = P4_BLOCK_FREE;
 		/*@fallthrough@*/
