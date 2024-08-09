@@ -859,7 +859,7 @@ p4Accept(P4_Input *input, P4_Char *buf, P4_Size size)
 	P4_Char *ptr;
 
 	if (input->fp == (FILE *) -1 || size-- <= 1) {
-		return 0;
+		return EOF;
 	}
 #ifdef HAVE_TCSETATTR
 	/* For a terminal restore original line input and echo settings. */
