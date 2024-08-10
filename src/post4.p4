@@ -2071,10 +2071,6 @@ VARIABLE SCR
 ;
 [THEN]
 
-[DEFINED] _fs [IF]
-_fs CONSTANT floating-stack DROP DROP
-[THEN]
-
 BEGIN-STRUCTURE p4_string
 	FIELD: str.length
 	FIELD: str.string	\ pointer C string
@@ -2209,6 +2205,7 @@ END-STRUCTURE
 ; IMMEDIATE compile-only
 
 [DEFINED] _fs [IF]
+_fs CONSTANT floating-stack DROP DROP
 ' _fsp_get IS _fsp@
 ' _fsp_put IS _fsp!
 
