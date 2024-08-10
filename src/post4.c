@@ -1553,8 +1553,6 @@ p4Repl(P4_Ctx *ctx)
 	if ((rc = SETJMP(ctx->on_throw)) != 0) {
 _thrown:
 		switch (rc) {
-		case P4_THROW_ABORT_MSG:
-			/* Displays its own message. */
 		case P4_THROW_ABORT:
 		case P4_THROW_QUIT:
 			/* Historically no message, simply return to REPL. */
@@ -1565,38 +1563,31 @@ _thrown:
 #else
 			(void) printf("%d thrown", rc);
 #endif
-		}
-
-		/* Cannot not rely on ctx->state for compilation state, since
-		 * its possible to temporarily change states in the middle of
-		 * compiling a word, eg : word [ 123 ;
-		 */
-		if (P4_WORD_IS_HIDDEN(ctx->words)) {
-			/* A thrown error while compiling a word leaves the
-			 * definition in an incomplete state; discard it.
+			/* Cannot not rely on ctx->state for compilation state, since
+			 * its possible to temporarily change states in the middle of
+			 * compiling a word, eg `: word [ 123 ;`  Use the fact that
+			 * while compiling the word is hidden from use.
 			 */
-			P4_Word *word = ctx->words;
-			(void) printf(
-				" while compiling \"%s\"",
-				word->name.length == 0 ? ":NONAME" : (char *)word->name.string
-			);
-			ctx->words = word->prev;
-			/* Rewind HERE, does not free ALLOCATE data. */
-			ctx->here = (P4_Char *) word->data;
-			p4WordFree(word);
-		}
-		switch (rc) {
+			if (P4_WORD_IS_HIDDEN(ctx->words)) {
+				/* A thrown error while compiling a word leaves the
+				 * definition in an incomplete state; discard it.
+				 */
+				P4_Word *word = ctx->words;
+				(void) printf(
+					" while compiling \" %s \"",
+					word->name.length == 0 ? ":NONAME" : (char *)word->name.string
+				);
+				ctx->words = word->prev;
+				/* Rewind HERE, does not free ALLOCATE data. */
+				ctx->here = (P4_Char *) word->data;
+				p4WordFree(word);
+			}
+			/*@fallthrough@*/
 		case P4_THROW_ABORT_MSG:
-			/* Displays its own message. */
-		case P4_THROW_ABORT:
-		case P4_THROW_QUIT:
-			/* Historically no message, simply return to REPL. */
-			break;
-		default:
+			/* Ensure ABORT" and other messages print newline.*/
 			(void) printf(crlf);
-			(void) fflush(stdout);
 		}
-
+		(void) fflush(stdout);
 		if (rc != P4_THROW_QUIT) {
 			P4_RESET(ctx->ds);
 #ifdef HAVE_MATH_H
@@ -1642,7 +1633,7 @@ _repl:
 				int is_float;
 				if (p4StrNum(str, ctx->radix, &x, &is_float) != str.length) {
 					/* Not a word, not a number. */
-					(void) printf("\"%.*s\" ", (int)str.length, str.string);
+					(void) printf("\" %.*s \" ", (int)str.length, str.string);
 					THROW(P4_THROW_UNDEFINED);
 				}
 				if (ctx->state == P4_STATE_COMPILE) {

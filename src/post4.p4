@@ -1842,9 +1842,7 @@ VARIABLE _str_buf_curr
 \ (S: bool caddr u -- )
 : _abort_msg?
 	ROT IF
-	  catch_frame @ 0= IF
-	    TYPE CR ABORT
-	  THEN
+	  catch_frame @ 0= IF TYPE THEN
 	  -2 THROW
 	THEN
 	2DROP
@@ -1852,9 +1850,9 @@ VARIABLE _str_buf_curr
 
 \ : X ... test ABORT" message" ...
 \
-\ (C: ccc<quote>" -- ) (S: i*x x1 --  | i*x ) ( R: j*x --  | j*x )
+\ (C: ccc<quote>" -- ) (S: i*x y --  | i*x ) ( R: j*x --  | j*x )
 \
-: ABORT" POSTPONE S" POSTPONE _abort_msg? ; IMMEDIATE compile-only
+: ABORT" POSTPONE S\" POSTPONE _abort_msg? ; IMMEDIATE compile-only
 
 \ ... SCR ...
 \
