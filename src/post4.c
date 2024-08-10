@@ -1597,46 +1597,31 @@ _thrown:
 			(void) fflush(stdout);
 		}
 
-		switch (rc) {
-		case P4_THROW_ABORT:
-		case P4_THROW_ABORT_MSG:
-		case P4_THROW_DS_OVER:
-		case P4_THROW_DS_UNDER:
-		case P4_THROW_UNDEFINED:
+		if (rc != P4_THROW_QUIT) {
 			P4_RESET(ctx->ds);
-			/*@fallthrough@*/
-#if defined(HAVE_MATH_H)
-		case P4_THROW_FS_OVER:
-		case P4_THROW_FS_UNDER:
+#ifdef HAVE_MATH_H
 			P4_RESET(ctx->fs);
-			/*@fallthrough@*/
 #endif
-		case P4_THROW_QUIT:
-		case P4_THROW_SIGSEGV:		/* Retain data stack. */
-		case P4_THROW_RS_OVER:
-		case P4_THROW_RS_UNDER:
-		case P4_THROW_LOOP_DEPTH:
-			P4_RESET(ctx->rs);
-			/* Normally at this point one would reset input
-			 * to the console, but that has problems.  Wait
-			 * for the caller to resolve this by closing
-			 * their files and popping the previous input
-			 * context and/or re-asserting stdin.
-			 *
-			 * ctx->input.fp = stdin;
-			 */
-			/*@fallthrough@*/
+		}
+		P4_RESET(ctx->rs);
+		/* Normally at this point one would reset input
+		 * to the console, but that has problems.  Wait
+		 * for the caller to resolve this by closing
+		 * their files and popping the previous input
+		 * context and/or re-asserting stdin.
+		 *
+		 * ctx->input.fp = stdin;
+		 */
 
 		/* See 3.4.4 Possible actions on an ambiguous condition
 		 *
 		 * - display a message;
 		 * - set interpretation state and begin text interpretation;
 		 */
-		default:
-			/* Discard the current input buffer. */
-			ctx->input.offset = ctx->input.length = 0;
-			ctx->state = P4_STATE_INTERPRET;
-		}
+
+		/* Discard the current input buffer. */
+		ctx->input.offset = ctx->input.length = 0;
+		ctx->state = P4_STATE_INTERPRET;
 
 		/* Ensure we cleanup before return. */
 		goto setjmp_cleanup;
