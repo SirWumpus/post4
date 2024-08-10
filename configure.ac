@@ -58,9 +58,7 @@ AC_ARG_ENABLE(hooks,[AS_HELP_STRING([--disable-hooks],[disable support for hooks
 ])
 AS_IF([test $enable_hooks = 'yes'],[AC_DEFINE(HAVE_HOOKS)])
 
-AC_ARG_ENABLE(stack-checks,[AS_HELP_STRING([--disable-stack-checks],[disable stack depth checks])],[
-	:
-],[
+AC_ARG_ENABLE(stack-checks,[AS_HELP_STRING([--enable-stack-checks],[enable old stack depth checks])],[
 	enable_stack_checks='yes'
 ])
 AS_IF([test $enable_stack_checks = 'yes'],[AC_DEFINE(USE_STACK_CHECKS)])

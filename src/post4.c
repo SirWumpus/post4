@@ -1255,6 +1255,33 @@ p4Trace(P4_Ctx *ctx, P4_Xt xt)
 # define p4Trace(c, xt)
 #endif
 
+static void
+p4StackGuard(P4_Ctx *ctx, P4_Stack *stack, int over, int under)
+{
+	int i;
+	ptrdiff_t length = (stack->top + 1 - stack->base);
+	if (length < 0 || stack->base[-1].u != P4_SENTINEL) {
+		p4Bp(ctx);
+		stack->base[-1].u = P4_SENTINEL;
+		LONGJMP(ctx->on_throw, under);
+	}
+	if (stack->size < length || stack->base[stack->size].u != P4_SENTINEL) {
+		p4Bp(ctx);
+		stack->base[stack->size].u = P4_SENTINEL;
+		LONGJMP(ctx->on_throw, over);
+	}
+}
+
+static void
+p4StackGuards(P4_Ctx *ctx)
+{
+	p4StackGuard(ctx, &ctx->ds, P4_THROW_DS_OVER, P4_THROW_DS_UNDER);
+	p4StackGuard(ctx, &ctx->rs, P4_THROW_RS_OVER, P4_THROW_RS_UNDER);
+#ifdef HAVE_MATH_H
+	p4StackGuard(ctx, &ctx->fs, P4_THROW_FS_OVER, P4_THROW_FS_UNDER);
+#endif
+}
+
 #ifdef USE_STACK_CHECKS
 static void
 p4StackCanPopPush(P4_Ctx *ctx, P4_Stack *stack, unsigned pop, unsigned push)
@@ -1615,6 +1642,7 @@ _thrown:
 		goto setjmp_cleanup;
 	}
 _repl:
+	p4StackGuards(ctx);
 	/* The input buffer might have been primed (EVALUATE, LOAD),
 	 * so try to parse it first before reading more input.
 	 */
@@ -1639,10 +1667,12 @@ _repl:
 				} else if (is_float) {
 					p4StackCanPopPush(ctx, &ctx->P4_FLOAT_STACK, 0, 1);
 					P4_PUSH(ctx->P4_FLOAT_STACK, x);
+					p4StackGuards(ctx);
 #endif
 				} else {
 					p4StackCanPopPush(ctx, &ctx->ds, 0, 1);
 					P4_PUSH(ctx->ds, x);
+					p4StackGuards(ctx);
 				}
 			} else if (ctx->state == P4_STATE_COMPILE && !P4_WORD_IS_IMM(word)) {
 				p4WordAppend(ctx, (P4_Cell) word);
@@ -1696,6 +1726,7 @@ _enter:		p4StackCanPopPush(ctx, &ctx->rs, 0, 1);
 
 		// ( i*x -- i*x )(R:ip -- )
 _exit:		p4StackCanPopPush(ctx, &ctx->rs, 1, 0);
+		p4StackGuards(ctx);
 		ip = P4_POP(ctx->rs).p;
 		NEXT;
 
