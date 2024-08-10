@@ -2070,8 +2070,20 @@ _unused:	P4_PUSH(ctx->ds, ctx->end - ctx->here);
 		/*
 		 * Dynamic Memory
 		 */
+		// ( aaddr -- ior )
+_free:		w = P4_TOP(ctx->ds);
+		free(w.s);
+		P4_TOP(ctx->ds).n = 0;
+		NEXT;
+
 		// ( u -- aaddr ior )
-_allocate:	w = P4_TOP(ctx->ds);
+_allocate:	x.s = NULL;
+		w = P4_TOP(ctx->ds);
+		goto _resize_null;
+
+		// ( aaddr1 u -- aaddr2 ior )
+_resize:	w = P4_POP(ctx->ds);
+		x = P4_TOP(ctx->ds);
 		/* GH-5 Check for possibly negative size.  A size_t is a positive
 		 * value so -1 would be 0xFFFF...FFFF and technically allowed
 		 * but so large as to be impractical and possibly a type error,
@@ -2079,29 +2091,7 @@ _allocate:	w = P4_TOP(ctx->ds);
 		 * is reserved for trapping this possible error.  Not perfect,
 		 * but should be handle most cases.
 		 */
-		if (w.n < 0 && -1024 <= w.n) {
-			P4_TOP(ctx->ds) = w;
-			P4_PUSH(ctx->ds, (P4_Int) ENOMEM);
-			NEXT;
-		}
-		errno = 0;
-		x.s = malloc((size_t) w.u);
-		MEMSET(x.s, BYTE_ME, w.u);
-		P4_TOP(ctx->ds) = x;
-		P4_PUSH(ctx->ds, (P4_Int) errno);
-		NEXT;
-
-		// ( aaddr -- ior )
-_free:		w = P4_TOP(ctx->ds);
-		free(w.s);
-		P4_TOP(ctx->ds).n = 0;
-		NEXT;
-
-		// ( aaddr1 u -- aaddr2 ior )
-_resize:	w = P4_POP(ctx->ds);
-		x = P4_TOP(ctx->ds);
-		/* GH-5 Check for possibly negative size.  See above. */
-		if (w.n < 0 && -1024 <= w.n) {
+_resize_null:	if (w.n < 0 && -1024 <= w.n) {
 			P4_TOP(ctx->ds) = x;
 			P4_PUSH(ctx->ds, (P4_Int) ENOMEM);
 			NEXT;
