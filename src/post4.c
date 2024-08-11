@@ -1814,9 +1814,8 @@ _colon:		str = p4ParseName(&ctx->input);
 		// (C: -- colon) (R: -- ip)
 		// Save the current lengths so we can check for imbalance.
 _do_colon:	ctx->state = P4_STATE_COMPILE;
-		/* Save stack lengths for control imbalance test below. */
-		w.u = P4_LENGTH(ctx->ds);
-		P4_PUSH(ctx->ds, w);
+		/* Save sentinel for control imbalance test below. */
+		P4_PUSH(ctx->ds, (P4_Uint) P4_SENTINEL);
 		word = p4WordCreate(ctx, str.string, str.length, &&_enter);
 		/* Keep new word hidden while compiling. */
 		P4_WORD_SET_HIDDEN(word);
@@ -1824,8 +1823,7 @@ _do_colon:	ctx->state = P4_STATE_COMPILE;
 
 		// (C: colon -- ) (R: ip -- )
 _semicolon:	ctx->state = P4_STATE_INTERPRET;
-		w = P4_POP(ctx->ds);
-		if (w.u != P4_LENGTH(ctx->ds)) {
+		if (P4_POP(ctx->ds).u != P4_SENTINEL) {
 			/* Control structure imbalance.  Did we match
 			 * all the IF-THEN, BEGIN-REPEAT, etc.
 			 */

@@ -1370,7 +1370,7 @@ Optional Features:
   --disable-math          disable libm support
   --disable-see           disable support for SEE
   --disable-hooks         disable support for hooks
-  --disable-stack-checks  disable stack depth checks
+  --enable-stack-checks   enable old stack depth checks
   --enable-exception-strings
                           enable exception strings in messages
 
@@ -4726,13 +4726,8 @@ fi
 if test ${enable_stack_checks+y}
 then :
   enableval=$enable_stack_checks;
-	:
-
-else case e in #(
-  e)
 	enable_stack_checks='yes'
- ;;
-esac
+
 fi
 
 if test $enable_stack_checks = 'yes'
