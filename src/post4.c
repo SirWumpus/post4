@@ -1325,9 +1325,9 @@ p4Repl(P4_Ctx *ctx)
 	P4_Cell w, x, *ip;
 
 	static P4_Word words[] = {
-		P4_WORD("_repl",	&&_repl,	0, 0),
+		P4_WORD("_repl",	&&_repl,	0, 0x00),
 		P4_WORD("LIT",		&&_lit,		0, 0x01),		// historic
-		P4_WORD(";",		&&_exit,	P4_BIT_HIDDEN, 0), // _seext
+		P4_WORD(";",		&&_exit,	P4_BIT_HIDDEN, 0x10),	// _seext
 #ifdef HAVE_MATH_H
 //		P4_WORD("min-float",	&&_min_float,	0, 0x01),	// p4
 		P4_WORD("max-float",	&&_max_float,	0, 0x01),	// p4
@@ -1399,16 +1399,16 @@ p4Repl(P4_Ctx *ctx)
 		P4_WORD("address-unit-bits",	&&_char_bit,	0, 0x01),	// p4
 
 		/* Internal support. */
-		P4_WORD("_bp",		&&_bp,		0, 0),		// p4
-		P4_WORD("_branch",	&&_branch,	P4_BIT_COMPILE, 0),	// p4
+		P4_WORD("_bp",		&&_bp,		0, 0x00),		// p4
+		P4_WORD("_branch",	&&_branch,	P4_BIT_COMPILE, 0x00),	// p4
 		P4_WORD("_branchz",	&&_branchz,	P4_BIT_COMPILE, 0x10),	// p4
 		P4_WORD("_call",	&&_call,	P4_BIT_COMPILE, 0x0100),// p4
 		P4_WORD("_ds",		&&_ds,		0, 0x03),	// p4
 		P4_WORD("_dsp@",	&&_dsp_get,	0, 0x01),	// p4
 		P4_WORD("_dsp!",	&&_dsp_put,	0, 0x10),	// p4
 #ifdef HAVE_HOOKS
-		P4_WORD("_hook_add",	&&_hook_add,	0, 0),		// p4
-		P4_WORD("_hook_call",	&&_hook_call,	0, 0),		// p4
+		P4_WORD("_hook_add",	&&_hook_add,	0, 0x10),	// p4
+		P4_WORD("_hook_call",	&&_hook_call,	0, 0x00),	// p4
 #endif
 		P4_WORD("_longjmp",	&&_longjmp,	0, 0x10),	// p4
 		P4_WORD("_rs",		&&_rs,		0, 0x03),	// p4
@@ -1418,26 +1418,26 @@ p4Repl(P4_Ctx *ctx)
 		P4_WORD("_window",	&&_window,	0, 0x02),	// p4
 
 		/* Compiling Words */
-		P4_WORD("compile-only",	&&_compile_only,0, 0),		// p4
-		P4_WORD("compile-only?",&&_is_compile,	P4_BIT_COMPILE, 0),// p4
-		P4_WORD(":NONAME",	&&_noname,	0, 0),
-		P4_WORD(":",		&&_colon,	0, 0),
-		P4_WORD(";",		&&_semicolon,	P4_BIT_IMM|P4_BIT_COMPILE, 0),
+		P4_WORD("compile-only",	&&_compile_only,0, 0x00),	//p4
+		P4_WORD("compile-only?",&&_is_compile,	P4_BIT_COMPILE, 0x11),// p4
+		P4_WORD(":NONAME",	&&_noname,	0, 0x00),
+		P4_WORD(":",		&&_colon,	0, 0x00),
+		P4_WORD(";",		&&_semicolon,	P4_BIT_IMM|P4_BIT_COMPILE, 0x00),
 		P4_WORD(">BODY",	&&_body,	0, 0x01),
 		P4_WORD("CREATE",	&&_create,	0, 0x01),
-		P4_WORD("DOES>",	&&_does,	P4_BIT_COMPILE, 0),
+		P4_WORD("DOES>",	&&_does,	P4_BIT_COMPILE, 0x1000),
 		P4_WORD("EVALUATE",	&&_evaluate,	0, 0x20),
 		P4_WORD("EXECUTE",	&&_execute,	0, 0x10),
-		P4_WORD("EXIT",		&&_exit,	P4_BIT_COMPILE, 0),
-		P4_WORD("IMMEDIATE",	&&_immediate,	0, 0),
+		P4_WORD("EXIT",		&&_exit,	P4_BIT_COMPILE, 0x1000),
+		P4_WORD("IMMEDIATE",	&&_immediate,	0, 0x00),
 		P4_WORD("immediate?",	&&_is_immediate,0, 0x01),	// p4
-		P4_WORD("MARKER",	&&_marker,	0, 0),
+		P4_WORD("MARKER",	&&_marker,	0, 0x00),
 		P4_WORD("STATE",	&&_state,	0, 0x01),
 
 		/* Data Space - Alignment */
 		P4_WORD("CELLS",	&&_cells,	0, 0x11),
 		P4_WORD("CHARS",	&&_chars,	0, 0x11),
-		P4_WORD("ALIGN",	&&_align,	0, 0),
+		P4_WORD("ALIGN",	&&_align,	0, 0x00),
 		P4_WORD("ALLOT",	&&_allot,	0, 0x10),
 		P4_WORD("HERE", 	&&_here_addr,	0, 0x01),
 		P4_WORD(">here",	&&_here_offset,	0, 0x01),	// p4
@@ -1453,9 +1453,9 @@ p4Repl(P4_Ctx *ctx)
 		P4_WORD("DROP",		&&_drop,	0, 0x10),
 		P4_WORD("DUP",		&&_dup,		0, 0x12),
 		P4_WORD("MOVE",		&&_move,	0, 0x30),
-		P4_WORD("PICK",		&&_pick,	0, 0),
+		P4_WORD("PICK",		&&_pick,	0, 0x11),
 		P4_WORD("R>",		&&_from_rs,	0, 0x1001),	// allow interpret
-		P4_WORD("ROLL",		&&_roll,	0, 0),
+		P4_WORD("ROLL",		&&_roll,	0, 0x10),
 		P4_WORD("SWAP",		&&_swap,	0, 0x22),
 		P4_WORD("BASE",		&&_base,	0, 0x01),
 
@@ -1497,16 +1497,16 @@ p4Repl(P4_Ctx *ctx)
 
 		/* I/O */
 		P4_WORD(">IN",		&&_input_offset,0, 0x01),
-		P4_WORD("ACCEPT",	&&_accept,	0, 0),
-		P4_WORD("BLK",		&&_blk,		0, 0),
-		P4_WORD("BLOCK",	&&_block,	0, 0),
-		P4_WORD("block-open",	&&_block_open,	0, 0),		// p4
-		P4_WORD("block-close",	&&_block_close,	0, 0),		// p4
-		P4_WORD("blocks",	&&_blocks, 	0, 0),		// p4
-		P4_WORD("BUFFER",	&&_buffer,	0, 0),
+		P4_WORD("ACCEPT",	&&_accept,	0, 0x21),
+		P4_WORD("BLK",		&&_blk,		0, 0x01),
+		P4_WORD("BLOCK",	&&_block,	0, 0x11),
+		P4_WORD("block-open",	&&_block_open,	0, 0x21),	// p4
+		P4_WORD("block-close",	&&_block_close,	0, 0x00),	// p4
+		P4_WORD("blocks",	&&_blocks, 	0, 0x01),	// p4
+		P4_WORD("BUFFER",	&&_buffer,	0, 0x21),
 		P4_WORD("DUMP",		&&_dump,	0, 0x20),
 		P4_WORD("EMIT",		&&_emit,	0, 0x10),
-		P4_WORD("EMPTY-BUFFERS", &&_empty_buffers, 0, 0),
+		P4_WORD("EMPTY-BUFFERS", &&_empty_buffers, 0, 0x00),
 		P4_WORD("epoch-seconds", &&_epoch_seconds, 0, 0x01),	// p4
 		P4_WORD("FIND-NAME",	&&_find_name,	0, 0x21),
 		P4_WORD("INCLUDED",	&&_included,	0, 0x20),
@@ -1516,11 +1516,11 @@ p4Repl(P4_Ctx *ctx)
 		P4_WORD("_parse",	&&_parse,	0, 0x22),	// p4
 		P4_WORD("PARSE-NAME",	&&_parse_name,	0, 0x02),
 		P4_WORD("REFILL",	&&_refill,	0, 0x01),
-		P4_WORD("SAVE-BUFFERS",	&&_save_buffers, 0, 0),
+		P4_WORD("SAVE-BUFFERS",	&&_save_buffers, 0, 0x00),
 		P4_WORD("SOURCE",	&&_source,	0, 0x02),
-		P4_WORD("SOURCE-ID",	&&_source_id,	0, 0),
+		P4_WORD("SOURCE-ID",	&&_source_id,	0, 0x01),
 		P4_WORD("TIME&DATE",	&&_time_date,	0, 0x06),
-		P4_WORD("UPDATE",	&&_update,	0, 0),
+		P4_WORD("UPDATE",	&&_update,	0, 0x00),
 
 		P4_WORD(NULL,		NULL,		0, 0),
 	};
@@ -1701,8 +1701,7 @@ _enter:		p4StackCanPopPush(ctx, &ctx->rs, 0, 1);
 		NEXT;
 
 		// ( i*x -- i*x )(R:ip -- )
-_exit:		p4StackCanPopPush(ctx, &ctx->rs, 1, 0);
-		p4StackGuards(ctx);
+_exit:		p4StackGuards(ctx);
 		ip = P4_POP(ctx->rs).p;
 		NEXT;
 
@@ -1815,11 +1814,9 @@ _colon:		str = p4ParseName(&ctx->input);
 		// (C: -- colon) (R: -- ip)
 		// Save the current lengths so we can check for imbalance.
 _do_colon:	ctx->state = P4_STATE_COMPILE;
-#ifdef USE_STACK_CHECKS
 		/* Save stack lengths for control imbalance test below. */
 		w.u = P4_LENGTH(ctx->ds);
 		P4_PUSH(ctx->ds, w);
-#endif
 		word = p4WordCreate(ctx, str.string, str.length, &&_enter);
 		/* Keep new word hidden while compiling. */
 		P4_WORD_SET_HIDDEN(word);
@@ -1827,7 +1824,6 @@ _do_colon:	ctx->state = P4_STATE_COMPILE;
 
 		// (C: colon -- ) (R: ip -- )
 _semicolon:	ctx->state = P4_STATE_INTERPRET;
-#ifdef USE_STACK_CHECKS
 		w = P4_POP(ctx->ds);
 		if (w.u != P4_LENGTH(ctx->ds)) {
 			/* Control structure imbalance.  Did we match
@@ -1835,7 +1831,6 @@ _semicolon:	ctx->state = P4_STATE_INTERPRET;
 			 */
 			THROW(P4_THROW_BAD_CONTROL);
 		}
-#endif
 		p4WordAppend(ctx, (P4_Cell) &w_semi);
 		if (ctx->words->name.length == 0) {
 			/* :NONAME leaves xt on stack. */
