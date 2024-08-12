@@ -387,9 +387,6 @@ struct p4_ctx {
 	P4_Stack	fs;		/* Float stack */
 	P4_Int		precision;
 #endif
-#ifdef P4_TRACE
-	P4_Int		trace;		/* Word trace for debugging. */
-#endif
 	P4_Int		state;
 	P4_Word *	words;		/* Head of the dictionary word list. */
 	P4_Uint		radix;		/* Input/Output radix */

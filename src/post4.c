@@ -1241,20 +1241,6 @@ p4Bp(P4_Ctx *ctx)
 }
 #endif
 
-
-#ifdef P4_TRACE
-static void
-p4Trace(P4_Ctx *ctx, P4_Xt xt)
-{
-	if (ctx->trace) {
-		P4_Int depth = ctx->ds.top - ctx->ds.base + 1;
-		(void) printf("  %.*s\tdepth="P4_INT_FMT"\r\n", xt, (int)xt->name.length, xt->name.string, depth);
-	}
-}
-#else
-# define p4Trace(c, xt)
-#endif
-
 static void
 p4StackGuard(P4_Ctx *ctx, P4_Stack *stack, int over, int under)
 {
@@ -1357,9 +1343,6 @@ p4Repl(P4_Ctx *ctx)
 		P4_WORD("READ-LINE",		&&_fa_rline,	0, 0x33),
 		P4_WORD("REPOSITION-FILE",	&&_fa_seek,	0, 0x21),
 		P4_WORD("WRITE-FILE",		&&_fa_write,	0, 0x31),
-#endif
-#ifdef P4_TRACE
-		P4_WORD("TRACE",		&&_trace,	0, 0x01),	// p4
 #endif
 		/* Constants. */
 		P4_WORD("/pad",			&&_pad_size,	0, 0x01),	// p4
@@ -1644,12 +1627,10 @@ _bp:		p4Bp(ctx);
 
 		// Indirect threading.
 _next:		w = *ip++;
-		p4Trace(ctx, w.xt);
 		goto *w.xt->code;
 
 		// ( xt -- )
 _execute:	w = P4_POP(ctx->ds);
-		p4Trace(ctx, w.xt);
 		goto *w.xt->code;
 
 		// ( i*x -- j*y )(R: -- ip)
@@ -1943,12 +1924,6 @@ _env:		P4_DROP(ctx->ds, 1);		// Ignore k, S" NUL terminates.
 		// ( -- addr )
 _state:		P4_PUSH(ctx->ds, (P4_Cell *) &ctx->state);
 		NEXT;
-
-#ifdef P4_TRACE
-		// ( -- addr )
-_trace:		P4_PUSH(ctx->ds, (P4_Cell *) &ctx->trace);
-		NEXT;
-#endif
 
 		/*
 		 * Numeric formatting
