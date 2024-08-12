@@ -1281,6 +1281,7 @@ p4Repl(P4_Ctx *ctx)
 		P4_WORD("_repl",	&&_repl,	0, 0x00),
 		P4_WORD("LIT",		&&_lit,		0, 0x01),		// historic
 		P4_WORD(";",		&&_exit,	P4_BIT_HIDDEN, 0x10),	// _seext
+		P4_WORD("QUIT",		&&_quit,	0, 0x00),
 #ifdef HAVE_MATH_H
 //		P4_WORD("min-float",	&&_min_float,	0, 0x01),	// p4
 		P4_WORD("max-float",	&&_max_float,	0, 0x01),	// p4
@@ -1538,12 +1539,11 @@ _thrown:
 			(void) printf(crlf);
 		}
 		(void) fflush(stdout);
-		if (rc != P4_THROW_QUIT) {
-			P4_RESET(ctx->ds);
+		P4_RESET(ctx->ds);
 #ifdef HAVE_MATH_H
-			P4_RESET(ctx->fs);
+		P4_RESET(ctx->fs);
 #endif
-		}
+_quit:
 		P4_RESET(ctx->rs);
 		/* Normally at this point one would reset input
 		 * to the console, but that has problems.  Wait
@@ -1563,9 +1563,6 @@ _thrown:
 		/* Discard the current input buffer. */
 		ctx->input.offset = ctx->input.length = 0;
 		ctx->state = P4_STATE_INTERPRET;
-
-		/* Ensure we cleanup before return. */
-		goto setjmp_cleanup;
 	}
 _repl:
 	p4StackGuards(ctx);

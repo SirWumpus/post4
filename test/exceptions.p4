@@ -18,8 +18,6 @@ INCLUDE ../test/assert.p4
 \ ABORT caught.
 \ $DEAD ' ABORT tw_catch_cold 1001 = assert $DEAD = assert
 
-
-
 \ No ABORT" error, pass through.
 t{ $DEAD 0 ' tw_abort" tw_catch_cold -> $DEAD $BEEF }t
 
@@ -51,6 +49,16 @@ t{ tw_catch_stack -> 5 }t
 : tw_throw_unwind 1- DUP 0> IF RECURSE ELSE $999 THROW $222 THEN ;
 : tw_catch_unwind $9876 10 ['] tw_throw_unwind CATCH $111 ;
 t{ tw_catch_unwind -> $9876 0 $999 $111 }t
+
+\ GH-8
+T{ 123 :NONAME 456 -1 THROW ; CATCH -> 123 -1 }T
+T{ 123 :NONAME 456 ABORT ; CATCH -> 123 -1 }T
+
+T{ 123 :NONAME 456 -2 THROW ; CATCH -> 123 -2 }T
+T{ 123 :NONAME 456 ABORT" TEST ERROR" ; CATCH -> 123 -2 }T
+
+T{ 123 :NONAME 456 1138 THROW ; CATCH -> 123 1138 }T
+T{ 123 :NONAME 456 HERE THROW ; CATCH -> 123 HERE }T
 
 test_group_end
 

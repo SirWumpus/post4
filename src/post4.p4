@@ -10,12 +10,6 @@ MARKER rm_core_words
 \
 : BYE 0 bye-code ;
 
-\ ... ABORT ...
-\
-\  ( i*x -- ) ( R: j*x -- )
-\
-: ABORT -1 _longjmp ;
-
 \ ... QUIT ...
 \
 \  ( -- ) ( R: i*x -- )
@@ -32,7 +26,9 @@ MARKER rm_core_words
 \	123
 \	ok
 \
-: QUIT -56 _longjmp ;
+\ *** DO NOT DO IT THIS WAY! ***
+\ : QUIT -56 _longjmp ;
+\ : QUIT -56 THROW ;
 
 \ ... .S ...
 \
@@ -623,7 +619,7 @@ MAX-U MAX-N 2CONSTANT MAX-D
 \
 \ (S: <spaces>name -- )
 \
-: DEFER CREATE ['] ABORT , DOES> @ EXECUTE ;
+: DEFER CREATE ['] QUIT , DOES> @ EXECUTE ;
 
 \ ... DEFER! ...
 \
@@ -681,6 +677,9 @@ DEFER _fsp!
 	  DROP R>		\ S: n    R: ip
 	THEN
 ;
+
+\ ( i*x -- ) ( R: j*x -- ) (F: k*x -- )
+: ABORT -1 THROW ;
 
 \ ( xt -- )
 : execute-compiling
