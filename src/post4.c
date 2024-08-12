@@ -1740,6 +1740,7 @@ _cells:		P4_TOP(ctx->ds).n *= P4_CELL;
 		/*
 		 * Defining words.
 		 */
+		// ( -- xt colon )
 _noname:	str.string = "";
 		str.length = 0;
 		goto _do_colon;
@@ -1750,9 +1751,13 @@ _colon:		str = p4ParseName(&ctx->input);
 		// (C: -- colon) (R: -- ip)
 		// Save the current lengths so we can check for imbalance.
 _do_colon:	ctx->state = P4_STATE_COMPILE;
+		word = p4WordCreate(ctx, str.string, str.length, &&_enter);
+		if (word->name.length == 0) {
+			/* :NONAME leaves xt on stack. */
+			P4_PUSH(ctx->ds, ctx->words);
+		}
 		/* Save sentinel for control imbalance test below. */
 		P4_PUSH(ctx->ds, (P4_Uint) P4_SENTINEL);
-		word = p4WordCreate(ctx, str.string, str.length, &&_enter);
 		/* Keep new word hidden while compiling. */
 		P4_WORD_SET_HIDDEN(word);
 		NEXT;
@@ -1766,12 +1771,7 @@ _semicolon:	ctx->state = P4_STATE_INTERPRET;
 			THROW(P4_THROW_BAD_CONTROL);
 		}
 		p4WordAppend(ctx, (P4_Cell) &w_semi);
-		if (ctx->words->name.length == 0) {
-			/* :NONAME leaves xt on stack. */
-			P4_PUSH(ctx->ds, ctx->words);
-		} else {
-			P4_WORD_CLEAR_HIDDEN(ctx->words);
-		}
+		P4_WORD_CLEAR_HIDDEN(ctx->words);
 		NEXT;
 
 		// ( -- )

@@ -399,6 +399,11 @@ t{ : tw_compose ( xt1 xt2 -- xt3 )
 t{ : tw_f1 5 + ; -> }t
 t{ : tw_f2 20 - ; -> }t
 t{ 10 ' tw_f1 ' tw_f2 tw_compose execute -> -5 }t
+
+\ GH-15
+t{ depth -> 0 }t
+t{ :noname  ( +n -- i*n ) dup if dup 1- [ depth 1- pick compile, ] then ; 3 swap execute -> 3 2 1 0 }t
+
 test_group_end
 
 .( COMPILE, ) test_group

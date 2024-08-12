@@ -2182,6 +2182,7 @@ END-STRUCTURE
 	_ctx ctx.words @	\ C: q-sys
 	DUP w.prev @		\ C: q-sys word
 	_ctx ctx.words !	\ C: q-sys
+	STATE @
 	\ Start nested definition.
 	:NONAME			\ C: q-sys c-sys
 ; IMMEDIATE compile-only
@@ -2192,8 +2193,9 @@ END-STRUCTURE
 \
 : ;]				\ C: q-sys c-sys
 	\ End current nested definition.
-	POSTPONE ; ]		\ C: q-sys xt
+	POSTPONE ;		\ C: q-sys xt
 	>R			\ C: q-sys  R: xt
+	STATE !
 	\ Push previous enclosing defintion being compiled.
 	DUP w.prev		\ C: q-sys prev  R: xt
 	_ctx ctx.words @	\ C: q-sys prev word  R: xt
