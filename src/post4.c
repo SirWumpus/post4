@@ -1248,7 +1248,7 @@ p4Trace(P4_Ctx *ctx, P4_Xt xt)
 {
 	if (ctx->trace) {
 		P4_Int depth = ctx->ds.top - ctx->ds.base + 1;
-		(void) printf("%#lx %.*s\tdepth=%ld\r\n", xt, (int)xt->name.length, xt->name.string, depth);
+		(void) printf("  %.*s\tdepth="P4_INT_FMT"\r\n", xt, (int)xt->name.length, xt->name.string, depth);
 	}
 }
 #else
@@ -1281,39 +1281,6 @@ p4StackGuards(P4_Ctx *ctx)
 	p4StackGuard(ctx, &ctx->fs, P4_THROW_FS_OVER, P4_THROW_FS_UNDER);
 #endif
 }
-
-#ifdef USE_STACK_CHECKS
-static void
-p4StackCanPopPush(P4_Ctx *ctx, P4_Stack *stack, unsigned pop, unsigned push)
-{
-	int over = P4_THROW_DS_OVER;
-	int under = P4_THROW_DS_UNDER;
-	unsigned length = (stack->top + 1 - stack->base);
-
-	if (stack == &ctx->rs) {
-		over = P4_THROW_RS_OVER;
-		under = P4_THROW_RS_UNDER;
-# if defined(HAVE_MATH_H)
-	} else if (stack == &ctx->fs) {
-		over = P4_THROW_FS_OVER;
-		under = P4_THROW_FS_UNDER;
-# endif
-	}
-
-	/* Stack has enough data to pop? */
-	if (length < pop) {
-		p4Bp(ctx);
-		LONGJMP(ctx->on_throw, under);
-	}
-	/* Stack has enough space to push data? */
-	if (stack->size < length + push - pop) {
-		p4Bp(ctx);
-		LONGJMP(ctx->on_throw, over);
-	}
-}
-#else
-# define p4StackCanPopPush(c, s, pop, push)
-#endif
 
 int
 p4Repl(P4_Ctx *ctx)
@@ -1641,12 +1608,10 @@ _repl:
 					p4WordAppend(ctx, x);
 #ifdef HAVE_MATH_H
 				} else if (is_float) {
-					p4StackCanPopPush(ctx, &ctx->P4_FLOAT_STACK, 0, 1);
 					P4_PUSH(ctx->P4_FLOAT_STACK, x);
 					p4StackGuards(ctx);
 #endif
 				} else {
-					p4StackCanPopPush(ctx, &ctx->ds, 0, 1);
 					P4_PUSH(ctx->ds, x);
 					p4StackGuards(ctx);
 				}
@@ -1680,12 +1645,6 @@ _bp:		p4Bp(ctx);
 		// Indirect threading.
 _next:		w = *ip++;
 		p4Trace(ctx, w.xt);
-		/* Check data stack bounds. */
-		p4StackCanPopPush(ctx, &ctx->ds, P4_DS_CAN_POP(w.w), P4_DS_CAN_PUSH(w.w));
-		p4StackCanPopPush(ctx, &ctx->rs, P4_RS_CAN_POP(w.w), P4_RS_CAN_PUSH(w.w));
-#ifdef HAVE_MATH_H
-		p4StackCanPopPush(ctx, &ctx->P4_FLOAT_STACK, P4_FS_CAN_POP(w.w), P4_FS_CAN_PUSH(w.w));
-#endif
 		goto *w.xt->code;
 
 		// ( xt -- )
@@ -1694,8 +1653,7 @@ _execute:	w = P4_POP(ctx->ds);
 		goto *w.xt->code;
 
 		// ( i*x -- j*y )(R: -- ip)
-_enter:		p4StackCanPopPush(ctx, &ctx->rs, 0, 1);
-		P4_PUSH(ctx->rs, ip);
+_enter:		P4_PUSH(ctx->rs, ip);
 		// w contains xt loaded by _next or _execute.
 		ip = w.xt->data;
 		NEXT;
@@ -1936,7 +1894,6 @@ _does:		word = ctx->words;
 		// ( -- aaddr)
 _do_does:	P4_PUSH(ctx->ds, w.xt->data + 1);
 		// Remember who called us.
-		p4StackCanPopPush(ctx, &ctx->rs, 0, 1);
 		P4_PUSH(ctx->rs, ip);
 		// Continue execution just after DOES> of the defining word.
 		ip = w.xt->data[0].p;
@@ -2113,8 +2070,6 @@ _dup:		w = P4_TOP(ctx->ds);
 		// : PICK >R _ds DROP 1 - CELLS + R> CELLS - @ ;
 		// 0 PICK == DUP, 1 PICK == OVER
 _pick:		w = P4_POP(ctx->ds);
-		/* Check stack depth. */
-		p4StackCanPopPush(ctx, &ctx->ds, w.u+1, 0);
 		x = P4_PICK(ctx->ds, w.u);
 		P4_PUSH(ctx->ds, x);
 		NEXT;
@@ -2130,8 +2085,6 @@ _swap:		w = P4_POP(ctx->ds);
 		// ( xu xu-1 ... x0 u –– xu-1 ... x0 xu )
 		// 0 ROLL == noop, 1 ROLL == SWAP, 2 ROLL == ROT
 _roll:		w = P4_POP(ctx->ds);
-		/* Check stack depth. */
-		p4StackCanPopPush(ctx, &ctx->ds, w.n+1, 0);
 		x = P4_PICK(ctx->ds, w.n);
 		for ( ; 0 < w.u; w.u--) {
 			P4_PICK(ctx->ds, w.n) = P4_PICK(ctx->ds, w.n-1);
