@@ -3034,9 +3034,7 @@ main(int argc, char **argv)
 	}
 
 	if (argc <= optind || (argv[optind][0] == '-' && argv[optind][1] == '\0')) {
-		while ((rc = p4Repl(ctx)) != P4_THROW_OK) {
-			; // Remain in the REPL until EOF or BYE.
-		}
+		rc = p4Repl(ctx);
 	} else if (optind < argc && (rc = p4EvalFile(ctx, argv[optind]))) {
 		err(EXIT_FAILURE, "%s", argv[optind]);
 	}
