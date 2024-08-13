@@ -1505,9 +1505,11 @@ p4Repl(P4_Ctx *ctx)
 _thrown:
 		switch (rc) {
 		case P4_THROW_ABORT:
-		case P4_THROW_QUIT:
 			/* Historically no message, simply return to REPL. */
 			break;
+		case P4_THROW_TERMINATE:
+			(void) printf(crlf);
+			goto setjmp_cleanup;
 		default:
 #ifdef USE_EXCEPTION_STRINGS
 			(void) printf("%d thrown: %s", rc, P4_THROW_future <= rc && rc < 0 ? p4_exceptions[-rc] : "?");
@@ -2952,13 +2954,24 @@ static const char p4_build_info[] =
 	"POST4_PATH=\"" P4_CORE_PATH "\"\r\n"
 ;
 
+static int signalmap[][2] = {
+	{ SIGBUS, P4_THROW_SIGBUS },
+	{ SIGINT, P4_THROW_SIGINT },
+	{ SIGFPE, P4_THROW_SIGFPE },
+	{ SIGQUIT, P4_THROW_QUIT },
+	{ SIGSEGV, P4_THROW_SIGSEGV },
+	{ SIGTERM, P4_THROW_TERMINATE },
+	{ 0, 0 }
+};
+
 static void
 sig_int(int signum)
 {
-	switch (signum) {
-	case SIGINT: signum = P4_THROW_SIGINT; break;
-	case SIGFPE: signum = P4_THROW_SIGFPE; break;
-	case SIGSEGV: signum = P4_THROW_SIGSEGV; break;
+	for (int (*map)[2] = signalmap; map[0] != 0; map++) {
+		if (signum == (*map)[0]) {
+			signum = (*map)[1];
+			break;
+		}
 	}
 	LONGJMP(signal_ctx->on_throw, signum);
 }
@@ -2971,9 +2984,9 @@ main(int argc, char **argv)
 
 	p4Init();
 
-	signal(SIGINT, sig_int);
-	signal(SIGFPE, sig_int);
-	signal(SIGSEGV, sig_int);
+	for (int (*map)[2] = signalmap; (*map)[0] != 0; map++) {
+		signal((*map)[0], sig_int);
+	}
 
 	while ((ch = getopt(argc, argv, "b:c:d:f:i:m:r:V")) != -1) {
 		switch (ch) {

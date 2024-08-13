@@ -66,10 +66,4 @@ test_group_end
 \ https://github.com/ForthHub/discussion/discussions/116#discussioncomment-3541822
 t{ :NONAME 123 [: 456 -56 THROW ;] CATCH ; EXECUTE -> 123 -56 }t
 
-\ While QUIT leaves the data stack untouched, it does resets the return
-\ stack, disrupting the test suite.  Also isolate QUIT with EVALUATE,
-\ which saves input source state.
-\ : tw_quit_noreturn [: 123 QUIT ;] CATCH 456 THROW ;
-\ t{ _rsp@ S" tw_quit_noreturn" EVALUATE SWAP _rsp! -> 123 }t
-
 test_group_end

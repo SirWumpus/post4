@@ -504,6 +504,7 @@ typedef struct {
 
 /* -4095..-256 reserved for the system (that's us). */
 
+#define P4_THROW_TERMINATE	(-256)
 #define P4_THROW_GENERIC	(-4095)
 
 /***********************************************************************
