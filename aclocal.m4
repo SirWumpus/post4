@@ -537,30 +537,6 @@ dnl	esac
 ])
 
 dnl
-dnl SNERT_CHECK_CONFIGURE
-dnl
-AC_DEFUN(SNERT_CHECK_CONFIGURE,[
-	# When we have no makefile, do it ourselves...
-dnl	snert_configure_command="$[]0 $[]@"
-
-	AC_CHECK_TOOL([AUTOCONF], [autoconf-2.61])
-	if test ${AUTOCONF:-no} = 'no' ; then
-		AC_CHECK_TOOL([AUTOCONF], [autoconf-2.59])
-		if test ${AUTOCONF:-no} = 'no' ; then
-			AC_CHECK_TOOL([AUTOCONF], [autoconf], [true])
-		fi
-	fi
-
-	if test ${AUTOCONF:-no} != 'no' -a \( aclocal.m4 -nt configure -o configure.in -nt configure -o configure.ac -nt configure \); then
-		echo 'Rebuilding the configure script first...'
-		${AUTOCONF} -f
-		echo 'Restarting configure script...'
-		echo $snert_configure_command
- 		exec $snert_configure_command
-	fi
-])
-
-dnl
 dnl SNERT_LIBMILTER
 dnl
 dnl Depends on SNERT_PTHREAD
@@ -1508,7 +1484,6 @@ AC_DEFUN(SNERT_INIT,[
 	AC_DEFINE_UNQUOTED(${snert_macro_prefix}_BUILT, ["$snert_build_date"])
 
 	SNERT_PLATFORM
-	SNERT_CHECK_CONFIGURE
 
 	dnl Define some default vaules for milters subsitutions.
 	if test X"$1" = X'MILTER' ; then

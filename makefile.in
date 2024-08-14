@@ -114,9 +114,6 @@ install: build
 	install -p -o root -g 0 ./README.md ${datarootdir}
 	install -p -o root -g 0 ./doc/* ${datarootdir}/doc
 
-config.status : configure
-	./configure
-
 configure : configure.ac aclocal.m4
 	${AUTOCONF} -f
 
