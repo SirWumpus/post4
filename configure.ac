@@ -58,7 +58,9 @@ AC_ARG_ENABLE(hooks,[AS_HELP_STRING([--disable-hooks],[disable support for hooks
 ])
 AS_IF([test ${enable_hooks:-no} = 'yes'],[AC_DEFINE(HAVE_HOOKS)])
 
-AC_ARG_ENABLE(exception-strings,[AS_HELP_STRING([--enable-exception-strings],[enable exception strings in messages])],[
+AC_ARG_ENABLE(exception-strings,[AS_HELP_STRING([--disable-exception-strings],[disable exception strings in error messages])],[
+	:
+],[
 	enable_exception_strings='yes'
 ])
 AS_IF([test ${enable_exception_strings:-no} = 'yes'],[AC_DEFINE(USE_EXCEPTION_STRINGS)])
