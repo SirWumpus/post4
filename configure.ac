@@ -49,24 +49,19 @@ AC_ARG_ENABLE(see,[AS_HELP_STRING([--disable-see],[disable support for SEE])],[
 ],[
 	enable_see='yes'
 ])
-AS_IF([test $enable_see = 'yes'],[AC_DEFINE(HAVE_SEE)])
+AS_IF([test ${enable_see:-no} = 'yes'],[AC_DEFINE(HAVE_SEE)])
 
 AC_ARG_ENABLE(hooks,[AS_HELP_STRING([--disable-hooks],[disable support for hooks])],[
 	:
 ],[
 	enable_hooks='yes'
 ])
-AS_IF([test $enable_hooks = 'yes'],[AC_DEFINE(HAVE_HOOKS)])
-
-AC_ARG_ENABLE(stack-checks,[AS_HELP_STRING([--enable-stack-checks],[enable old stack depth checks])],[
-	enable_stack_checks='yes'
-])
-AS_IF([test $enable_stack_checks = 'yes'],[AC_DEFINE(USE_STACK_CHECKS)])
+AS_IF([test ${enable_hooks:-no} = 'yes'],[AC_DEFINE(HAVE_HOOKS)])
 
 AC_ARG_ENABLE(exception-strings,[AS_HELP_STRING([--enable-exception-strings],[enable exception strings in messages])],[
 	enable_exception_strings='yes'
 ])
-AS_IF([test $enable_exception_strings = 'yes'],[AC_DEFINE(USE_EXCEPTION_STRINGS)])
+AS_IF([test ${enable_exception_strings:-no} = 'yes'],[AC_DEFINE(USE_EXCEPTION_STRINGS)])
 
 #######################################################################
 #	Configuration options: packages
