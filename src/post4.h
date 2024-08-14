@@ -83,6 +83,10 @@ extern "C" {
 #define P4_PIC_SIZE			(2 * sizeof (P4_Cell) * CHAR_BIT + 2)
 #endif
 
+#ifndef P4_FILE_ACCESS
+#define P4_FILE_ACCESS			1
+#endif
+
 /***********************************************************************
  *** No configuration below this point.
  ***********************************************************************/

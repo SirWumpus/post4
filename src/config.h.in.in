@@ -30,12 +30,6 @@ extern "C" {
 
 #undef NDEBUG
 
-#undef P4_BLOCK_SIZE
-#undef P4_STACK_SIZE
-#undef P4_STRING_SIZE
-#undef P4_SAFE_PATH
-#define P4_FILE_ACCESS
-
 #undef WITH_JAVA
 #undef HAVE_SEE
 #undef HAVE_HOOKS
