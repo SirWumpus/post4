@@ -1519,6 +1519,7 @@ _thrown:
 			/* Historically no message, simply return to REPL. */
 			break;
 		case P4_THROW_TERMINATE:
+			rc = 128 + SIGTERM;
 			(void) printf(crlf);
 			goto setjmp_cleanup;
 		default:
