@@ -1119,6 +1119,17 @@ p4FindName(P4_Ctx *ctx, P4_Char *caddr, P4_Size length)
 	return NULL;
 }
 
+int
+p4IsWord(P4_Ctx *ctx, void *xt)
+{
+	for (P4_Word *word = ctx->words; word != NULL; word = word->prev) {
+		if (xt == (void *) word) {
+			return 1;
+		}
+	}
+	return 0;
+}
+
 void
 p4Free(P4_Ctx *ctx)
 {
@@ -2548,8 +2559,7 @@ _seext:		word = P4_POP(ctx->ds).xt;
 				x = *w.p;
 				if (x.w->code == &&_lit) {
 					x = *++w.p;
-					if (x.w != NULL && words <= x.w
-					&& p4IsPrintable(x.w->name.string, x.w->name.length)) {
+					if (x.w != NULL && words <= x.w && p4IsWord(ctx, x.v)) {
 						(void) printf("[ ' %.*s ] LITERAL ", (int) x.w->name.length, x.w->name.string);
 					} else {
 						(void) printf("[ "P4_INT_FMT" ] LITERAL ", x.n);
