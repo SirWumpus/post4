@@ -1282,7 +1282,7 @@ p4StackGuards(P4_Ctx *ctx)
 int
 p4Repl(P4_Ctx *ctx)
 {
-	int rc;
+	int rc = 0;
 	P4_Char *cstr;
 	P4_Word *word;
 	P4_String str;
@@ -1519,6 +1519,7 @@ _thrown:
 			/* Historically no message, simply return to REPL. */
 			break;
 		case P4_THROW_TERMINATE:
+			/* Return shell equivalent exit status. */
 			rc = 128 + SIGTERM;
 			(void) printf(crlf);
 			goto setjmp_cleanup;
@@ -1547,6 +1548,8 @@ _thrown:
 				ctx->here = (P4_Char *) word->data;
 				p4WordFree(word);
 			}
+			/* Set exit status within 1..255 */
+			rc = EXIT_FAILURE;
 			/*@fallthrough@*/
 		case P4_THROW_ABORT_MSG:
 			/* Ensure ABORT" and other messages print newline.*/

@@ -60,6 +60,10 @@ T{ 123 :NONAME 456 ABORT" TEST ERROR" ; CATCH -> 123 -2 }T
 T{ 123 :NONAME 456 1138 THROW ; CATCH -> 123 1138 }T
 T{ 123 :NONAME 456 HERE THROW ; CATCH -> 123 HERE }T
 
+\ GH-18
+\ https://github.com/SirWumpus/post4/issues/18#issuecomment-2293207015
+T{ -1 ' THROW CATCH NIP -> -1 }T
+T{  1 2 :NONAME ( x x -- ) 2DROP ABORT ; CATCH NIP NIP -> -1 }T
 test_group_end
 
 .( -56 THROW ) test_group
