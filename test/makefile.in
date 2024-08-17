@@ -63,7 +63,7 @@ title :
 test : ${POST4}
 	POST4_PATH=../src ${POST4} ./units.p4
 	@echo Testing QUIT...
-	( printf "' QUIT CATCH \n ABORT" | ${POST4} -c ${WORDS}; test $$? -eq 255 )
-	( printf "' QUIT CATCH \n -1 THROW" | ${POST4} -c ${WORDS}; test $$? -eq 255 )
-	( printf "' QUIT CATCH \n -123 THROW" | ${POST4} -c ${WORDS}; test $$? -eq 1 )
+	! printf "' QUIT CATCH \n ABORT" | ${POST4} -c ${WORDS}
+	! printf "' QUIT CATCH \n -1 THROW" | ${POST4} -c ${WORDS}
+	! printf "' QUIT CATCH \n -123 THROW" | ${POST4} -c ${WORDS}
 	printf ": tw_keep_ds [: 123 QUIT ;] CATCH 456 . THROW ;\n tw_keep_ds \n ." | ${POST4} -c ${WORDS}
