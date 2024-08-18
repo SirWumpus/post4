@@ -2988,6 +2988,12 @@ sig_int(int signum)
 	abort();
 }
 
+void
+cleanup(void)
+{
+	p4Free(signal_ctx);
+}
+
 int
 main(int argc, char **argv)
 {
@@ -3049,6 +3055,7 @@ main(int argc, char **argv)
 	}
 	(void) p4HookInit(ctx);
 	signal_ctx = ctx;
+	(void) atexit(cleanup);
 
 	optind = 1;
 	while ((ch = getopt(argc, argv, "b:c:d:f:i:m:r:V")) != -1) {
@@ -3063,8 +3070,6 @@ main(int argc, char **argv)
 	} else if (optind < argc && (rc = p4EvalFile(ctx, argv[optind]))) {
 		err(EXIT_FAILURE, "%s", argv[optind]);
 	}
-
-	p4Free(ctx);
 
 	return rc;
 }
