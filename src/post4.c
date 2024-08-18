@@ -1366,6 +1366,8 @@ p4Repl(P4_Ctx *ctx, int rc)
 		P4_WORD("_hook_add",	&&_hook_add,	0, 0x10),	// p4
 		P4_WORD("_hook_call",	&&_hook_call,	0, 0x00),	// p4
 #endif
+		P4_WORD("_input_push",	&&_input_push,	0, 0x0600),	// p4
+		P4_WORD("_input_pop",	&&_input_pop,	0, 0x6000),	// p4
 		P4_WORD("_longjmp",	&&_longjmp,	0, 0x10),	// p4
 		P4_WORD("_rs",		&&_rs,		0, 0x03),	// p4
 		P4_WORD("_rsp@",	&&_rsp_get,	0, 0x01),	// p4
@@ -1809,6 +1811,18 @@ _rm_marker:	x.w = w.xt;
 		/* Rewind HERE, does not free ALLOCATE data. */
 		ctx->here = (P4_Char *) word->data;
 		p4WordFree(word);
+		NEXT;
+
+_input_push:	p4StackGuards(ctx);
+		w.p = ctx->rs.top+1;
+		P4_DROP(ctx->rs, -sizeof (P4_Input) / sizeof (P4_Cell));
+		(void) memcpy(w.v, &ctx->input, sizeof (ctx->input));
+		NEXT;
+
+_input_pop:	P4_DROP(ctx->rs, sizeof (P4_Input) / sizeof (P4_Cell));
+		w.p = ctx->rs.top+1;
+		(void) memcpy(&ctx->input, w.v, sizeof (ctx->input));
+		p4StackGuards(ctx);
 		NEXT;
 
 		// ( i*x caddr u -- j*x )
@@ -2900,22 +2914,13 @@ p4EvalFile(P4_Ctx *ctx, const char *file)
 int
 p4EvalString(P4_Ctx *ctx, const P4_Char *str, size_t len)
 {
-	int rc;
-
 	/* Do not save STATE, see A.6.1.2250 STATE. */
-	P4_INPUT_PUSH(&ctx->input);
-
 	ctx->input.fp = (FILE *) -1;
 	ctx->input.buffer = (P4_Char *) str;
 	ctx->input.length = len;
 	ctx->input.offset = 0;
 	ctx->input.blk = 0;
-
-	rc = p4Repl(ctx, P4_THROW_OK);
-
-	P4_INPUT_POP(&ctx->input);
-
-	return rc;
+	return p4Repl(ctx, P4_THROW_OK);
 }
 
 #ifdef TEST

@@ -1900,18 +1900,16 @@ VARIABLE SCR
 \
 \ (S: i*x u -- j*x )
 \
-: LOAD BLK @ >R DUP BLK ! BLOCK 1024 ['] EVALUATE CATCH R> BLK ! THROW ;
+: LOAD _input_push DUP BLK ! BLOCK 1024 ['] EVALUATE CATCH _input_pop THROW ;
 
 \ ... EVALUATE ...
 \
 \ ( i*x caddr u -- j*x )
 \
-\ Redefine in order to set BLK to zero _after_ implementing LOAD.
-\
 \ @see
 \	https://forth-standard.org/standard/block/EVALUATE
 \
-: EVALUATE BLK @ >R 0 BLK ! ['] EVALUATE CATCH R> BLK ! THROW ;
+: EVALUATE _input_push ['] EVALUATE CATCH _input_pop THROW ;
 
 \ ... THRU ...
 \
