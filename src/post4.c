@@ -11,7 +11,6 @@
  ***********************************************************************/
 
 static P4_Word *p4_builtin_words;
-static P4_Ctx * volatile signal_ctx;
 
 static int is_tty;
 #ifdef HAVE_TCGETATTR
@@ -1218,11 +1217,6 @@ p4Create(P4_Options *opts)
 
 	ctx->block_fd = p4BlockOpen(opts->block_file);
 
-	if (p4_builtin_words == NULL) {
-		/* Link up the base dictionary. */
-		(void) p4EvalString(ctx, "", 0);
-	}
-
 	(void) p4LoadFile(ctx, opts->core_file);
 
 	return ctx;
@@ -1280,18 +1274,18 @@ p4StackGuards(P4_Ctx *ctx)
 }
 
 int
-p4Repl(P4_Ctx *ctx)
+p4Repl(P4_Ctx *ctx, int rc)
 {
-	int rc = 0;
 	P4_Char *cstr;
 	P4_Word *word;
 	P4_String str;
 	P4_Cell w, x, *ip;
 
 	static P4_Word words[] = {
-		P4_WORD("_repl",	&&_repl,	0, 0x00),
+		P4_WORD("_repl",	&&_repl,	P4_BIT_HIDDEN, 0x00),
 		P4_WORD("LIT",		&&_lit,		0, 0x01),		// historic
 		P4_WORD(";",		&&_exit,	P4_BIT_HIDDEN, 0x10),	// _seext
+		P4_WORD("ABORT",	&&_abort,	0, 0x00),
 		P4_WORD("QUIT",		&&_quit,	0, 0x00),
 #ifdef HAVE_MATH_H
 //		P4_WORD("min-float",	&&_min_float,	0, 0x01),	// p4
@@ -1510,58 +1504,52 @@ p4Repl(P4_Ctx *ctx)
 #define NEXT		goto _next
 #define THROW(x)	{ rc = (x); goto _thrown; }
 
-	signal_ctx = ctx;
-	SETJMP_PUSH(ctx->on_throw);
-	if ((rc = SETJMP(ctx->on_throw)) != 0) {
 _thrown:
-		switch (rc) {
-		case P4_THROW_ABORT:
-			/* Historically no message, simply return to REPL. */
-			break;
-		case P4_THROW_TERMINATE:
-			/* Return shell equivalent exit status. */
-			rc = 128 + SIGTERM;
-			(void) printf(crlf);
-			goto setjmp_cleanup;
-		default:
+	switch (rc) {
+	case P4_THROW_TERMINATE:
+		/* Return shell equivalent exit status. */
+		(void) printf(crlf);
+		return 128+SIGTERM;
+	default:
 #ifdef USE_EXCEPTION_STRINGS
-			(void) printf("%d thrown: %s", rc, P4_THROW_future <= rc && rc < 0 ? p4_exceptions[-rc] : "?");
+		(void) printf("%d thrown: %s", rc, P4_THROW_future <= rc && rc < 0 ? p4_exceptions[-rc] : "?");
 #else
-			(void) printf("%d thrown", rc);
+		(void) printf("%d thrown", rc);
 #endif
-			/* Cannot not rely on ctx->state for compilation state, since
-			 * its possible to temporarily change states in the middle of
-			 * compiling a word, eg `: word [ 123 ;`  Use the fact that
-			 * while compiling the word is hidden from use.
+		/* Cannot not rely on ctx->state for compilation state, since
+		 * its possible to temporarily change states in the middle of
+		 * compiling a word, eg `: word [ 123 ;`  Use the fact that
+		 * while compiling the word is hidden from use.
+		 */
+		if (P4_WORD_IS_HIDDEN(ctx->words)) {
+			/* A thrown error while compiling a word leaves the
+			 * definition in an incomplete state; discard it.
 			 */
-			if (P4_WORD_IS_HIDDEN(ctx->words)) {
-				/* A thrown error while compiling a word leaves the
-				 * definition in an incomplete state; discard it.
-				 */
-				P4_Word *word = ctx->words;
-				(void) printf(
-					" while compiling \" %s \"",
-					word->name.length == 0 ? ":NONAME" : (char *)word->name.string
-				);
-				ctx->words = word->prev;
-				/* Rewind HERE, does not free ALLOCATE data. */
-				ctx->here = (P4_Char *) word->data;
-				p4WordFree(word);
-			}
-			/* Set exit status within 1..255 */
-			rc = EXIT_FAILURE;
-			/*@fallthrough@*/
-		case P4_THROW_ABORT_MSG:
-			/* Ensure ABORT" and other messages print newline.*/
-			(void) printf(crlf);
+			P4_Word *word = ctx->words;
+			(void) printf(
+				" while compiling \" %s \"",
+				word->name.length == 0 ? ":NONAME" : (char *)word->name.string
+			);
+			ctx->words = word->prev;
+			/* Rewind HERE, does not free ALLOCATE data. */
+			ctx->here = (P4_Char *) word->data;
+			p4WordFree(word);
 		}
-		(void) fflush(stdout);
+		/*@fallthrough@*/
+	case P4_THROW_ABORT_MSG:
+		/* Ensure ABORT" and other messages print newline.*/
+		(void) printf(crlf);
+		/*@fallthrough@*/
+	case P4_THROW_ABORT:
+		/* Historically no message, simply return to REPL. */
+_abort:		(void) fflush(stdout);
+		/* Set exit status within 1..255 */
+		rc = EXIT_FAILURE;
 		P4_RESET(ctx->ds);
 #ifdef HAVE_MATH_H
 		P4_RESET(ctx->fs);
 #endif
-_quit:
-		P4_RESET(ctx->rs);
+_quit:		P4_RESET(ctx->rs);
 		/* Normally at this point one would reset input
 		 * to the console, but that has problems.  Wait
 		 * for the caller to resolve this by closing
@@ -1580,9 +1568,11 @@ _quit:
 		/* Discard the current input buffer. */
 		ctx->input.offset = ctx->input.length = 0;
 		ctx->state = P4_STATE_INTERPRET;
+		/*@fallthrough@*/
+	case P4_THROW_OK:
+		;
 	}
-_repl:
-	p4StackGuards(ctx);
+_repl:	p4StackGuards(ctx);
 	/* The input buffer might have been primed (EVALUATE, LOAD),
 	 * so try to parse it first before reading more input.
 	 */
@@ -1630,9 +1620,6 @@ _repl:
 	if (P4_INTERACTIVE(ctx)) {
 		(void) printf(crlf);
 	}
-
-setjmp_cleanup:
-	SETJMP_POP(ctx->on_throw);
 	return rc;
 
 		// ( -- )
@@ -1827,7 +1814,7 @@ _rm_marker:	x.w = w.xt;
 		// ( i*x caddr u -- j*x )
 _evaluate:	w = P4_POP(ctx->ds);
 		x = P4_POP(ctx->ds);
-		(void) p4EvalString(ctx, x.s, w.u);
+		rc = p4EvalString(ctx, x.s, w.u);
 		NEXT;
 
 
@@ -2890,7 +2877,7 @@ p4EvalFp(P4_Ctx *ctx, FILE *fp)
 	P4_INPUT_PUSH(&ctx->input);
 	ctx->input.fp = fp;
 	p4ResetInput(ctx);
-	rc = p4Repl(ctx);
+	rc = p4Repl(ctx, P4_THROW_OK);
 	P4_INPUT_POP(&ctx->input);
 
 	return rc;
@@ -2922,8 +2909,9 @@ p4EvalString(P4_Ctx *ctx, const P4_Char *str, size_t len)
 	ctx->input.buffer = (P4_Char *) str;
 	ctx->input.length = len;
 	ctx->input.offset = 0;
+	ctx->input.blk = 0;
 
-	rc = p4Repl(ctx);
+	rc = p4Repl(ctx, P4_THROW_OK);
 
 	P4_INPUT_POP(&ctx->input);
 
@@ -2978,6 +2966,8 @@ static int signalmap[][2] = {
 	{ 0, 0 }
 };
 
+static P4_Ctx * volatile signal_ctx;
+
 static void
 sig_int(int signum)
 {
@@ -2987,7 +2977,10 @@ sig_int(int signum)
 			break;
 		}
 	}
-	LONGJMP(signal_ctx->on_throw, signum);
+	if (signal_ctx != NULL) {
+		LONGJMP(signal_ctx->on_throw, signum);
+	}
+	abort();
 }
 
 int
@@ -2995,12 +2988,6 @@ main(int argc, char **argv)
 {
 	int ch, rc;
 	P4_Ctx *ctx;
-
-	p4Init();
-
-	for (int (*map)[2] = signalmap; (*map)[0] != 0; map++) {
-		signal((*map)[0], sig_int);
-	}
 
 	while ((ch = getopt(argc, argv, "b:c:d:f:i:m:r:V")) != -1) {
 		switch (ch) {
@@ -3048,10 +3035,15 @@ main(int argc, char **argv)
 	options.argc = argc - optind;
 	options.argv = argv + optind;
 
+	p4Init();
+	for (int (*map)[2] = signalmap; (*map)[0] != 0; map++) {
+		signal((*map)[0], sig_int);
+	}
 	if ((ctx = p4Create(&options)) == NULL) {
 		return EXIT_FAILURE;
 	}
 	(void) p4HookInit(ctx);
+	signal_ctx = ctx;
 
 	optind = 1;
 	while ((ch = getopt(argc, argv, "b:c:d:f:i:m:r:V")) != -1) {
@@ -3061,7 +3053,8 @@ main(int argc, char **argv)
 	}
 
 	if (argc <= optind || (argv[optind][0] == '-' && argv[optind][1] == '\0')) {
-		rc = p4Repl(ctx);
+		rc = SETJMP(ctx->on_throw);
+		rc = p4Repl(ctx, rc);
 	} else if (optind < argc && (rc = p4EvalFile(ctx, argv[optind]))) {
 		err(EXIT_FAILURE, "%s", argv[optind]);
 	}

@@ -544,7 +544,7 @@ extern void p4Free(P4_Ctx *ctx);
  * @return
  *	Zero on success, otherwise an exception code.
  */
-extern int p4Repl(P4_Ctx *ctx);
+extern int p4Repl(P4_Ctx *ctx, int code);
 
 /**
  * @param ctx

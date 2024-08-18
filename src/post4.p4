@@ -665,7 +665,7 @@ DEFER _fsp!
 	?DUP IF			\ S: n    R:
 	  \ When no catch frame, throw to C.
 	  catch_frame @ 0= IF	\ S: n    R:
-	    _longjmp		\ S: --   R: --
+	    ABORT		\ S: --   R: --
 	  THEN
 	  \ Restore return stack of CATCH at EXECUTE.
 	  catch_frame @ _rsp!	\ S: n    R: ip ds fs cf

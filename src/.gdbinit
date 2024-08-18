@@ -9,19 +9,19 @@ end
 define showds
 p ctx->ds.top + 1 - ctx->ds.base
 p ctx->ds
-x/8gx ctx->ds.base
+x/16gx ctx->ds.base-2
 end
 
 define showfs
 p ctx->fs.top + 1 - ctx->fs.base
 p ctx->fs
-x/8gx ctx->fs.base
+x/8gx ctx->fs.base-2
 end
 
 define showrs
 p ctx->rs.top + 1 - ctx->rs.base
 p ctx->rs
-x/8gx ctx->rs.base
+x/16gx ctx->rs.base-2
 end
 
 define showword
