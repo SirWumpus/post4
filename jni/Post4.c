@@ -126,7 +126,7 @@ Java_post4_jni_Post4_repl(JNIEnv *env, jobject self)
 {
 	P4_Ctx *ctx = getCtx(env, self);
 	ctx->jenv = env;
-	return p4Repl(ctx);
+	return p4Repl(ctx, P4_THROW_OK);
 }
 
 JNIEXPORT jobject JNICALL
