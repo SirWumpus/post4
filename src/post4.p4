@@ -619,7 +619,7 @@ MAX-U MAX-N 2CONSTANT MAX-D
 \
 \ (S: <spaces>name -- )
 \
-: DEFER CREATE ['] QUIT , DOES> @ EXECUTE ;
+: DEFER CREATE ['] _quit , DOES> @ EXECUTE ;
 
 \ ... DEFER! ...
 \
@@ -665,7 +665,7 @@ DEFER _fsp!
 	?DUP IF			\ S: n    R:
 	  \ When no catch frame, throw to C.
 	  catch_frame @ 0= IF	\ S: n    R:
-	    ABORT		\ S: --   R: --
+	    _abort		\ S: --   R: --
 	  THEN
 	  \ Restore return stack of CATCH at EXECUTE.
 	  catch_frame @ _rsp!	\ S: n    R: ip ds fs cf
@@ -688,7 +688,7 @@ DEFER _fsp!
 \
 \ printf "' quit catch \n abort" | ./post4 ; echo $?
 \
-: QUIT 0 catch_frame ! QUIT ;
+: QUIT 0 catch_frame ! _quit ;
 
 \ ( xt -- )
 : execute-compiling
@@ -1900,7 +1900,7 @@ VARIABLE SCR
 \
 \ (S: i*x u -- j*x )
 \
-: LOAD _input_push DUP BLK ! BLOCK 1024 ['] EVALUATE CATCH _input_pop THROW ;
+: LOAD _input_push DUP BLK ! BLOCK 1024 ['] _evaluate CATCH _input_pop THROW ;
 
 \ ... EVALUATE ...
 \
@@ -1909,7 +1909,7 @@ VARIABLE SCR
 \ @see
 \	https://forth-standard.org/standard/block/EVALUATE
 \
-: EVALUATE _input_push ['] EVALUATE CATCH _input_pop THROW ;
+: EVALUATE _input_push ['] _evaluate CATCH _input_pop THROW ;
 
 \ ... THRU ...
 \

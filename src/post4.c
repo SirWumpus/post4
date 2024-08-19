@@ -1285,8 +1285,8 @@ p4Repl(P4_Ctx *ctx, int rc)
 		P4_WORD("_repl",	&&_repl,	P4_BIT_HIDDEN, 0x00),
 		P4_WORD("LIT",		&&_lit,		0, 0x01),		// historic
 		P4_WORD(";",		&&_exit,	P4_BIT_HIDDEN, 0x10),	// _seext
-		P4_WORD("ABORT",	&&_abort,	0, 0x00),
-		P4_WORD("QUIT",		&&_quit,	0, 0x00),
+		P4_WORD("_abort",	&&_abort,	0, 0x00),
+		P4_WORD("_quit",	&&_quit,	0, 0x00),
 #ifdef HAVE_MATH_H
 //		P4_WORD("min-float",	&&_min_float,	0, 0x01),	// p4
 		P4_WORD("max-float",	&&_max_float,	0, 0x01),	// p4
@@ -1384,7 +1384,7 @@ p4Repl(P4_Ctx *ctx, int rc)
 		P4_WORD(">BODY",	&&_body,	0, 0x01),
 		P4_WORD("CREATE",	&&_create,	0, 0x01),
 		P4_WORD("DOES>",	&&_does,	P4_BIT_COMPILE, 0x1000),
-		P4_WORD("EVALUATE",	&&_evaluate,	0, 0x20),
+		P4_WORD("_evaluate",	&&_evaluate,	0, 0x20),	// p4
 		P4_WORD("EXECUTE",	&&_execute,	0, 0x10),
 		P4_WORD("EXIT",		&&_exit,	P4_BIT_COMPILE, 0x1000),
 		P4_WORD("IMMEDIATE",	&&_immediate,	0, 0x00),
@@ -2988,7 +2988,7 @@ sig_int(int signum)
 	abort();
 }
 
-void
+static void
 cleanup(void)
 {
 	p4Free(signal_ctx);
