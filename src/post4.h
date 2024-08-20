@@ -391,6 +391,8 @@ struct p4_ctx {
 	P4_Stack	fs;		/* Float stack */
 	P4_Int		precision;
 #endif
+	P4_Int          trace;          /* Word trace for debugging. */
+	P4_Int		level;		/* Tracing depth. */
 	P4_Int		state;
 	P4_Word *	words;		/* Head of the dictionary word list. */
 	P4_Uint		radix;		/* Input/Output radix */
@@ -407,7 +409,9 @@ struct p4_ctx {
 #ifdef WITH_JAVA
 	void *		jenv;
 #endif
-	JMP_BUF		on_throw;
+	JMP_BUF		on_throw;	/* Must be last in struct; size can
+					 * vary by CPU and implementation.
+					 */
 };
 
 typedef struct {

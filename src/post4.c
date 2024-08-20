@@ -1227,11 +1227,12 @@ error0:
 
 #ifdef NDEBUG
 # define p4Bp(ctx)
+# define p4Trace(ctx, P4_Xt)
 #else
 static void
 p4Bp(P4_Ctx *ctx)
 {
-	int has_nl = ctx->input.buffer[ctx->input.length-1] == '\n';
+	int has_nl = ctx->input.buffer[ctx->input.length-(0 < ctx->input.length)] == '\n';
 	// Convert tabs to spaces in effort to get ^ to line up.
 	for (int i = 0; i < ctx->input.length; i++) {
 		if (ctx->input.buffer[i] == '\t') {
@@ -1243,6 +1244,26 @@ p4Bp(P4_Ctx *ctx)
 		(int)ctx->input.length - has_nl, ctx->input.buffer,
 		(int)ctx->input.offset, '^'
 	);
+}
+
+static void
+p4Trace(P4_Ctx *ctx, P4_Xt xt)
+{
+	if (ctx->trace) {
+		(void) printf(
+			" ds=%-2d fs=%-2d rs=%-2d %*s%s\r\n",
+			(int)P4_LENGTH(ctx->ds), (int)P4_LENGTH(ctx->fs), (int)P4_LENGTH(ctx->rs),
+			2 * (int)ctx->level, "", 0 < xt->name.length ? (char *)xt->name.string : ":NONAME"
+		);
+	}
+}
+
+static void
+p4TraceLit(P4_Ctx *ctx, P4_Cell w)
+{
+	if (ctx->trace) {
+		(void) printf("%19s%*s"P4_HEX_FMT"\r\n", "", 2 * (int)ctx->level, "", w.v);
+	}
 }
 #endif
 
@@ -1391,6 +1412,7 @@ p4Repl(P4_Ctx *ctx, int rc)
 		P4_WORD("immediate?",	&&_is_immediate,0, 0x01),	// p4
 		P4_WORD("MARKER",	&&_marker,	0, 0x00),
 		P4_WORD("STATE",	&&_state,	0, 0x01),
+		P4_WORD("trace",	&&_trace,	0, 0x01),	// p4
 
 		/* Data Space - Alignment */
 		P4_WORD("CELLS",	&&_cells,	0, 0x11),
@@ -1618,7 +1640,6 @@ _repl:	p4StackGuards(ctx);
 			(void) fflush(stdout);
 		}
 	} while (p4Refill(ctx, &ctx->input));
-
 	if (P4_INTERACTIVE(ctx)) {
 		(void) printf(crlf);
 	}
@@ -1630,21 +1651,25 @@ _bp:		p4Bp(ctx);
 
 		// Indirect threading.
 _next:		w = *ip++;
+		p4Trace(ctx, w.xt);
 		goto *w.xt->code;
 
 		// ( xt -- )
 _execute:	w = P4_POP(ctx->ds);
+		p4Trace(ctx, w.xt);
 		goto *w.xt->code;
 
 		// ( i*x -- j*y )(R: -- ip)
 _enter:		P4_PUSH(ctx->rs, ip);
 		// w contains xt loaded by _next or _execute.
 		ip = w.xt->data;
+		ctx->level++;
 		NEXT;
 
 		// ( i*x -- i*x )(R:ip -- )
 _exit:		p4StackGuards(ctx);
 		ip = P4_POP(ctx->rs).p;
+		ctx->level--;
 		NEXT;
 
 		// ( ex_code -- )
@@ -1657,18 +1682,22 @@ _ctx:		P4_PUSH(ctx->ds, (P4_Cell *) ctx);
 
 		// ( -- )
 _call:		w = *ip;
+		p4TraceLit(ctx, w);
 		P4_PUSH(ctx->rs, ip + 1);
 		ip = (P4_Cell *)((P4_Char *) ip + w.n);
 		NEXT;
 
 		// ( -- )
 _branch:	w = *ip;
+		p4TraceLit(ctx, w);
 		ip = (P4_Cell *)((P4_Char *) ip + w.n);
 		NEXT;
 
 		// ( flag -- )
 _branchz:	w = *ip;
 		x = P4_POP(ctx->ds);
+		p4TraceLit(ctx, x);
+		p4TraceLit(ctx, w);
 		ip = (P4_Cell *)((P4_Char *) ip + (x.u == 0 ? w.n : P4_CELL));
 		NEXT;
 
@@ -1725,6 +1754,7 @@ _longjmp:	w = P4_POP(ctx->ds);
 		// ( -- x )
 		// : lit r> dup cell+ >r @ ;
 _lit:		w = *ip++;
+		p4TraceLit(ctx, w);
 		P4_PUSH(ctx->ds, w);
 		NEXT;
 
@@ -1893,6 +1923,7 @@ _do_does:	P4_PUSH(ctx->ds, w.xt->data + 1);
 		P4_PUSH(ctx->rs, ip);
 		// Continue execution just after DOES> of the defining word.
 		ip = w.xt->data[0].p;
+		ctx->level++;
 		NEXT;
 
 		// ( xt -- addr )
@@ -1934,6 +1965,10 @@ _env:		P4_DROP(ctx->ds, 1);		// Ignore k, S" NUL terminates.
 		x.s = getenv(w.s);
 		P4_TOP(ctx->ds) = x;
 		P4_PUSH(ctx->ds, (P4_Int)(x.s == NULL ? -1 : strlen(x.s)));
+		NEXT;
+
+		// ( -- addr )
+_trace:		P4_PUSH(ctx->ds, (P4_Cell *) &ctx->trace);
 		NEXT;
 
 		// ( -- addr )

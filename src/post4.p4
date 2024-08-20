@@ -2127,9 +2127,8 @@ BEGIN-STRUCTURE p4_ctx
 	p4_stack +FIELD ctx.fs	\ see _fs
 	FIELD: ctx.precision	\ see PRECISION and SET-PRECISION
 [THEN]
-[DEFINED] TRACE [IF]
-        FIELD: ctx.trace        \ see TRACE
-[THEN]
+	FIELD: ctx.trace	\ see _trace
+	FIELD: ctx.level	\ see p4
 	FIELD: ctx.state	\ see STATE
 	FIELD: ctx.words	\ p4_word pointer
 	FIELD: ctx.radix	\ see BASE
