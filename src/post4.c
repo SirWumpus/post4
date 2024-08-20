@@ -1151,8 +1151,9 @@ p4Free(P4_Ctx *ctx)
 }
 
 static void
-p4ResetInput(P4_Ctx *ctx)
+p4ResetInput(P4_Ctx *ctx, FILE *fp)
 {
+	ctx->input.fp = fp;
 	ctx->input.size = sizeof (ctx->tty);
 	ctx->input.buffer = ctx->tty;
 	ctx->input.length = 0;
@@ -1185,8 +1186,7 @@ p4Create(P4_Options *opts)
 	}
 	ctx->radix = 10;
 	ctx->unkey = EOF;
-	ctx->input.fp = stdin;
-	p4ResetInput(ctx);
+	p4ResetInput(ctx, stdin);
 	ctx->argc = opts->argc;
 	ctx->argv = opts->argv;
 	ctx->state = P4_STATE_INTERPRET;
@@ -2889,8 +2889,7 @@ p4EvalFp(P4_Ctx *ctx, FILE *fp)
 
 	/* Do not save STATE, see A.6.1.2250 STATE. */
 	P4_INPUT_PUSH(&ctx->input);
-	ctx->input.fp = fp;
-	p4ResetInput(ctx);
+	p4ResetInput(ctx, fp);
 	rc = p4Repl(ctx, P4_THROW_OK);
 	P4_INPUT_POP(&ctx->input);
 
@@ -3065,7 +3064,9 @@ main(int argc, char **argv)
 	}
 
 	if (argc <= optind || (argv[optind][0] == '-' && argv[optind][1] == '\0')) {
-		rc = SETJMP(ctx->on_throw);
+		if ((rc = SETJMP(ctx->on_throw)) != 0) {
+			p4ResetInput(ctx, stdin);
+		}
 		rc = p4Repl(ctx, rc);
 	} else if (optind < argc && (rc = p4EvalFile(ctx, argv[optind]))) {
 		err(EXIT_FAILURE, "%s", argv[optind]);
