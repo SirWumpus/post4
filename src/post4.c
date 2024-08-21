@@ -1441,7 +1441,7 @@ p4Repl(P4_Ctx *ctx, int rc)
 
 		/* Dynamic Memory */
 		P4_WORD("ALLOCATE",	&&_allocate,	0, 0x12),
-		P4_WORD("FREE",	&&_free,	0, 0x11),
+		P4_WORD("FREE",		&&_free,	0, 0x11),
 		P4_WORD("RESIZE",	&&_resize,	0, 0x22),
 
 		/* Operators */
@@ -2485,24 +2485,30 @@ _dump:		x = P4_POP(ctx->ds);
 			"a+",  "r", "w", "w+", "ab+", "rb", "wb", "wb+"
 		};
 
+		// ( -- fam )
 _fa_ro:		P4_PUSH(ctx->ds, (P4_Uint) 1);
 		NEXT;
 
+		// ( -- fam )
 _fa_wo:		P4_PUSH(ctx->ds, (P4_Uint) 2);
 		NEXT;
 
+		// ( -- fam )
 _fa_rw:		P4_PUSH(ctx->ds, (P4_Uint) 3);
 		NEXT;
 
+		// ( fam1 -- fam2 )
 _fa_bin:	x = P4_TOP(ctx->ds);
 		P4_TOP(ctx->ds).u = x.u | 4;
 		NEXT;
 
+		// ( fd -- ior )
 _fa_close:	errno = 0;
 		(void) fclose(P4_TOP(ctx->ds).v);
 		P4_TOP(ctx->ds).n = errno;
 		NEXT;
 
+		// ( caddr u -- ior )
 _fa_delete:	errno = 0;
 		P4_DROP(ctx->ds, 1);
 		w = P4_TOP(ctx->ds);
@@ -2510,6 +2516,7 @@ _fa_delete:	errno = 0;
 		P4_TOP(ctx->ds).n = errno;
 		NEXT;
 
+		// ( caddr u fam -- fd ior )
 _fa_create:
 _fa_open:	errno = 0;
 		x = P4_POP(ctx->ds);
@@ -2520,6 +2527,7 @@ _fa_open:	errno = 0;
 		P4_PUSH(ctx->ds, (P4_Int) errno);
 		NEXT;
 
+		// ( caddr u1 fd -- u2 ior )
 _fa_read:	fp = P4_POP(ctx->ds).v;
 		x = P4_POP(ctx->ds);
 		w = P4_POP(ctx->ds);
@@ -2528,6 +2536,7 @@ _fa_read:	fp = P4_POP(ctx->ds).v;
 		P4_PUSH(ctx->ds, (P4_Int) errno);
 		NEXT;
 
+		// ( caddr u1 fd -- u2 bool ior )
 _fa_rline:	errno = 0;
 		fp = P4_POP(ctx->ds).v;
 		x = P4_POP(ctx->ds);
@@ -2543,11 +2552,13 @@ _fa_rline:	errno = 0;
 		P4_PUSH(ctx->ds, (P4_Int) errno);
 		NEXT;
 
+		// ( fd -- ior )
 _fa_flush:	errno = 0;
 		(void) fflush(P4_TOP(ctx->ds).v);
 		P4_TOP(ctx->ds).n = errno;
 		NEXT;
 
+		// ( fd -- u bool ior )
 _fa_fsize:	errno = 0;
 		(void) fstat(fileno(P4_TOP(ctx->ds).v), &sb);
 		P4_TOP(ctx->ds).n = sb.st_size;
@@ -2555,6 +2566,7 @@ _fa_fsize:	errno = 0;
 		P4_PUSH(ctx->ds, (P4_Int) errno);
 		NEXT;
 
+		// ( caddr u fd -- ior )
 _fa_write:	errno = 0;
 		fp = P4_POP(ctx->ds).v;
 		x = P4_POP(ctx->ds);
@@ -2563,10 +2575,12 @@ _fa_write:	errno = 0;
 		P4_TOP(ctx->ds).n = errno;
 		NEXT;
 
+		// ( i*x fd -- j*y ior )
 _fa_include:	x.n = p4EvalFp(ctx, P4_TOP(ctx->ds).v);
 		P4_TOP(ctx->ds) = x;
 		NEXT;
 
+		// ( ud fd -- ior )
 _fa_seek:	errno = 0;
 		fp = P4_POP(ctx->ds).v;
 		P4_DROP(ctx->ds, 1);
@@ -2575,6 +2589,7 @@ _fa_seek:	errno = 0;
 		P4_PUSH(ctx->ds, (P4_Int) errno);
 		NEXT;
 
+		// ( fd -- ud ior )
 _fa_tell:	errno = 0;
 		x.u = ftell(P4_TOP(ctx->ds).v);
 		P4_TOP(ctx->ds) = x;
