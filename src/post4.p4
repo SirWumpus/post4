@@ -638,8 +638,8 @@ VARIABLE catch_frame
 DEFER _fsp@
 DEFER _fsp!
 
-:NONAME $dead ; ' _fsp@ DEFER!
-:NONAME DROP ; ' _fsp! DEFER!
+' TRUE ' _fsp@ DEFER!
+' DROP ' _fsp! DEFER!
 
 \ ... CATCH ...
 \
@@ -652,7 +652,7 @@ DEFER _fsp!
 	_rsp@ catch_frame !	\ S: xt   R: ip ds fs cf
 	EXECUTE			\ S: --   R: ip ds fs cf
 	R> catch_frame !	\ S: --   R: ip ds fs
-	2R> 2DROP 		\ S: --   R: ip
+	R> R> 2DROP 		\ S: --   R: ip
 	0			\ S: 0    R: ip
 ;
 
@@ -665,7 +665,7 @@ DEFER _fsp!
 	?DUP IF			\ S: n    R:
 	  \ When no catch frame, throw to C.
 	  catch_frame @ 0= IF	\ S: n    R:
-	    _abort		\ S: --   R: --
+	    _longjmp		\ S: --   R: --
 	  THEN
 	  \ Restore return stack of CATCH at EXECUTE.
 	  catch_frame @ _rsp!	\ S: n    R: ip ds fs cf
