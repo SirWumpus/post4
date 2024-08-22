@@ -1228,6 +1228,7 @@ error0:
 #ifdef NDEBUG
 # define p4Bp(ctx)
 # define p4Trace(ctx, P4_Xt)
+# define p4TraceLit(ctx, P4_Xt)
 #else
 static void
 p4Bp(P4_Ctx *ctx)
