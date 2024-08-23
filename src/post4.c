@@ -1469,6 +1469,7 @@ p4Repl(P4_Ctx *ctx, int rc)
 		P4_WORD("<",		&&_lt,		0, 0x21),
 
 		/* Tools*/
+		P4_WORD("alias",	&&_alias,	0, 0x10),	// p4
 		P4_WORD("args",		&&_args,	0, 0x02),	// p4
 		P4_WORD("bye-code",	&&_bye_code,	0, 0x10),	// p4
 		P4_WORD("env",		&&_env,		0, 0x22),	// p4
@@ -1944,6 +1945,15 @@ _allot:		w = P4_POP(ctx->ds);
 		if (p4Allot(ctx, w.n) == NULL) {
 			THROW(P4_THROW_ALLOCATE);
 		}
+		NEXT;
+
+		// ( xt -- <spaces>name )
+_alias:		w = P4_POP(ctx->ds);
+		str = p4ParseName(&ctx->input);
+		word = p4WordCreate(ctx, str.string, str.length, w.w->code);
+		word->bits = w.w->bits;
+		word->data = w.w->data;
+		word->ndata = w.w->ndata;
 		NEXT;
 
 		// ( -- )

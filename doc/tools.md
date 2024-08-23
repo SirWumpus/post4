@@ -144,6 +144,10 @@ List defined words
 
 ### Post4 Specific Words
 
+### alias
+( `xt` -- `<spaces>name` )  
+Create an alias word for `xt`.
+
 - - -
 #### bye-code
 ( `exit_code` -- )  
@@ -153,7 +157,6 @@ Terminate and return to the host OS an exit code; zero (0) for normal/success, n
 ( `caddr` -- )  
 Display the character value stored at `caddr`.
 
-- - -
 - - -
 #### _bp
 ( -- )  

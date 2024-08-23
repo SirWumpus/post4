@@ -50,12 +50,6 @@ MARKER rm_core_words
 : PARSE 0 _parse ;
 : parse-escape 1 _parse ;
 
-\ (C: xu ... x1 x0 u -- xu ... x1 x0 xu )
-: CS-PICK PICK ; compile-only
-
-\ (C: xu xu-1 ... x0 u -- xu-1 ... x0 xu )
-: CS-ROLL ROLL ; compile-only
-
 \ (S: u -- addr )
 : reserve DUP ALLOT HERE SWAP - ;
 
@@ -65,8 +59,21 @@ MARKER rm_core_words
 \ ( char -- )
 : C, 1 CHARS reserve C! ;
 
+\ ( -- xt | 0 )
+\ xt is also an nt.
+: ' PARSE-NAME FIND-NAME ;
+
+\ ( -- )
+' _bp alias _bpnow immediate
+
 \ ( xt -- )
-: COMPILE, , ; compile-only
+' , alias COMPILE, compile-only
+
+\ (C: xu ... x1 x0 u -- xu ... x1 x0 xu )
+' PICK alias CS-PICK compile-only
+
+\ (C: xu xu-1 ... x0 u -- xu-1 ... x0 xu )
+' ROLL alias CS-ROLL compile-only
 
 \ value CONSTANT name
 \
@@ -491,10 +498,6 @@ MAX-U MAX-N 2CONSTANT MAX-D
 \ (S: <spaces>name -- char )
 \
 : CHAR PARSE-NAME DROP C@ ;
-
-\ ( -- xt | 0 )
-\ xt is also an nt.
-: ' PARSE-NAME FIND-NAME ;
 
 \ Compile LIT xt into the current word, which pushes xt when run.
 \ (C: <spaces>name -- ) (S: -- xt )
