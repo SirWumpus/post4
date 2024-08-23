@@ -233,7 +233,8 @@ typedef double		P4_Float;
 # define P4_HEX_FMT 	"$%.16lx"
 # define DIV		ldiv
 # define DIV_T		ldiv_t
-# define P4_SENTINEL	((P4_Uint)0xdeadbeefcafebabeL)
+# define P4_SENTINEL	(0xdeadbeefcafebabeUL)
+# define P4_MARKER	(0xfeedfacedeafdeedUL)
 #elif P4_UINT_BITS == 32
 typedef uint16_t	P4_Uint_Half;
 typedef float		P4_Float;
@@ -243,7 +244,8 @@ typedef float		P4_Float;
 # define P4_FLOAT_FMT	"%lE"
 # define DIV		div
 # define DIV_T		div_t
-# define P4_SENTINEL	((P4_Uint)0xdeadbeefL)
+# define P4_SENTINEL	(0xdeadbeefUL)
+# define P4_MARKER	(0xfeedfaceUL)
 #else
 # error "Unsupported cell size."
 #endif

@@ -1795,14 +1795,14 @@ _do_colon:	ctx->state = P4_STATE_COMPILE;
 			P4_PUSH(ctx->ds, ctx->words);
 		}
 		/* Save sentinel for control imbalance test below. */
-		P4_PUSH(ctx->ds, (P4_Uint) P4_SENTINEL);
+		P4_PUSH(ctx->ds, (P4_Uint) P4_MARKER);
 		/* Keep new word hidden while compiling. */
 		P4_WORD_SET_HIDDEN(word);
 		NEXT;
 
 		// (C: colon -- ) (R: ip -- )
 _semicolon:	ctx->state = P4_STATE_INTERPRET;
-		if (P4_POP(ctx->ds).u != P4_SENTINEL) {
+		if (P4_POP(ctx->ds).u != P4_MARKER) {
 			/* Control structure imbalance.  Did we match
 			 * all the IF-THEN, BEGIN-REPEAT, etc.
 			 */
