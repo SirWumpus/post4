@@ -1227,32 +1227,26 @@ error0:
 
 #ifdef NDEBUG
 # define p4Bp(ctx)
-# define p4Trace(ctx, P4_Xt)
-# define p4TraceLit(ctx, P4_Xt)
+# define p4Trace(ctx, xt)
+# define p4TraceLit(ctx, w)
 #else
 static void
 p4Bp(P4_Ctx *ctx)
 {
 	int has_nl = ctx->input.buffer[ctx->input.length-(0 < ctx->input.length)] == '\n';
-	// Convert tabs to spaces in effort to get ^ to line up.
-	for (int i = 0; i < ctx->input.length; i++) {
-		if (ctx->input.buffer[i] == '\t') {
-			ctx->input.buffer[i] == ' ';
-		}
+	(void) fprintf(stderr, ">> ");
+	for (int i = 0; i < ctx->input.length-has_nl; i++) {
+		(void) fputc(ctx->input.buffer[i] == '\t' ? ' ' : ctx->input.buffer[i], stderr);
 	}
-	(void) printf(
-		">> %.*s\r\n>> %*c\r\n",
-		(int)ctx->input.length - has_nl, ctx->input.buffer,
-		(int)ctx->input.offset, '^'
-	);
+	(void) fprintf(stderr, "\r\n>> %*c\r\n", (int)ctx->input.offset, '^' );
 }
 
 static void
 p4Trace(P4_Ctx *ctx, P4_Xt xt)
 {
 	if (ctx->trace) {
-		(void) printf(
-			" ds=%-2d fs=%-2d rs=%-2d %*s%s\r\n",
+		(void) fprintf(
+			stderr, " ds=%-2d fs=%-2d rs=%-2d %*s%s\r\n",
 			(int)P4_LENGTH(ctx->ds), (int)P4_LENGTH(ctx->fs), (int)P4_LENGTH(ctx->rs),
 			2 * (int)ctx->level, "", 0 < xt->name.length ? (char *)xt->name.string : ":NONAME"
 		);
@@ -1263,7 +1257,11 @@ static void
 p4TraceLit(P4_Ctx *ctx, P4_Cell w)
 {
 	if (ctx->trace) {
-		(void) printf("%19s%*s"P4_HEX_FMT"\r\n", "", 2 * (int)ctx->level, "", w.v);
+		int is_small = -65536 < w.n && w.n < 65536;
+		(void) fprintf(
+			stderr, is_small ? "%*s"P4_INT_FMT"\r\n" : "%*s"P4_HEX_FMT"\r\n",
+			19+2*(int)ctx->level, "", w.n
+		);
 	}
 }
 #endif
@@ -1789,6 +1787,9 @@ _colon:		str = p4ParseName(&ctx->input);
 		// (C: -- colon) (R: -- ip)
 		// Save the current lengths so we can check for imbalance.
 _do_colon:	ctx->state = P4_STATE_COMPILE;
+		if (ctx->trace) {
+			(void) printf("%*s%.*s\r\n", 19+2*(int)ctx->level, "", (int)str.length, str.string);
+		}
 		word = p4WordCreate(ctx, str.string, str.length, &&_enter);
 		if (word->name.length == 0) {
 			/* :NONAME leaves xt on stack. */
