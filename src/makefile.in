@@ -93,3 +93,8 @@ post4.i : config.h post4.h post4.c
 
 test : post4$E
 	cd ../test && ${MAKE} $@
+
+valgrind: post4$E
+	echo BYE | valgrind --leak-check=full ./post4$E
+	valgrind --leak-check=full ./post4$E ../test/units.p4
+	valgrind --leak-check=full ./post4$E ../examples/life1d.p4

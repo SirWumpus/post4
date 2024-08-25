@@ -328,20 +328,24 @@ struct p4_word {
 #define P4_BIT_HIDDEN			0x0004
 #define P4_BIT_COMPILE			0x0008
 
-#define P4_WORD_IS_IMM(w)		(((w)->bits & P4_BIT_IMM) == P4_BIT_IMM)
-#define P4_WORD_SET_IMM(w)		((w)->bits |= P4_BIT_IMM)
-#define P4_WORD_CLEAR_IMM(w)		((w)->bits &= ~P4_BIT_IMM)
+#define P4_WORD_IS(w, bit)		(((w)->bits & (bit)) == (bit))
+#define P4_WORD_SET(w, bit)		((w)->bits |= (bit))
+#define P4_WORD_CLEAR(w, bit)		((w)->bits &= ~(bit))
 
-#define P4_WORD_WAS_CREATED(w)		(((w)->bits & P4_BIT_CREATED) == P4_BIT_CREATED)
-#define P4_WORD_SET_CREATED(w)		((w)->bits |= P4_BIT_CREATED)
+#define P4_WORD_IS_IMM(w)		P4_WORD_IS(w, P4_BIT_IMM)
+#define P4_WORD_SET_IMM(w)		P4_WORD_SET(w, P4_BIT_IMM)
+#define P4_WORD_CLEAR_IMM(w)		P4_WORD_CLEAR(w, P4_BIT_IMM)
 
-#define P4_WORD_IS_HIDDEN(w)		(((w)->bits & P4_BIT_HIDDEN) == P4_BIT_HIDDEN)
-#define P4_WORD_SET_HIDDEN(w)		((w)->bits |= P4_BIT_HIDDEN)
-#define P4_WORD_CLEAR_HIDDEN(w)		((w)->bits &= ~P4_BIT_HIDDEN)
+#define P4_WORD_WAS_CREATED(w)		P4_WORD_IS(w, P4_BIT_CREATED)
+#define P4_WORD_SET_CREATED(w)		P4_WORD_SET(w, P4_BIT_CREATED)
 
-#define P4_WORD_IS_COMPILE(w)		(((w)->bits & P4_BIT_COMPILE) == P4_BIT_COMPILE)
-#define P4_WORD_SET_COMPILE(w)		((w)->bits |= P4_BIT_COMPILE)
-#define P4_WORD_CLEAR_COMPILE(w)	((w)->bits &= ~P4_BIT_COMPILE)
+#define P4_WORD_IS_HIDDEN(w)		P4_WORD_IS(w, P4_BIT_HIDDEN)
+#define P4_WORD_SET_HIDDEN(w)		P4_WORD_SET(w, P4_BIT_HIDDEN)
+#define P4_WORD_CLEAR_HIDDEN(w)		P4_WORD_CLEAR(w,P4_BIT_HIDDEN)
+
+#define P4_WORD_IS_COMPILE(w)		P4_WORD_IS(w, P4_BIT_COMPILE)
+#define P4_WORD_SET_COMPILE(w)		P4_WORD_SET(w, P4_BIT_COMPILE)
+#define P4_WORD_CLEAR_COMPILE(w)	P4_WORD_CLEAR(w, P4_BIT_COMPILE)
 
 #ifdef USE_STACK_CHECKS
 	P4_Uint		poppush;
@@ -514,7 +518,7 @@ typedef struct {
 
 /* -4095..-256 reserved for the system (that's us). */
 
-#define P4_THROW_TERMINATE	(-256)
+#define P4_THROW_SIGTERM	(-256)
 #define P4_THROW_GENERIC	(-4095)
 
 /***********************************************************************

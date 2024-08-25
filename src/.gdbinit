@@ -21,7 +21,7 @@ end
 define showrs
 p ctx->rs.top + 1 - ctx->rs.base
 p ctx->rs
-x/16gx ctx->rs.base-2
+x/24gx ctx->rs.base-2
 end
 
 define showword
@@ -45,7 +45,13 @@ commands
 finish
 end
 
-b p4Repl:_repl
+b p4Repl:_interpret
 disable 2
+b p4Repl:_inter_loop
+disable 3
+b p4Repl:_halt
+disable 4
+b p4Repl:_evaluate
+disable 5
 
 show user

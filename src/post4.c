@@ -1302,11 +1302,24 @@ p4Repl(P4_Ctx *ctx, int rc)
 	P4_Cell w, x, *ip;
 
 	static P4_Word words[] = {
-		P4_WORD("_repl",	&&_repl,	P4_BIT_HIDDEN, 0x00),
 		P4_WORD("LIT",		&&_lit,		0, 0x01),		// historic
+#define w_lit		words[0]
 		P4_WORD(";",		&&_exit,	P4_BIT_HIDDEN, 0x10),	// _seext
+#define w_semi		words[1]
 		P4_WORD("_abort",	&&_abort,	0, 0x00),
+#define w_abort		words[2]
 		P4_WORD("_quit",	&&_quit,	0, 0x00),
+#define w_quit		words[3]
+		P4_WORD("_interpret",	&&_interpret,	0, 0x00),
+#define w_interpret	words[4]
+		P4_WORD("REFILL",	&&_refill,	0, 0x01),
+#define w_refill	words[5]
+		P4_WORD("_branchnz",	&&_branchnz,	0, 0x10),
+#define w_branchnz	words[6]
+#ifdef HAVE_HOOKS
+		P4_WORD("_hook_add",	&&_hook_add,	0, 0x10),	// p4
+		P4_WORD("_hook_call",	&&_hook_call,	0, 0x00),	// p4
+#endif
 #ifdef HAVE_MATH_H
 //		P4_WORD("min-float",	&&_min_float,	0, 0x01),	// p4
 		P4_WORD("max-float",	&&_max_float,	0, 0x01),	// p4
@@ -1382,10 +1395,6 @@ p4Repl(P4_Ctx *ctx, int rc)
 		P4_WORD("_ds",		&&_ds,		0, 0x03),	// p4
 		P4_WORD("_dsp@",	&&_dsp_get,	0, 0x01),	// p4
 		P4_WORD("_dsp!",	&&_dsp_put,	0, 0x10),	// p4
-#ifdef HAVE_HOOKS
-		P4_WORD("_hook_add",	&&_hook_add,	0, 0x10),	// p4
-		P4_WORD("_hook_call",	&&_hook_call,	0, 0x00),	// p4
-#endif
 		P4_WORD("_input_push",	&&_input_push,	0, 0x0600),	// p4
 		P4_WORD("_input_pop",	&&_input_pop,	0, 0x6000),	// p4
 		P4_WORD("_longjmp",	&&_longjmp,	0, 0x10),	// p4
@@ -1495,7 +1504,6 @@ p4Repl(P4_Ctx *ctx, int rc)
 		P4_WORD("MS",		&&_ms,		0, 0x10),
 		P4_WORD("_parse",	&&_parse,	0, 0x22),	// p4
 		P4_WORD("PARSE-NAME",	&&_parse_name,	0, 0x02),
-		P4_WORD("REFILL",	&&_refill,	0, 0x01),
 		P4_WORD("SAVE-BUFFERS",	&&_save_buffers, 0, 0x00),
 		P4_WORD("SOURCE",	&&_source,	0, 0x02),
 		P4_WORD("SOURCE-ID",	&&_source_id,	0, 0x01),
@@ -1504,17 +1512,6 @@ p4Repl(P4_Ctx *ctx, int rc)
 
 		P4_WORD(NULL,		NULL,		0, 0),
 	};
-
-#define w_repl	words[0]	// See exec[].
-#define w_lit	words[1]
-#define w_semi	words[2]	// See _seext.
-
-	/* When the REPL executes a word, it puts the XT of the word here
-	 * and starts the machine with the IP pointed to exec[].  When the
-	 * word completes the next XT (w_repl) transitions from threaded
-	 * code back into the C driven REPL.
-	 */
-	static P4_Cell exec[] = { { 0 }, { .w = &w_repl } };
 
 	if (p4_builtin_words == NULL) {
 		/* Link up the base dictionary. */
@@ -1528,9 +1525,24 @@ p4Repl(P4_Ctx *ctx, int rc)
 #define NEXT		goto _next
 #define THROW(x)	{ rc = (x); goto _thrown; }
 
+	static P4_Word w_inter_loop = P4_WORD("_inter_loop", &&_inter_loop, P4_BIT_HIDDEN, 0x00);
+	static P4_Word w_halt = P4_WORD("_halt", &&_halt, P4_BIT_HIDDEN, 0x00);
+	static P4_Word w_ok = P4_WORD("_ok", &&_ok, P4_BIT_HIDDEN, 0x00);
+	static P4_Cell repl[] = {
+		{.w = &w_interpret}, {.w = &w_ok},  {.w = &w_refill},
+		{.w = &w_branchnz}, {.n = -4 * sizeof (P4_Cell)},
+		{.w = &w_halt}
+	};
+	/* When the REPL executes a word, it puts the XT of the word here
+	 * and executes the word with the IP pointed to exec[].  When the
+	 * word completes the next XT transitions from threaded code back
+	 * into the C driven REPL.
+	 */
+	static P4_Cell exec[] = { { 0 }, {.w = &w_inter_loop} };
+
 _thrown:
 	switch (rc) {
-	case P4_THROW_TERMINATE:
+	case P4_THROW_SIGTERM:
 		/* Return shell equivalent exit status. */
 		(void) printf(crlf);
 		return 128+SIGTERM;
@@ -1596,12 +1608,15 @@ _quit:		P4_RESET(ctx->rs);
 	case P4_THROW_OK:
 		;
 	}
-_repl:	p4StackGuards(ctx);
-	/* The input buffer might have been primed (EVALUATE, LOAD),
-	 * so try to parse it first before reading more input.
-	 */
-	do {
-		while (ctx->input.offset < ctx->input.length) {
+	ip = repl+1;
+
+//	do {
+		/* The input buffer might have been primed (EVALUATE, LOAD),
+		 * so try to parse it first before reading more input.
+		 */
+_interpret:	p4StackGuards(ctx);
+		P4_PUSH(ctx->rs, ip);
+_inter_loop:	while (ctx->input.offset < ctx->input.length) {
 			str = p4ParseName(&ctx->input);
 			if (str.length == 0) {
 				break;
@@ -1629,18 +1644,23 @@ _repl:	p4StackGuards(ctx);
 			} else if (ctx->state == P4_STATE_COMPILE && !P4_WORD_IS_IMM(word)) {
 				p4WordAppend(ctx, (P4_Cell) word);
 			} else {
-				// Setup XT of word found to execute.
 				exec[0].w = word;
 				ip = exec;
 				NEXT;
 			}
 		}
-		if (P4_INTERACTIVE(ctx)) {
+		ip = P4_POP(ctx->rs).p;
+		NEXT;
+
+_ok:		if (P4_INTERACTIVE(ctx)) {
 			(void) printf("ok ");
 			(void) fflush(stdout);
 		}
-	} while (p4Refill(ctx, &ctx->input));
-	if (P4_INTERACTIVE(ctx)) {
+		NEXT;
+
+//	} while (p4Refill(ctx, &ctx->input));
+
+_halt:	if (P4_INTERACTIVE(ctx)) {
 		(void) printf(crlf);
 	}
 	return rc;
@@ -1699,6 +1719,14 @@ _branchz:	w = *ip;
 		p4TraceLit(ctx, x);
 		p4TraceLit(ctx, w);
 		ip = (P4_Cell *)((P4_Char *) ip + (x.u == 0 ? w.n : P4_CELL));
+		NEXT;
+
+		// ( flag -- )
+_branchnz:	w = *ip;
+		x = P4_POP(ctx->ds);
+		p4TraceLit(ctx, x);
+		p4TraceLit(ctx, w);
+		ip = (P4_Cell *)((P4_Char *) ip + (x.u != 0 ? w.n : P4_CELL));
 		NEXT;
 
 #ifdef HAVE_HOOKS
@@ -1848,22 +1876,23 @@ _rm_marker:	x.w = w.xt;
 
 _input_push:	p4StackGuards(ctx);
 		w.p = ctx->rs.top+1;
-		P4_DROP(ctx->rs, -sizeof (P4_Input) / sizeof (P4_Cell));
+		P4_DROP(ctx->rs, -sizeof (ctx->input) / sizeof (P4_Cell));
 		(void) memcpy(w.v, &ctx->input, sizeof (ctx->input));
 		NEXT;
 
-_input_pop:	P4_DROP(ctx->rs, sizeof (P4_Input) / sizeof (P4_Cell));
+_input_pop:	P4_DROP(ctx->rs, sizeof (ctx->input) / sizeof (P4_Cell));
 		w.p = ctx->rs.top+1;
 		(void) memcpy(&ctx->input, w.v, sizeof (ctx->input));
 		p4StackGuards(ctx);
 		NEXT;
 
 		// ( i*x caddr u -- j*x )
-_evaluate:	w = P4_POP(ctx->ds);
-		x = P4_POP(ctx->ds);
-		rc = p4EvalString(ctx, x.s, w.u);
-		NEXT;
-
+_evaluate:	ctx->input.length = P4_POP(ctx->ds).z;
+		ctx->input.buffer = P4_POP(ctx->ds).s;
+		ctx->input.fp = (FILE *) -1;
+		ctx->input.offset = 0;
+		ctx->input.blk = 0;
+		goto _interpret;
 
 		/* CREATE DOES> is bit of a mind fuck.  Their purpose is to define
 		 * words that in turn define new words.  Best to look at a simple
@@ -2103,15 +2132,14 @@ _dup:		w = P4_TOP(ctx->ds);
 		NEXT;
 
 		// ( xu ... x1 x0 u -- xu ... x1 x0 xu )
-		// Could be implemented in Post4 minus the stack depth check.
-		// : PICK >R _ds DROP 1 - CELLS + R> CELLS - @ ;
+		// : PICK >R _DS DROP 1 - R> - CELLS + @ ;
 		// 0 PICK == DUP, 1 PICK == OVER
 _pick:		w = P4_POP(ctx->ds);
 		x = P4_PICK(ctx->ds, w.u);
 		P4_PUSH(ctx->ds, x);
 		NEXT;
 
-		// ( x y -- y x )
+		// ( x y -- y x ): pp _ds drop 2 - rot - cells + @ ;
 		// 1 ROLL == SWAP
 _swap:		w = P4_POP(ctx->ds);
 		x = P4_TOP(ctx->ds);
@@ -2636,7 +2664,8 @@ _seext:		word = P4_POP(ctx->ds).xt;
 					w.u += P4_CELL + P4_CELL_ALIGN(w.p[1].u + 1);
 				} else {
 					(void) printf("%.*s ", (int) x.w->name.length, x.w->name.string);
-					if ((x.w->code == &&_branch || x.w->code == &&_branchz || x.w->code == &&_call)) {
+					if (x.w->code == &&_branch || x.w->code == &&_branchz
+					||  x.w->code == &&_branchnz || x.w->code == &&_call) {
 						/* If a branch/call is postponed then it is a control
 						 * structure definition so what follows is an xt, not
 						 * a relative distance.
@@ -3028,7 +3057,7 @@ static int signalmap[][2] = {
 	{ SIGFPE, P4_THROW_SIGFPE },
 	{ SIGQUIT, P4_THROW_QUIT },
 	{ SIGSEGV, P4_THROW_SIGSEGV },
-	{ SIGTERM, P4_THROW_TERMINATE },
+	{ SIGTERM, P4_THROW_SIGTERM },
 	{ 0, 0 }
 };
 

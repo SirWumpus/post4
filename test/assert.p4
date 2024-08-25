@@ -135,19 +135,13 @@ VARIABLE tc_fs_expect
 	tests_failed @ 0<> IF 1 bye-code THEN
 ;
 
-: test_group ( -- )( R: -- depth)
-	['] test_fail IS test_skip_fail	\ S: --		R: ip
-	DEPTH R>			\ S: depth ip	R: --
-	SWAP >R >R			\ S: --		R: depth ip
-	CR
-	\ Setup clean-up marker.
-	S" MARKER rm_test_group" EVALUATE
+: test_group ( -- )
+	['] test_fail IS test_skip_fail
+	S" MARKER rm_test_group" EVALUATE CR
 ;
 
-: test_group_end ( -- )( R: depth -- )
-	DEPTH 2R> >R <>
-	CR ABORT" Test group stack depth incorrect."
-	\ Clean-up test words and data.
+: test_group_end ( -- )
+	CR DEPTH ABORT" Test group stack depth incorrect."
 	S" rm_test_group" EVALUATE
 ;
 

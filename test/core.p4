@@ -323,7 +323,7 @@ T{ tv_v1 -> 222 }T
 test_group_end
 
 .( BASE HEX DECIMAL ) test_group
-t{ BASE @ >R -> }t
+t{ BASE @ -> #10 }t
 t{ HEX BASE @ -> #16 }t
 t{ DECIMAL BASE @ -> #10 }t
 [DEFINED] OCTAL [IF]
@@ -332,7 +332,7 @@ t{ OCTAL BASE @ -> #8 }t
 [DEFINED] BINARY [IF]
 t{ BINARY BASE @ -> #2 }t
 [THEN]
-t{ R> BASE ! -> }t
+DECIMAL
 test_group_end
 
 .( CHAR ) test_group
@@ -506,6 +506,82 @@ T{ : tw_iw9 CREATE , DOES> @ 2 + IMMEDIATE ; -> }T
 T{ : tw_find_iw BL WORD FIND NIP ; -> }T
 T{ 222 tw_iw9 tw_iw10 tw_find_iw tw_iw10 -> -1 }T	\ tw_iw10 is not immediate
 T{ tw_iw10 tw_find_iw tw_iw10 -> 224 1 }T		\ tw_iw10 becomes immediate
+test_group_end
+
+.( >R R@ R> 2>R 2R@ 2R> ) test_group
+t{ 12 34 :NONAME 2>R R> R> ; EXECUTE -> 34 12 }t
+t{ 12 34 :NONAME >R >R 2R> ; EXECUTE -> 34 12 }t
+t{ 12 34 :NONAME 2>R 2R@ 2R> ; EXECUTE -> 12 34 12 34 }t
+t{ 12 34 :NONAME >R R@ SWAP >R R@ 2R> ; EXECUTE -> 34 12 34 12 }t
+test_group_end
+
+.( DO I LOOP) test_group
+: tw_do DO I LOOP ;
+T{   790   789 tw_do -> 789 }T
+T{ -9875 -9876 tw_do -> -9876 }T
+T{     5     0 tw_do -> 0 1 2 3 4 }T
+
+: tw_do1 DO LOOP ;
+T{   790   789 tw_do1 -> }T
+T{ -9875 -9876 tw_do1 -> }T
+T{     5     0 tw_do1 -> }T
+test_group_end
+
+.( ?DO LOOP +LOOP I LEAVE ) test_group
+: qd ?DO I LOOP ;
+T{   789   789 qd -> }T
+T{ -9876 -9876 qd -> }T
+T{     5     0 qd -> 0 1 2 3 4 }T
+
+: qd1 ?DO I 10 +LOOP ;
+T{ 50 1 qd1 -> 1 11 21 31 41 }T
+T{ 50 0 qd1 -> 0 10 20 30 40 }T
+
+\ \ : qd2 ?DO I 3 > IF LEAVE ELSE I THEN LOOP ;
+\ \ T{ 5 -1 qd2 -> -1 0 1 2 3 }T
+
+: qd3 ?DO I 1 +LOOP ;
+T{ 4  4 qd3 -> }T
+\ T{ 4  1 qd3 ->  1 2 3 }T
+\ T{ 2 -1 qd3 -> -1 0 1 }T
+
+: qd4 ?DO I -1 +LOOP ;
+T{  4 4 qd4 -> }T
+\ T{  1 4 qd4 -> 4 3 2  1 }T
+\ T{ -1 2 qd4 -> 2 1 0 -1 }T
+
+\ : qd5 ?DO I -10 +LOOP ;
+\ T{   1 50 qd5 -> 50 40 30 20 10   }T
+\ T{   0 50 qd5 -> 50 40 30 20 10 0 }T
+\ T{ -25 10 qd5 -> 10 0 -10 -20     }T
+\ VARIABLE qditerations
+\ VARIABLE qdincrement
+\
+\ : qd6 ( limit start increment -- )    qdincrement !
+\    0 qditerations !
+\    ?DO
+\      1 qditerations +!
+\      I
+\      qditerations @ 6 = IF LEAVE THEN
+\      qdincrement @
+\    +LOOP qditerations @
+\ ;
+\
+\ T{  4  4 -1 qd6 ->                   0  }T
+\ T{  1  4 -1 qd6 ->  4  3  2  1       4  }T
+\ T{  4  1 -1 qd6 ->  1  0 -1 -2 -3 -4 6  }T
+\ T{  4  1  0 qd6 ->  1  1  1  1  1  1 6  }T
+\ T{  0  0  0 qd6 ->                   0  }T
+\ T{  1  4  0 qd6 ->  4  4  4  4  4  4 6  }T
+\ T{  1  4  1 qd6 ->  4  5  6  7  8  9 6  }T
+\ T{  4  1  1 qd6 ->  1  2  3          3  }T
+\ T{  4  4  1 qd6 ->                   0  }T
+\ T{  2 -1 -1 qd6 -> -1 -2 -3 -4 -5 -6 6  }T
+\ T{ -1  2 -1 qd6 ->  2  1  0 -1       4  }T
+\ T{  2 -1  0 qd6 -> -1 -1 -1 -1 -1 -1 6  }T
+\ T{ -1  2  0 qd6 ->  2  2  2  2  2  2 6  }T
+\ T{ -1  2  1 qd6 ->  2  3  4  5  6  7 6  }T
+\ T{  2 -1  1 qd6 -> -1  0  1          3  }T
 test_group_end
 
 .( S" S\\" EVALUATE ) test_group
@@ -702,21 +778,18 @@ t{ 127 CHARS BUFFER: tw_buf_1 -> }t
 
 \ Buffer is aligned
 t{ tw_buf_0 ALIGNED -> tw_buf_0 }t
-
 \ Buffers do not overlap
 t{ tw_buf_1 tw_buf_0 - ABS 127 CHARS < -> FALSE }t
-
 \ Buffer can be written to
 : tw_buf_full? ( c-addr n char -- flag )
-	TRUE 2SWAP CHARS OVER + SWAP ?DO
+	TRUE 2SWAP CHARS OVER + SWAP DO
 	OVER I C@ = AND
 	/CHAR +LOOP NIP
 ;
-
-t{ tw_buf_0 127 CHAR * FILL -> }t
-t{ tw_buf_0 127 CHAR * tw_buf_full? -> TRUE }t
-t{ tw_buf_0 127 0 FILL -> }t
-t{ tw_buf_0 127 0 tw_buf_full? -> TRUE }t
+t{ tw_buf_0 128 CHAR * FILL -> }t
+t{ tw_buf_0 128 CHAR * tw_buf_full? -> TRUE }t
+t{ tw_buf_0 128 0 FILL -> }t
+t{ tw_buf_0 128 0 tw_buf_full? -> TRUE }t
 test_group_end
 
 .( CASE OF ENDOF ENDCASE ) test_group

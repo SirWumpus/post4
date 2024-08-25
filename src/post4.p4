@@ -4,36 +4,10 @@ MARKER rm_core_words
 
 \ Post4 Copyright 2007, 2024 by Anthony Howe.  All rights reserved.
 
-\ ... BYE ...
-\
-\ ( -- )
-\
+\ ( -- ⊥ )
 : BYE 0 bye-code ;
 
-\ ... QUIT ...
-\
-\  ( -- ) ( R: i*x -- )
-\
-\ See https://github.com/ForthHub/discussion/discussions/116#discussioncomment-3541822
-\
-\ Expected standard behaviour:
-\
-\ 1.	ok :noname 123 [: 456 -56 throw ;] catch . . ;  execute
-\	-56 123 ok
-\
-\ 2.	ok : foo [: 123 quit ;] catch 456 . throw ;  foo
-\	ok .s
-\	123
-\	ok
-\
-\ *** DO NOT DO IT THIS WAY! ***
-\ : QUIT -56 _longjmp ;
-\ : QUIT -56 THROW ;
-
-\ ... .S ...
-\
 \ ( -- )
-\
 : .S 'd' EMIT 's' EMIT '\r' EMIT '\n' EMIT _ds DROP _stack_dump ;
 
 \ ... .RS ...
@@ -140,23 +114,14 @@ _ds CONSTANT stack-cells DROP DROP
 : [ FALSE STATE ! ; IMMEDIATE \ allow interpret
 : ] TRUE STATE ! ; \ allow interpret
 
-\ ... CELL+ ...
-\
 \ (S: aaddr1 -- aaddr2 )
-\
 : CELL+ /CELL + ;
 : CELL- /CELL - ;
 
-\ ... R@ ...
-\
 \ ( -- x )(R: x -- x)
-\
-: R@ R> R> DUP >R SWAP >R ; \ allow interpret
+: R@ R> R> DUP >R SWAP >R ; compile-only
 
-\ ... DROPALL ...
-\
 \ ( i*x -- )
-\
 : dropall _ds DROP DROP CELL- _dsp! ;
 
 \ ... NEGATE ...
@@ -224,6 +189,9 @@ _ds CONSTANT stack-cells DROP DROP
 
 \ (S: x1 x2 x3 x4 x5 x6 -- x3 x4 x5 x6 x1 x2 )
 : 2ROT 5 ROLL 5 ROLL ;
+
+\ (S: u -- xu )(R: xu ...x1 x0 -- xu ip ...x1 x0 ip )
+: rpick _rs DROP 1 - ROT - CELLS + @ ;
 
 \ ... S>D ...
 \
@@ -356,7 +324,7 @@ MAX-U MAX-N 2CONSTANT MAX-D
 	R> ROT 			\ S: x2 ip x1  R: --
 	>R SWAP			\ S: ip x2  R: x1
 	>R >R			\ S: --  R: x1 x2 ip
-; \ allow interpret
+; compile-only
 
 \ ... 2R> ...
 \
@@ -366,7 +334,7 @@ MAX-U MAX-N 2CONSTANT MAX-D
 	R> R> R>		\ S: ip x2 x1  R: --
 	ROT			\ S: x2 x1 ip  R: --
 	>R SWAP			\ S: x1 x2  R: ip
-; \ allow interpret
+; compile-only
 
 \ ... 2R@ ...
 \
@@ -376,7 +344,7 @@ MAX-U MAX-N 2CONSTANT MAX-D
 	R> 2R>			\ S: ip x1 x2  R: --
 	2DUP 2>R		\ S: ip x1 x2  R: x1 x2
 	ROT >R			\ S: x1 x2  R: x1 x2 ip
-; \ allow interpret
+; compile-only
 
 \ ... /MOD ...
 \
@@ -681,7 +649,7 @@ DEFER _fsp!
 	THEN
 ;
 
-\ ( i*x -- ) ( R: j*x -- ) (F: k*x -- )
+\ ( i*x -- ⊥ )(F: k*x -- ⊥ )( R: j*x -- ⊥ )
 : ABORT -1 THROW ;
 
 \ GH-18
@@ -691,6 +659,7 @@ DEFER _fsp!
 \
 \ printf "' quit catch \n abort" | ./post4 ; echo $?
 \
+\ ( i*x -- ⊥ )(F: k*x -- ⊥ )
 : QUIT 0 catch_frame ! _quit ;
 
 \ ( xt -- )
@@ -1393,7 +1362,7 @@ VARIABLE _>pic
 
 \ ... NR> ...
 \
-\ (S: �� i*x +n ) (R: i*x +n �� )
+\ (S: –– i*x +n ) (R: i*x +n –– )
 \
 \  The original stack order of i*x prior to the matching N>R is restored.
 \
@@ -1410,47 +1379,46 @@ VARIABLE _>pic
 
 \ ... limit first DO ... LOOP ...
 \
-\ (C: -- dest )(R: -- count) || (S: limit first -- ) (R: -- limit first )
+\ (C: -- count dest ) || (S: limit first -- ) (R: -- limit first )
 \
-: DO				\ C: --  R: ip
-	POSTPONE 2>R		\ S: --  R: limit first
-	R> 0 >R	>R		\ C: --  R: 0 ip
-	POSTPONE BEGIN		\ C: dest R: 0 ip
+: DO
+	POSTPONE 2>R		\ S:			R: limit first
+	0			\ C: 0
+	POSTPONE BEGIN		\ C: 0 dest
 ; IMMEDIATE compile-only
 
 \ ... limit first ?DO ... LOOP ...
 \
-\ (C: -- dest ) (R: -- forw 1 ) || (S: limit first -- ) (R: -- limit first )
+\ (C: -- forw 1 dest ) || (S: limit first -- ) (R: -- limit first )
 \
-: ?DO				\ C: --  R: ip
-	POSTPONE 2>R		\ S: --  R: limit first
-	POSTPONE 2R@		\ S: limit first  R: limit first
-	POSTPONE <>		\ S: flag  R: limit first
-	R>			\ C: ip  R: --
-	POSTPONE IF >R 1 >R	\ C: ip  R: forw 1
-	>R			\ C: --  R: forw 1 ip
-	POSTPONE BEGIN		\ C: dest  R: forw 1 ip
+: ?DO				\ C:
+	POSTPONE 2>R		\ S:			R: limit first
+	POSTPONE 2R@		\ S: limit first  	R: limit first
+	POSTPONE <>		\ S: flag  		R: limit first
+	POSTPONE IF		\ C: forw
+	1			\ C: forw 1
+	POSTPONE BEGIN		\ C: forw 1 dest
 ; IMMEDIATE compile-only
 
 \ ... limit first DO ... IF ... LEAVE THEN ... LOOP ...
 \
-\ (C: dest -- dest ) (R: n*forw n -- n'*forw n' )
-\
-: LEAVE				\ C: dest  R: n*forw n ip
-	R> R> 1+		\ C: dest ip n'  R: n*forw
-	POSTPONE AHEAD		\ C: dest ip n' forw  R: n*forw
-	>R >R >R		\ C: dest  R: n'*forw n' ip
+\ (C: n*forw n dest -- n'*forw n' dest )
+: LEAVE
+	>R 1+			\ C: n*forw n'	  	R: dest
+	POSTPONE AHEAD		\ C: n*forw n' forw	R: dest
+	SWAP R>			\ C: n'*forw n' dest
 ; IMMEDIATE compile-only
 
 \ ... limit first DO ... test ?LEAVE ... LOOP ...
 \
-\ (C: dest -- dest ) (R: n*forw n -- n'*forw n' )
-\
-: ?LEAVE			\ C: dest flag  R: n*forw n ip
-	POSTPONE IF		\ C: dest  R: n*forw n ip
-	POSTPONE LEAVE		\ C: dest  R: n'*forw n' ip
-	POSTPONE THEN		\ C: --  R: n'*forw n' ip
-; compile-only
+\ (C: n*forw n dest -- n'*forw n' dest )
+: ?LEAVE
+	>R			\ C: n*forw		R: dest0
+	POSTPONE IF		\ C: n*forw dest1	R: dest0
+	POSTPONE LEAVE		\ C: n'*forw n' dest1	R: dest0
+	POSTPONE THEN		\ C: n'*forw n'		R: dest0
+	R>			\ C: n'*forw n' dest
+; IMMEDIATE compile-only
 
 \ : X ... limit first DO ... test IF ... UNLOOP EXIT THEN ... LOOP ... ;
 \
@@ -1467,31 +1435,64 @@ VARIABLE _>pic
 \	therefore 0 0 DO ... LOOP iterates UINT_MAX+1 times.
 \
 : _loop_inc_test
-	R> 2R> 1+		\ S: ip limit index' R: --
-	2DUP 2>R		\ S: ip limit index' R: limit index'
-	=			\ S: ip flag R: limit index'
-	SWAP >R			\ S: flag R: limit index' ip
+	R> 2R> 1+		\ S: ip limit index'
+	2DUP 2>R		\ S: ip limit index'	R: limit index'
+	=			\ S: ip flag		R: limit index'
+	SWAP >R			\ S: flag		R: limit index' ip
 ;
 
 \ ... limit first DO ... LOOP ...
 \
-\ (C: dest -- ) (R: n*forw n ip -- ip )
+\ (S: n -- flag ) (R: limit index ip -- limit index' ip )
+: _loop_step_test		\ S: n  		R: l x ip
+	R> R> DUP		\ S: n ip x x		R: l
+	3 ROLL + DUP >R		\ S: ip x x'		R: l x'
+	SWAP 2 rpick		\ S: ip x' x l		R: l x'
+	WITHIN INVERT SWAP >R	\ S: bool		R: l x' ip
+
+\ 	\ Add step to index.
+\ 	R> 2R>			\ S: n ip l x
+\ 	3 ROLL +		\ S: ip l x'
+\ 	2DUP 2>R		\ S: ip l x'		R: l x'
+\ \ 	=			\ S: ip bool		R: l x'
+\ \ 	SWAP >R			\ S: bool		R: l x' ip
 \
-: LOOP				\ C: dest  R: n*forw n ip
-	POSTPONE _loop_inc_test
-	POSTPONE UNTIL		\ C: --  R: n*forw n ip
+\ 	\ Has index crossed (limit-1) and limit boundary?
+\ 	\ ie. (INT_MIN - limit) & INT_MIN != (INT_MIN - limit + index) & INT_MIN
+\ 	SWAP MIN-N SWAP -	\ S: ip x' l'  		R: l x'
+\ 	DUP MIN-N AND		\ S: ip x' l' sign  	R: l x'
+\ 	>R + MIN-N AND R>	\ S: ip cross sign  	R: l x'
+\ 	<> SWAP >R		\ S: flag  		R: l x' ip
+;
+
+\ (C: n*forw n dest -- )
+: _loop_control			\ C: n*forw n dest
+	POSTPONE UNTIL		\ C: n*forw n
 
 	\ Resolve LEAVE forward references.
-	R> R>			\ C: ip n  R: n*forw
-	BEGIN ?DUP WHILE        \ C: ip n  R: n*forw
-	  1-			\ C: ip n' R: n*forw
-	  R>			\ C: ip n' forw  R: n'*forw
-	  POSTPONE THEN		\ C: ip n'  R: n'*forw
+	BEGIN ?DUP WHILE        \ C: n*forw n
+	  1-			\ C: n*forw n'
+	  SWAP			\ C: n'*forw n' forw
+	  POSTPONE THEN		\ C: n'*forw n'
 	REPEAT
-	>R			\ C: -- R: ip
 
 	\  LEAVE branches to just after UNTIL and before UNLOOP.
 	POSTPONE UNLOOP
+;
+
+\ ... limit first DO ... LOOP ...
+\ (C: n*forw n dest -- )
+: LOOP
+	POSTPONE _loop_inc_test
+	_loop_control
+; IMMEDIATE compile-only
+
+\ ... limit first DO ... +step LOOP ...
+\ (C: n*forw n dest -- )
+: +LOOP
+	\  Loop increment and test.
+	POSTPONE _loop_step_test
+	_loop_control
 ; IMMEDIATE compile-only
 
 \ ... limit first DO ... LOOP ...
@@ -1500,55 +1501,8 @@ VARIABLE _>pic
 \
 : I R> R@ SWAP >R ; compile-only
 
-\ ... limit first DO ... LOOP ...
-\
 \ (S: -- index1 ) (R: limit1 index1 limit2 index2 ip -- limit1 index1 limit2 index2 ip )
-\
-: J				\ S: --  R: l1 i1 l2 i2 ip
-	R> R> R> R@		\ S: ip i2 l2 i1  R: l1 i1
-	3 ROLL 3 ROLL 3 ROLL	\ S: i1 ip i2 l2  R: l1 i1
-	>R >R >R		\ S: i1  R: l1 i1 l2 i2 ip
-; compile-only
-
-\ ... limit first DO ... LOOP ...
-\
-\ (S: n -- flag ) (R: limit index ip -- limit index' ip )
-\
-: _loop_step_test		\ S: n  R: l x ip
-	\ Add step to index.
-	R> 2R>			\ S: n ip l x
-	3 ROLL +		\ S: ip l x'
-	2DUP 2>R		\ S: ip l x'  R: l x'
-
-	\ Has index crossed (limit-1) and limit boundary?
-	\ ie. (INT_MIN - limit) & INT_MIN != (INT_MIN - limit + index) & INT_MIN
-	SWAP MIN-N SWAP -	\ S: ip x' l'  R: l x'
-	DUP MIN-N AND		\ S: ip x' l' sign  R: l x'
-	>R + MIN-N AND R>	\ S: ip cross sign  R: l x'
-	<> SWAP >R		\ S: flag  R: l x' ip
-;
-
-\ ... limit first DO ... LOOP ...
-\
-\ (C: dest -- ) (R: n*forw n ip -- ip )
-\
-: +LOOP				\ C: dest  R: n*forw n ip
-	\  Loop increment and test.
-	POSTPONE _loop_step_test
-	POSTPONE UNTIL		\ C: --  R: n*forw n ip
-
-	\ Resolve LEAVE forward references.
-	R> R>			\ C: ip n  R: n*forw
-	BEGIN ?DUP WHILE        \ C: ip n  R: n*forw
-	  1-			\ C: ip n' R: n*forw
-	  R>			\ C: ip n' forw  R: n'*forw
-	  POSTPONE THEN		\ C: ip n'  R: n'*forw
-	REPEAT
-	>R			\ C: -- R: ip
-
-	\  LEAVE branches to just after UNTIL and before UNLOOP.
-	POSTPONE UNLOOP
-; IMMEDIATE compile-only
+: J 3 rpick ; compile-only
 
 \ ... x CASE ... ENDCASE
 \
