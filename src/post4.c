@@ -3072,10 +3072,7 @@ sig_int(int signum)
 			break;
 		}
 	}
-	if (signal_ctx != NULL) {
-		LONGJMP(signal_ctx->on_throw, signum);
-	}
-	abort();
+	LONGJMP(signal_ctx->on_throw, signum);
 }
 
 static void
@@ -3088,7 +3085,6 @@ int
 main(int argc, char **argv)
 {
 	int ch, rc;
-	P4_Ctx *ctx;
 
 	while ((ch = getopt(argc, argv, "b:c:d:f:i:m:r:V")) != -1) {
 		switch (ch) {
@@ -3137,29 +3133,31 @@ main(int argc, char **argv)
 	options.argv = argv + optind;
 
 	p4Init();
+	if ((signal_ctx = p4Create(&options)) == NULL) {
+		return EXIT_FAILURE;
+	}
+	(void) atexit(cleanup);
+	(void) p4HookInit(signal_ctx);
+	if (SETJMP(signal_ctx->on_throw) != 0) {
+		return EXIT_FAILURE;
+	}
 	for (int (*map)[2] = signalmap; (*map)[0] != 0; map++) {
 		signal((*map)[0], sig_int);
 	}
-	if ((ctx = p4Create(&options)) == NULL) {
-		return EXIT_FAILURE;
-	}
-	(void) p4HookInit(ctx);
-	signal_ctx = ctx;
-	(void) atexit(cleanup);
 
 	optind = 1;
 	while ((ch = getopt(argc, argv, "b:c:d:f:i:m:r:V")) != -1) {
-		if (ch == 'i' && (rc = p4EvalFile(ctx, optarg)) != P4_THROW_OK) {
+		if (ch == 'i' && (rc = p4EvalFile(signal_ctx, optarg)) != P4_THROW_OK) {
 			err(EXIT_FAILURE, "%s", optarg);
 		}
 	}
 
 	if (argc <= optind || (argv[optind][0] == '-' && argv[optind][1] == '\0')) {
-		if ((rc = SETJMP(ctx->on_throw)) != 0) {
-			p4ResetInput(ctx, stdin);
+		if ((rc = SETJMP(signal_ctx->on_throw)) != 0) {
+			p4ResetInput(signal_ctx, stdin);
 		}
-		rc = p4Repl(ctx, rc);
-	} else if (optind < argc && (rc = p4EvalFile(ctx, argv[optind]))) {
+		rc = p4Repl(signal_ctx, rc);
+	} else if (optind < argc && (rc = p4EvalFile(signal_ctx, argv[optind]))) {
 		err(EXIT_FAILURE, "%s", argv[optind]);
 	}
 
