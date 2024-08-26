@@ -401,6 +401,7 @@ struct p4_ctx {
 	P4_Stack	fs;		/* Float stack */
 	P4_Int		precision;
 #endif
+	P4_Int		frame;		/* See CATCH and THROW. */
 	P4_Int          trace;          /* Word trace for debugging. */
 	P4_Int		level;		/* Tracing depth. */
 	P4_Int		state;

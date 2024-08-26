@@ -604,8 +604,6 @@ MAX-U MAX-N 2CONSTANT MAX-D
 \
 : DEFER@ >BODY @ ;
 
-VARIABLE catch_frame
-
 DEFER _fsp@
 DEFER _fsp!
 
@@ -2084,6 +2082,7 @@ BEGIN-STRUCTURE p4_ctx
 	p4_stack +FIELD ctx.fs	\ see _fs
 	FIELD: ctx.precision	\ see PRECISION and SET-PRECISION
 [THEN]
+	FIELD: ctx.frame  	\ see CATCH and THROW
 	FIELD: ctx.trace	\ see _trace
 	FIELD: ctx.level	\ see p4
 	FIELD: ctx.state	\ see STATE

@@ -1427,6 +1427,7 @@ p4Repl(P4_Ctx *ctx, int rc)
 		P4_WORD("_branch",	&&_branch,	P4_BIT_COMPILE, 0x00),	// p4
 		P4_WORD("_branchz",	&&_branchz,	P4_BIT_COMPILE, 0x10),	// p4
 		P4_WORD("_call",	&&_call,	P4_BIT_COMPILE, 0x0100),// p4
+		P4_WORD("catch_frame",	&&_frame,	0, 0x01),	// p4
 		P4_WORD("_ds",		&&_ds,		0, 0x03),	// p4
 		P4_WORD("_dsp@",	&&_dsp_get,	0, 0x01),	// p4
 		P4_WORD("_dsp!",	&&_dsp_put,	0, 0x10),	// p4
@@ -1558,7 +1559,9 @@ p4Repl(P4_Ctx *ctx, int rc)
 	}
 
 #define NEXT		goto _next
-#define THROW(x)	{ rc = (x); goto _thrown; }
+#define THROWHARD(e)	{ rc = (e); goto _thrown; }
+#define THROW(e)	{ if ((word = p4FindName(ctx, "THROW", STRLEN("THROW"))) != NULL) { \
+				P4_PUSH(ctx->ds, (P4_Int)(e)); goto _forth; } THROWHARD(e); }
 
 	static P4_Word w_inter_loop = P4_WORD("_inter_loop", &&_inter_loop, P4_BIT_HIDDEN, 0x00);
 	static P4_Word w_halt = P4_WORD("_halt", &&_halt, P4_BIT_HIDDEN, 0x00);
@@ -1580,7 +1583,7 @@ _thrown:
 	case P4_THROW_SIGTERM:
 		/* Return shell equivalent exit status. */
 		(void) printf(crlf);
-		return 128+SIGTERM;
+		exit(128+SIGTERM);
 	case P4_THROW_UNDEFINED:
 		p4Bp(ctx);
 		/*@fallthrough@*/
@@ -1618,7 +1621,6 @@ _thrown:
 		/* Historically no message, simply return to REPL. */
 _abort:		(void) fflush(stdout);
 		/* Set exit status within 1..255 */
-		rc = EXIT_FAILURE;
 		P4_RESET(ctx->ds);
 #ifdef HAVE_MATH_H
 		P4_RESET(ctx->fs);
@@ -1681,7 +1683,7 @@ _inter_loop:	while (ctx->input.offset < ctx->input.length) {
 			} else if (ctx->state == P4_STATE_COMPILE && !P4_WORD_IS_IMM(word)) {
 				p4WordAppend(ctx, (P4_Cell) word);
 			} else {
-				exec[0].w = word;
+_forth:				exec[0].w = word;
 				ip = exec;
 				NEXT;
 			}
@@ -1815,7 +1817,7 @@ _fsp_put:	w = P4_POP(ctx->ds);
 
 		// ( n -- )
 _longjmp:	w = P4_POP(ctx->ds);
-		THROW((int) w.n);
+		THROWHARD((int) w.n);
 
 		// ( -- x )
 		// : lit r> dup cell+ >r @ ;
@@ -2044,6 +2046,10 @@ _env:		P4_DROP(ctx->ds, 1);		// Ignore k, S" NUL terminates.
 		x.s = getenv(w.s);
 		P4_TOP(ctx->ds) = x;
 		P4_PUSH(ctx->ds, (P4_Int)(x.s == NULL ? -1 : strlen(x.s)));
+		NEXT;
+
+		// ( -- addr )
+_frame:		P4_PUSH(ctx->ds, (P4_Cell *) &ctx->frame);
 		NEXT;
 
 		// ( -- addr )
@@ -2428,8 +2434,11 @@ _included:	w = P4_POP(ctx->ds);
 		if ((cstr = strndup(x.s, w.u)) == NULL) {
 			THROW(P4_THROW_ALLOCATE);
 		}
-		(void) p4LoadFile(ctx, cstr);
+		rc = p4LoadFile(ctx, cstr);
 		free(cstr);
+		if (rc != 0) {
+			THROW(rc);
+		}
 		NEXT;
 
 
