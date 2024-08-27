@@ -2202,6 +2202,7 @@ _to_rs:		P4STACKISEMPTY(ctx, &ctx->ds, P4_THROW_DS_UNDER);
 		w = P4_POP(ctx->ds);
 		P4STACKISFULL(ctx, &ctx->rs, P4_THROW_RS_OVER);
 		P4_PUSH(ctx->rs, w);
+		P4STACKGUARDS(ctx);
 		NEXT;
 
 		// (R: x -- )
@@ -2209,6 +2210,7 @@ _from_rs:	P4STACKISEMPTY(ctx, &ctx->rs, P4_THROW_RS_UNDER);
 		w = P4_POP(ctx->rs);
 		P4STACKISFULL(ctx, &ctx->ds, P4_THROW_DS_OVER);
 		P4_PUSH(ctx->ds, w);
+		P4STACKGUARDS(ctx);
 		NEXT;
 
 		/*
@@ -2800,6 +2802,7 @@ _fs_to_rs:	P4STACKISEMPTY(ctx, &ctx->ds,P4_THROW_FS_UNDER);
 		w = P4_POP(ctx->P4_FLOAT_STACK);
 		P4STACKISFULL(ctx, &ctx->rs, P4_THROW_RS_OVER);
 		P4_PUSH(ctx->rs, w);
+		P4STACKGUARDS(ctx);
 		NEXT;
 
 		// (R: x -- )
@@ -2807,6 +2810,7 @@ _rs_to_fs:	P4STACKISEMPTY(ctx, &ctx->rs, P4_THROW_RS_UNDER);
 		w = P4_POP(ctx->rs);
 		P4STACKISFULL(ctx, &ctx->fs, P4_THROW_FS_OVER);
 		P4_PUSH(ctx->P4_FLOAT_STACK, w);
+		P4STACKGUARDS(ctx);
 		NEXT;
 	{
 		// ( caddr u -- F:f bool )
