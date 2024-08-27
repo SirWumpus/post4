@@ -1225,11 +1225,7 @@ error0:
 	return NULL;
 }
 
-#ifdef NDEBUG
-# define p4Bp(ctx)
-# define p4Trace(ctx, xt)
-# define p4TraceLit(ctx, w)
-#else
+#ifdef P4_TRACE
 static void
 p4Bp(P4_Ctx *ctx)
 {
@@ -1264,8 +1260,53 @@ p4TraceLit(P4_Ctx *ctx, P4_Cell w)
 		);
 	}
 }
+#else
+# define p4Bp(ctx)
+# define p4Trace(ctx, xt)
+# define p4TraceLit(ctx, w)
 #endif
 
+/* When compiled with debugging add more selective and frequent stack checks. */
+#ifdef NDEBUG
+# define P4BP(ctx)
+# define P4STACKGUARD(ctx, stk, over, under)
+# define P4STACKGUARDS(ctx)
+# define P4STACKISEMPTY(ctx, stk, under)
+# define P4STACKISFULL(ctx, stk, over)
+#else
+# define P4BP(ctx)				p4Bp(ctx)
+# define P4STACKGUARD(ctx, stk, over, under) 	p4StackGuard(ctx, stk, over, under)
+# define P4STACKGUARDS(ctx)			p4StackGuards(ctx)
+# define P4STACKISEMPTY(ctx, stk, under)	p4StackIsEmpty(ctx, stk, under)
+# define P4STACKISFULL(ctx, stk, over)		p4StackIsFull(ctx, stk, over)
+#endif
+
+/*
+ * Stack checks before operation.
+ */
+static void
+p4StackIsEmpty(P4_Ctx *ctx, P4_Stack *stack, int under)
+{
+	ptrdiff_t length = (stack->top + 1 - stack->base);
+	if (length <= 0) {
+		p4Bp(ctx);
+		LONGJMP(ctx->on_throw, under);
+	}
+}
+
+static void
+p4StackIsFull(P4_Ctx *ctx, P4_Stack *stack, int over)
+{
+	ptrdiff_t length = (stack->top + 1 - stack->base);
+	if (stack->size <= length) {
+		p4Bp(ctx);
+		LONGJMP(ctx->on_throw, over);
+	}
+}
+
+/*
+ * Stack checks after operation.
+ */
 static void
 p4StackGuard(P4_Ctx *ctx, P4_Stack *stack, int over, int under)
 {
@@ -1546,11 +1587,14 @@ _thrown:
 		/* Return shell equivalent exit status. */
 		(void) printf(crlf);
 		return 128+SIGTERM;
+	case P4_THROW_UNDEFINED:
+		p4Bp(ctx);
+		/*@fallthrough@*/
 	default:
 #ifdef USE_EXCEPTION_STRINGS
-		(void) printf("%d thrown: %s", rc, P4_THROW_future <= rc && rc < 0 ? p4_exceptions[-rc] : "?");
+		(void) fprintf(stderr, "%d thrown: %s", rc, P4_THROW_future <= rc && rc < 0 ? p4_exceptions[-rc] : "?");
 #else
-		(void) printf("%d thrown", rc);
+		(void) fprintf(stderr, "%d thrown", rc);
 #endif
 		/* Cannot not rely on ctx->state for compilation state, since
 		 * its possible to temporarily change states in the middle of
@@ -1562,7 +1606,7 @@ _thrown:
 			 * definition in an incomplete state; discard it.
 			 */
 			P4_Word *word = ctx->words;
-			(void) printf(
+			(void) fprintf(stderr,
 				" while compiling \" %s \"",
 				word->name.length == 0 ? ":NONAME" : (char *)word->name.string
 			);
@@ -1626,7 +1670,6 @@ _inter_loop:	while (ctx->input.offset < ctx->input.length) {
 				int is_float;
 				if (p4StrNum(str, ctx->radix, &x, &is_float) != str.length) {
 					/* Not a word, not a number. */
-					(void) printf("\" %.*s \" ", (int)str.length, str.string);
 					THROW(P4_THROW_UNDEFINED);
 				}
 				if (ctx->state == P4_STATE_COMPILE) {
@@ -1649,6 +1692,7 @@ _inter_loop:	while (ctx->input.offset < ctx->input.length) {
 				NEXT;
 			}
 		}
+		p4StackIsEmpty(ctx, &ctx->rs, P4_THROW_RS_UNDER);
 		ip = P4_POP(ctx->rs).p;
 		NEXT;
 
@@ -1687,7 +1731,7 @@ _enter:		P4_PUSH(ctx->rs, ip);
 		NEXT;
 
 		// ( i*x -- i*x )(R:ip -- )
-_exit:		p4StackGuards(ctx);
+_exit:		P4STACKGUARDS(ctx);
 		ip = P4_POP(ctx->rs).p;
 		ctx->level--;
 		NEXT;
@@ -2124,11 +2168,13 @@ _resize_null:	if (w.n < 0 && -1024 <= w.n) {
 		 */
 		// ( x -- )
 _drop:		P4_DROP(ctx->ds, 1);
+		P4STACKGUARD(ctx, &ctx->ds, P4_THROW_DS_OVER, P4_THROW_DS_UNDER);
 		NEXT;
 
 		// ( x -- x x )
 _dup:		w = P4_TOP(ctx->ds);
 		P4_PUSH(ctx->ds, w);
+		P4STACKGUARD(ctx, &ctx->ds, P4_THROW_DS_OVER, P4_THROW_DS_UNDER);
 		NEXT;
 
 		// ( xu ... x1 x0 u -- xu ... x1 x0 xu )
@@ -2158,12 +2204,16 @@ _roll:		w = P4_POP(ctx->ds);
 		NEXT;
 
 		// (x -- )(R: -- x )
-_to_rs:		w = P4_POP(ctx->ds);
+_to_rs:		P4STACKISEMPTY(ctx, &ctx->ds, P4_THROW_DS_UNDER);
+		w = P4_POP(ctx->ds);
+		P4STACKISFULL(ctx, &ctx->rs, P4_THROW_RS_OVER);
 		P4_PUSH(ctx->rs, w);
 		NEXT;
 
 		// (R: x -- )
-_from_rs:	w = P4_POP(ctx->rs);
+_from_rs:	P4STACKISEMPTY(ctx, &ctx->rs, P4_THROW_RS_UNDER);
+		w = P4_POP(ctx->rs);
+		P4STACKISFULL(ctx, &ctx->ds, P4_THROW_DS_OVER);
 		P4_PUSH(ctx->ds, w);
 		NEXT;
 
@@ -2752,12 +2802,16 @@ _f_store:	w = P4_POP(ctx->ds);
 		NEXT;
 
 		// (x -- )(R: -- x )
-_fs_to_rs:	w = P4_POP(ctx->P4_FLOAT_STACK);
+_fs_to_rs:	P4STACKISEMPTY(ctx, &ctx->ds,P4_THROW_FS_UNDER);
+		w = P4_POP(ctx->P4_FLOAT_STACK);
+		P4STACKISFULL(ctx, &ctx->rs, P4_THROW_RS_OVER);
 		P4_PUSH(ctx->rs, w);
 		NEXT;
 
 		// (R: x -- )
-_rs_to_fs:	w = P4_POP(ctx->rs);
+_rs_to_fs:	P4STACKISEMPTY(ctx, &ctx->rs, P4_THROW_RS_UNDER);
+		w = P4_POP(ctx->rs);
+		P4STACKISFULL(ctx, &ctx->fs, P4_THROW_FS_OVER);
 		P4_PUSH(ctx->P4_FLOAT_STACK, w);
 		NEXT;
 	{

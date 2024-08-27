@@ -87,6 +87,10 @@ extern "C" {
 #define P4_FILE_ACCESS			1
 #endif
 
+#ifndef P4_TRACE
+#define P4_TRACE			1
+#endif
+
 /***********************************************************************
  *** No configuration below this point.
  ***********************************************************************/
