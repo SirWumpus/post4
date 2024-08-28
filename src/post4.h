@@ -314,6 +314,7 @@ union p4_cell {
 	P4_Word *	w;
 	void *		v;
 	P4_Xt		xt;
+	const P4_Word *	cw;
 };
 
 #define P4_CELL				((P4_Int) sizeof (P4_Cell))

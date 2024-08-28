@@ -1563,20 +1563,20 @@ p4Repl(P4_Ctx *ctx, int rc)
 #define THROW(e)	{ if ((word = p4FindName(ctx, "THROW", STRLEN("THROW"))) != NULL) { \
 				P4_PUSH(ctx->ds, (P4_Int)(e)); goto _forth; } THROWHARD(e); }
 
-	static P4_Word w_inter_loop = P4_WORD("_inter_loop", &&_inter_loop, P4_BIT_HIDDEN, 0x00);
-	static P4_Word w_halt = P4_WORD("_halt", &&_halt, P4_BIT_HIDDEN, 0x00);
-	static P4_Word w_ok = P4_WORD("_ok", &&_ok, P4_BIT_HIDDEN, 0x00);
-	static P4_Cell repl[] = {
-		{.w = &w_interpret}, {.w = &w_ok},  {.w = &w_refill},
-		{.w = &w_branchnz}, {.n = -4 * sizeof (P4_Cell)},
-		{.w = &w_halt}
+	static const P4_Word w_inter_loop = P4_WORD("_inter_loop", &&_inter_loop, P4_BIT_HIDDEN, 0x00);
+	static const P4_Word w_halt = P4_WORD("_halt", &&_halt, P4_BIT_HIDDEN, 0x00);
+	static const P4_Word w_ok = P4_WORD("_ok", &&_ok, P4_BIT_HIDDEN, 0x00);
+	static const P4_Cell repl[] = {
+		{.cw = &w_interpret}, {.cw = &w_ok},  {.cw = &w_refill},
+		{.cw = &w_branchnz}, {.n = -4 * sizeof (P4_Cell)},
+		{.cw = &w_halt}
 	};
 	/* When the REPL executes a word, it puts the XT of the word here
 	 * and executes the word with the IP pointed to exec[].  When the
 	 * word completes the next XT transitions from threaded code back
 	 * into the C driven REPL.
 	 */
-	static P4_Cell exec[] = { { 0 }, {.w = &w_inter_loop} };
+	static P4_Cell exec[] = { { 0 }, {.cw = &w_inter_loop} };
 
 _thrown:
 	switch (rc) {
@@ -1602,9 +1602,9 @@ _thrown:
 			/* A thrown error while compiling a word leaves the
 			 * definition in an incomplete state; discard it.
 			 */
-			P4_Word *word = ctx->words;
+			word = ctx->words;
 			(void) fprintf(stderr,
-				" while compiling \" %s \"",
+				" while compiling %s",
 				word->name.length == 0 ? ":NONAME" : (char *)word->name.string
 			);
 			ctx->words = word->prev;
@@ -1649,7 +1649,7 @@ _quit:		P4_RESET(ctx->rs);
 	case P4_THROW_OK:
 		;
 	}
-	ip = repl+1;
+	ip = (P4_Cell *)(repl+1);
 
 //	do {
 		/* The input buffer might have been primed (EVALUATE, LOAD),
@@ -1862,7 +1862,7 @@ _do_colon:	ctx->state = P4_STATE_COMPILE;
 		word = p4WordCreate(ctx, str.string, str.length, &&_enter);
 		if (word->name.length == 0) {
 			/* :NONAME leaves xt on stack. */
-			P4_PUSH(ctx->ds, ctx->words);
+			P4_PUSH(ctx->ds, word);
 		}
 		/* Save sentinel for control imbalance test below. */
 		P4_PUSH(ctx->ds, (P4_Uint) P4_MARKER);
