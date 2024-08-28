@@ -1534,9 +1534,11 @@ VARIABLE _>pic
 \
 : ENDCASE
 	POSTPONE DROP		\ S: --
-	0 ?DO			\ C: i*forw
-	  POSTPONE THEN		\ C: i'*forw
-	LOOP
+	BEGIN ?DUP WHILE        \ C: n*forw n
+	  1-			\ C: n*forw n'
+	  SWAP			\ C: n'*forw n' forw
+	  POSTPONE THEN		\ C: n'*forw n'
+	REPEAT
 ; IMMEDIATE compile-only
 
 \
@@ -1813,20 +1815,18 @@ VARIABLE _str_buf_curr
 \
 VARIABLE SCR
 
-\ ... LIST ...
-\
 \ (S: u -- )
-\
-: LIST				\ S: u
+: LIST
 	DUP SCR !		\ S: u
 	BLOCK			\ S: caddr
-	16 0 DO
-	  I 1+ 2 .R
+	0 BEGIN			\ S: caddr i
+	  1+ DUP 2 .R		\ S: caddr i'
 	  [CHAR] | EMIT
-	  DUP 64 TYPE		\ S: caddr
+	  OVER 64 TYPE		\ S: caddr i'
 	  [CHAR] | EMIT CR
-	  64 CHARS +		\ S: caddr'
-	LOOP DROP		\ S: --
+	  SWAP 64 CHARS +	\ S: i' caddr'
+	  SWAP DUP 16 >=	\ S: caddr' i' bool
+	UNTIL 2DROP
 ;
 
 \ ... FLUSH ...
@@ -1856,15 +1856,14 @@ VARIABLE SCR
 \
 : EVALUATE _input_push ['] _evaluate CATCH _input_pop THROW ;
 
-\ ... THRU ...
-\
 \ (S: start end -- )
-\
-: THRU				\ S: start end
-	1+ SWAP			\ S: end' start
-	DO			\ S: --
-	  I LOAD
-	LOOP
+: THRU
+	>R >R			\ S:		R: end start
+	BEGIN
+	  R@ LOAD		\ S: 		R: end start
+	  R> 1+ DUP >R		\ S: start'	R: end start'
+	  2 rpick >		\ S: bool	R: end start'
+	UNTIL 2R> 2DROP
 ;
 
 \ ... AT-XY ...
