@@ -2808,7 +2808,7 @@ _f_store:	w = P4_POP(ctx->ds);
 		NEXT;
 
 		// (x -- )(R: -- x )
-_fs_to_rs:	P4STACKISEMPTY(ctx, &ctx->ds,P4_THROW_FS_UNDER);
+_fs_to_rs:	P4STACKISEMPTY(ctx, &ctx->fs,P4_THROW_FS_UNDER);
 		w = P4_POP(ctx->P4_FLOAT_STACK);
 		P4STACKISFULL(ctx, &ctx->rs, P4_THROW_RS_OVER);
 		P4_PUSH(ctx->rs, w);
