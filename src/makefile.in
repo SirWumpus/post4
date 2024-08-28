@@ -31,7 +31,7 @@ CC_E		= @CC_E@
 CC_O		= @CC_O@
 CPPFLAGS	= @CPPFLAGS@
 CWARNINGS	= -Wno-unused-label -funsigned-char -Wno-unused-const-variable
-CFLAGS		= @CFLAGS@ -std=c11 ${CWARNINGS} ${DBG}
+CFLAGS		= @CFLAGS@ -std=c11 ${CPPFLAGS} ${CWARNINGS} ${DBG}
 LDFLAGS		= @LDFLAGS@
 LIBS		= @LIBS@
 

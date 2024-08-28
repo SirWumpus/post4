@@ -212,7 +212,7 @@ p4LoadFile(P4_Ctx *ctx, const char *file)
 {
 	FILE *fp;
 	int rc = P4_THROW_ENOENT;
-	char *p4path, *path, *next, filepath[_XOPEN_PATH_MAX];
+	char *p4path, *path, *next, filepath[PATH_MAX];
 
 	if (file == NULL || *file == '\0') {
 		goto error0;
