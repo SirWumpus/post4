@@ -210,37 +210,31 @@ p4Init(void)
 int
 p4LoadFile(P4_Ctx *ctx, const char *file)
 {
-	struct stat sb;
-	int rc = -1, cwd;
-	char *path_copy, *path, *next;
+	FILE *fp;
+	int rc = P4_THROW_ENOENT;
+	char *p4path, *path, *next, filepath[_XOPEN_PATH_MAX];
 
-	if (file == NULL || *file == '\0' || (cwd = open(".", O_RDONLY)) < 0) {
+	if (file == NULL || *file == '\0') {
 		goto error0;
 	}
-	if ((path_copy = getenv("POST4_PATH")) == NULL || *path_copy == '\0') {
-		path_copy = P4_CORE_PATH;
+	/* strtok() modifies the string as it parses it. */
+	if ((p4path = getenv("POST4_PATH")) == NULL || *p4path == '\0') {
+		p4path = P4_CORE_PATH;
 	}
-	if ((path_copy = strdup(path_copy)) == NULL) {
+	if ((p4path = strdup(p4path)) == NULL) {
 		goto error1;
 	}
-	for (next = path_copy; (path = strtok(next, ":")) != NULL; next = NULL) {
-		if (stat(path, &sb) || !S_ISDIR(sb.st_mode) || chdir(path)) {
-			continue;
-		}
-		if (stat(file, &sb) == 0 && S_ISREG(sb.st_mode)) {
-			break;
+	/* Search "dir0:dir1:...:dirN" string. */
+	for (next = p4path; (path = strtok(next, ":")) != NULL; next = NULL) {
+		(void) snprintf(filepath, sizeof (filepath), "%s/%s", path, file);
+		if ((fp = fopen(filepath, "r")) != NULL) {
+			rc = p4EvalFp(ctx, fp);
+			(void) fclose(fp);
+			return rc;
 		}
 	}
-	if (path == NULL) {
-		warn("%s", file);
-	} else {
-		rc = p4EvalFile(ctx, file);
-	}
-error2:
-	free(path_copy);
 error1:
-	(void) fchdir(cwd);
-	(void) close(cwd);
+	warn("%s", file);
 error0:
 	return rc;
 }
@@ -3034,8 +3028,11 @@ p4EvalFp(P4_Ctx *ctx, FILE *fp)
 
 	/* Do not save STATE, see A.6.1.2250 STATE. */
 	P4_INPUT_PUSH(&ctx->input);
+	SETJMP_PUSH(ctx->on_throw);
+	rc = SETJMP(ctx->on_throw);
 	p4ResetInput(ctx, fp);
-	rc = p4Repl(ctx, P4_THROW_OK);
+	rc = p4Repl(ctx, rc);
+	SETJMP_POP(ctx->on_throw);
 	P4_INPUT_POP(&ctx->input);
 
 	return rc;
