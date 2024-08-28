@@ -1343,7 +1343,7 @@ p4Repl(P4_Ctx *ctx, int rc)
 #define w_semi		words[1]
 		P4_WORD("_abort",	&&_abort,	0, 0x00),
 #define w_abort		words[2]
-		P4_WORD("_quit",	&&_quit,	0, 0x00),
+		P4_WORD("QUIT",		&&_quit,	0, 0x00),
 #define w_quit		words[3]
 		P4_WORD("_interpret",	&&_interpret,	0, 0x00),
 #define w_interpret	words[4]
@@ -1644,6 +1644,7 @@ _quit:		P4_RESET(ctx->rs);
 		/* Discard the current input buffer. */
 		ctx->input.offset = ctx->input.length = 0;
 		ctx->state = P4_STATE_INTERPRET;
+		ctx->frame = 0;
 		/*@fallthrough@*/
 	case P4_THROW_OK:
 		;

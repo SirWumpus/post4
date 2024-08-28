@@ -650,16 +650,6 @@ DEFER _fsp!
 \ ( i*x -- ⊥ )(F: k*x -- ⊥ )( R: j*x -- ⊥ )
 : ABORT -1 THROW ;
 
-\ GH-18
-\ QUIT resumes the REPL and never returns to the caller.
-\ Need to be sure to reset the catch_frame for future
-\ THROW CATCH ABORT or QUIT.
-\
-\ printf "' quit catch \n abort" | ./post4 ; echo $?
-\
-\ ( i*x -- ⊥ )(F: k*x -- ⊥ )
-: QUIT 0 catch_frame ! _quit ;
-
 \ ( xt -- )
 : execute-compiling
 	STATE @ IF EXECUTE EXIT THEN
