@@ -352,7 +352,7 @@ struct p4_word {
 #define P4_WORD_SET_COMPILE(w)		P4_WORD_SET(w, P4_BIT_COMPILE)
 #define P4_WORD_CLEAR_COMPILE(w)	P4_WORD_CLEAR(w, P4_BIT_COMPILE)
 
-#ifdef USE_STACK_CHECKS
+#ifdef NOT_USED_YET
 	P4_Uint		poppush;
 #endif
 #define P4_FS_CAN_POP(w)		(((w)->poppush >> 20) & 0x0F)
