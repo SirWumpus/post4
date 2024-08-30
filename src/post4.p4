@@ -2122,37 +2122,47 @@ END-STRUCTURE
 	R> 2DROP CR		\ S: --  R: --
 ;
 
+\ (S: -- word )
+: _pop_word
+	\ Pop enclosing defintion being compiled.
+	_ctx ctx.words @	\ S: word
+	DUP w.prev @		\ S: word prev
+	_ctx ctx.words !	\ S: word
+;
+
+\ (S: word -- )
+: _push_word
+	\ Push previous enclosing defintion being compiled.
+	DUP w.prev		\ C: word prev
+	_ctx ctx.words @	\ C: word prev curr
+	SWAP ! 			\ C: word
+	_ctx ctx.words !	\ C:
+;
+
 \ : newword ... [: nested words ;] ... ;
 \
 \ (C: -- quotation-sys colon-sys )
 \
 : [:
-	POSTPONE AHEAD
-	\ Pop enclosing defintion being compiled.
-	_ctx ctx.words @	\ C: q-sys
-	DUP w.prev @		\ C: q-sys word
-	_ctx ctx.words !	\ C: q-sys
-	STATE @
+	POSTPONE AHEAD		\ C: forw
+	STATE @			\ S: forw state
+	_pop_word		\ S: forw state word
 	\ Start nested definition.
-	:NONAME			\ C: q-sys c-sys
+	:NONAME			\ C: forw state word xt
 ; IMMEDIATE compile-only
 
 \ : newword ... [: nested words ;] ... ;
 \
-\ (C: quotation-sys colon-sys -- )(S: -- xt )
+\ (C: forw state curr xt -- ) || (S: -- xt )
 \
-: ;]				\ C: q-sys c-sys
+: ;]
 	\ End current nested definition.
-	POSTPONE ;		\ C: q-sys xt
-	>R			\ C: q-sys  R: xt
-	STATE !
-	\ Push previous enclosing defintion being compiled.
-	DUP w.prev		\ C: q-sys prev  R: xt
-	_ctx ctx.words @	\ C: q-sys prev word  R: xt
-	SWAP ! 			\ C: q-sys  R: xt
-	_ctx ctx.words !	\ C: --  R: xt
-	POSTPONE THEN
-	R> POSTPONE LITERAL	\ C: --  R: --
+	POSTPONE ;		\ C: forw state curr xt
+	>R			\ C: forw state curr		R: xt
+	_push_word		\ C: forw state
+	STATE !			\ C:
+	POSTPONE THEN		\ C:				R: xt
+	R> POSTPONE LITERAL	\ C:
 ; IMMEDIATE compile-only
 
 [DEFINED] _fs [IF]
