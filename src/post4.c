@@ -234,7 +234,9 @@ p4LoadFile(P4_Ctx *ctx, const char *file)
 		}
 	}
 error1:
-	warn("%s", file);
+	if (ctx->frame == 0) {
+		warn("%s", file);
+	}
 error0:
 	return rc;
 }
@@ -499,7 +501,7 @@ p4StackDump(FILE *fp, P4_Cell *base, P4_Uint length)
 		if ((count & 3) == 0) {
 			(void) fprintf(fp, "top-%.2u ", (unsigned) length);
 		}
-		(void) fprintf(fp, P4_HEX_FMT" ", cell->u);
+		(void) fprintf(fp, P4_H0X_FMT" ", cell->u);
 		if ((++count & 3) == 0) {
 			(void) fprintf(fp, crlf);
 		}
@@ -521,7 +523,7 @@ p4MemDump(FILE *fp, P4_Char *addr, P4_Size length)
 			/* Format with fixed width hex string, instead
 			 * of as pointer to maintain the dump layout.
 			 */
-			(void) fprintf(fp, P4_HEX_FMT"  ", (long)addr);
+			(void) fprintf(fp, P4_H0X_FMT"  ", (long)addr);
 			s = addr;
 		}
 		(void) fprintf(fp, "%.2x", (unsigned char) *addr);
@@ -1219,16 +1221,18 @@ error0:
 	return NULL;
 }
 
+#define STDERR	stderr
+
 #ifdef P4_TRACE
 static void
 p4Bp(P4_Ctx *ctx)
 {
 	int has_nl = ctx->input.buffer[ctx->input.length-(0 < ctx->input.length)] == '\n';
-	(void) fprintf(stderr, ">> ");
+	(void) fprintf(STDERR, ">> ");
 	for (int i = 0; i < ctx->input.length-has_nl; i++) {
-		(void) fputc(ctx->input.buffer[i] == '\t' ? ' ' : ctx->input.buffer[i], stderr);
+		(void) fputc(ctx->input.buffer[i] == '\t' ? ' ' : ctx->input.buffer[i], STDERR);
 	}
-	(void) fprintf(stderr, "\r\n>> %*c\r\n", (int)ctx->input.offset, '^' );
+	(void) fprintf(STDERR, "\r\n>> %*c\r\n", (int)ctx->input.offset, '^' );
 }
 
 static void
@@ -1236,7 +1240,7 @@ p4Trace(P4_Ctx *ctx, P4_Xt xt)
 {
 	if (ctx->trace) {
 		(void) fprintf(
-			stderr, " ds=%-2d fs=%-2d rs=%-2d %*s%s\r\n",
+			STDERR, " ds=%-2d fs=%-2d rs=%-2d %*s%s\r\n",
 			(int)P4_LENGTH(ctx->ds), (int)P4_LENGTH(ctx->fs), (int)P4_LENGTH(ctx->rs),
 			2 * (int)ctx->level, "", 0 < xt->name.length ? (char *)xt->name.string : ":NONAME"
 		);
@@ -1249,7 +1253,7 @@ p4TraceLit(P4_Ctx *ctx, P4_Cell w)
 	if (ctx->trace) {
 		int is_small = -65536 < w.n && w.n < 65536;
 		(void) fprintf(
-			stderr, is_small ? "%*s"P4_INT_FMT"\r\n" : "%*s"P4_HEX_FMT"\r\n",
+			STDERR, is_small ? "%*s"P4_INT_FMT"\r\n" : "%*s"P4_HEX_FMT"\r\n",
 			19+2*(int)ctx->level, "", w.n
 		);
 	}
@@ -1337,20 +1341,22 @@ p4Repl(P4_Ctx *ctx, int rc)
 	P4_Cell w, x, *ip;
 
 	static P4_Word words[] = {
+		P4_WORD("_nop",		&&_nop,		0, 0x00),	//_p4
+#define w_nop		words[0]
 		P4_WORD("LIT",		&&_lit,		0, 0x01),		// historic
-#define w_lit		words[0]
+#define w_lit		words[1]
 		P4_WORD(";",		&&_exit,	P4_BIT_HIDDEN, 0x10),	// _seext
-#define w_semi		words[1]
+#define w_semi		words[2]
 		P4_WORD("_abort",	&&_abort,	0, 0x00),
-#define w_abort		words[2]
+#define w_abort		words[3]
 		P4_WORD("QUIT",		&&_quit,	0, 0x00),
-#define w_quit		words[3]
+#define w_quit		words[4]
 		P4_WORD("_interpret",	&&_interpret,	0, 0x00),
-#define w_interpret	words[4]
+#define w_interpret	words[5]
 		P4_WORD("REFILL",	&&_refill,	0, 0x01),
-#define w_refill	words[5]
+#define w_refill	words[6]
 		P4_WORD("_branchnz",	&&_branchnz,	0, 0x10),
-#define w_branchnz	words[6]
+#define w_branchnz	words[7]
 #ifdef HAVE_HOOKS
 		P4_WORD("_hook_add",	&&_hook_add,	0, 0x10),	// p4
 		P4_WORD("_hook_call",	&&_hook_call,	0, 0x00),	// p4
@@ -1589,9 +1595,9 @@ _thrown:
 		/*@fallthrough@*/
 	default:
 #ifdef USE_EXCEPTION_STRINGS
-		(void) fprintf(stderr, "%d thrown: %s", rc, P4_THROW_future <= rc && rc < 0 ? p4_exceptions[-rc] : "?");
+		(void) fprintf(STDERR, "%d thrown: %s", rc, P4_THROW_future <= rc && rc < 0 ? p4_exceptions[-rc] : "?");
 #else
-		(void) fprintf(stderr, "%d thrown", rc);
+		(void) fprintf(STDERR, "%d thrown", rc);
 #endif
 		/* Cannot not rely on ctx->state for compilation state, since
 		 * its possible to temporarily change states in the middle of
@@ -1603,7 +1609,7 @@ _thrown:
 			 * definition in an incomplete state; discard it.
 			 */
 			word = ctx->words;
-			(void) fprintf(stderr,
+			(void) fprintf(STDERR,
 				" while compiling %s",
 				word->name.length == 0 ? ":NONAME" : (char *)word->name.string
 			);
@@ -1620,7 +1626,6 @@ _thrown:
 	case P4_THROW_ABORT:
 		/* Historically no message, simply return to REPL. */
 _abort:		(void) fflush(stdout);
-		/* Set exit status within 1..255 */
 		P4_RESET(ctx->ds);
 #ifdef HAVE_MATH_H
 		P4_RESET(ctx->fs);
@@ -1710,6 +1715,7 @@ _halt:	if (P4_INTERACTIVE(ctx)) {
 _bp:		p4Bp(ctx);
 		/*@fallthrough@*/
 
+_nop:
 		// Indirect threading.
 _next:		w = *ip++;
 		p4Trace(ctx, w.xt);
@@ -2706,14 +2712,15 @@ _seext:		word = P4_POP(ctx->ds).xt;
 				word->name.length == 0 ? ":NONAME " : ": %.*s ",
 				(int) word->name.length, word->name.string
 			);
-			for (w.p = word->data; w.p->xt != &w_semi; w.p++) {
+			for (w.p = word->data; w.p->xt != &w_semi || w.p[1].xt == &w_nop; w.p++) {
 				x = *w.p;
 				if (x.w->code == &&_lit) {
 					x = *++w.p;
-					if (x.w != NULL && words <= x.w && p4IsWord(ctx, x.v)) {
+					if (x.w != NULL && words <= x.w && p4IsWord(ctx, x.v) && 0 < x.w->name.length) {
 						(void) printf("[ ' %.*s ] LITERAL ", (int) x.w->name.length, x.w->name.string);
 					} else {
-						(void) printf("[ "P4_INT_FMT" ] LITERAL ", x.n);
+						int is_small = -65536 < x.n && x.n < 65536;
+						(void) printf(is_small ? "[ "P4_INT_FMT" ] LITERAL " : "[ "P4_HEX_FMT" ] LITERAL ", x.n);
 					}
 				} else if (strncmp(x.w->name.string, "_slit", STRLEN("_slit")) == 0) {
 					(void) printf("S\" %s\" ", (char *) &w.p[2]);
@@ -2729,6 +2736,7 @@ _seext:		word = P4_POP(ctx->ds).xt;
 						(void) printf("[ "P4_INT_FMT" CELLS , ] ", (*++w.p).n / P4_CELL);
 					}
 				}
+				/* Use _nop after ; as a marker to continue to see quotations. */
 			}
 			(void) printf(";%s%s\r\n",
 				P4_WORD_IS_IMM(word) ? " IMMEDIATE" : "",

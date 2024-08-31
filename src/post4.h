@@ -234,7 +234,8 @@ typedef double		P4_Float;
 # define P4_INT_FMT	"%ld"
 # define P4_UINT_FMT	"%lu"
 # define P4_FLOAT_FMT	"%lE"
-# define P4_HEX_FMT 	"$%.16lx"
+# define P4_HEX_FMT 	"$%lx"
+# define P4_H0X_FMT 	"0x%.16lx"
 # define DIV		ldiv
 # define DIV_T		ldiv_t
 # define P4_SENTINEL	(0xdeadbeefcafebabeUL)
@@ -244,7 +245,8 @@ typedef uint16_t	P4_Uint_Half;
 typedef float		P4_Float;
 # define P4_INT_FMT	"%d"
 # define P4_UINT_FMT	"%u"
-# define P4_HEX_FMT 	"$%.8x"
+# define P4_HEX_FMT 	"$x"
+# define P4_H0X_FMT 	"0x%.8x"
 # define P4_FLOAT_FMT	"%lE"
 # define DIV		div
 # define DIV_T		div_t
