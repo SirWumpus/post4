@@ -1365,133 +1365,6 @@ VARIABLE _>pic
 	DROP DUP 1+ ROLL >R	\  S: ip j*x n R: ip
 ; \ allow interpret
 
-\ ... limit first DO ... LOOP ...
-\
-\ (C: -- count dest ) || (S: limit first -- ) (R: -- limit first )
-\
-: DO
-	POSTPONE 2>R		\ S:			R: limit first
-	0			\ C: 0
-	POSTPONE BEGIN		\ C: 0 dest
-; IMMEDIATE compile-only
-
-\ ... limit first ?DO ... LOOP ...
-\
-\ (C: -- forw 1 dest ) || (S: limit first -- ) (R: -- limit first )
-\
-: ?DO				\ C:
-	POSTPONE 2>R		\ S:			R: limit first
-	POSTPONE 2R@		\ S: limit first  	R: limit first
-	POSTPONE <>		\ S: flag  		R: limit first
-	POSTPONE IF		\ C: forw
-	1			\ C: forw 1
-	POSTPONE BEGIN		\ C: forw 1 dest
-; IMMEDIATE compile-only
-
-\ ... limit first DO ... IF ... LEAVE THEN ... LOOP ...
-\
-\ (C: n*forw n dest -- n'*forw n' dest )
-: LEAVE
-	>R 1+			\ C: n*forw n'	  	R: dest
-	POSTPONE AHEAD		\ C: n*forw n' forw	R: dest
-	SWAP R>			\ C: n'*forw n' dest
-; IMMEDIATE compile-only
-
-\ ... limit first DO ... test ?LEAVE ... LOOP ...
-\
-\ (C: n*forw n dest -- n'*forw n' dest )
-: ?LEAVE
-	>R			\ C: n*forw		R: dest0
-	POSTPONE IF		\ C: n*forw dest1	R: dest0
-	POSTPONE LEAVE		\ C: n'*forw n' dest1	R: dest0
-	POSTPONE THEN		\ C: n'*forw n'		R: dest0
-	R>			\ C: n'*forw n' dest
-; IMMEDIATE compile-only
-
-\ : X ... limit first DO ... test IF ... UNLOOP EXIT THEN ... LOOP ... ;
-\
-\ (S: --  ) (R: limit index ip -- ip )
-\
-: UNLOOP R> 2R> 2DROP >R ; compile-only
-
-\ ... limit first DO ... LOOP ...
-\
-\ (S: -- flag ) (R: limit index ip -- limit index' ip )
-\
-\ @note
-\	Can count from zero up to the unsigned maximum possible in one cell,
-\	therefore 0 0 DO ... LOOP iterates UINT_MAX+1 times.
-\
-: _loop_inc_test
-	R> 2R> 1+		\ S: ip limit index'
-	2DUP 2>R		\ S: ip limit index'	R: limit index'
-	=			\ S: ip flag		R: limit index'
-	SWAP >R			\ S: flag		R: limit index' ip
-;
-
-\ ... limit first DO ... LOOP ...
-\
-\ (S: n -- flag ) (R: limit index ip -- limit index' ip )
-: _loop_step_test		\ S: n  		R: l x ip
-	R> R> DUP		\ S: n ip x x		R: l
-	3 ROLL + DUP >R		\ S: ip x x'		R: l x'
-	SWAP 2 rpick		\ S: ip x' x l		R: l x'
-	WITHIN INVERT SWAP >R	\ S: bool		R: l x' ip
-
-\ 	\ Add step to index.
-\ 	R> 2R>			\ S: n ip l x
-\ 	3 ROLL +		\ S: ip l x'
-\ 	2DUP 2>R		\ S: ip l x'		R: l x'
-\ \ 	=			\ S: ip bool		R: l x'
-\ \ 	SWAP >R			\ S: bool		R: l x' ip
-\
-\ 	\ Has index crossed (limit-1) and limit boundary?
-\ 	\ ie. (INT_MIN - limit) & INT_MIN != (INT_MIN - limit + index) & INT_MIN
-\ 	SWAP MIN-N SWAP -	\ S: ip x' l'  		R: l x'
-\ 	DUP MIN-N AND		\ S: ip x' l' sign  	R: l x'
-\ 	>R + MIN-N AND R>	\ S: ip cross sign  	R: l x'
-\ 	<> SWAP >R		\ S: flag  		R: l x' ip
-;
-
-\ (C: n*forw n dest -- )
-: _loop_control			\ C: n*forw n dest
-	POSTPONE UNTIL		\ C: n*forw n
-
-	\ Resolve LEAVE forward references.
-	BEGIN ?DUP WHILE        \ C: n*forw n
-	  1-			\ C: n*forw n'
-	  SWAP			\ C: n'*forw n' forw
-	  POSTPONE THEN		\ C: n'*forw n'
-	REPEAT
-
-	\  LEAVE branches to just after UNTIL and before UNLOOP.
-	POSTPONE UNLOOP
-;
-
-\ ... limit first DO ... LOOP ...
-\ (C: n*forw n dest -- )
-: LOOP
-	POSTPONE _loop_inc_test
-	_loop_control
-; IMMEDIATE compile-only
-
-\ ... limit first DO ... +step LOOP ...
-\ (C: n*forw n dest -- )
-: +LOOP
-	\  Loop increment and test.
-	POSTPONE _loop_step_test
-	_loop_control
-; IMMEDIATE compile-only
-
-\ ... limit first DO ... LOOP ...
-\
-\ (S: -- index ) (R: limit index ip -- limit index ip )
-\
-: I R> R@ SWAP >R ; compile-only
-
-\ (S: -- index1 ) (R: limit1 index1 limit2 index2 ip -- limit1 index1 limit2 index2 ip )
-: J 3 rpick ; compile-only
-
 \ ... x CASE ... ENDCASE
 \
 \ (C: -- #of ) (S: x -- x )
@@ -2158,11 +2031,110 @@ END-STRUCTURE
 : ;]
 	\ End current nested definition.
 	POSTPONE ;		\ C: forw state curr xt
+[DEFINED] _seext [IF]
+	POSTPONE _nop
+[THEN]
 	>R			\ C: forw state curr		R: xt
 	_push_word		\ C: forw state
-	STATE !			\ C:
+	STATE !			\ C: forw
 	POSTPONE THEN		\ C:				R: xt
 	R> POSTPONE LITERAL	\ C:
+; IMMEDIATE compile-only
+
+\ ... limit first DO ... LOOP ...
+\
+\ (C: -- 0 forw state curr xt ) || (S: limit first -- ) (R: -- limit first )
+\
+: DO
+	0			\ C: 0
+	POSTPONE 2>R		\ S:			R: lm ix
+	POSTPONE BEGIN		\ C: 0 dest
+	\ Loop body is an anonymouse word for LEAVE.
+	POSTPONE [:		\ C: 0 dest forw state curr xt
+; IMMEDIATE compile-only
+
+\ ... limit first ?DO ... LOOP ...
+\
+\ (C: -- forw forw state curr xt ) || (S: limit first -- ) (R: -- limit first )
+\
+: ?DO
+	POSTPONE 2>R		\ S:			R: lm ix
+	POSTPONE 2R@		\ S: lm ix		R: lm ix
+	POSTPONE <>		\ S: bool
+	POSTPONE IF -1		\ C: forw -1		R: lm ix
+	\ Loop body is an anonymouse word for LEAVE.
+	POSTPONE BEGIN		\ C: forw -1 dest
+	POSTPONE [:			\ C: forw -1 dest forw state curr xt
+; IMMEDIATE compile-only
+
+\ : X ... limit first DO ... test IF ... UNLOOP EXIT THEN ... LOOP ... ;
+\
+\ (S: --  ) (R: limit index ip -- ip )
+\
+: UNLOOP R> 2R> 2DROP >R ; compile-only
+
+\ ... limit first DO ... IF ... LEAVE THEN ... LOOP ...
+: LEAVE POSTPONE TRUE POSTPONE EXIT ; IMMEDIATE compile-only
+
+\ (S: -- index ) (R: limit index ip1 ip0 -- limit index ip1 ip0 )
+: I 3 rpick ; compile-only
+
+\ (S: -- index1 ) (R: limit1 index1 limit2 index2 ip1 ip0  -- limit1 index1 limit2 index2 ip1 ip0  )
+: J 5 rpick ; compile-only
+
+\ ... limit first DO ... LOOP ...
+\
+\ (S: -- bool ) (R: limit index -- limit index' )
+\
+\ @note
+\	Can count from zero up to the unsigned maximum possible in one cell,
+\	therefore 0 0 DO ... LOOP iterates UINT_MAX+1 times.
+\
+: _loop_inc_test		\ S: 			R: lm ix' r1 r0
+	R> R> 2R> 1+		\ S: r0 r1 lm ix'
+	2DUP 2>R		\ S: r0 r1 lm ix'	R: lm ix'
+	=			\ S: r0 r1 bool		R: lm ix'
+	ROT ROT >R >R		\ S: bool		R: lm ix' r1 r0
+;
+
+\ (S: n -- bool ) (R: limit index -- limit index' )
+: _loop_step_test		\ S: n  		R: l x r1 r0
+	\ Save our return and noname return.
+	R> R> ROT		\ S: r0 r1 n 		R: l x
+	\ Increment index.
+	R> DUP ROT + DUP >R	\ S: r0 r1 x x'		R: l x'
+
+	\ (x-l) xor (x'-l) < 0
+	2 rpick -		\ S: r0 r1 x d'		R: l x'
+	SWAP 2 rpick -		\ S: r0 r1 d' d		R: l x'
+	XOR 0<			\ S: r0 r1 bool		R: l x'
+
+	\ Restore return stack.
+	ROT ROT >R >R		\ S: bool		R: l x' ip1 ip0
+;
+
+\ (C: forw? n dest forw state curr xt test -- )
+: _loop_control
+	POSTPONE ;]		\ C: forw? n dest			R: test
+	  POSTPONE EXECUTE	\ C: forw? n dest			R: test
+	POSTPONE UNTIL		\ C: forw? n
+	\ Complete ?DO initial test.
+	0< IF			\ C: forw?
+	  POSTPONE THEN		\ C:
+	THEN			\ C:
+	POSTPONE UNLOOP
+;
+
+\ ... limit first DO ... LOOP ...
+\ (C: forw? n forw curr state xt -- ) || (S: -- )(R: limit index -- )
+: LOOP
+	['] _loop_inc_test COMPILE, _loop_control
+; IMMEDIATE compile-only
+
+\ ... limit first DO ... +step LOOP ...
+\ (C: forw? n forw curr state xt -- ) || (S: -- )(R: limit index -- )
+: +LOOP
+	['] _loop_step_test COMPILE, _loop_control
 ; IMMEDIATE compile-only
 
 [DEFINED] _fs [IF]
