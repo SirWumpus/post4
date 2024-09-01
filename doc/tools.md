@@ -144,25 +144,6 @@ List defined words
 
 ### Post4 Specific Words
 
-### alias
-( `xt` -- `<spaces>name` )  
-Create an alias word for `xt`.
-
-- - -
-#### bye-code
-( `exit_code` -- )  
-Terminate and return to the host OS an exit code; zero (0) for normal/success, non-zero an error occurred.
-
-#### C?
-( `caddr` -- )  
-Display the character value stored at `caddr`.
-
-- - -
-#### _bp
-( -- )  
-Breakpoint.  Display current source buffer position.  Intended as convenient function, with no side effects, to set a breakpoint while debugging.
-
-- - -
 #### .fs
 ( -- )  
 Dump the float stack.
@@ -171,6 +152,51 @@ Dump the float stack.
 #### .rs
 ( -- )  
 Dump the return stack.
+
+- - -
+#### alias
+( `xt` -- `<spaces>name` )  
+Create an alias word for `xt`.
+
+- - -
+#### bye-code
+( `exit_code` -- )  
+Terminate and return to the host OS an exit code; zero (0) for normal/success, non-zero an error occurred.
+
+- - -
+#### c?
+( `caddr` -- )  
+Display the character value stored at `caddr`.
+
+- - -
+#### stack_length
+( `stk` -- `u` )  
+Return the current stack length (depth).
+
+- - -
+#### stack_pop
+( `stk` -- `x` )  
+Pop the top of the stack `stk` returning `x`.
+
+- - -
+#### stack_push
+( `x` `stk` -- )  
+Push `x` onto the stack `stk`.  *Currently no overflow checking.*
+
+- - -
+#### stack_tmp
+( `u` -- `stk` )  
+Allocate a stack of `u` cells returning `stk`.  Use `FREE` to discard.
+
+- - -
+#### trace
+( -- `aaddr` )  
+Return the address `aaddr` of the trace variable; set true for tracing, otherwise false to disable.
+
+- - -
+#### _bp
+( -- )  
+Breakpoint.  Display current source buffer position.  Intended as convenient function, with no side effects, to set a breakpoint while debugging.
 
 - - -
 #### _seext
