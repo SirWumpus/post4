@@ -26,5 +26,7 @@ jobs:
       run: make test
     - name: test with JNI
       run: cd jni && make test
+    - name: run life1d example
+      run: cd src && make build && ./post4 ../examples/life1d.p4
     - name: make distclean
       run: make distclean
