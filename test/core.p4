@@ -535,6 +535,10 @@ T{ 7 1 tw_do3 -> 1 2 3 }T
 T{ 7 2 tw_do3 -> 2 3 }T
 T{ 7 3 tw_do3 -> 3 }T
 T{ 7 4 tw_do3 -> }T
+T{ 7 5 tw_do3 -> }T
+
+: tw_do4 2 0 DO 4 1 DO I J + LOOP LOOP ;
+t{ tw_do4 -> 1 2 3 2 3 4 }t
 test_group_end
 
 .( ?DO LOOP +LOOP I LEAVE ) test_group
@@ -564,6 +568,9 @@ T{ -1 2 qd4 -> 2 1 0 -1 }T
 T{   1 50 qd5 -> 50 40 30 20 10   }T
 T{   0 50 qd5 -> 50 40 30 20 10 0 }T
 T{ -25 10 qd5 -> 10 0 -10 -20     }T
+
+: qd6 20 0 DO 4 1 DO I J + LOOP 10 +LOOP ;
+t{ qd6 -> 1 2 3 11 12 13 }t
 
 VARIABLE qditerations
 VARIABLE qdincrement

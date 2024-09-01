@@ -2041,46 +2041,57 @@ END-STRUCTURE
 	R> POSTPONE LITERAL	\ C:
 ; IMMEDIATE compile-only
 
+: stack_tmp ( u -- aaddr ) 1+ CELLS ALLOCATE THROW DUP DUP CELL+ SWAP ! ;
+: stack_push ( n stack -- ) TUCK @ ! /CELL SWAP +! ;
+: stack_pop ( stack -- n ) /CELL NEGATE OVER +! DUP @ TUCK  >= ABORT" tmp. stack underflow" @ ;
+: stack_length ( stack -- n ) DUP @ SWAP - /CELL / 1- ;
+
+VARIABLE _do_sys_stk
+: _do_sys_new ( -- ) _do_sys_stk @ 8 stack_tmp DUP _do_sys_stk ! stack_push ;
+: _do_sys_end ( -- ) _do_sys_stk @ DUP stack_pop _do_sys_stk ! FREE DROP ;
+
 \ ... limit first DO ... LOOP ...
 \
-\ (C: -- 0 forw state curr xt ) || (S: limit first -- ) (R: -- limit first )
+\ (C: -- dest ) || (S: limit first -- )(R: -- limit first )
 \
 : DO
-	0			\ C: 0
 	POSTPONE 2>R		\ S:			R: lm ix
-	POSTPONE BEGIN		\ C: 0 dest
-	\ Loop body is an anonymouse word for LEAVE.
-	POSTPONE [:		\ C: 0 dest forw state curr xt
+	_do_sys_new
+	POSTPONE BEGIN		\ C: dest
 ; IMMEDIATE compile-only
 
 \ ... limit first ?DO ... LOOP ...
 \
-\ (C: -- forw forw state curr xt ) || (S: limit first -- ) (R: -- limit first )
+\ (C: -- dest ) || (S: limit first -- )(R: -- limit first )
 \
 : ?DO
 	POSTPONE 2>R		\ S:			R: lm ix
 	POSTPONE 2R@		\ S: lm ix		R: lm ix
 	POSTPONE <>		\ S: bool
-	POSTPONE IF -1		\ C: forw -1		R: lm ix
-	\ Loop body is an anonymouse word for LEAVE.
-	POSTPONE BEGIN		\ C: forw -1 dest
-	POSTPONE [:			\ C: forw -1 dest forw state curr xt
+	_do_sys_new
+	POSTPONE IF		\ C: forw 		R: lm ix
+	_do_sys_stk @ stack_push
+	POSTPONE BEGIN		\ C: dest
 ; IMMEDIATE compile-only
 
 \ : X ... limit first DO ... test IF ... UNLOOP EXIT THEN ... LOOP ... ;
 \
 \ (S: --  ) (R: limit index ip -- ip )
-\
 : UNLOOP R> 2R> 2DROP >R ; compile-only
 
 \ ... limit first DO ... IF ... LEAVE THEN ... LOOP ...
-: LEAVE POSTPONE TRUE POSTPONE EXIT ; IMMEDIATE compile-only
+\
+\ (C: -- )
+: LEAVE
+	POSTPONE AHEAD
+	_do_sys_stk @ stack_push
+; IMMEDIATE compile-only
 
-\ (S: -- index ) (R: limit index ip1 ip0 -- limit index ip1 ip0 )
-: I 3 rpick ; compile-only
+\ (S: -- index )(R: limit index ip -- limit index ip )
+: I  R> R@ SWAP >R ; compile-only
 
-\ (S: -- index1 ) (R: limit1 index1 limit2 index2 ip1 ip0  -- limit1 index1 limit2 index2 ip1 ip0  )
-: J 5 rpick ; compile-only
+\ (S: -- index1 )(R: limit1 index1 limit0 index0 ip -- limit1 index1 limit0 index0 ip )
+: J 4 rpick ; compile-only
 
 \ ... limit first DO ... LOOP ...
 \
@@ -2090,51 +2101,55 @@ END-STRUCTURE
 \	Can count from zero up to the unsigned maximum possible in one cell,
 \	therefore 0 0 DO ... LOOP iterates UINT_MAX+1 times.
 \
-: _loop_inc_test		\ S: 			R: lm ix' r1 r0
-	R> R> 2R> 1+		\ S: r0 r1 lm ix'
-	2DUP 2>R		\ S: r0 r1 lm ix'	R: lm ix'
-	=			\ S: r0 r1 bool		R: lm ix'
-	ROT ROT >R >R		\ S: bool		R: lm ix' r1 r0
+: _loop_inc_test		\ S: 			R: lm ix' r0
+	R> 2R> 1+		\ S: r0 lm ix'
+	2DUP 2>R		\ S: r0 lm ix'		R: lm ix'
+	=			\ S: r0 bool		R: lm ix'
+	SWAP >R			\ S: bool		R: lm ix' r0
 ;
 
 \ (S: n -- bool ) (R: limit index -- limit index' )
-: _loop_step_test		\ S: n  		R: l x r1 r0
-	\ Save our return and noname return.
-	R> R> ROT		\ S: r0 r1 n 		R: l x
+: _loop_step_test		\ S: n  		R: l x r0
+	R> SWAP			\ S: r0 n 		R: l x
 	\ Increment index.
-	R> DUP ROT + DUP >R	\ S: r0 r1 x x'		R: l x'
+	R> DUP ROT + DUP >R	\ S: r0 x x'		R: l x'
 
 	\ (x-l) xor (x'-l) < 0
-	2 rpick -		\ S: r0 r1 x d'		R: l x'
-	SWAP 2 rpick -		\ S: r0 r1 d' d		R: l x'
-	XOR 0<			\ S: r0 r1 bool		R: l x'
+	2 rpick -		\ S: r0 x d'		R: l x'
+	SWAP 2 rpick -		\ S: r0 d' d		R: l x'
+	XOR 0<			\ S: r0 bool		R: l x'
 
 	\ Restore return stack.
-	ROT ROT >R >R		\ S: bool		R: l x' ip1 ip0
+	SWAP >R			\ S: bool		R: lm ix' r0
 ;
 
-\ (C: forw? n dest forw state curr xt test -- )
+\ (C: dest -- )
 : _loop_control
-	POSTPONE ;]		\ C: forw? n dest			R: test
-	  POSTPONE EXECUTE	\ C: forw? n dest			R: test
-	POSTPONE UNTIL		\ C: forw? n
-	\ Complete ?DO initial test.
-	0< IF			\ C: forw?
-	  POSTPONE THEN		\ C:
-	THEN			\ C:
+	POSTPONE UNTIL
+
+	BEGIN
+	  _do_sys_stk @ stack_length 1 >
+	WHILE
+	  _do_sys_stk @ stack_pop
+	  POSTPONE THEN
+	REPEAT
+	_do_sys_end
+
 	POSTPONE UNLOOP
 ;
 
 \ ... limit first DO ... LOOP ...
-\ (C: forw? n forw curr state xt -- ) || (S: -- )(R: limit index -- )
+\ (C: n*forw n dest -- ) || (S: -- )(R: limit index -- )
 : LOOP
-	['] _loop_inc_test COMPILE, _loop_control
+	POSTPONE _loop_inc_test
+	_loop_control
 ; IMMEDIATE compile-only
 
 \ ... limit first DO ... +step LOOP ...
-\ (C: forw? n forw curr state xt -- ) || (S: -- )(R: limit index -- )
+\ (C: n*forw n dest -- ) || (S: -- )(R: limit index -- )
 : +LOOP
-	['] _loop_step_test COMPILE, _loop_control
+	POSTPONE _loop_step_test
+	_loop_control
 ; IMMEDIATE compile-only
 
 [DEFINED] _fs [IF]

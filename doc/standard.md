@@ -285,12 +285,6 @@ Mark the start of `?DO ... +LOOP` or `?DO ... LOOP`.
 Duplicate `x` if it is non-zero.
 
 - - -
-#### ?LEAVE
-( -- )  
-
-        : SOMEWORD ... limit first DO ... test ?LEAVE ... LOOP ... ;
-
-- - -
 #### @
 ( `aaddr` -- `x` )  
 Fetch from `aaddr` the value `x` stored there.
