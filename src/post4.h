@@ -383,6 +383,7 @@ typedef struct {
 } P4_Array, P4_Stack;
 
 # define P4_PICK(stack, offset)		((stack).top[-(offset)])
+# define P4_INDEX(stack, index)		((stack).base[index])
 # define P4_TOP(stack)			(*(stack).top)
 # define P4_POP(stack)			(*(stack).top--)
 # define P4_PUSH(stack, x)		(*++(stack).top = (P4_Cell)(x))
@@ -391,6 +392,11 @@ typedef struct {
 # define P4_SET(stack, n)		((stack).top = (stack).base + (n) - 1)
 # define P4_RESET(stack)		P4_SET(stack, 0)
 # define P4_GUARD_CELLS			4
+
+# define P4_PLENGTH(stk)		((stk)->top + 1 - (stk)->base)
+# define P4_PSET(stk, n)		((stk)->top = (stk)->base + (n) - 1)
+# define P4_PRESET(stk)			P4_PSET(stk, 0)
+
 
 typedef enum {
 	P4_STATE_INTERPRET,

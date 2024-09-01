@@ -1167,8 +1167,8 @@ p4CreateStack(P4_Stack *stk, int size)
 	stk->base += P4_GUARD_CELLS/2;
 	stk->base[size].u = P4_SENTINEL;
 	stk->base[-1].u = P4_SENTINEL;
-	stk->top = stk->base - 1;
 	stk->size = size;
+	P4_PRESET(stk);
 	return 0;
 }
 
@@ -1285,7 +1285,7 @@ p4TraceLit(P4_Ctx *ctx, P4_Cell w)
 static void
 p4StackIsEmpty(P4_Ctx *ctx, P4_Stack *stack, int under)
 {
-	ptrdiff_t length = (stack->top + 1 - stack->base);
+	ptrdiff_t length = P4_PLENGTH(stack);
 	if (length <= 0) {
 		p4Bp(ctx);
 		LONGJMP(ctx->on_throw, under);
@@ -1295,7 +1295,7 @@ p4StackIsEmpty(P4_Ctx *ctx, P4_Stack *stack, int under)
 static void
 p4StackIsFull(P4_Ctx *ctx, P4_Stack *stack, int over)
 {
-	ptrdiff_t length = (stack->top + 1 - stack->base);
+	ptrdiff_t length = P4_PLENGTH(stack);
 	if (stack->size <= length) {
 		p4Bp(ctx);
 		LONGJMP(ctx->on_throw, over);
@@ -1309,7 +1309,7 @@ static void
 p4StackGuard(P4_Ctx *ctx, P4_Stack *stack, int over, int under)
 {
 	int i;
-	ptrdiff_t length = (stack->top + 1 - stack->base);
+	ptrdiff_t length = P4_PLENGTH(stack);
 	if (length < 0 || stack->base[-1].u != P4_SENTINEL) {
 		p4Bp(ctx);
 		stack->base[-1].u = P4_SENTINEL;
