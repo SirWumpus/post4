@@ -2041,7 +2041,8 @@ END-STRUCTURE
 	R> POSTPONE LITERAL	\ C:
 ; IMMEDIATE compile-only
 
-: stack_tmp ( u -- aaddr ) 1+ CELLS ALLOCATE THROW DUP DUP CELL+ SWAP ! ;
+: stack_new ( u <spaces>name -- ) CREATE 1+ CELLS reserve DUP CELL+ SWAP ! ;
+: stack_tmp ( u -- stack ) 1+ CELLS ALLOCATE THROW DUP DUP CELL+ SWAP ! ;
 : stack_push ( n stack -- ) TUCK @ ! /CELL SWAP +! ;
 : stack_pop ( stack -- n ) /CELL NEGATE OVER +! DUP @ TUCK  >= ABORT" tmp. stack underflow" @ ;
 : stack_length ( stack -- n ) DUP @ SWAP - /CELL / 1- ;

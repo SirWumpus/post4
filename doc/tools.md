@@ -174,6 +174,11 @@ Display the character value stored at `caddr`.
 Return the current stack length (depth).
 
 - - -
+#### stack_new 
+( `u` `<spaces>name` -- )  
+Create a stack of `u` cells with `name`.  Invoking `name` will puts `stk` address on the stack.
+
+- - -
 #### stack_pop
 ( `stk` -- `x` )  
 Pop the top of the stack `stk` returning `x`.
