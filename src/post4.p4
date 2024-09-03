@@ -40,6 +40,9 @@ MARKER rm_core_words
 \ ( -- )
 ' _bp alias _bpnow immediate
 
+\ ( -- )
+' _nop alias post4
+
 \ ( xt -- )
 ' , alias COMPILE, compile-only
 

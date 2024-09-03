@@ -1373,6 +1373,11 @@ Push the return stack's size.
 Push the data stack's size.
 
 - - -
+#### post4
+( -- )  
+A defined word for the implementation.  Currently does nothing but subject to change.
+
+- - -
 #### _branch
 ( -- )  
 Branch relative.  The integer that immediately follows is the relative distance in address units from the integer's address.  Used in the definition of flow control words, like `AGAIN` and `AHEAD`, `ELSE`, `REPEAT`.
