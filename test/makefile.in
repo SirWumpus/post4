@@ -46,7 +46,7 @@ build: title post4$E
 
 clean : title
 	-rm -f *.o *.obj *.i *.map *.tds *.TR2 *.stackdump core *.core core.* *.log
-	-rm -f a.out$E post4$E
+	-rm -f a.out$E see.out post4$E
 
 distclean: clean
 	-rm -f config.h config.h.in makefile
@@ -60,8 +60,12 @@ title :
 	@echo '***************************************************************'
 	@echo
 
+tests: test test_quit see_all
+
 test : ${POST4}
 	POST4_PATH=../src ${POST4} ./units.p4
+
+test_quit : ${POST4}
 	@echo Testing QUIT...
 	! printf "' QUIT CATCH \n ABORT" | ${POST4} -c ${WORDS}
 	! printf "' QUIT CATCH \n -1 THROW" | ${POST4} -c ${WORDS}
@@ -69,3 +73,10 @@ test : ${POST4}
 	printf 'S" 0 THROW" '\'' EVALUATE CATCH' | ${POST4} -c ${WORDS}
 	printf 'S" -1 THROW" '\'' EVALUATE CATCH' | ${POST4} -c ${WORDS}
 	printf ": tw_keep_ds [: 123 QUIT ;] CATCH 456 . THROW ;\n tw_keep_ds \n . CR" | ${POST4} -c ${WORDS}
+
+# Test SEE against all words to check if any result in some failure like SEGFAULT.
+see_all: ${POST4}
+	echo WORDS | ${POST4} -c ${WORDS} \
+	  | sed 's/[[:space:][:cntrl:]]*$$//; s/[^[:space:][:cntrl:]]*/SEE &/g'\
+	  | ${POST4} -c ${WORDS} >see.out 2>&1
+	@echo "-OK-"

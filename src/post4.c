@@ -1221,7 +1221,7 @@ error0:
 	return NULL;
 }
 
-#define STDERR	stderr
+#define STDERR	stdout
 
 #ifdef P4_TRACE
 static void
@@ -2725,6 +2725,9 @@ _seext:		word = P4_POP(ctx->ds).xt;
 				} else if (strncmp(x.w->name.string, "_slit", STRLEN("_slit")) == 0) {
 					(void) printf("S\" %s\" ", (char *) &w.p[2]);
 					w.u += P4_CELL + P4_CELL_ALIGN(w.p[1].u + 1);
+				} else if (strncmp(x.w->name.string, "flit", STRLEN("flit")) == 0) {
+					/* Test: SEE FNEGATE */
+					(void) printf("%.*lF ", (int) ctx->precision, (*++w.p).f);
 				} else {
 					(void) printf("%.*s ", (int) x.w->name.length, x.w->name.string);
 					if (x.w->code == &&_branch || x.w->code == &&_branchz

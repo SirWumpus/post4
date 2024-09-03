@@ -91,7 +91,7 @@ post4$E : config.h post4.h hooks.c post4.c
 post4.i : config.h post4.h post4.c
 	${CC} -E ${CFLAGS} -DTEST -DP4_BUILT="\"${BUILT}\"" post4.c >$*.i
 
-test : post4$E
+test tests: post4$E
 	cd ../test && ${MAKE} $@
 
 valgrind: post4$E
