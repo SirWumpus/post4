@@ -22,8 +22,8 @@ jobs:
       run: ./configure
     - name: make
       run: make
-    - name: make test
-      run: make test
+    - name: make tests
+      run: make tests
     - name: test with JNI
       run: cd jni && make test
     - name: run life1d example
