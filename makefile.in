@@ -84,7 +84,7 @@ clean : title _clean
 distclean : title _distclean
 	@for i in $(BUILD_DIRS); do ( cd $$i; ${MAKE} ${MAKEFLAGS} $@ ); done
 
-test : build
+test tests : build
 	@cd src; $(MAKE) $@
 
 title :
