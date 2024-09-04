@@ -626,6 +626,15 @@ t{ : tw_eval_7 tw_eval_2 tw_eval_6 ; -> }t
 t{   tw_eval_7        -> 123 }t
 t{ : tw_eval_8 tw_eval_3 tw_eval_6 ; -> }t
 t{   tw_eval_8        -> 124 }t
+
+\ GH-16 Nested EVALUATE.
+t{ S\" 123 '\"' 456" EVALUATE -> 123 CHAR " 456 }t
+\ 2-deep
+t{ S\" 123 S\\\" 456 \" EVALUATE 789" EVALUATE -> 123 456 789 }t
+\ 3-deep
+t{ S\" 123 S\\\" 456 tw_eval_1 \" EVALUATE" EVALUATE -> 123 456 9876 }t
+\ 3-deep don't try this at home
+t{ S\" 123 S\\\" 456 S\\\\\\\" 789 \\\" EVALUATE 234\" EVALUATE 567" EVALUATE -> 123 456 789 234 567 }t
 test_group_end
 
 .( <# # #> ) test_group
