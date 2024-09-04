@@ -81,7 +81,7 @@ build :
 clean : title _clean
 	@for i in $(BUILD_DIRS); do ( cd $$i; ${MAKE} ${MAKEFLAGS} $@ ); done
 
-distclean : title _distclean
+clobber distclean : title _distclean
 	@for i in $(BUILD_DIRS); do ( cd $$i; ${MAKE} ${MAKEFLAGS} $@ ); done
 
 test tests : build

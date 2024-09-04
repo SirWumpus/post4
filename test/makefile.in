@@ -48,7 +48,7 @@ clean : title
 	-rm -f *.o *.obj *.i *.map *.tds *.TR2 *.stackdump core *.core core.* *.log
 	-rm -f a.out$E see.out post4$E
 
-distclean: clean
+clobber distclean: clean
 	-rm -f config.h config.h.in makefile
 
 realclean: distclean

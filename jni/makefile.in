@@ -71,7 +71,7 @@ all: build
 clean: title
 	-rm *.i *$O *.class *.core *.log
 
-distclean: clean
+clobber distclean: clean
 	-rm -rf *$L *.dll *$A makefile ./post4
 
 build: title ${LIBNAME} Post4Exception$C Post4Options$C Post4Stacks$C Post4$C
