@@ -230,11 +230,12 @@ p4LoadFile(P4_Ctx *ctx, const char *file)
 		if ((fp = fopen(filepath, "r")) != NULL) {
 			rc = p4EvalFp(ctx, fp);
 			(void) fclose(fp);
-			return rc;
+			break;
 		}
 	}
+	free(p4path);
 error1:
-	if (ctx->frame == 0) {
+	if (rc != P4_THROW_OK && ctx->frame == 0) {
 		warn("%s", file);
 	}
 error0:
