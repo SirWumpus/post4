@@ -1558,6 +1558,7 @@ VARIABLE _str_buf_curr
 	  MOVE 0 C, ALIGN	\ S: --
 ; IMMEDIATE compile-only
 
+\ (S: caddr1 u -- caddr2 u' )
 : _string0_store
 	STATE @ IF
 	  POSTPONE SLITERAL
@@ -1766,11 +1767,15 @@ VARIABLE SCR
 \
 : PAGE 0 0 AT-XY S\" \e[0J" TYPE ;
 
-\ ... INCLUDE filename ...
-\
-\ (S: <spaces>filename" -- )
-\
-: INCLUDE PARSE-NAME INCLUDED ;
+\ (S: i*x caddr u -- j*x )
+: INCLUDED
+	R/O OPEN-FILE THROW
+	DUP >R INCLUDE-FILE DROP
+	R> CLOSE-FILE DROP
+;
+
+\ (S: i*x <spaces>filename" -- j*x )
+: INCLUDE PARSE-NAME _string0_store INCLUDED ;
 
 \ ... ACTION-OF ...
 \

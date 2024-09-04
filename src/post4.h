@@ -425,7 +425,6 @@ struct p4_ctx {
 	P4_Input	input;
 	P4_Block	block;
 	P4_Int		block_fd;
-	P4_Char		tty[P4_INPUT_SIZE];
 #ifdef WITH_JAVA
 	void *		jenv;
 #endif
@@ -517,7 +516,7 @@ typedef struct {
 #define P4_THROW__66		(-66)	/* FILE-SIZE */
 #define P4_THROW__67		(-67)	/* FILE-STATUS */
 #define P4_THROW__68		(-68)	/* FLUSH-FILE */
-#define P4_THROW__69		(-69)	/* OPEN-FILE */
+#define P4_THROW_OPEN		(-69)	/* OPEN-FILE */
 #define P4_THROW__70		(-70)	/* READ-FILE */
 #define P4_THROW__71		(-71)	/* READ-LINE */
 #define P4_THROW__72		(-72)	/* RENAME-FILE */

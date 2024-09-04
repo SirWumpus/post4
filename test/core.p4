@@ -925,6 +925,10 @@ test_group_end
 .( INCLUDE INCLUDED ) test_group
 T{ 0 INCLUDE ../test/data/increment_tos.p4 -> 1 }T
 T{ 2 S" ../test/data/increment_tos.p4" INCLUDED  -> 3 }T
+
+\ GH-16 Nesting INCLUDE et al.
+t{ INCLUDE ../test/data/include1.p4 -> 123 666 999 789 456 }t
+t{ S" ../test/data/include1.p4" INCLUDED -> 123 666 999 789 456 }t
 test_group_end
 
 .( RECURSE ) test_group

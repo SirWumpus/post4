@@ -1141,6 +1141,7 @@ p4Free(P4_Ctx *ctx)
 #endif
 		free(ctx->ds.base - P4_GUARD_CELLS/2);
 		free(ctx->rs.base - P4_GUARD_CELLS/2);
+		free(ctx->input.buffer);
 		free(ctx->mem);
 		free(ctx);
 	}
@@ -1150,8 +1151,6 @@ static void
 p4ResetInput(P4_Ctx *ctx, FILE *fp)
 {
 	ctx->input.fp = fp;
-	ctx->input.size = sizeof (ctx->tty);
-	ctx->input.buffer = ctx->tty;
 	ctx->input.length = 0;
 	ctx->input.offset = 0;
 	ctx->input.blk = 0;
@@ -1182,10 +1181,15 @@ p4Create(P4_Options *opts)
 	}
 	ctx->radix = 10;
 	ctx->unkey = EOF;
-	p4ResetInput(ctx, stdin);
 	ctx->argc = opts->argc;
 	ctx->argv = opts->argv;
 	ctx->state = P4_STATE_INTERPRET;
+
+	if ((ctx->input.buffer = calloc(1, P4_INPUT_SIZE)) == NULL) {
+		goto error0;
+	}
+	ctx->input.size = P4_INPUT_SIZE;
+	p4ResetInput(ctx, stdin);
 
 	/* GH-5 Clear initial memory space to placate Valgrind. */
 	if ((ctx->mem = calloc(1, opts->mem_size * 1024)) == NULL) {
@@ -1540,7 +1544,6 @@ p4Repl(P4_Ctx *ctx, int rc)
 		P4_WORD("EMPTY-BUFFERS", &&_empty_buffers, 0, 0x00),
 		P4_WORD("epoch-seconds", &&_epoch_seconds, 0, 0x01),	// p4
 		P4_WORD("FIND-NAME",	&&_find_name,	0, 0x21),
-		P4_WORD("INCLUDED",	&&_included,	0, 0x20),
 		P4_WORD("KEY",		&&_key,		0, 0x01),
 		P4_WORD("KEY?",		&&_key_ready,	0, 0x01),
 		P4_WORD("MS",		&&_ms,		0, 0x10),
@@ -2435,20 +2438,6 @@ _emit:		w = P4_POP(ctx->ds);
 		(void) fputc(w.n, stdout);
 		NEXT;
 
-		// ( caddr u -- )
-_included:	w = P4_POP(ctx->ds);
-		x = P4_POP(ctx->ds);
-		if ((cstr = strndup(x.s, w.u)) == NULL) {
-			THROW(P4_THROW_ALLOCATE);
-		}
-		rc = p4LoadFile(ctx, cstr);
-		free(cstr);
-		if (rc != 0) {
-			THROW(rc);
-		}
-		NEXT;
-
-
 		/*
 		 * Block I/O
 		 */
@@ -2678,8 +2667,11 @@ _fa_write:	errno = 0;
 		NEXT;
 
 		// ( i*x fd -- j*y ior )
-_fa_include:	x.n = p4EvalFp(ctx, P4_TOP(ctx->ds).v);
-		P4_TOP(ctx->ds) = x;
+_fa_include:	w = P4_POP(ctx->ds);
+		P4_PUSH(ctx->rs, ip);
+		x.n = p4EvalFp(ctx, w.v);
+		ip = P4_POP(ctx->rs).p;
+		P4_PUSH(ctx->ds, x);
 		NEXT;
 
 		// ( ud fd -- ior )
@@ -3050,13 +3042,23 @@ int
 p4EvalFp(P4_Ctx *ctx, FILE *fp)
 {
 	int rc;
+	char *buffer;
+
+	if ((buffer = calloc(1, P4_INPUT_SIZE)) == NULL) {
+		return P4_THROW_ALLOCATE;
+	}
 
 	/* Do not save STATE, see A.6.1.2250 STATE. */
 	P4_INPUT_PUSH(&ctx->input);
 	SETJMP_PUSH(ctx->on_throw);
+
 	rc = SETJMP(ctx->on_throw);
+	ctx->input.size = P4_INPUT_SIZE;
+	ctx->input.buffer = buffer;
 	p4ResetInput(ctx, fp);
 	rc = p4Repl(ctx, rc);
+	free(buffer);
+
 	SETJMP_POP(ctx->on_throw);
 	P4_INPUT_POP(&ctx->input);
 
