@@ -3127,14 +3127,20 @@ static const char p4_build_info[] =
 	"POST4_PATH=\"" P4_CORE_PATH "\"\r\n"
 ;
 
-static int signalmap[][2] = {
-	{ SIGBUS, P4_THROW_SIGBUS },
-	{ SIGINT, P4_THROW_SIGINT },
-	{ SIGFPE, P4_THROW_SIGFPE },
-	{ SIGQUIT, P4_THROW_QUIT },
-	{ SIGSEGV, P4_THROW_SIGSEGV },
-	{ SIGTERM, P4_THROW_SIGTERM },
-	{ 0, 0 }
+typedef struct {
+	int signal;
+	int exception;
+	void (*handler)(int);
+} sig_map;
+
+static sig_map signalmap[] = {
+	{ SIGBUS, P4_THROW_SIGBUS, NULL },
+	{ SIGINT, P4_THROW_SIGINT, NULL },
+	{ SIGFPE, P4_THROW_SIGFPE, NULL },
+	{ SIGQUIT, P4_THROW_QUIT, NULL },
+	{ SIGSEGV, P4_THROW_SIGSEGV, NULL },
+	{ SIGTERM, P4_THROW_SIGTERM, NULL },
+	{ 0, P4_THROW_OK, NULL }
 };
 
 static P4_Ctx * volatile signal_ctx;
@@ -3142,9 +3148,9 @@ static P4_Ctx * volatile signal_ctx;
 static void
 sig_int(int signum)
 {
-	for (int (*map)[2] = signalmap; map[0] != 0; map++) {
-		if (signum == (*map)[0]) {
-			signum = (*map)[1];
+	for (sig_map *map = signalmap; map->signal != 0; map++) {
+		if (signum == map->signal) {
+			signum = map->exception;
 			break;
 		}
 	}
@@ -3152,9 +3158,34 @@ sig_int(int signum)
 }
 
 static void
+sig_init(void)
+{
+	for (sig_map *map = signalmap; map->signal != 0; map++) {
+		map->handler = signal(map->signal, sig_int);
+	}
+}
+
+static void
+sig_fini(void)
+{
+	for (sig_map *map = signalmap; map->signal != 0; map++) {
+		if (map->handler != NULL) {
+			(void) signal(map->signal, map->handler);
+			map->handler = NULL;
+		}
+	}
+}
+
+static void
 cleanup(void)
 {
+	/* Memory clean-up on exit is redundant since it all goes back
+	 * to OS anyway when the process is reaped, but it helps close
+	 * the loop on memory allocations for Valgrind.
+	 */
 	p4Free(signal_ctx);
+	/* This is redundant too, but I like it for symmetry. */
+	sig_fini();
 }
 
 int
@@ -3217,9 +3248,7 @@ main(int argc, char **argv)
 	if (SETJMP(signal_ctx->on_throw) != 0) {
 		return EXIT_FAILURE;
 	}
-	for (int (*map)[2] = signalmap; (*map)[0] != 0; map++) {
-		signal((*map)[0], sig_int);
-	}
+	sig_init();
 
 	optind = 1;
 	while ((ch = getopt(argc, argv, "b:c:d:f:i:m:r:V")) != -1) {
