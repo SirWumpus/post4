@@ -881,14 +881,14 @@ p4Accept(P4_Input *input, P4_Char *buf, P4_Size size)
 }
 
 P4_Int
-p4Refill(P4_Ctx *ctx, P4_Input *input)
+p4Refill(P4_Input *input)
 {
 	P4_Int n;
 
-	if (P4_INPUT_IS_STR(ctx->input)) {
+	if (P4_INPUT_IS_STR(input)) {
 		return P4_FALSE;
 	}
-	if ((n = p4Accept(&ctx->input, ctx->input.buffer, P4_INPUT_SIZE)) < 0) {
+	if ((n = p4Accept(input, input->buffer, P4_INPUT_SIZE)) < 0) {
 		return P4_FALSE;
 	}
 	input->length = n;
@@ -1011,20 +1011,20 @@ p4BlockBuffer(P4_Ctx *ctx, P4_Uint blk_num, int with_read)
 	if (blk_num == 0) {
 		return P4_THROW_BLOCK_BAD;
 	}
-	if (blk_num == ctx->block.number) {
+	if (blk_num == ctx->block->number && ctx->block->state != P4_BLOCK_FREE) {
 		return P4_THROW_OK;
 	}
 	/* Current there is no block buffer assignment strategy beyond
 	 * a single buffer per context.  Might add one day.
 	 */
-	if (ctx->block.state == P4_BLOCK_DIRTY && p4BlockWrite(ctx->block_fd, &ctx->block)) {
+	if (ctx->block->state == P4_BLOCK_DIRTY && p4BlockWrite(ctx->block_fd, ctx->block)) {
 		return P4_THROW_BLOCK_WR;
 	}
-	if (with_read && p4BlockRead(ctx->block_fd, blk_num, &ctx->block)) {
+	if (with_read && p4BlockRead(ctx->block_fd, blk_num, ctx->block)) {
 		return P4_THROW_BLOCK_RD;
 	}
-	ctx->block.state = P4_BLOCK_CLEAN;
-	ctx->block.number = blk_num;
+	ctx->block->state = P4_BLOCK_CLEAN;
+	ctx->block->number = blk_num;
 	return P4_THROW_OK;
 }
 
@@ -1126,6 +1126,15 @@ p4IsWord(P4_Ctx *ctx, void *xt)
 	return 0;
 }
 
+static void
+p4FreeInput(P4_Input *input)
+{
+	if (input != NULL) {
+		free(input->buffer);
+		free(input);
+	}
+}
+
 void
 p4Free(P4_Ctx *ctx)
 {
@@ -1136,13 +1145,14 @@ p4Free(P4_Ctx *ctx)
 			prev = word->prev;
 			p4WordFree(word);
 		}
-		(void) p4BlockClose(ctx->block_fd, &ctx->block);
+		(void) p4BlockClose(ctx->block_fd, ctx->block);
 #if defined(HAVE_MATH_H)
 		free(ctx->fs.base - P4_GUARD_CELLS/2);
 #endif
 		free(ctx->ds.base - P4_GUARD_CELLS/2);
 		free(ctx->rs.base - P4_GUARD_CELLS/2);
-		free(ctx->input.buffer);
+		p4FreeInput(ctx->input);
+		free(ctx->block);
 		free(ctx->mem);
 		free(ctx);
 	}
@@ -1151,10 +1161,10 @@ p4Free(P4_Ctx *ctx)
 static void
 p4ResetInput(P4_Ctx *ctx, FILE *fp)
 {
-	ctx->input.fp = fp;
-	ctx->input.length = 0;
-	ctx->input.offset = 0;
-	ctx->input.blk = 0;
+	ctx->input->fp = fp;
+	ctx->input->length = 0;
+	ctx->input->offset = 0;
+	ctx->input->blk = 0;
 }
 
 static int
@@ -1172,6 +1182,20 @@ p4CreateStack(P4_Stack *stk, int size)
 	return 0;
 }
 
+static P4_Input *
+p4CreateInput(void)
+{
+	P4_Input *input;
+	if ((input = calloc(1, sizeof (*input))) == NULL) {
+		return NULL;
+	}
+	if ((input->buffer = calloc(1, P4_INPUT_SIZE)) == NULL) {
+		free(input);
+		return NULL;
+	}
+	return input;
+}
+
 P4_Ctx *
 p4Create(P4_Options *opts)
 {
@@ -1186,7 +1210,7 @@ p4Create(P4_Options *opts)
 	ctx->argv = opts->argv;
 	ctx->state = P4_STATE_INTERPRET;
 
-	if ((ctx->input.buffer = calloc(1, P4_INPUT_SIZE)) == NULL) {
+	if ((ctx->input = p4CreateInput()) == NULL) {
 		goto error0;
 	}
 	p4ResetInput(ctx, stdin);
@@ -1202,6 +1226,9 @@ p4Create(P4_Options *opts)
 	ctx->end = ctx->mem + opts->mem_size * 1024;
 	ctx->here = ctx->mem;
 
+	if ((ctx->block = calloc(1, sizeof (*ctx->block))) == NULL) {
+		goto error0;
+	}
 #ifdef HAVE_MATH_H
 	ctx->precision = 6;
 	if (p4CreateStack(&ctx->fs, opts->fs_size)) {
@@ -1231,12 +1258,13 @@ error0:
 static void
 p4Bp(P4_Ctx *ctx)
 {
-	int has_nl = ctx->input.buffer[ctx->input.length-(0 < ctx->input.length)] == '\n';
+	P4_Input *input = ctx->input;
+	int has_nl = input->buffer[input->length-(0 < input->length)] == '\n';
 	(void) fprintf(STDERR, ">> ");
-	for (int i = 0; i < ctx->input.length-has_nl; i++) {
-		(void) fputc(ctx->input.buffer[i] == '\t' ? ' ' : ctx->input.buffer[i], STDERR);
+	for (int i = 0; i < input->length-has_nl; i++) {
+		(void) fputc(input->buffer[i] == '\t' ? ' ' : input->buffer[i], STDERR);
 	}
-	(void) fprintf(STDERR, "\r\n>> %*c\r\n", (int)ctx->input.offset, '^' );
+	(void) fprintf(STDERR, "\r\n>> %*c\r\n", (int)input->offset, '^' );
 }
 
 static void
@@ -1441,8 +1469,6 @@ p4Repl(P4_Ctx *ctx, int rc)
 		P4_WORD("_ds",		&&_ds,		0, 0x03),	// p4
 		P4_WORD("_dsp@",	&&_dsp_get,	0, 0x01),	// p4
 		P4_WORD("_dsp!",	&&_dsp_put,	0, 0x10),	// p4
-		P4_WORD("_input_push",	&&_input_push,	0, 0x0600),	// p4
-		P4_WORD("_input_pop",	&&_input_pop,	0, 0x6000),	// p4
 		P4_WORD("_longjmp",	&&_longjmp,	0, 0x10),	// p4
 		P4_WORD("_rs",		&&_rs,		0, 0x03),	// p4
 		P4_WORD("_rsp@",	&&_rsp_get,	0, 0x01),	// p4
@@ -1533,7 +1559,6 @@ p4Repl(P4_Ctx *ctx, int rc)
 		/* I/O */
 		P4_WORD(">IN",		&&_input_offset,0, 0x01),
 		P4_WORD("ACCEPT",	&&_accept,	0, 0x21),
-		P4_WORD("BLK",		&&_blk,		0, 0x01),
 		P4_WORD("BLOCK",	&&_block,	0, 0x11),
 		P4_WORD("block-open",	&&_block_open,	0, 0x21),	// p4
 		P4_WORD("block-close",	&&_block_close,	0, 0x00),	// p4
@@ -1640,7 +1665,7 @@ _quit:		P4_RESET(ctx->rs);
 		 * their files and popping the previous input
 		 * context and/or re-asserting stdin.
 		 *
-		 * ctx->input.fp = stdin;
+		 * ctx->input->fp = stdin;
 		 */
 
 		/* See 3.4.4 Possible actions on an ambiguous condition
@@ -1650,7 +1675,7 @@ _quit:		P4_RESET(ctx->rs);
 		 */
 
 		/* Discard the current input buffer. */
-		ctx->input.offset = ctx->input.length = 0;
+		ctx->input->offset = ctx->input->length = 0;
 		ctx->state = P4_STATE_INTERPRET;
 		ctx->frame = 0;
 		/*@fallthrough@*/
@@ -1665,8 +1690,8 @@ _quit:		P4_RESET(ctx->rs);
 		 */
 _interpret:	p4StackGuards(ctx);
 		P4_PUSH(ctx->rs, ip);
-_inter_loop:	while (ctx->input.offset < ctx->input.length) {
-			str = p4ParseName(&ctx->input);
+_inter_loop:	while (ctx->input->offset < ctx->input->length) {
+			str = p4ParseName(ctx->input);
 			if (str.length == 0) {
 				break;
 			}
@@ -1707,7 +1732,7 @@ _ok:		if (P4_INTERACTIVE(ctx)) {
 		}
 		NEXT;
 
-//	} while (p4Refill(ctx, &ctx->input));
+//	} while (p4Refill(ctx->input));
 
 _halt:	if (P4_INTERACTIVE(ctx)) {
 		(void) printf(crlf);
@@ -1781,7 +1806,7 @@ _branchnz:	w = *ip;
 
 #ifdef HAVE_HOOKS
 		// ( func `<spaces>name` -- )
-_hook_add:	str = p4ParseName(&ctx->input);
+_hook_add:	str = p4ParseName(ctx->input);
 		p4WordCreate(ctx, str.string, str.length, &&_hook_call);
 		w = P4_POP(ctx->ds);
 		p4WordAppend(ctx, w);
@@ -1859,7 +1884,7 @@ _noname:	str.string = "";
 		str.length = 0;
 		goto _do_colon;
 
-_colon:		str = p4ParseName(&ctx->input);
+_colon:		str = p4ParseName(ctx->input);
 		goto _do_colon;
 
 		// (C: -- colon) (R: -- ip)
@@ -1909,7 +1934,7 @@ _is_immediate:	w = P4_TOP(ctx->ds);
 		P4_TOP(ctx->ds).n = P4_BOOL(P4_WORD_IS_IMM(w.xt));
 		NEXT;
 
-_marker:	str = p4ParseName(&ctx->input);
+_marker:	str = p4ParseName(ctx->input);
 		(void) p4WordCreate(ctx, str.string, str.length, &&_rm_marker);
 		NEXT;
 
@@ -1924,24 +1949,11 @@ _rm_marker:	x.w = w.xt;
 		p4WordFree(word);
 		NEXT;
 
-_input_push:	p4StackGuards(ctx);
-		w.p = ctx->rs.top+1;
-		P4_DROP(ctx->rs, -sizeof (ctx->input) / sizeof (P4_Cell));
-		(void) memcpy(w.v, &ctx->input, sizeof (ctx->input));
-		NEXT;
-
-_input_pop:	P4_DROP(ctx->rs, sizeof (ctx->input) / sizeof (P4_Cell));
-		w.p = ctx->rs.top+1;
-		(void) memcpy(&ctx->input, w.v, sizeof (ctx->input));
-		p4StackGuards(ctx);
-		NEXT;
-
 		// ( i*x caddr u -- j*x )
-_evaluate:	ctx->input.length = P4_POP(ctx->ds).z;
-		ctx->input.buffer = P4_POP(ctx->ds).s;
-		ctx->input.fp = (FILE *) -1;
-		ctx->input.offset = 0;
-		ctx->input.blk = 0;
+_evaluate:	ctx->input->length = P4_POP(ctx->ds).z;
+		ctx->input->buffer = P4_POP(ctx->ds).s;
+		ctx->input->fp = (FILE *) -1;
+		ctx->input->offset = 0;
 		goto _interpret;
 
 		/* CREATE DOES> is bit of a mind fuck.  Their purpose is to define
@@ -1969,7 +1981,7 @@ _evaluate:	ctx->input.length = P4_POP(ctx->ds).z;
 		 *	CREATE stuff 1 , 2 , 3 , 4 ,
 		 */
 		// ( -- addr )
-_create:	str = p4ParseName(&ctx->input);
+_create:	str = p4ParseName(ctx->input);
 		word = p4WordCreate(ctx, str.string, str.length, &&_data_field);
 		// Reserve the 1st data cell for possible DOES>; wasted otherwise.
 		p4WordAppend(ctx, (P4_Cell)(P4_Int) 0),
@@ -2029,7 +2041,7 @@ _allot:		w = P4_POP(ctx->ds);
 
 		// ( xt -- <spaces>name )
 _alias:		w = P4_POP(ctx->ds);
-		str = p4ParseName(&ctx->input);
+		str = p4ParseName(ctx->input);
 		word = p4WordCreate(ctx, str.string, str.length, w.w->code);
 		word->bits = w.w->bits;
 		word->data = w.w->data;
@@ -2372,28 +2384,28 @@ _lt:		w = P4_POP(ctx->ds);
 		 * I/O
 		 */
 		// ( -- u )
-_input_offset:	P4_PUSH(ctx->ds, (P4_Cell *) &ctx->input.offset);
+_input_offset:	P4_PUSH(ctx->ds, (P4_Cell *) &ctx->input->offset);
 		NEXT;
 
 		// ( -- caddr u )
-_source:	P4_PUSH(ctx->ds, ctx->input.buffer);
-		P4_PUSH(ctx->ds, ctx->input.length);
+_source:	P4_PUSH(ctx->ds, ctx->input->buffer);
+		P4_PUSH(ctx->ds, ctx->input->length);
 		NEXT;
 
 		// ( -- -1 | 0 | fp )
 		// Alias FILE *stdin to NULL.
-_source_id:	P4_PUSH(ctx->ds, (P4_Cell *)(ctx->input.fp == stdin ? NULL : ctx->input.fp));
+_source_id:	P4_PUSH(ctx->ds, (P4_Int)(ctx->input->fp == stdin ? NULL : ctx->input->fp));
 		NEXT;
 
 		// ( caddr +n1 -- +n2 )
 _accept:	w = P4_POP(ctx->ds);
 		x = P4_TOP(ctx->ds);
-		w.u = p4Accept(&ctx->input, x.s, w.u);
+		w.u = p4Accept(ctx->input, x.s, w.u);
 		P4_TOP(ctx->ds) = w;
 		NEXT;
 
 		// ( -- flag)
-_refill:	w.n = p4Refill(ctx, &ctx->input);
+_refill:	w.n = p4Refill(ctx->input);
 		P4_PUSH(ctx->ds, w);
 		NEXT;
 
@@ -2441,18 +2453,14 @@ _emit:		w = P4_POP(ctx->ds);
 		/*
 		 * Block I/O
 		 */
-		// ( -- aaddr )
-_blk:		P4_PUSH(ctx->ds, (P4_Cell *) &ctx->input.blk);
-		NEXT;
-
 		// ( u -- aaddr )
 _block:		x.u = 1;
 
 _block_buffer:	w = P4_TOP(ctx->ds);
-		if ((rc = p4BlockBuffer(ctx, w.u, x.u)) != P4_THROW_OK) {
+		if ((rc = p4BlockBuffer(ctx, w.u, (int) x.u)) != P4_THROW_OK) {
 			THROW(rc);
 		}
-		P4_TOP(ctx->ds).s = ctx->block.buffer;
+		P4_TOP(ctx->ds).s = ctx->block->buffer;
 		NEXT;
 
 		// ( u -- aaddr )
@@ -2462,13 +2470,13 @@ _buffer:	x.u = 0;
 		// ( caddr u -- bool )
 _block_open:	w = P4_POP(ctx->ds);
 		x = P4_TOP(ctx->ds);
-		(void) p4BlockClose(ctx->block_fd, &ctx->block);
+		(void) p4BlockClose(ctx->block_fd, ctx->block);
 		ctx->block_fd = p4BlockOpen(x.s);
 		P4_TOP(ctx->ds).n = P4_BOOL(0 < ctx->block_fd);
 		NEXT;
 
 		// ( -- )
-_block_close:	(void) p4BlockClose(ctx->block_fd, &ctx->block);
+_block_close:	(void) p4BlockClose(ctx->block_fd, ctx->block);
 		NEXT;
 
 	{	// ( -- u )
@@ -2481,17 +2489,17 @@ _blocks:	if (fstat(ctx->block_fd, &sb) != 0) {
 		NEXT;
 	}
 		// ( -- )
-_empty_buffers:	ctx->block.state = P4_BLOCK_FREE;
+_empty_buffers:	ctx->block->state = P4_BLOCK_FREE;
 		/*@fallthrough@*/
 
 		// ( -- )
-_save_buffers:	if (ctx->block.state == P4_BLOCK_DIRTY && p4BlockWrite(ctx->block_fd, &ctx->block)) {
+_save_buffers:	if (ctx->block->state == P4_BLOCK_DIRTY && p4BlockWrite(ctx->block_fd, ctx->block)) {
 			THROW(P4_THROW_BLOCK_WR);
 		}
 		NEXT;
 
 		// ( -- )
-_update:	ctx->block.state = P4_BLOCK_DIRTY;
+_update:	ctx->block->state = P4_BLOCK_DIRTY;
 		NEXT;
 
 
@@ -2500,13 +2508,13 @@ _update:	ctx->block.state = P4_BLOCK_DIRTY;
 		// ( char bool -- c-addr u )
 _parse:		x = P4_POP(ctx->ds);
 		w = P4_TOP(ctx->ds);
-		str = p4Parse(&ctx->input, w.u, x.u);
+		str = p4Parse(ctx->input, w.u, x.u);
 		P4_TOP(ctx->ds).s = str.string;
 		P4_PUSH(ctx->ds, str.length);
 		NEXT;
 
 		// ( -- c-addr u )
-_parse_name:	str = p4ParseName(&ctx->input);
+_parse_name:	str = p4ParseName(ctx->input);
 		P4_PUSH(ctx->ds, str.string);
 		P4_PUSH(ctx->ds, str.length);
 		NEXT;
@@ -3042,24 +3050,17 @@ int
 p4EvalFp(P4_Ctx *ctx, FILE *fp)
 {
 	int rc;
-	char *buffer;
-
-	if ((buffer = calloc(1, P4_INPUT_SIZE)) == NULL) {
-		return P4_THROW_ALLOCATE;
-	}
 
 	/* Do not save STATE, see A.6.1.2250 STATE. */
-	P4_INPUT_PUSH(&ctx->input);
+	P4_INPUT_PUSH(ctx->input);
 	SETJMP_PUSH(ctx->on_throw);
 
 	rc = SETJMP(ctx->on_throw);
-	ctx->input.buffer = buffer;
 	p4ResetInput(ctx, fp);
 	rc = p4Repl(ctx, rc);
-	free(buffer);
 
 	SETJMP_POP(ctx->on_throw);
-	P4_INPUT_POP(&ctx->input);
+	P4_INPUT_POP(ctx->input);
 
 	return rc;
 }
@@ -3081,12 +3082,13 @@ p4EvalFile(P4_Ctx *ctx, const char *file)
 int
 p4EvalString(P4_Ctx *ctx, const P4_Char *str, size_t len)
 {
+	P4_Input *input = ctx->input;
 	/* Do not save STATE, see A.6.1.2250 STATE. */
-	ctx->input.fp = (FILE *) -1;
-	ctx->input.buffer = (P4_Char *) str;
-	ctx->input.length = len;
-	ctx->input.offset = 0;
-	ctx->input.blk = 0;
+	input->fp = (FILE *) -1;
+	input->buffer = (P4_Char *) str;
+	input->length = len;
+	input->offset = 0;
+	input->blk = 0;
 	return p4Repl(ctx, P4_THROW_OK);
 }
 

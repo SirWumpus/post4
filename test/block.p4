@@ -10,7 +10,7 @@ MARKER rm_block_tests
 
 : tw_tmp_blk S" /tmp/tmp.blk" ;
 
-.( BLOCK-OPEN ) test_group
+.( BLOCK-OPEN BLOCK-CLOSE DELETE-FILE ) test_group
 t{ BLOCK-CLOSE tw_tmp_blk DELETE-FILE DROP -> }t
 t{ tw_tmp_blk BLOCK-OPEN -> TRUE }t
 test_group_end
@@ -49,8 +49,35 @@ test_group_end
 t{ CHAR ^ PARSE S" SOURCE-ID BLK @ " EVALUATE ^ 1 BLOCK OVER COMPARE -> 0 }t
 test_group_end
 
-.( BLOCK-CLOSE ) test_group
-t{ BLOCK-CLOSE tw_tmp_blk DELETE-FILE -> 0 }t
+\ GH-16
+.( Nested LOAD ) test_group
+
+t{ 3 BUFFER DUP 1024 BLANK
+    CHAR ^ PARSE 123 4 LOAD 456^ ROT SWAP CMOVE
+    UPDATE
+-> }t
+t{ 4 BUFFER DUP 1024 BLANK
+    CHAR ^ PARSE 666 2 LOAD 1 LOAD 999^ ROT SWAP CMOVE
+    UPDATE
+-> }t
+t{ SAVE-BUFFERS 4 LOAD -> 666 579 -1 0 999 }t
+t{ SAVE-BUFFERS 3 LOAD -> 123 666 579 -1 0 999 456 }t
+
+t{ 5 BUFFER DUP 1024 BLANK
+    CHAR ^ PARSE S" 123 6 LOAD 456 " EVALUATE ^ ROT SWAP CMOVE
+    UPDATE
+-> }t
+t{ 6 BUFFER DUP 1024 BLANK
+    CHAR ^ PARSE S" 666 2 LOAD 1 LOAD 999 " EVALUATE ^ ROT SWAP CMOVE
+    UPDATE
+-> }t
+t{ SAVE-BUFFERS 6 LOAD -> 666 579 -1 0 999 }t
+t{ SAVE-BUFFERS 5 LOAD -> 123 666 579 -1 0 999 456 }t
+
+test_group_end
+
+.( BLOCK-CLOSE DELETE-FILE ) test_group
+\ t{ BLOCK-CLOSE tw_tmp_blk DELETE-FILE -> 0 }t
 test_group_end
 
 rm_block_tests

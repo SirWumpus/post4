@@ -992,18 +992,6 @@ DEFER _fsp!
 	DROP
 ; IMMEDIATE
 
-\ ... \ comment to end of line
-\
-\ (S: ccc<eol>" -- )
-\
-: \
-	BLK @ IF		( Block input source? )
-	  >IN @ $3F OR 1+ >IN !	(   Advance >IN to next line in 16x64 block. )
-	ELSE			( Streaming input... )
-	  '\n' PARSE 2DROP	(   Skip up to and including newline. )
-	THEN
-; IMMEDIATE
-
 \ ... TYPE ...
 \
 \ (S: caddr u -- )
@@ -1686,6 +1674,175 @@ VARIABLE _str_buf_curr
 \
 : ABORT" POSTPONE S\" POSTPONE _abort_msg? ; IMMEDIATE compile-only
 
+: [DEFINED] ( <space>name -- bool ) PARSE-NAME FIND-NAME 0<> ; IMMEDIATE
+: [UNDEFINED] ( <space>name -- bool ) PARSE-NAME FIND-NAME 0= ; IMMEDIATE
+
+: [ELSE] ( -- )
+	1 BEGIN 				\ level
+	  BEGIN PARSE-NAME DUP WHILE		\ level adr len
+	    2DUP S" \" COMPARE 0= IF
+	      \ Ignore remainder of comment line.
+	      2DROP POSTPONE \
+	    ELSE 2DUP S" [IF]" COMPARE 0= IF		\ level adr len
+	      2DROP 1+				\ level'
+	    ELSE				\ level adr len
+	      2DUP S" [ELSE]" COMPARE 0= IF	\ level adr len
+	        2DROP 1-			\ level'
+	        \ Not yet zero, then restore previous level while nested.
+	        DUP IF 1+ THEN			\ level'
+	      ELSE 				\ level adr len
+	        S" [THEN]" COMPARE 0= IF	\ level
+	          1-				\ level'
+	        THEN
+	      THEN
+	    THEN THEN
+	    ?DUP 0= IF EXIT THEN		\ level'
+	  REPEAT 2DROP				\ level
+	REFILL 0= UNTIL				\ level
+	DROP
+; IMMEDIATE
+
+: [IF] ( flag -- )
+	0= IF POSTPONE [ELSE] THEN
+; IMMEDIATE
+
+: [THEN] ( -- ) ; IMMEDIATE
+
+[DEFINED] _seext [IF]
+\ ( <spaces>name -- )
+: SEE ' _seext ;
+[THEN]
+
+[DEFINED] WRITE-FILE [IF]
+\ ( caddr u fid -- ior )
+: WRITE-LINE
+	DUP >R WRITE-FILE DROP
+	S\" \r\n" R> WRITE-FILE
+;
+[THEN]
+
+\ ... BEGIN-STRUCTURE name ...
+\
+\ (C: <spaces>name -- aaddr 0 ) (S: -- size )
+\
+: BEGIN-STRUCTURE
+	CREATE HERE 0 0 ,	\ C: aaddr 0
+	DOES> @			\ S: size
+;
+
+\ ... END-STRUCTURE ...
+\
+\ (C: aaddr size -- )
+\
+: END-STRUCTURE SWAP ! ;
+
+\ ... +FIELD name ...
+\
+\ (C: offset size <spaces>name -- offset' ) \ (S: addr -- addr' )
+\
+\ Note does not align items.
+\
+\ Structure name defined last:
+\
+\	0			\ initial total byte count
+\	  1 CELLS +FIELD p.x	\ single cell field named p.x
+\	  1 CELLS +FIELD p.y	\ single cell field named p.y
+\	CONSTANT point 		\ save structure size
+\
+\ Structure name defined first:
+\
+\	BEGIN-STRUCTURE point	\ create the named structure
+\	  1 CELLS +FIELD p.x	\ A single cell filed named p.x
+\	  1 CELLS +FIELD p.y	\ A single cell field named p.y
+\	END-STRUCTURE
+\
+: +FIELD
+	CREATE OVER , +		\ C: aaddr offset size -- aaddr offset'
+	DOES> @ +		\ S: addr -- addr'
+;
+
+\ ... CFIELD: name ...
+\
+\ (C: offset <spaces>name -- offset' ) \ (S: addr -- addr' )
+\
+: CFIELD: 1 CHARS +FIELD ;
+
+\ ... FIELD: name ...
+\
+\ (C: offset <spaces>name -- offset' ) \ (S: addr -- addr' )
+\
+: FIELD: ALIGNED 1 CELLS +FIELD ;
+
+BEGIN-STRUCTURE p4_string
+	FIELD: str.length
+	FIELD: str.string	\ pointer C string
+END-STRUCTURE
+
+BEGIN-STRUCTURE p4_word
+	FIELD: w.prev		\ pointer previous word
+	p4_string +FIELD w.name
+	FIELD: w.bits
+	FIELD: w.code		\ pointer
+	FIELD: w.ndata		\ data length
+	FIELD: w.data		\ pointer to data cells
+END-STRUCTURE
+
+BEGIN-STRUCTURE p4_block
+	FIELD: blk.state	\ 0 free, 1 clean, 2 dirty, 3 lock
+	FIELD: blk.number	\ 0 < number
+	1024 +FIELD blk.buffer
+END-STRUCTURE
+
+BEGIN-STRUCTURE p4_stack
+	FIELD: stk.size
+	FIELD: stk.top		\ pointer
+	FIELD: stk.base		\ pointer
+END-STRUCTURE
+
+BEGIN-STRUCTURE p4_input
+	FIELD: in.fp		\ pointer
+	FIELD: in.blk
+	FIELD: in.length
+	FIELD: in.offset
+	FIELD: in.buffer	\ pointer
+END-STRUCTURE
+
+\ Example
+\
+\	_ctx		 	\ Post4 machine context pointer
+\	ctx.words @		\ pointer to most recent word
+\	w.name str.string @	\ pointer to word name
+\	puts			\ write name
+\
+BEGIN-STRUCTURE p4_ctx
+	p4_stack +FIELD ctx.ds	\ see _ds
+	p4_stack +FIELD ctx.rs	\ see _rs
+[DEFINED] _fs [IF]
+	p4_stack +FIELD ctx.fs	\ see _fs
+	FIELD: ctx.precision	\ see PRECISION and SET-PRECISION
+[THEN]
+	FIELD: ctx.frame  	\ see CATCH and THROW
+	FIELD: ctx.trace	\ see _trace
+	FIELD: ctx.level	\ see p4
+	FIELD: ctx.state	\ see STATE
+	FIELD: ctx.words	\ pointer
+	FIELD: ctx.radix	\ see BASE
+	FIELD: ctx.argc
+	FIELD: ctx.argv
+	FIELD: ctx.here		\ see HERE
+	FIELD: ctx.end		\ see UNUSED
+	FIELD: ctx.mem		\ data space
+	FIELD: ctx.unkey	\ KEY and KEY?
+	FIELD: ctx.input	\ pointer
+	FIELD: ctx.block	\ pointer
+	FIELD: ctx.block_fd
+	/PAD +FIELD ctx.tty	\ buffer, see SOURCE
+[DEFINED] jcall [IF]
+	FIELD: jenv
+[THEN]
+	0 +FIELD ctx.on_throw	\ size varies by host OS
+END-STRUCTURE
+
 \ ... SCR ...
 \
 \ (S: -- aaddr )
@@ -1718,11 +1875,49 @@ VARIABLE SCR
 \
 : list+ SCR @ 1+ LIST ;
 
-\ ... LOAD ...
-\
+\ (S: -- )
+: _input_ptr _ctx ctx.input ;
+
+\ (S: -- aaddr )
+: BLK _input_ptr @ in.blk ;
+
+\ (S: -- )
+: _input_push
+	R> _input_ptr @ >R >R
+	p4_input ALLOCATE DROP _input_ptr !
+	\ Note that the in.buffer is undefined.
+	_input_ptr @ -1 OVER in.fp ! 0 OVER in.length ! 0 SWAP in.offset !
+;
+
+\ (S: -- )
+: _input_pop
+	_input_ptr @ FREE DROP
+	R> R> _input_ptr ! >R
+;
+
+\ (S: -- caddr )
+: _block_ptr _ctx ctx.block ;
+
+\ (S: -- )
+: _block_push
+	SAVE-BUFFERS
+	R> _block_ptr @ >R >R
+	p4_block ALLOCATE DROP _block_ptr !
+	_block_ptr @ 0 OVER blk.number ! 0 SWAP blk.state !
+;
+
+\ (S: -- )
+: _block_pop
+	_block_ptr @ FREE DROP
+	R> R> _block_ptr ! >R
+;
+
 \ (S: i*x u -- j*x )
-\
-: LOAD _input_push DUP BLK ! BLOCK 1024 ['] _evaluate CATCH _input_pop THROW ;
+: LOAD
+	_input_push _block_push
+	DUP BLK ! BLOCK 1024 ['] _evaluate CATCH
+	_block_pop _input_pop THROW
+;
 
 \ ... EVALUATE ...
 \
@@ -1731,7 +1926,7 @@ VARIABLE SCR
 \ @see
 \	https://forth-standard.org/standard/block/EVALUATE
 \
-: EVALUATE _input_push ['] _evaluate CATCH _input_pop THROW ;
+: EVALUATE _input_push 0 BLK ! ['] _evaluate CATCH _input_pop THROW ;
 
 \ (S: start end -- )
 : THRU
@@ -1742,6 +1937,18 @@ VARIABLE SCR
 	  2 rpick >		\ S: bool	R: end start'
 	UNTIL 2R> 2DROP
 ;
+
+\ ... \ comment to end of line
+\
+\ (S: ccc<eol>" -- )
+\
+: \
+	BLK @ IF		( Block input source? )
+	  >IN @ $3F OR 1+ >IN !	(   Advance >IN to next line in 16x64 block. )
+	ELSE			( Streaming input... )
+	  '\n' PARSE 2DROP	(   Skip up to and including newline. )
+	THEN
+; IMMEDIATE
 
 \ ... AT-XY ...
 \
@@ -1802,176 +2009,6 @@ VARIABLE SCR
 	  ' DEFER!
 	THEN
 ; IMMEDIATE
-
-\ ... BEGIN-STRUCTURE name ...
-\
-\ (C: <spaces>name -- aaddr 0 ) (S: -- size )
-\
-: BEGIN-STRUCTURE
-	CREATE HERE 0 0 ,	\ C: aaddr 0
-	DOES> @			\ S: size
-;
-
-\ ... END-STRUCTURE ...
-\
-\ (C: aaddr size -- )
-\
-: END-STRUCTURE SWAP ! ;
-
-\ ... +FIELD name ...
-\
-\ (C: offset size <spaces>name -- offset' ) \ (S: addr -- addr' )
-\
-\ Note does not align items.
-\
-\ Structure name defined last:
-\
-\	0			\ initial total byte count
-\	  1 CELLS +FIELD p.x	\ single cell field named p.x
-\	  1 CELLS +FIELD p.y	\ single cell field named p.y
-\	CONSTANT point 		\ save structure size
-\
-\ Structure name defined first:
-\
-\	BEGIN-STRUCTURE point	\ create the named structure
-\	  1 CELLS +FIELD p.x	\ A single cell filed named p.x
-\	  1 CELLS +FIELD p.y	\ A single cell field named p.y
-\	END-STRUCTURE
-\
-: +FIELD
-	CREATE OVER , +		\ C: aaddr offset size -- aaddr offset'
-	DOES> @ +		\ S: addr -- addr'
-;
-
-\ ... CFIELD: name ...
-\
-\ (C: offset <spaces>name -- offset' ) \ (S: addr -- addr' )
-\
-: CFIELD: 1 CHARS +FIELD ;
-
-\ ... FIELD: name ...
-\
-\ (C: offset <spaces>name -- offset' ) \ (S: addr -- addr' )
-\
-: FIELD: ALIGNED 1 CELLS +FIELD ;
-
-: [DEFINED] ( <space>name -- bool ) PARSE-NAME FIND-NAME 0<> ; IMMEDIATE
-: [UNDEFINED] ( <space>name -- bool ) PARSE-NAME FIND-NAME 0= ; IMMEDIATE
-
-: [ELSE] ( -- )
-	1 BEGIN 				\ level
-	  BEGIN PARSE-NAME DUP WHILE		\ level adr len
-	    2DUP S" \" COMPARE 0= IF
-	      \ Ignore remainder of comment line.
-	      2DROP POSTPONE \
-	    ELSE 2DUP S" [IF]" COMPARE 0= IF		\ level adr len
-	      2DROP 1+				\ level'
-	    ELSE				\ level adr len
-	      2DUP S" [ELSE]" COMPARE 0= IF	\ level adr len
-	        2DROP 1-			\ level'
-	        \ Not yet zero, then restore previous level while nested.
-	        DUP IF 1+ THEN			\ level'
-	      ELSE 				\ level adr len
-	        S" [THEN]" COMPARE 0= IF	\ level
-	          1-				\ level'
-	        THEN
-	      THEN
-	    THEN THEN
-	    ?DUP 0= IF EXIT THEN		\ level'
-	  REPEAT 2DROP				\ level
-	REFILL 0= UNTIL				\ level
-	DROP
-; IMMEDIATE
-
-: [IF] ( flag -- )
-	0= IF POSTPONE [ELSE] THEN
-; IMMEDIATE
-
-: [THEN] ( -- ) ; IMMEDIATE
-
-[DEFINED] _seext [IF]
-\ ( <spaces>name -- )
-: SEE ' _seext ;
-[THEN]
-
-[DEFINED] WRITE-FILE [IF]
-\ ( caddr u fid -- ior )
-: WRITE-LINE
-	DUP >R WRITE-FILE DROP
-	S\" \r\n" R> WRITE-FILE
-;
-[THEN]
-
-BEGIN-STRUCTURE p4_string
-	FIELD: str.length
-	FIELD: str.string	\ pointer C string
-END-STRUCTURE
-
-BEGIN-STRUCTURE p4_word
-	FIELD: w.prev		\ pointer previous word
-	p4_string +FIELD w.name
-	FIELD: w.bits
-	FIELD: w.code		\ pointer
-	FIELD: w.ndata		\ data length
-	FIELD: w.data		\ pointer to data cells
-END-STRUCTURE
-
-BEGIN-STRUCTURE p4_block
-	FIELD: blk.state	\ 0 free, 1 clean, 2 dirty
-	FIELD: blk.number	\ 0 < number
-	1024 +FIELD blk.buffer	\ buffer
-END-STRUCTURE
-
-BEGIN-STRUCTURE p4_stack
-	FIELD: stk.size
-	FIELD: stk.top		\ pointer
-	FIELD: stk.base		\ pointer
-END-STRUCTURE
-
-BEGIN-STRUCTURE p4_input
-	FIELD: in.fp		\ pointer
-	FIELD: in.blk
-	FIELD: in.size
-	FIELD: in.length
-	FIELD: in.offset
-	FIELD: in.buffer	\ pointer
-END-STRUCTURE
-
-\ Example
-\
-\	_ctx		 	\ Post4 machine context pointer
-\	ctx.words @		\ pointer to most recent word
-\	w.name str.string @	\ pointer to word name
-\	puts			\ write name
-\
-BEGIN-STRUCTURE p4_ctx
-	p4_stack +FIELD ctx.ds	\ see _ds
-	p4_stack +FIELD ctx.rs	\ see _rs
-[DEFINED] _fs [IF]
-	p4_stack +FIELD ctx.fs	\ see _fs
-	FIELD: ctx.precision	\ see PRECISION and SET-PRECISION
-[THEN]
-	FIELD: ctx.frame  	\ see CATCH and THROW
-	FIELD: ctx.trace	\ see _trace
-	FIELD: ctx.level	\ see p4
-	FIELD: ctx.state	\ see STATE
-	FIELD: ctx.words	\ p4_word pointer
-	FIELD: ctx.radix	\ see BASE
-	FIELD: ctx.argc
-	FIELD: ctx.argv
-	FIELD: ctx.here		\ see HERE
-	FIELD: ctx.end		\ see UNUSED
-	FIELD: ctx.mem		\ current data space
-	FIELD: ctx.unkey	\ KEY and KEY?
-	p4_input +FIELD ctx.input
-	p4_block +FIELD ctx.block
-	FIELD: ctx.block_fd
-	/PAD +FIELD ctx.tty	\ buffer, see SOURCE
-[DEFINED] jcall [IF]
-	FIELD: jenv
-[THEN]
-	0 +FIELD ctx.on_throw	\ size varies by host OS
-END-STRUCTURE
 
 \ ... NAME>STRING ...
 \

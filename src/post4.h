@@ -95,6 +95,10 @@ extern "C" {
 #define P4_TRACE			1
 #endif
 
+#ifndef ASSERT_LINE_BUFFERING
+#define ASSERT_LINE_BUFFERING		1
+#endif
+
 /***********************************************************************
  *** No configuration below this point.
  ***********************************************************************/
@@ -289,12 +293,12 @@ typedef struct {
 	P4_Char *	buffer;
 } P4_Input;
 
-#define P4_INPUT_IS_BLK(input)	((input).fp == (FILE *) -1 && (input).blk > 0)
-#define P4_INPUT_IS_STR(input)	((input).fp == (FILE *) -1 && (input).blk == 0)
-#define P4_INPUT_IS_FILE(input) ((input).fp != (FILE *) -1 && !P4_INPUT_IS_TERM(input))
-#define P4_INPUT_IS_TERM(input)	((input).fp == stdin)
-#define P4_INPUT_PUSH(input)	{ P4_Input input_save = *(input)
-#define P4_INPUT_POP(input)	*(input) = input_save; }
+#define P4_INPUT_IS_BLK(input)	((input)->fp == (FILE *) -1 && (input)->blk > 0)
+#define P4_INPUT_IS_STR(input)	((input)->fp == (FILE *) -1 && (input)->blk == 0)
+#define P4_INPUT_IS_FILE(input) ((input)->fp != (FILE *) -1 && !P4_INPUT_IS_TERM(input))
+#define P4_INPUT_IS_TERM(input)	((input)->fp == stdin)
+#define P4_INPUT_PUSH(input)	{ P4_Input *input_save = (input); input = p4CreateInput()
+#define P4_INPUT_POP(input)	p4FreeInput(input); (input) = input_save; }
 
 typedef enum {
 	P4_BLOCK_FREE,
@@ -425,8 +429,8 @@ struct p4_ctx {
 	P4_Char *	end;		/* End of data space memory. */
 	P4_Char	*	mem;		/* Fixed, do not resize. */
 	P4_Int		unkey;		/* KEY and KEY? */
-	P4_Input	input;
-	P4_Block	block;
+	P4_Input *	input;
+	P4_Block *	block;
 	P4_Int		block_fd;
 #ifdef WITH_JAVA
 	void *		jenv;

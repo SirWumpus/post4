@@ -287,7 +287,7 @@ jUnboxArray(P4_Ctx *ctx)
 	/* Enough stack space to hold array items? */
 	if (ctx->ds.size <= ds_depth + size + 1) {
 		/* Grow data stack with some extra work space. */
-		size_t ds_size = ds_depth + size + P4_STACK_SIZE;
+		size_t ds_size = ds_depth + size + P4_DATA_STACK_SIZE;
 		P4_Cell *ds_base = realloc(ctx->ds.base, ds_size);
 		if (ds_base == NULL) {
 			/* Frick'n'ell. */

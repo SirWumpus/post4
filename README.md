@@ -66,7 +66,7 @@ Post4 is written in ISO C11 using only one extension, `Labels As Values`, which 
 
         $ ./configure --help
         $ ./configure
-        $ make test
+        $ make tests
         $ sudo make install
         $ post4
 
