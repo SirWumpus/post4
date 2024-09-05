@@ -43,8 +43,12 @@ extern "C" {
 #define P4_NAME_SIZE			32		/* in bytes */
 #endif
 
-#ifndef P4_STACK_SIZE
-#define P4_STACK_SIZE			64		/* in CELLS */
+#ifndef P4_DATA_STACK_SIZE
+#define P4_DATA_STACK_SIZE		64		/* in CELLS */
+#endif
+
+#ifndef P4_RETURN_STACK_SIZE
+#define P4_RETURN_STACK_SIZE		64		/* in CELLS */
 #endif
 
 #ifndef P4_FLOAT_STACK_SIZE

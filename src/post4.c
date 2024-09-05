@@ -3103,18 +3103,18 @@ static const char usage[] =
 "\r\n"
 "-b file\t\topen a block file\r\n"
 "-c file\t\tword definition file; default " P4_CORE_FILE " from $POST4_PATH\r\n"
-"-d size\t\tdata stack size in cells; default " QUOTE(P4_STACK_SIZE) "\r\n"
+"-d size\t\tdata stack size in cells; default " QUOTE(P4_DATA_STACK_SIZE) "\r\n"
 "-f size\t\tfloat stack size; default " QUOTE(P4_FLOAT_STACK_SIZE) "\r\n"
 "-i file\t\tinclude file; can be repeated; searches $POST4_PATH\r\n"
 "-m size\t\tdata space memory in KB; default " QUOTE(P4_MEM_SIZE) "\r\n"
-"-r size\t\treturn stack size in cells; default " QUOTE(P4_STACK_SIZE) "\r\n"
+"-r size\t\treturn stack size in cells; default " QUOTE(P4_RETURN_STACK_SIZE) "\r\n"
 "-V\t\tbuild and version information\r\n\r\n"
 "If script is \"-\", read it from standard input.\r\n"
 ;
 
 static P4_Options options = {
-	.ds_size = P4_STACK_SIZE,
-	.rs_size = P4_STACK_SIZE,
+	.ds_size = P4_DATA_STACK_SIZE,
+	.rs_size = P4_RETURN_STACK_SIZE,
 	.fs_size = P4_FLOAT_STACK_SIZE,
 	.mem_size = P4_MEM_SIZE,
 	.core_file = P4_CORE_FILE,
