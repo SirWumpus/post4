@@ -284,7 +284,6 @@ typedef struct {
 typedef struct {
 	FILE *		fp;		/* stdin or an open file, -1 string. */
 	P4_Uint		blk;		/* If 0< then buffer is a block and this is the block number. */
-	P4_Size		size;		/* Size of buffer. */
 	P4_Size		length;		/* Length of input in buffer. */
 	P4_Size		offset;		/* Offset of unconsumed input. */
 	P4_Char *	buffer;

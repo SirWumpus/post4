@@ -888,7 +888,7 @@ p4Refill(P4_Ctx *ctx, P4_Input *input)
 	if (P4_INPUT_IS_STR(ctx->input)) {
 		return P4_FALSE;
 	}
-	if ((n = p4Accept(&ctx->input, ctx->input.buffer, ctx->input.size)) < 0) {
+	if ((n = p4Accept(&ctx->input, ctx->input.buffer, P4_INPUT_SIZE)) < 0) {
 		return P4_FALSE;
 	}
 	input->length = n;
@@ -1189,7 +1189,6 @@ p4Create(P4_Options *opts)
 	if ((ctx->input.buffer = calloc(1, P4_INPUT_SIZE)) == NULL) {
 		goto error0;
 	}
-	ctx->input.size = P4_INPUT_SIZE;
 	p4ResetInput(ctx, stdin);
 
 	/* GH-5 Clear initial memory space to placate Valgrind. */
@@ -3054,7 +3053,6 @@ p4EvalFp(P4_Ctx *ctx, FILE *fp)
 	SETJMP_PUSH(ctx->on_throw);
 
 	rc = SETJMP(ctx->on_throw);
-	ctx->input.size = P4_INPUT_SIZE;
 	ctx->input.buffer = buffer;
 	p4ResetInput(ctx, fp);
 	rc = p4Repl(ctx, rc);
