@@ -1840,7 +1840,7 @@ BEGIN-STRUCTURE p4_ctx
 [DEFINED] jcall [IF]
 	FIELD: jenv
 [THEN]
-	0 +FIELD ctx.on_throw	\ size varies by host OS
+\	0 +FIELD ctx.longjmp	\ size varies by host OS
 END-STRUCTURE
 
 \ ... SCR ...

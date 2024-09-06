@@ -435,7 +435,7 @@ struct p4_ctx {
 #ifdef WITH_JAVA
 	void *		jenv;
 #endif
-	JMP_BUF		on_throw;	/* Must be last in struct; size can
+	JMP_BUF		longjmp;	/* Must be last in struct; size can
 					 * vary by CPU and implementation.
 					 */
 };

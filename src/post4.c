@@ -1087,7 +1087,7 @@ p4WordCreate(P4_Ctx *ctx, const char *name, size_t length, P4_Code code)
 error1:
 	free(word);
 error0:
-	LONGJMP(ctx->on_throw, P4_THROW_ALLOCATE);
+	LONGJMP(ctx->longjmp, P4_THROW_ALLOCATE);
 }
 
 void
@@ -1320,7 +1320,7 @@ p4StackIsEmpty(P4_Ctx *ctx, P4_Stack *stack, int under)
 	ptrdiff_t length = P4_PLENGTH(stack);
 	if (length <= 0) {
 		p4Bp(ctx);
-		LONGJMP(ctx->on_throw, under);
+		LONGJMP(ctx->longjmp, under);
 	}
 }
 
@@ -1330,7 +1330,7 @@ p4StackIsFull(P4_Ctx *ctx, P4_Stack *stack, int over)
 	ptrdiff_t length = P4_PLENGTH(stack);
 	if (stack->size <= length) {
 		p4Bp(ctx);
-		LONGJMP(ctx->on_throw, over);
+		LONGJMP(ctx->longjmp, over);
 	}
 }
 
@@ -1345,12 +1345,12 @@ p4StackGuard(P4_Ctx *ctx, P4_Stack *stack, int over, int under)
 	if (length < 0 || stack->base[-1].u != P4_SENTINEL) {
 		p4Bp(ctx);
 		stack->base[-1].u = P4_SENTINEL;
-		LONGJMP(ctx->on_throw, under);
+		LONGJMP(ctx->longjmp, under);
 	}
 	if (stack->size < length || stack->base[stack->size].u != P4_SENTINEL) {
 		p4Bp(ctx);
 		stack->base[stack->size].u = P4_SENTINEL;
-		LONGJMP(ctx->on_throw, over);
+		LONGJMP(ctx->longjmp, over);
 	}
 }
 
@@ -1612,6 +1612,7 @@ p4Repl(P4_Ctx *ctx, int rc)
 	 */
 	static P4_Cell exec[] = { { 0 }, {.cw = &w_inter_loop} };
 
+	rc = SETJMP(ctx->longjmp);
 _thrown:
 	switch (rc) {
 	case P4_THROW_SIGTERM:
@@ -1807,7 +1808,7 @@ _branchnz:	w = *ip;
 #ifdef HAVE_HOOKS
 		// ( func `<spaces>name` -- )
 _hook_add:	str = p4ParseName(ctx->input);
-		p4WordCreate(ctx, str.string, str.length, &&_hook_call);
+		(void) p4WordCreate(ctx, str.string, str.length, &&_hook_call);
 		w = P4_POP(ctx->ds);
 		p4WordAppend(ctx, w);
 		NEXT;
@@ -3053,13 +3054,8 @@ p4EvalFp(P4_Ctx *ctx, FILE *fp)
 
 	/* Do not save STATE, see A.6.1.2250 STATE. */
 	P4_INPUT_PUSH(ctx->input);
-	SETJMP_PUSH(ctx->on_throw);
-
-	rc = SETJMP(ctx->on_throw);
 	p4ResetInput(ctx, fp);
 	rc = p4Repl(ctx, rc);
-
-	SETJMP_POP(ctx->on_throw);
 	P4_INPUT_POP(ctx->input);
 
 	return rc;
@@ -3146,7 +3142,8 @@ static sig_map signalmap[] = {
 	{ 0, P4_THROW_OK, NULL }
 };
 
-static P4_Ctx * volatile signal_ctx;
+static P4_Ctx *ctx_main;
+static JMP_BUF break_glass;
 
 static void
 sig_int(int signum)
@@ -3157,7 +3154,7 @@ sig_int(int signum)
 			break;
 		}
 	}
-	LONGJMP(signal_ctx->on_throw, signum);
+	LONGJMP(break_glass, signum);
 }
 
 static void
@@ -3186,7 +3183,7 @@ cleanup(void)
 	 * to OS anyway when the process is reaped, but it helps close
 	 * the loop on memory allocations for Valgrind.
 	 */
-	p4Free(signal_ctx);
+	p4Free(ctx_main);
 	/* This is redundant too, but I like it for symmetry. */
 	sig_fini();
 }
@@ -3243,29 +3240,28 @@ main(int argc, char **argv)
 	options.argv = argv + optind;
 
 	p4Init();
-	if ((signal_ctx = p4Create(&options)) == NULL) {
-		return EXIT_FAILURE;
-	}
-	(void) atexit(cleanup);
-	(void) p4HookInit(signal_ctx);
-	if (SETJMP(signal_ctx->on_throw) != 0) {
+	if (SETJMP(break_glass) != 0) {
 		return EXIT_FAILURE;
 	}
 	sig_init();
+	if ((ctx_main = p4Create(&options)) == NULL) {
+		return EXIT_FAILURE;
+	}
+	(void) atexit(cleanup);
+	(void) p4HookInit(ctx_main);
 
 	optind = 1;
 	while ((ch = getopt(argc, argv, "b:c:d:f:i:m:r:V")) != -1) {
-		if (ch == 'i' && (rc = p4EvalFile(signal_ctx, optarg)) != P4_THROW_OK) {
+		if (ch == 'i' && (rc = p4EvalFile(ctx_main, optarg)) != P4_THROW_OK) {
 			err(EXIT_FAILURE, "%s", optarg);
 		}
 	}
 
 	if (argc <= optind || (argv[optind][0] == '-' && argv[optind][1] == '\0')) {
-		if ((rc = SETJMP(signal_ctx->on_throw)) != 0) {
-			p4ResetInput(signal_ctx, stdin);
-		}
-		rc = p4Repl(signal_ctx, rc);
-	} else if (optind < argc && (rc = p4EvalFile(signal_ctx, argv[optind]))) {
+		rc = SETJMP(break_glass);
+		p4ResetInput(ctx_main, stdin);
+		rc = p4Repl(ctx_main, rc);
+	} else if (optind < argc && (rc = p4EvalFile(ctx_main, argv[optind]))) {
 		err(EXIT_FAILURE, "%s", argv[optind]);
 	}
 
