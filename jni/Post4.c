@@ -264,7 +264,7 @@ jBoxArray(P4_Ctx *ctx)
 	jsize size = (jsize) P4_POP(ctx->ds).z;
 	jlongArray arr = (*env)->NewLongArray(env, size);
 	if (arr == NULL) {
-		LONGJMP(ctx->on_throw, P4_THROW_ALLOCATE);
+		LONGJMP(ctx->longjmp, P4_THROW_ALLOCATE);
 	}
 	for (jsize i = 0; i < size; i++) {
 		jlong item = (jlong) P4_POP(ctx->ds).n;
@@ -291,7 +291,7 @@ jUnboxArray(P4_Ctx *ctx)
 		P4_Cell *ds_base = realloc(ctx->ds.base, ds_size);
 		if (ds_base == NULL) {
 			/* Frick'n'ell. */
-			LONGJMP(ctx->on_throw, P4_THROW_DS_OVER);
+			LONGJMP(ctx->longjmp, P4_THROW_DS_OVER);
 		}
 		ctx->ds.base = ds_base;
 		ctx->ds.size = ds_size - 1;
@@ -331,7 +331,7 @@ jBoxString(P4_Ctx *ctx)
 	jstring jstr = (*env)->NewStringUTF(env, str);
 	if (jstr == NULL) {
 		(*env)->ExceptionDescribe(env);
-		LONGJMP(ctx->on_throw, P4_THROW_EINVAL);
+		LONGJMP(ctx->longjmp, P4_THROW_EINVAL);
 	}
 	P4_TOP(ctx->ds).v = jstr;
 }
@@ -362,7 +362,7 @@ jPushLocalFrame(P4_Ctx *ctx)
 	jint rc = (*env)->PushLocalFrame(env, capacity);
 	if (rc != JNI_OK) {
 		(*env)->ExceptionDescribe(env);
-		LONGJMP(ctx->on_throw, P4_THROW_ALLOCATE);
+		LONGJMP(ctx->longjmp, P4_THROW_ALLOCATE);
 	}
 }
 
@@ -388,7 +388,7 @@ jObjectClass(P4_Ctx *ctx)
 	jclass cls = (*env)->GetObjectClass(env, obj);
 	if (cls == NULL) {
 		(*env)->ExceptionDescribe(env);
-		LONGJMP(ctx->on_throw, P4_THROW_EINVAL);
+		LONGJMP(ctx->longjmp, P4_THROW_EINVAL);
 	}
 	P4_TOP(ctx->ds).v = cls;
 }
@@ -414,7 +414,7 @@ jMethodID(P4_Ctx *ctx)
 		mid = (*env)->GetStaticMethodID(env, cls, method, sig);
 		if (mid == NULL) {
 			(*env)->ExceptionDescribe(env);
-			LONGJMP(ctx->on_throw, P4_THROW_EINVAL);
+			LONGJMP(ctx->longjmp, P4_THROW_EINVAL);
 		}
 		is_static = 1;
 	}
@@ -444,7 +444,7 @@ jFieldID(P4_Ctx *ctx)
 		fid = (*env)->GetStaticFieldID(env, cls, field, sig);
 		if (fid == NULL) {
 			(*env)->ExceptionDescribe(env);
-			LONGJMP(ctx->on_throw, P4_THROW_EINVAL);
+			LONGJMP(ctx->longjmp, P4_THROW_EINVAL);
 		}
 		is_static = 1;
 	}
@@ -582,7 +582,7 @@ jCall(P4_Ctx *ctx)
 error1:
 	(*env)->DeleteLocalRef(env, cls);
 error0:
-	LONGJMP(ctx->on_throw, P4_THROW_EINVAL);
+	LONGJMP(ctx->longjmp, P4_THROW_EINVAL);
 }
 
 /*
@@ -692,7 +692,7 @@ jField(P4_Ctx *ctx)
 error1:
 	(*env)->DeleteLocalRef(env, cls);
 error0:
-	LONGJMP(ctx->on_throw, P4_THROW_EINVAL);
+	LONGJMP(ctx->longjmp, P4_THROW_EINVAL);
 }
 
 /*
@@ -801,7 +801,7 @@ jSetField(P4_Ctx *ctx)
 error1:
 	(*env)->DeleteLocalRef(env, cls);
 error0:
-	LONGJMP(ctx->on_throw, P4_THROW_EINVAL);
+	LONGJMP(ctx->longjmp, P4_THROW_EINVAL);
 }
 
 static P4_Hook jHooks[] = {
