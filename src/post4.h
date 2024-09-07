@@ -205,6 +205,14 @@ extern "C" {
 # endif
 #endif
 
+#define STDERR		stdout
+
+#ifdef USE_EXCEPTION_STRINGS
+# define THROW_MSG(e)	(void) fprintf(STDERR, "%d thrown: %s", (e), P4_THROW_future <= (e) && (e) < 0 ? p4_exceptions[-(e)] : "?")
+#else
+# define THROW_MSG(e)	(void) fprintf(STDERR, "%d thrown", (e))
+#endif
+
 /***********************************************************************
  *** Types
  ***********************************************************************/

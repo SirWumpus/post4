@@ -1130,7 +1130,9 @@ static void
 p4FreeInput(P4_Input *input)
 {
 	if (input != NULL) {
-		free(input->buffer);
+		if (input->fp != (FILE *) -1) {
+			free(input->buffer);
+		}
 		free(input);
 	}
 }
@@ -1173,7 +1175,7 @@ p4CreateStack(P4_Stack *stk, int size)
 	if ((stk->base = calloc(size + P4_GUARD_CELLS, sizeof (*stk->base))) == NULL) {
 		return -1;
 	}
-	/* Adjust base for underflow gurard. */
+	/* Adjust base for underflow guard. */
 	stk->base += P4_GUARD_CELLS/2;
 	stk->base[size].u = P4_SENTINEL;
 	stk->base[-1].u = P4_SENTINEL;
@@ -1612,6 +1614,7 @@ p4Repl(P4_Ctx *ctx, int rc)
 	 */
 	static P4_Cell exec[] = { { 0 }, {.cw = &w_inter_loop} };
 
+	SETJMP_PUSH(ctx->longjmp);
 	rc = SETJMP(ctx->longjmp);
 _thrown:
 	switch (rc) {
@@ -1623,11 +1626,7 @@ _thrown:
 		p4Bp(ctx);
 		/*@fallthrough@*/
 	default:
-#ifdef USE_EXCEPTION_STRINGS
-		(void) fprintf(STDERR, "%d thrown: %s", rc, P4_THROW_future <= rc && rc < 0 ? p4_exceptions[-rc] : "?");
-#else
-		(void) fprintf(STDERR, "%d thrown", rc);
-#endif
+		THROW_MSG(rc);
 		/* Cannot not rely on ctx->state for compilation state, since
 		 * its possible to temporarily change states in the middle of
 		 * compiling a word, eg `: word [ 123 ;`  Use the fact that
@@ -1738,6 +1737,7 @@ _ok:		if (P4_INTERACTIVE(ctx)) {
 _halt:	if (P4_INTERACTIVE(ctx)) {
 		(void) printf(crlf);
 	}
+	SETJMP_POP(ctx->longjmp);
 	return rc;
 
 		// ( -- )
@@ -3055,7 +3055,7 @@ p4EvalFp(P4_Ctx *ctx, FILE *fp)
 	/* Do not save STATE, see A.6.1.2250 STATE. */
 	P4_INPUT_PUSH(ctx->input);
 	p4ResetInput(ctx, fp);
-	rc = p4Repl(ctx, rc);
+	rc = p4Repl(ctx, P4_THROW_OK);
 	P4_INPUT_POP(ctx->input);
 
 	return rc;
@@ -3240,7 +3240,9 @@ main(int argc, char **argv)
 	options.argv = argv + optind;
 
 	p4Init();
-	if (SETJMP(break_glass) != 0) {
+	if ((rc = SETJMP(break_glass)) != 0) {
+		THROW_MSG(rc);
+		(void) fprintf(STDERR, crlf);
 		return EXIT_FAILURE;
 	}
 	sig_init();
