@@ -55,6 +55,10 @@ extern "C" {
 #define P4_FLOAT_STACK_SIZE		6		/* in CELLS */
 #endif
 
+#ifndef P4_STACK_EXTRA
+#define P4_STACK_EXTRA			16		/* in CELLS */
+#endif
+
 #ifndef P4_STRING_SIZE
 #define P4_STRING_SIZE			256		/* in bytes */
 #endif

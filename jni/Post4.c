@@ -274,6 +274,32 @@ jBoxArray(P4_Ctx *ctx)
 	P4_PUSH(ctx->ds, (void *) arr);
 }
 
+static int
+p4StackResize(P4_Stack *stk, unsigned newsize)
+{
+	if (newsize <= stk->size) {
+		/* Nothing but growth potential. */
+		return 0;
+	}
+	size_t depth = P4_PLENGTH(stk);
+	P4_Cell *newbase = realloc(stk->base - P4_GUARD_CELLS/2, (newsize + P4_GUARD_CELLS) * sizeof (*stk->base));
+	if (newbase == NULL) {
+		return -1;
+	}
+	/* Set stack just above lower guards. */
+	stk->base = newbase + P4_GUARD_CELLS/2;
+	/* Clear new memory to make Valgrind happy. */
+	(void) memset(stk->base + depth, 0, (newsize - stk->size) * sizeof (*stk->base));
+	/* Set the guards. */
+	stk->base[newsize].u = P4_SENTINEL;
+	stk->base[-1].u = P4_SENTINEL;
+	stk->base[newsize+1].u = 0;
+	stk->base[-2].u = 0;
+	stk->size = newsize;
+	P4_PSET(stk, depth);
+	return 0;
+}
+
 /*
  * jUnboxArray ( jarray -- x*i i )
  */
@@ -287,16 +313,10 @@ jUnboxArray(P4_Ctx *ctx)
 	/* Enough stack space to hold array items? */
 	if (ctx->ds.size <= ds_depth + size + 1) {
 		/* Grow data stack with some extra work space. */
-		size_t ds_size = ds_depth + size + P4_DATA_STACK_SIZE;
-		P4_Cell *ds_base = realloc(ctx->ds.base, ds_size);
-		if (ds_base == NULL) {
+		if (p4StackResize(&ctx->ds, ctx->ds.size + size + P4_STACK_EXTRA)) {
 			/* Frick'n'ell. */
 			LONGJMP(ctx->longjmp, P4_THROW_DS_OVER);
 		}
-		ctx->ds.base = ds_base;
-		ctx->ds.size = ds_size - 1;
-		ctx->ds.base[ds_size - 1].u = P4_SENTINEL;
-		P4_SET(ctx->ds, ds_depth);
 	}
 	/* Get each array item and push. */
 	for (jsize i = size - 1; 0 <= i; i--) {
