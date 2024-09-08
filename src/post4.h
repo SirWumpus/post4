@@ -224,6 +224,7 @@ extern "C" {
 typedef struct {
 	int argc;
 	char **argv;
+	int trace;
 	unsigned ds_size;
 	unsigned rs_size;
 	unsigned fs_size;
@@ -373,9 +374,10 @@ struct p4_word {
 #define P4_WORD_SET_COMPILE(w)		P4_WORD_SET(w, P4_BIT_COMPILE)
 #define P4_WORD_CLEAR_COMPILE(w)	P4_WORD_CLEAR(w, P4_BIT_COMPILE)
 
-#ifdef NOT_USED_YET
 	P4_Uint		poppush;
-#endif
+
+#define P4_WD_LIT(w)			(((w)->poppush >> 24) & 0x0F)
+#define P4_WD_LIT_SET(w, u)		(((w)->poppush | (((u)& 0x0F) << 24)
 #define P4_FS_CAN_POP(w)		(((w)->poppush >> 20) & 0x0F)
 #define P4_FS_CAN_PUSH(w)		(((w)->poppush >> 16) & 0x0F)
 #define P4_RS_CAN_POP(w)		(((w)->poppush >> 12) & 0x0F)
@@ -389,11 +391,7 @@ struct p4_word {
 	P4_Cell *	data;		/* Word grows by data cells. */
 };
 
-#ifdef USE_STACK_CHECKS
 # define P4_WORD(name, code, bits, pp)	{ NULL, { STRLEN(name), name }, bits, pp, code, 0 }
-#else
-# define P4_WORD(name, code, bits, pp)	{ NULL, { STRLEN(name), name }, bits, code, 0 }
-#endif
 
 typedef struct {
 	P4_Size		size;		/* Size of table in cells. */

@@ -873,6 +873,8 @@ Java_post4_jni_Post4_p4Create(JNIEnv *env, jobject self, jobject opts)
 	/* Map from object to struct. */
 	jclass clazz = (*env)->GetObjectClass(env, opts);
 
+	fid = (*env)->GetFieldID(env, clazz, "trace", "I");
+	p4_opts.trace = (int)(*env)->GetIntField(env, opts, fid);
 	fid = (*env)->GetFieldID(env, clazz, "ds_size", "I");
 	p4_opts.ds_size = (unsigned)(*env)->GetIntField(env, opts, fid);
 	fid = (*env)->GetFieldID(env, clazz, "fs_size", "I");

@@ -1211,6 +1211,7 @@ p4Create(P4_Options *opts)
 	ctx->argc = opts->argc;
 	ctx->argv = opts->argv;
 	ctx->state = P4_STATE_INTERPRET;
+	ctx->trace = opts->trace;
 
 	if ((ctx->input = p4CreateInput()) == NULL) {
 		goto error0;
@@ -1270,18 +1271,6 @@ p4Bp(P4_Ctx *ctx)
 }
 
 static void
-p4Trace(P4_Ctx *ctx, P4_Xt xt)
-{
-	if (ctx->trace) {
-		(void) fprintf(
-			STDERR, " ds=%-2d fs=%-2d rs=%-2d %*s%s\r\n",
-			(int)P4_LENGTH(ctx->ds), (int)P4_LENGTH(ctx->fs), (int)P4_LENGTH(ctx->rs),
-			2 * (int)ctx->level, "", 0 < xt->name.length ? (char *)xt->name.string : ":NONAME"
-		);
-	}
-}
-
-static void
 p4TraceLit(P4_Ctx *ctx, P4_Cell w)
 {
 	if (ctx->trace) {
@@ -1292,9 +1281,47 @@ p4TraceLit(P4_Ctx *ctx, P4_Cell w)
 		);
 	}
 }
+
+static void
+p4TraceStack(P4_Ctx *ctx, P4_Stack *stk, int u, const char *prefix)
+{
+	P4_Cell w;
+	unsigned i;
+	int is_small;
+
+	(void) fprintf(STDERR, "%s%s", prefix, 0 < u ? "" : "-");
+	for ( ; 0 < u; u--) {
+		w = stk->top[1-u];
+		is_small = -65536 < w.n && w.n < 65536;
+		(void) fprintf(STDERR, is_small ? P4_INT_FMT"%s" : P4_HEX_FMT"%s", w.n, 1 < u ? " " : "");
+	}
+}
+
+static void
+p4Trace(P4_Ctx *ctx, P4_Xt xt, P4_Cell *ip)
+{
+	if (ctx->trace) {
+		(void) fprintf(
+			STDERR, "ds=%-2d fs=%-2d rs=%-2d %*s%s ",
+			(int)P4_LENGTH(ctx->ds), (int)P4_LENGTH(ctx->fs), (int)P4_LENGTH(ctx->rs),
+			2 * (int)ctx->level, "", 0 < xt->name.length ? (char *)xt->name.string : ":NONAME"
+		);
+		for (int i = P4_WD_LIT(xt); 0 < i--; ip++) {
+			int is_small = -65536 < ip->n && ip->n < 65536;
+			(void) fprintf(STDERR, is_small ? P4_INT_FMT" " : P4_HEX_FMT" ", ip->n);
+		}
+		if (xt->poppush & 0xF0F0F0) {
+			p4TraceStack(ctx, &ctx->ds, P4_DS_CAN_POP(xt), "\t(");
+			p4TraceStack(ctx, &ctx->fs, P4_FS_CAN_POP(xt), "/");
+			p4TraceStack(ctx, &ctx->rs, P4_RS_CAN_POP(xt), "/");
+			(void) fputc(')', STDERR);
+		}
+		(void) fputs(crlf, STDERR);
+	}
+}
 #else
 # define p4Bp(ctx)
-# define p4Trace(ctx, xt)
+# define p4Trace(ctx, xt, ip)
 # define p4TraceLit(ctx, w)
 #endif
 
@@ -1377,9 +1404,9 @@ p4Repl(P4_Ctx *ctx, int rc)
 	static P4_Word words[] = {
 		P4_WORD("_nop",		&&_nop,		0, 0x00),	//_p4
 #define w_nop		words[0]
-		P4_WORD("LIT",		&&_lit,		0, 0x01),		// historic
+		P4_WORD("LIT",		&&_lit,		0, 0x01000001),		// historic
 #define w_lit		words[1]
-		P4_WORD(";",		&&_exit,	P4_BIT_HIDDEN, 0x10),	// _seext
+		P4_WORD(";",		&&_exit,	P4_BIT_HIDDEN, 0x0100),	// _seext
 #define w_semi		words[2]
 		P4_WORD("_abort",	&&_abort,	0, 0x00),
 #define w_abort		words[3]
@@ -1389,7 +1416,7 @@ p4Repl(P4_Ctx *ctx, int rc)
 #define w_interpret	words[5]
 		P4_WORD("REFILL",	&&_refill,	0, 0x01),
 #define w_refill	words[6]
-		P4_WORD("_branchnz",	&&_branchnz,	0, 0x10),
+		P4_WORD("_branchnz",	&&_branchnz,	0, 0x01000010),
 #define w_branchnz	words[7]
 #ifdef HAVE_HOOKS
 		P4_WORD("_hook_add",	&&_hook_add,	0, 0x10),	// p4
@@ -1464,9 +1491,9 @@ p4Repl(P4_Ctx *ctx, int rc)
 
 		/* Internal support. */
 		P4_WORD("_bp",		&&_bp,		0, 0x00),		// p4
-		P4_WORD("_branch",	&&_branch,	P4_BIT_COMPILE, 0x00),	// p4
-		P4_WORD("_branchz",	&&_branchz,	P4_BIT_COMPILE, 0x10),	// p4
-		P4_WORD("_call",	&&_call,	P4_BIT_COMPILE, 0x0100),// p4
+		P4_WORD("_branch",	&&_branch,	P4_BIT_COMPILE, 0x01000000),	// p4
+		P4_WORD("_branchz",	&&_branchz,	P4_BIT_COMPILE, 0x01000010),	// p4
+		P4_WORD("_call",	&&_call,	P4_BIT_COMPILE, 0x0100),	// p4
 		P4_WORD("catch_frame",	&&_frame,	0, 0x01),	// p4
 		P4_WORD("_ds",		&&_ds,		0, 0x03),	// p4
 		P4_WORD("_dsp@",	&&_dsp_get,	0, 0x01),	// p4
@@ -1475,6 +1502,7 @@ p4Repl(P4_Ctx *ctx, int rc)
 		P4_WORD("_rs",		&&_rs,		0, 0x03),	// p4
 		P4_WORD("_rsp@",	&&_rsp_get,	0, 0x01),	// p4
 		P4_WORD("_rsp!",	&&_rsp_put,	0, 0x10),	// p4
+		P4_WORD("_set_pp",	&&_set_pp,	P4_BIT_IMM, 0x10), // p4
 		P4_WORD("_stack_dump",	&&_stack_dump,	0, 0x20),	// p4
 		P4_WORD("_window",	&&_window,	0, 0x02),	// p4
 
@@ -1747,12 +1775,12 @@ _bp:		p4Bp(ctx);
 _nop:
 		// Indirect threading.
 _next:		w = *ip++;
-		p4Trace(ctx, w.xt);
+		p4Trace(ctx, w.xt, ip);
 		goto *w.xt->code;
 
 		// ( xt -- )
 _execute:	w = P4_POP(ctx->ds);
-		p4Trace(ctx, w.xt);
+		p4Trace(ctx, w.xt, ip);
 		goto *w.xt->code;
 
 		// ( i*x -- j*y )(R: -- ip)
@@ -1785,23 +1813,18 @@ _call:		w = *ip;
 
 		// ( -- )
 _branch:	w = *ip;
-		p4TraceLit(ctx, w);
 		ip = (P4_Cell *)((P4_Char *) ip + w.n);
 		NEXT;
 
 		// ( flag -- )
 _branchz:	w = *ip;
 		x = P4_POP(ctx->ds);
-		p4TraceLit(ctx, x);
-		p4TraceLit(ctx, w);
 		ip = (P4_Cell *)((P4_Char *) ip + (x.u == 0 ? w.n : P4_CELL));
 		NEXT;
 
 		// ( flag -- )
 _branchnz:	w = *ip;
 		x = P4_POP(ctx->ds);
-		p4TraceLit(ctx, x);
-		p4TraceLit(ctx, w);
 		ip = (P4_Cell *)((P4_Char *) ip + (x.u != 0 ? w.n : P4_CELL));
 		NEXT;
 
@@ -1858,7 +1881,6 @@ _longjmp:	w = P4_POP(ctx->ds);
 		// ( -- x )
 		// : lit r> dup cell+ >r @ ;
 _lit:		w = *ip++;
-		p4TraceLit(ctx, w);
 		P4_PUSH(ctx->ds, w);
 		NEXT;
 
@@ -1928,6 +1950,11 @@ _is_compile:	w = P4_TOP(ctx->ds);
 
 		// ( -- )
 _immediate:	P4_WORD_SET_IMM(ctx->words);
+		NEXT;
+
+		// ( u -- )
+_set_pp:	w = P4_POP(ctx->ds);
+		ctx->words->poppush = w.u;
 		NEXT;
 
 		// ( xt -- bool )
@@ -3094,7 +3121,7 @@ p4EvalString(P4_Ctx *ctx, const P4_Char *str, size_t len)
  ***********************************************************************/
 
 static const char usage[] =
-"usage: post4 [-V][-b file][-c file][-d size][-f size][-i file][-m size]\r\n"
+"usage: post4 [-TV][-b file][-c file][-d size][-f size][-i file][-m size]\r\n"
 "             [-r size][script [args ...]]\r\n"
 "\r\n"
 "-b file\t\topen a block file\r\n"
@@ -3104,9 +3131,12 @@ static const char usage[] =
 "-i file\t\tinclude file; can be repeated; searches $POST4_PATH\r\n"
 "-m size\t\tdata space memory in KB; default " QUOTE(P4_MEM_SIZE) "\r\n"
 "-r size\t\treturn stack size in cells; default " QUOTE(P4_RETURN_STACK_SIZE) "\r\n"
+"-T\t\tenable tracing; see TRACE\r\n"
 "-V\t\tbuild and version information\r\n\r\n"
 "If script is \"-\", read it from standard input.\r\n"
 ;
+
+static char *flags = "b:c:d:f:i:m:r:TV";
 
 static P4_Options options = {
 	.ds_size = P4_DATA_STACK_SIZE,
@@ -3193,7 +3223,7 @@ main(int argc, char **argv)
 {
 	int ch, rc;
 
-	while ((ch = getopt(argc, argv, "b:c:d:f:i:m:r:V")) != -1) {
+	while ((ch = getopt(argc, argv, flags)) != -1) {
 		switch (ch) {
 		case 'b':
 			options.block_file = optarg;
@@ -3219,6 +3249,9 @@ main(int argc, char **argv)
 			break;
 		case 'r':
 			options.rs_size = strtol(optarg, NULL, 10);
+			break;
+		case 'T':
+			options.trace++;
 			break;
 		case 'V':
 			(void) printf(
@@ -3253,7 +3286,7 @@ main(int argc, char **argv)
 	(void) p4HookInit(ctx_main);
 
 	optind = 1;
-	while ((ch = getopt(argc, argv, "b:c:d:f:i:m:r:V")) != -1) {
+	while ((ch = getopt(argc, argv, flags)) != -1) {
 		if (ch == 'i' && (rc = p4EvalFile(ctx_main, optarg)) != P4_THROW_OK) {
 			err(EXIT_FAILURE, "%s", optarg);
 		}

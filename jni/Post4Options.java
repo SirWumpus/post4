@@ -16,4 +16,5 @@ public class Post4Options
 	public String block_file = "";
 	public String[] argv = {};
 	public int argc = 0;
+	public int trace = 0;
 }
