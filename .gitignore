@@ -1,5 +1,5 @@
 *.bak
-*.blk
+#*.blk
 *.o
 *.so
 *.dll

@@ -89,7 +89,7 @@ t{ BLOCKS -> 6 }t
 test_group_end
 
 .( BLOCK-CLOSE DELETE-FILE ) test_group
-\ t{ BLOCK-CLOSE tw_tmp_blk DELETE-FILE -> 0 }t
+t{ BLOCK-CLOSE tw_tmp_blk DELETE-FILE -> 0 }t
 test_group_end
 
 rm_block_tests
