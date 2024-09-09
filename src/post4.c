@@ -2577,7 +2577,7 @@ _seext:		word = P4_POP(ctx->ds).xt;
 					(void) printf("S\\\" ");
 					for (char *s = (char *)&w.p[2];*s != '\0'; s++) {
 						if ((x.n = (P4_Int) p4LiteralEscape(*s))) {
-							(void) printf("\\%c", x.n);
+							(void) printf("\\%c", (int) x.n);
 							continue;
 						}
 						(void) fputc(*s, stdout);
