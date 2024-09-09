@@ -255,7 +255,7 @@ Initialise the pictured numeric output conversion process.
 
 - - -
 #### >BODY
-( `xt` -- `aaddr` )  
+( `xt` -- `aaddr` | ⊥ )  
 `aaddr` is the data-field address corresponding to `xt`.  Will throw not created (-31) if `xt` is not a word defined by `CREATE`.
 
 - - -
@@ -291,12 +291,12 @@ Fetch from `aaddr` the value `x` stored there.
 
 - - -
 #### ABORT
-( `i*x` -- ) ( R: `j*x` -- )  
+( `i*x` -- ⊥ ) ( R: `j*x` -- )  
 Throw abort (-1).  Clear the data stack and perform a `QUIT`, which clears the return stack too.  Never returns to caller.
 
 - - -
 #### ABORT" ccc"
-( `i*x` `x1` -- | `i*x` ) ( R: `j*x` -- | `j*x` )  
+( `i*x` `x1` -- `i*x` | ⊥ ) ( R: `j*x` -- `j*x` | ⊥ )  
 If `x1` is not equal to zero (0), display the message that follows up to the closing double-quote and perform an `ABORT`.  Never returns to caller.
 
 - - -
@@ -860,7 +860,7 @@ An example:
 
 - - -
 #### QUIT
-( -- )(R: `i*x` -- )  
+( -- ⊥ )(R: `i*x` -- ⊥ )  
 Empty the return stack (never returns to caller), reset `SOURCE-ID` to zero (0), set the console as the input source, enter interpretation state, and start REPL:
 
   * Accept a line from the input source into the input buffer, set `>IN` to zero (0), and interpret.

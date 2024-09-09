@@ -1875,7 +1875,7 @@ END-STRUCTURE
 \ (S: u -- ior )
 : _block_seek _block_flush 1- _blk_size * S>D _block_fd @ REPOSITION-FILE ;
 
-\ (S: u -- )
+\ (S: u -- | ⊥ )
 : _block_read
 	DUP _block_seek THROW
 	_blk_buffer _blk_size _block_fd @ READ-FILE
@@ -1883,7 +1883,7 @@ END-STRUCTURE
 	_blk_number ! _blk_clean
 ;
 
-\ (S: u -- )
+\ (S: u -- | ⊥ )
 : _block_grow
 	\ Switch from block # to file offset.
 	_blk_size *			\ S: u'
@@ -1910,7 +1910,7 @@ END-STRUCTURE
 	2DROP				\ S:
 ;
 
-\ (S: u -- )
+\ (S: u -- | ⊥ )
 : _block_write
 	DUP
 	_block_grow _block_seek THROW

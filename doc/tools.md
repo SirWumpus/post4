@@ -209,6 +209,11 @@ Breakpoint.  Display current source buffer position.  Intended as convenient fun
 Display an implementation-defined human-readable representation referenced by `xt`.
 
 - - -
+#### _stack_check
+( -- | ⊥ )  
+Perform an explicit stack check and throw on error.
+
+- - -
 #### _stack_dump
 ( `aaddr` `u` -- )  
 Utility word used to define `.S` and `.rs`.

@@ -1144,18 +1144,6 @@ p4Bp(P4_Ctx *ctx)
 }
 
 static void
-p4TraceLit(P4_Ctx *ctx, P4_Cell w)
-{
-	if (ctx->trace) {
-		int is_small = -65536 < w.n && w.n < 65536;
-		(void) fprintf(
-			STDERR, is_small ? "%*s"P4_INT_FMT"\r\n" : "%*s"P4_HEX_FMT"\r\n",
-			19+2*(int)ctx->level, "", w.n
-		);
-	}
-}
-
-static void
 p4TraceStack(P4_Ctx *ctx, P4_Stack *stk, int u, const char *prefix)
 {
 	P4_Cell w;
@@ -1194,8 +1182,8 @@ p4Trace(P4_Ctx *ctx, P4_Xt xt, P4_Cell *ip)
 }
 #else
 # define p4Bp(ctx)
+# define p4Cp(ctx)
 # define p4Trace(ctx, xt, ip)
-# define p4TraceLit(ctx, w)
 #endif
 
 /* When compiled with debugging add more selective and frequent stack checks. */
@@ -1364,7 +1352,7 @@ p4Repl(P4_Ctx *ctx, int rc)
 		P4_WORD("_bp",		&&_bp,		0, 0x00),		// p4
 		P4_WORD("_branch",	&&_branch,	P4_BIT_COMPILE, 0x01000000),	// p4
 		P4_WORD("_branchz",	&&_branchz,	P4_BIT_COMPILE, 0x01000010),	// p4
-		P4_WORD("_call",	&&_call,	P4_BIT_COMPILE, 0x0100),	// p4
+		P4_WORD("_call",	&&_call,	P4_BIT_COMPILE, 0x01000100),	// p4
 		P4_WORD("catch_frame",	&&_frame,	0, 0x01),	// p4
 		P4_WORD("_ds",		&&_ds,		0, 0x03),	// p4
 		P4_WORD("_dsp@",	&&_dsp_get,	0, 0x01),	// p4
@@ -1374,6 +1362,7 @@ p4Repl(P4_Ctx *ctx, int rc)
 		P4_WORD("_rsp@",	&&_rsp_get,	0, 0x01),	// p4
 		P4_WORD("_rsp!",	&&_rsp_put,	0, 0x10),	// p4
 		P4_WORD("_set_pp",	&&_set_pp,	P4_BIT_IMM, 0x10), // p4
+		P4_WORD("_stack_check", &&_stack_check, 0, 0x00),	// p4
 		P4_WORD("_stack_dump",	&&_stack_dump,	0, 0x20),	// p4
 		P4_WORD("_window",	&&_window,	0, 0x02),	// p4
 
@@ -1656,6 +1645,12 @@ _enter:		P4_PUSH(ctx->rs, ip);
 		// ( i*x -- i*x )(R:ip -- )
 _exit:		P4STACKGUARDS(ctx);
 		ip = P4_POP(ctx->rs).p;
+#ifndef NDEBUG
+		/* Did we mess up the return stack? */
+		if (ip < repl || (P4_Cell *)ctx->end <= ip) {
+			THROW(P4_THROW_SIGSEGV);
+		}
+#endif
 		ctx->level--;
 		NEXT;
 
@@ -1669,7 +1664,6 @@ _ctx:		P4_PUSH(ctx->ds, (P4_Cell *) ctx);
 
 		// ( -- )
 _call:		w = *ip;
-		p4TraceLit(ctx, w);
 		P4_PUSH(ctx->rs, ip + 1);
 		ip = (P4_Cell *)((P4_Char *) ip + w.n);
 		NEXT;
@@ -2004,18 +1998,22 @@ _cstore:	w = P4_POP(ctx->ds);
 
 		// ( aaddr -- x )
 _fetch:		w = P4_TOP(ctx->ds);
+#ifndef NDEBUG
 		if (w.u & 1) {
 			THROW(P4_THROW_SIGBUS);
 		}
+#endif
 		P4_TOP(ctx->ds) = *w.p;
 		NEXT;
 
 		// ( x aaddr -- )
 _store:		w = P4_POP(ctx->ds);
 		x = P4_POP(ctx->ds);
+#ifndef NDEBUG
 		if (w.u & 1) {
 			THROW(P4_THROW_SIGBUS);
 		}
+#endif
 		*w.p = x;
 		NEXT;
 
@@ -2404,6 +2402,10 @@ _rs:		w.n = P4_LENGTH(ctx->rs);
 		P4_PUSH(ctx->ds, ctx->rs.base);
 		P4_PUSH(ctx->ds, w);
 		P4_PUSH(ctx->ds, ctx->rs.size);
+		NEXT;
+
+		// ( -- )
+_stack_check:	p4StackGuards(ctx);
 		NEXT;
 
 		// ( addr u -- )
