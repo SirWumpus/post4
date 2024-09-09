@@ -91,10 +91,6 @@ extern "C" {
 #define P4_PIC_SIZE			(2 * sizeof (P4_Cell) * CHAR_BIT + 2)
 #endif
 
-#ifndef P4_FILE_ACCESS
-#define P4_FILE_ACCESS			1
-#endif
-
 #ifndef P4_TRACE
 #define P4_TRACE			1
 #endif
@@ -441,7 +437,7 @@ struct p4_ctx {
 	P4_Int		unkey;		/* KEY and KEY? */
 	P4_Input *	input;
 	P4_Block *	block;
-	P4_Int		block_fd;
+	void *		block_fd;
 #ifdef WITH_JAVA
 	void *		jenv;
 #endif

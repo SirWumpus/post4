@@ -23,8 +23,8 @@ T{ tw_fn1 R/W CREATE-FILE SWAP tv_fid1 ! -> 0 }T
 T{ tv_fid1 @ CLOSE-FILE -> 0 }T
 test_group_end
 
-.( WRITE-LINE W/O OPEN-FILE ) test_group
-T{ tw_fn1 W/O OPEN-FILE SWAP tv_fid1 ! -> 0 }T
+.( WRITE-LINE R/W OPEN-FILE ) test_group
+T{ tw_fn1 R/W OPEN-FILE SWAP tv_fid1 ! -> 0 }T
 T{ tw_line1 tv_fid1 @ WRITE-LINE -> 0 }T
 T{ tv_fid1 @ CLOSE-FILE -> 0 }T
 test_group_end
@@ -58,7 +58,6 @@ test_group_end
 
 .( DELETE-FILE ) test_group
 T{ S" /tmp/fa_bogus.txt" DELETE-FILE 0<> -> TRUE }T
-T{ tw_fn1 DELETE-FILE -> 0 }T
 T{ tw_fn1 R/W BIN OPEN-FILE SWAP tv_fid1 ! -> 0 }T
 T{ tv_fid1 @ CLOSE-FILE -> 0 }T
 T{ tw_fn1 DELETE-FILE -> 0 }T

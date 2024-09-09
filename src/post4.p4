@@ -1838,48 +1838,138 @@ BEGIN-STRUCTURE p4_ctx
 	FIELD: ctx.block_fd
 	/PAD +FIELD ctx.tty	\ buffer, see SOURCE
 [DEFINED] jcall [IF]
-	FIELD: jenv
+	FIELD: ctx.jenv
 [THEN]
 \	0 +FIELD ctx.longjmp	\ size varies by host OS
 END-STRUCTURE
-
-\ ... SCR ...
-\
-\ (S: -- aaddr )
-\
-VARIABLE SCR
-
-\ (S: u -- )
-: LIST
-	DUP SCR !		\ S: u
-	BLOCK			\ S: caddr
-	0 BEGIN			\ S: caddr i
-	  1+ DUP 2 .R		\ S: caddr i'
-	  [CHAR] | EMIT
-	  OVER 64 TYPE		\ S: caddr i'
-	  [CHAR] | EMIT CR
-	  SWAP 64 CHARS +	\ S: i' caddr'
-	  SWAP DUP 16 >=	\ S: caddr' i' bool
-	UNTIL 2DROP
-;
-
-\ ... FLUSH ...
-\
-\ (S: -- )
-\
-: FLUSH SAVE-BUFFERS EMPTY-BUFFERS ;
-
-\ ... LIST+ ...
-\
-\ (S: -- )
-\
-: list+ SCR @ 1+ LIST ;
 
 \ (S: -- )
 : _input_ptr _ctx ctx.input ;
 
 \ (S: -- aaddr )
 : BLK _input_ptr @ in.blk ;
+
+\ (S: -- aaddr )
+: _block_ptr _ctx ctx.block ;
+: _blk_state _block_ptr @ blk.state ;
+: _blk_number _block_ptr @ blk.number ;
+
+\ (S: -- caddr )
+: _blk_buffer _block_ptr @ blk.buffer ;
+
+\ (S: -- )
+: _blk_free 0 _blk_state ! 0 _blk_number ! ;
+: _blk_clean 1 _blk_state ! ;
+: _blk_dirty 2 _blk_state ! ;
+' _blk_free alias EMPTY-BUFFERS
+' _blk_dirty alias UPDATE
+
+\ (S: -- aaddr )
+: _block_fd _ctx ctx.block_fd ;
+
+1024 CONSTANT _blk_size
+
+\ (S: -- )
+: _block_flush _block_fd @ FLUSH-FILE DROP ;
+
+\ (S: u -- ior )
+: _block_seek _block_flush 1- _blk_size * S>D _block_fd @ REPOSITION-FILE ;
+
+\ (S: u -- )
+: _block_read
+	DUP _block_seek THROW
+	_blk_buffer _blk_size _block_fd @ READ-FILE
+	0<> SWAP _blk_size <> AND -33 AND THROW
+	_blk_number ! _blk_clean
+;
+
+\ (S: u -- )
+: _block_grow
+	\ Switch from block # to file offset.
+	_blk_size *			\ S: u'
+	_block_fd @ FILE-SIZE 0<> -66 AND THROW
+	D>S				\ S: u' v
+	\ Is the file already large enough?
+	2DUP U> IF			\ S: u' v
+	  _block_flush
+	  \ Seek end of file.
+	  DUP S>D _block_fd @ REPOSITION-FILE THROW
+	  \ Temporary blank buffer, skip allocation.
+	  HERE DUP >R _blk_size BLANK	\ S: u' v adr	R: adr
+	  \ Extend the file with blank blocks.
+	  BEGIN
+	    2DUP U>			\ S: u'	v	R: adr
+	  WHILE
+	    \ Next block.
+	    _blk_size +			\ S: u'	v'	R: adr
+	    \ Append a blank block.
+	    R@ _blk_size _block_fd @ WRITE-FILE THROW
+	  REPEAT
+	  R> DROP			\ S: u' v'	R:
+	THEN
+	2DROP				\ S:
+;
+
+\ (S: u -- )
+: _block_write
+	DUP
+	_block_grow _block_seek THROW
+	_blk_buffer _blk_size _block_fd @ WRITE-FILE THROW
+;
+
+\ (S: -- )
+: SAVE-BUFFERS _blk_number @ _block_write _blk_clean _block_fd @ FLUSH-FILE DROP ;
+: FLUSH SAVE-BUFFERS EMPTY-BUFFERS ;
+
+\ (S: u xt -- aaddr )
+: _block_or_buffer
+	\ Block zero?
+	OVER 0= -35 AND THROW
+	\ Block aready loaded?
+	OVER _blk_number @ <> IF
+	  \ Block is dirty?
+	  _blk_state @ 2 = IF
+	     _blk_number @ _block_write
+	  THEN
+	  \ Read block for BLOCK (not BUFFER).
+	  OVER SWAP EXECUTE
+	ELSE
+	  DROP
+	THEN
+ 	_blk_number ! _blk_clean _blk_buffer
+;
+
+\ (S: u -- aaddr )
+: BLOCK ['] _block_read _block_or_buffer ;
+
+\ (S: u -- aaddr )
+: BUFFER ['] DROP _block_or_buffer ;
+
+\ (S: -- )
+: BLOCK-CLOSE
+	_block_fd @ 0<> _blk_number @ 0<> AND IF
+	  _blk_number @ _block_write _block_fd @ CLOSE-FILE DROP
+	  0 _block_fd ! _blk_free
+        THEN
+;
+
+\ (S: caddr u -- ior )
+: BLOCK-OPEN
+	2DUP R/W BIN OPEN-FILE IF
+	  DROP R/W BIN CREATE-FILE ?DUP IF
+	    NIP EXIT
+	  THEN
+	ELSE
+	  >R 2DROP R>
+	THEN
+	_block_fd ! 0
+;
+
+\ (S: -- u )
+: BLOCKS _block_fd @ FILE-SIZE DROP D>S _blk_size / ;
+
+\ \ (S: -- )
+\ : FLUSH SAVE-BUFFERS EMPTY-BUFFERS ;
 
 \ (S: -- )
 : _input_push
@@ -1895,15 +1985,12 @@ VARIABLE SCR
 	R> R> _input_ptr ! >R
 ;
 
-\ (S: -- caddr )
-: _block_ptr _ctx ctx.block ;
-
 \ (S: -- )
 : _block_push
 	SAVE-BUFFERS
 	R> _block_ptr @ >R >R
-	p4_block ALLOCATE DROP _block_ptr !
-	_block_ptr @ 0 OVER blk.number ! 0 SWAP blk.state !
+	p4_block ALLOCATE DROP
+	DUP _block_ptr ! 0 OVER blk.number ! 0 SWAP blk.state !
 ;
 
 \ (S: -- )
@@ -1915,7 +2002,7 @@ VARIABLE SCR
 \ (S: i*x u -- j*x )
 : LOAD
 	_input_push _block_push
-	DUP BLK ! BLOCK 1024 ['] _evaluate CATCH
+	DUP BLK ! BLOCK _blk_size ['] _evaluate CATCH
 	_block_pop _input_pop THROW
 ;
 
@@ -1949,6 +2036,29 @@ VARIABLE SCR
 	  '\n' PARSE 2DROP	(   Skip up to and including newline. )
 	THEN
 ; IMMEDIATE
+
+\ (S: -- aaddr )
+VARIABLE SCR
+
+\ (S: u -- )
+: LIST
+	DUP SCR !		\ S: u
+	BLOCK			\ S: caddr
+	0 BEGIN			\ S: caddr i
+	  1+ DUP 2 .R		\ S: caddr i'
+	  [CHAR] | EMIT
+	  OVER 64 TYPE		\ S: caddr i'
+	  [CHAR] | EMIT CR
+	  SWAP 64 CHARS +	\ S: i' caddr'
+	  SWAP DUP 16 >=	\ S: caddr' i' bool
+	UNTIL 2DROP
+;
+
+\ ... LIST+ ...
+\
+\ (S: -- )
+\
+: list+ SCR @ 1+ LIST ;
 
 \ ... AT-XY ...
 \
@@ -2211,7 +2321,7 @@ _fs CONSTANT floating-stack DROP DROP
 : FALIGNED ALIGNED ;
 : FFIELD: FIELD: ;
 
-: .fs 'f' EMIT 's' EMIT '\r' EMIT '\n' EMIT _fs DROP _stack_dump ;
+: .fs S\" fs\r\n" TYPE _fs DROP _stack_dump ;
 
 : fs>ds fs>rs R> ;
 : ds>fs >R rs>fs ;

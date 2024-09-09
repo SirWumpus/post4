@@ -898,137 +898,6 @@ p4Refill(P4_Input *input)
 }
 
 /***********************************************************************
- *** Block I/O
- ***********************************************************************/
-
-int
-p4BlockGrow(int fd, P4_Uint block)
-{
-	size_t n;
-	struct stat sb;
-	P4_Char blanks[P4_BLOCK_SIZE];
-
-	if (fstat(fd, &sb)) {
-		return -1;
-	}
-	/* Is the file large enough to contain the requested block? */
-	if (sb.st_size < block * P4_BLOCK_SIZE) {
-		if (lseek(fd, 0, SEEK_END) == (off_t) -1) {
-			return -1;
-		}
-		(void) memset(blanks, ' ', sizeof (blanks));
-
-		/* P4_BLOCK_SIZE is a power of 2. */
-		if ((n = (sb.st_size & (P4_BLOCK_SIZE-1))) != 0) {
-			/* Extend the file to a multiple of block size. */
-			if (write(fd, blanks, P4_BLOCK_SIZE - n) != P4_BLOCK_SIZE - n) {
-				return -1;
-			}
-			sb.st_size = sb.st_size - n + P4_BLOCK_SIZE;
-		}
-
-		/* Extend the file with blank blocks. */
-		for (n = sb.st_size / P4_BLOCK_SIZE; n < block; n++) {
-			if (write(fd, blanks, P4_BLOCK_SIZE) != P4_BLOCK_SIZE) {
-				return -1;
-			}
-		}
-	}
-	if (lseek(fd, (block - 1) * P4_BLOCK_SIZE, SEEK_SET) == (off_t) -1) {
-		return -1;
-	}
-
-	return 0;
-}
-
-int
-p4BlockRead(int fd, P4_Uint blk_num, P4_Block *block)
-{
-	if (fd <= 0 || blk_num == 0 || block == NULL) {
-		return -1;
-	}
-	if (lseek(fd, (blk_num - 1) * P4_BLOCK_SIZE, SEEK_SET) == (off_t) -1) {
-		return -1;
-	}
-	if (read(fd, block->buffer, P4_BLOCK_SIZE) != P4_BLOCK_SIZE) {
-		return -1;
-	}
-	block->state = P4_BLOCK_CLEAN;
-	block->number = blk_num;
-
-	return 0;
-}
-
-int
-p4BlockWrite(int fd, P4_Block *block)
-{
-	if (fd <= 0 || block == NULL) {
-		return -1;
-	}
-	if (p4BlockGrow(fd, block->number)) {
-		return -1;
-	}
-	if (write(fd, block->buffer, P4_BLOCK_SIZE) != P4_BLOCK_SIZE) {
-		return -1;
-	}
-	block->state = P4_BLOCK_CLEAN;
-
-	return 0;
-}
-
-int
-p4BlockOpen(const char *file)
-{
-	int fd;
-
-	if (file == NULL || *file == '\0') {
-		return -1;
-	}
-	if ((fd = open(file, O_CREAT|O_RDWR, S_IRWXU|S_IRWXG|S_IRWXO)) < 0 || flock(fd, LOCK_EX|LOCK_NB)) {
-		warn("%s", file);
-	}
-
-	return fd;
-}
-
-int
-p4BlockClose(int fd, P4_Block *block)
-{
-	if (fd < 0 || block->state == P4_BLOCK_DIRTY && p4BlockWrite(fd, block)) {
-		return -1;
-	}
-	block->state = P4_BLOCK_FREE;
-	block->number = 0;
-	return close(fd);
-}
-
-int
-p4BlockBuffer(P4_Ctx *ctx, P4_Uint blk_num, int with_read)
-{
-	if (ctx->block_fd <= 0) {
-		return P4_THROW_EIO;
-	}
-	if (blk_num == 0) {
-		return P4_THROW_BLOCK_BAD;
-	}
-	if (blk_num == ctx->block->number && ctx->block->state != P4_BLOCK_FREE) {
-		return P4_THROW_OK;
-	}
-	/* Current there is no block buffer assignment strategy beyond
-	 * a single buffer per context.  Might add one day.
-	 */
-	if (ctx->block->state == P4_BLOCK_DIRTY && p4BlockWrite(ctx->block_fd, ctx->block)) {
-		return P4_THROW_BLOCK_WR;
-	}
-	if (with_read && p4BlockRead(ctx->block_fd, blk_num, ctx->block)) {
-		return P4_THROW_BLOCK_RD;
-	}
-	ctx->block->state = P4_BLOCK_CLEAN;
-	ctx->block->number = blk_num;
-	return P4_THROW_OK;
-}
-
-/***********************************************************************
  *** Core
  ***********************************************************************/
 
@@ -1147,12 +1016,14 @@ p4Free(P4_Ctx *ctx)
 			prev = word->prev;
 			p4WordFree(word);
 		}
-		(void) p4BlockClose(ctx->block_fd, ctx->block);
 #if defined(HAVE_MATH_H)
 		free(ctx->fs.base - P4_GUARD_CELLS/2);
 #endif
 		free(ctx->ds.base - P4_GUARD_CELLS/2);
 		free(ctx->rs.base - P4_GUARD_CELLS/2);
+		if (ctx->block_fd != NULL) {
+			(void) fclose(ctx->block_fd);
+		}
 		p4FreeInput(ctx->input);
 		free(ctx->block);
 		free(ctx->mem);
@@ -1191,7 +1062,8 @@ p4CreateInput(void)
 	if ((input = calloc(1, sizeof (*input))) == NULL) {
 		return NULL;
 	}
-	if ((input->buffer = calloc(1, P4_INPUT_SIZE)) == NULL) {
+	/* Extra byte for NUL termination, see p4System(). */
+	if ((input->buffer = calloc(1, P4_INPUT_SIZE+1)) == NULL) {
 		free(input);
 		return NULL;
 	}
@@ -1244,18 +1116,19 @@ p4Create(P4_Options *opts)
 	if (p4CreateStack(&ctx->ds, opts->ds_size)) {
 		goto error0;
 	}
-
-	ctx->block_fd = p4BlockOpen(opts->block_file);
-
-	(void) p4LoadFile(ctx, opts->core_file);
-
+	if (opts->block_file != NULL					/* Block file name? */
+	&& (ctx->block_fd = fopen(opts->block_file, "rb+")) == NULL	/* File exists? */
+	&& (ctx->block_fd = fopen(opts->block_file, "wb+")) == NULL) {	/* Else create file. */
+		warn("%s", opts->block_file);
+	}
+	if (p4LoadFile(ctx, opts->core_file)) {
+		goto error0;
+	}
 	return ctx;
 error0:
 	p4Free(ctx);
 	return NULL;
 }
-
-#define STDERR	stdout
 
 #ifdef P4_TRACE
 static void
@@ -1467,11 +1340,9 @@ p4Repl(P4_Ctx *ctx, int rc)
 		P4_WORD("fs>rs",	&&_fs_to_rs,	0, 0x100100),	// p4
 		P4_WORD("rs>fs",	&&_rs_to_fs,	0, 0x011000),	// p4
 #endif
-#ifdef P4_FILE_ACCESS
 		P4_WORD("BIN",			&&_fa_bin,	0, 0x01),
 		P4_WORD("R/O",			&&_fa_ro,	0, 0x01),
 		P4_WORD("R/W",			&&_fa_rw,	0, 0x01),
-		P4_WORD("W/O",			&&_fa_wo,	0, 0x01),
 		P4_WORD("CLOSE-FILE",		&&_fa_close,	0, 0x11),
 		P4_WORD("CREATE-FILE",		&&_fa_create,	0, 0x22),
 		P4_WORD("DELETE-FILE",		&&_fa_delete,	0, 0x21),
@@ -1484,7 +1355,7 @@ p4Repl(P4_Ctx *ctx, int rc)
 		P4_WORD("READ-LINE",		&&_fa_rline,	0, 0x33),
 		P4_WORD("REPOSITION-FILE",	&&_fa_seek,	0, 0x21),
 		P4_WORD("WRITE-FILE",		&&_fa_write,	0, 0x31),
-#endif
+
 		/* Constants. */
 		P4_WORD("/pad",			&&_pad_size,	0, 0x01),	// p4
 		P4_WORD("address-unit-bits",	&&_char_bit,	0, 0x01),	// p4
@@ -1589,14 +1460,8 @@ p4Repl(P4_Ctx *ctx, int rc)
 		/* I/O */
 		P4_WORD(">IN",		&&_input_offset,0, 0x01),
 		P4_WORD("ACCEPT",	&&_accept,	0, 0x21),
-		P4_WORD("BLOCK",	&&_block,	0, 0x11),
-		P4_WORD("block-open",	&&_block_open,	0, 0x21),	// p4
-		P4_WORD("block-close",	&&_block_close,	0, 0x00),	// p4
-		P4_WORD("blocks",	&&_blocks, 	0, 0x01),	// p4
-		P4_WORD("BUFFER",	&&_buffer,	0, 0x21),
 		P4_WORD("DUMP",		&&_dump,	0, 0x20),
 		P4_WORD("EMIT",		&&_emit,	0, 0x10),
-		P4_WORD("EMPTY-BUFFERS", &&_empty_buffers, 0, 0x00),
 		P4_WORD("epoch-seconds", &&_epoch_seconds, 0, 0x01),	// p4
 		P4_WORD("FIND-NAME",	&&_find_name,	0, 0x21),
 		P4_WORD("KEY",		&&_key,		0, 0x01),
@@ -1604,11 +1469,9 @@ p4Repl(P4_Ctx *ctx, int rc)
 		P4_WORD("MS",		&&_ms,		0, 0x10),
 		P4_WORD("_parse",	&&_parse,	0, 0x22),	// p4
 		P4_WORD("PARSE-NAME",	&&_parse_name,	0, 0x02),
-		P4_WORD("SAVE-BUFFERS",	&&_save_buffers, 0, 0x00),
 		P4_WORD("SOURCE",	&&_source,	0, 0x02),
 		P4_WORD("SOURCE-ID",	&&_source_id,	0, 0x01),
 		P4_WORD("TIME&DATE",	&&_time_date,	0, 0x06),
-		P4_WORD("UPDATE",	&&_update,	0, 0x00),
 
 		P4_WORD(NULL,		NULL,		0, 0),
 	};
@@ -2141,12 +2004,18 @@ _cstore:	w = P4_POP(ctx->ds);
 
 		// ( aaddr -- x )
 _fetch:		w = P4_TOP(ctx->ds);
+		if (w.u & 1) {
+			THROW(P4_THROW_SIGBUS);
+		}
 		P4_TOP(ctx->ds) = *w.p;
 		NEXT;
 
 		// ( x aaddr -- )
 _store:		w = P4_POP(ctx->ds);
 		x = P4_POP(ctx->ds);
+		if (w.u & 1) {
+			THROW(P4_THROW_SIGBUS);
+		}
 		*w.p = x;
 		NEXT;
 
@@ -2478,61 +2347,6 @@ _emit:		w = P4_POP(ctx->ds);
 		(void) fputc(w.n, stdout);
 		NEXT;
 
-		/*
-		 * Block I/O
-		 */
-		// ( u -- aaddr )
-_block:		x.u = 1;
-
-_block_buffer:	w = P4_TOP(ctx->ds);
-		if ((rc = p4BlockBuffer(ctx, w.u, (int) x.u)) != P4_THROW_OK) {
-			THROW(rc);
-		}
-		P4_TOP(ctx->ds).s = ctx->block->buffer;
-		NEXT;
-
-		// ( u -- aaddr )
-_buffer:	x.u = 0;
-		goto _block_buffer;
-
-		// ( caddr u -- bool )
-_block_open:	w = P4_POP(ctx->ds);
-		x = P4_TOP(ctx->ds);
-		(void) p4BlockClose(ctx->block_fd, ctx->block);
-		ctx->block_fd = p4BlockOpen(x.s);
-		P4_TOP(ctx->ds).n = P4_BOOL(0 < ctx->block_fd);
-		NEXT;
-
-		// ( -- )
-_block_close:	(void) p4BlockClose(ctx->block_fd, ctx->block);
-		NEXT;
-
-	{	// ( -- u )
-		struct stat sb;
-_blocks:	if (fstat(ctx->block_fd, &sb) != 0) {
-			THROW(P4_THROW_EIO);
-		}
-		w.u = sb.st_size / P4_BLOCK_SIZE;
-		P4_PUSH(ctx->ds, w);
-		NEXT;
-	}
-		// ( -- )
-_empty_buffers:	ctx->block->state = P4_BLOCK_FREE;
-		/*@fallthrough@*/
-
-		// ( -- )
-_save_buffers:	if (ctx->block->state == P4_BLOCK_DIRTY && p4BlockWrite(ctx->block_fd, ctx->block)) {
-			THROW(P4_THROW_BLOCK_WR);
-		}
-		NEXT;
-
-		// ( -- )
-_update:	ctx->block->state = P4_BLOCK_DIRTY;
-		NEXT;
-
-
-		/*
-		 */
 		// ( char bool -- c-addr u )
 _parse:		x = P4_POP(ctx->ds);
 		w = P4_TOP(ctx->ds);
@@ -2604,29 +2418,20 @@ _dump:		x = P4_POP(ctx->ds);
 		p4MemDump(stdout, w.s, x.u);
 		NEXT;
 
-#ifdef P4_FILE_ACCESS
-	{
 		FILE *fp;
 		struct stat sb;
-		static char *fmodes[] = {
-			"a+",  "r", "w", "w+", "ab+", "rb", "wb", "wb+"
-		};
 
 		// ( -- fam )
-_fa_ro:		P4_PUSH(ctx->ds, (P4_Uint) 1);
+_fa_ro:		P4_PUSH(ctx->ds, (P4_Uint) 0);
 		NEXT;
 
 		// ( -- fam )
-_fa_wo:		P4_PUSH(ctx->ds, (P4_Uint) 2);
-		NEXT;
-
-		// ( -- fam )
-_fa_rw:		P4_PUSH(ctx->ds, (P4_Uint) 3);
+_fa_rw:		P4_PUSH(ctx->ds, (P4_Uint) 1);
 		NEXT;
 
 		// ( fam1 -- fam2 )
 _fa_bin:	x = P4_TOP(ctx->ds);
-		P4_TOP(ctx->ds).u = x.u | 4;
+		P4_TOP(ctx->ds).u = x.u | 2;
 		NEXT;
 
 		// ( fd -- ior )
@@ -2644,7 +2449,14 @@ _fa_delete:	errno = 0;
 		NEXT;
 
 		// ( caddr u fam -- fd ior )
-_fa_create:
+		static char *fmodes[] = {
+			"r", "r+", "rb", "rb+",		/* open */
+			"w", "w+", "wb", "wb+"		/* create */
+		};
+_fa_create:	x = P4_TOP(ctx->ds);
+		P4_TOP(ctx->ds).u = x.u | 4;
+		/*@fallthrough@*/
+
 _fa_open:	errno = 0;
 		x = P4_POP(ctx->ds);
 		P4_DROP(ctx->ds, 1);
@@ -2658,7 +2470,7 @@ _fa_open:	errno = 0;
 _fa_read:	fp = P4_POP(ctx->ds).v;
 		x = P4_POP(ctx->ds);
 		w = P4_POP(ctx->ds);
-		w.u = fread(w.s, sizeof (*w.s), x.u, fp);
+		w.u = fread(w.s, sizeof (*w.s), x.z, fp);
 		P4_PUSH(ctx->ds, w);
 		P4_PUSH(ctx->ds, (P4_Int) errno);
 		NEXT;
@@ -2685,7 +2497,7 @@ _fa_flush:	errno = 0;
 		P4_TOP(ctx->ds).n = errno;
 		NEXT;
 
-		// ( fd -- u bool ior )
+		// ( fd -- ud ior )
 _fa_fsize:	errno = 0;
 		(void) fstat(fileno(P4_TOP(ctx->ds).v), &sb);
 		P4_TOP(ctx->ds).n = sb.st_size;
@@ -2698,7 +2510,7 @@ _fa_write:	errno = 0;
 		fp = P4_POP(ctx->ds).v;
 		x = P4_POP(ctx->ds);
 		w = P4_TOP(ctx->ds);
-		w.u = fwrite(w.s, sizeof (*w.s), x.u, fp);
+		w.u = fwrite(w.s, sizeof (*w.s), x.z, fp);
 		P4_TOP(ctx->ds).n = errno;
 		NEXT;
 
@@ -2715,7 +2527,7 @@ _fa_seek:	errno = 0;
 		fp = P4_POP(ctx->ds).v;
 		P4_DROP(ctx->ds, 1);
 		x = P4_POP(ctx->ds);
-		(void) fseek(fp, x.n, SEEK_SET);
+		(void) fseek(fp, x.z, SEEK_SET);
 		P4_PUSH(ctx->ds, (P4_Int) errno);
 		NEXT;
 
@@ -2726,8 +2538,6 @@ _fa_tell:	errno = 0;
 		P4_PUSH(ctx->ds, (P4_Uint) 0);
 		P4_PUSH(ctx->ds, (P4_Int) errno);
 		NEXT;
-	}
-#endif
 #ifdef HAVE_SEE
 		// ( xt -- )
 _seext:		word = P4_POP(ctx->ds).xt;
