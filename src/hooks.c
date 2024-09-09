@@ -8,17 +8,18 @@
 
 #ifdef HAVE_HOOKS
 
-# ifdef USE_HOOK_SHELL
+# ifdef HOOK_SHELL
 /*
- * SH ( `input` -- )
+ * SH ( `remaining input line` -- )
  */
 static void
 p4System(P4_Ctx *ctx)
 {
+	P4_Input *input = ctx->input;
 	// Assumes input buffer is writeable.
-	ctx->input.buffer[ctx->input.length < ctx->input.size ? ctx->input.length : ctx->input.size-1] = '\0';
-	(void) system(ctx->input.buffer + ctx->input.offset);
-	ctx->input.offset = ctx->input.length;
+	input->buffer[input->length] = '\0';
+	(void) system(input->buffer + input->offset);
+	input->offset = input->length;
 }
 
 /*
@@ -34,7 +35,7 @@ p4SystemString(P4_Ctx *ctx)
 }
 # endif
 
-# ifdef USE_HOOK_PRIMATIVES
+# ifdef HOOK_PRIMATIVES
 /* Examples of how some words, in particular those calling libc
  * or other library functions can be isolated as hooks.
  */
@@ -79,11 +80,11 @@ p4TimeDate(P4_Ctx *ctx)
 # endif
 
 static P4_Hook p4_hooks[] = {
-# ifdef USE_HOOK_SHELL
+# ifdef HOOK_SHELL
 	{ "SH", p4System },
 	{ "SHELL", p4SystemString },
 # endif
-# ifdef USE_HOOK_PRIMATIVES
+# ifdef HOOK_PRIMATIVES
 	{ "MOVE", p4Move },
 	{ "TIME&DATE", p4STimeDate },
 # endif
