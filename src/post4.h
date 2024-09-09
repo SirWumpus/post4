@@ -189,12 +189,6 @@ extern "C" {
 
 #define BYTE_ME		(0x7F)
 
-#ifdef NDEBUG
-# define CHECK_ADDR(a)
-#else
-# define CHECK_ADDR(a)		if (((P4_Uint)(a) & 1) == 1) { raise(SIGBUS); }
-#endif
-
 #ifndef LONG_BIT
 # if LONG_MAX == 0x7FFFFFFFL
 #  define LONG_BIT	32
