@@ -246,6 +246,8 @@ error0:
  *** Conversion API
  ***********************************************************************/
 
+static const char escape_map[] = "s a\ab\bf\fn\nr\rt\tv\ve\033?\177\"\"\\\\z\00\0";
+
 /**
  * @param ch
  *	A C-style backslash escaped character.
@@ -270,21 +272,24 @@ error0:
 int
 p4CharLiteral(int ch)
 {
-	switch (ch) {
-	case 'a': return '\a';		/* bell */
-	case 'b': return '\b';		/* backspace */
-	case 'e': return '\033';	/* escape */
-	case 'f': return '\f';		/* formfeed */
-	case 'n': return '\n';		/* linefeed */
-	case 'r': return '\r';		/* carriage-return */
-	case 's': return ' ';		/* space */
-	case 't': return '\t';		/* tab */
-	case 'v': return '\v';		/* vertical tab */
-	case 'z': return '\0';		/* nul */
-	case '0': return '\0';		/* nul */
-	case '?': return '\177';	/* delete */
+	for (const char *map = escape_map; *map != '\0'; map += 2) {
+		if (ch == map[0]) {
+			return map[1];
+		}
 	}
-	return ch;			/* identity */
+	return ch;
+}
+
+int
+p4LiteralEscape(int ch)
+{
+	/* Do not escape every space character. */
+	for (const char *map = escape_map+2; *map != '\0'; map += 2) {
+		if (ch == map[1]) {
+			return map[0];
+		}
+	}
+	return 0;
 }
 
 int
@@ -1257,7 +1262,6 @@ p4StackGuards(P4_Ctx *ctx)
 int
 p4Repl(P4_Ctx *ctx, int rc)
 {
-	P4_Char *cstr;
 	P4_Word *word;
 	P4_String str;
 	P4_Cell w, x, *ip;
@@ -2563,7 +2567,17 @@ _seext:		word = P4_POP(ctx->ds).xt;
 						(void) printf(is_small ? "[ "P4_INT_FMT" ] LITERAL " : "[ "P4_HEX_FMT" ] LITERAL ", x.n);
 					}
 				} else if (strncmp(x.w->name.string, "_slit", STRLEN("_slit")) == 0) {
-					(void) printf("S\" %s\" ", (char *) &w.p[2]);
+					/* Test: SEE AT-XY SEE PAGE SEE WRITE-FILE */
+					char *s;
+					(void) printf("S\\\" ");
+					for (char *s = (char *)&w.p[2];*s != '\0'; s++) {
+						if ((x.n = (P4_Int) p4LiteralEscape(*s))) {
+							(void) printf("\\%c", x.n);
+							continue;
+						}
+						(void) fputc(*s, stdout);
+					}
+					(void) printf("\" ");
 					w.u += P4_CELL + P4_CELL_ALIGN(w.p[1].u + 1);
 				} else if (strncmp(x.w->name.string, "flit", STRLEN("flit")) == 0) {
 					/* Test: SEE FNEGATE */
