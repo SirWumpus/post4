@@ -2915,14 +2915,21 @@ p4EvalFile(P4_Ctx *ctx, const char *file)
 int
 p4EvalString(P4_Ctx *ctx, const P4_Char *str, size_t len)
 {
-	P4_Input *input = ctx->input;
+	int rc;
+	P4_Input *input;
+
 	/* Do not save STATE, see A.6.1.2250 STATE. */
+	P4_INPUT_PUSH(ctx->input);
+	input = ctx->input;
 	input->fp = (FILE *) -1;
 	input->buffer = (P4_Char *) str;
 	input->length = len;
 	input->offset = 0;
 	input->blk = 0;
-	return p4Repl(ctx, P4_THROW_OK);
+	rc = p4Repl(ctx, P4_THROW_OK);
+	P4_INPUT_POP(ctx->input);
+
+	return rc;
 }
 
 #ifdef TEST
