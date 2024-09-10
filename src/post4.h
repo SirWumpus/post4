@@ -24,6 +24,10 @@ extern "C" {
 # define ECHOCTL			0
 #endif
 
+#ifdef __APPLE__
+# define _DARWIN_C_SOURCE 		1
+#endif
+
 #include "config.h"
 
 #ifndef P4_MEM_SIZE
