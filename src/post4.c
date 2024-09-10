@@ -2009,6 +2009,7 @@ _cfetch:	w = P4_TOP(ctx->ds);
 
 		// ( char caddr -- )
 _cstore:	w = P4_POP(ctx->ds);
+		FAULT_ADDR(w.s);
 		*w.s = P4_POP(ctx->ds).u;
 		NEXT;
 
