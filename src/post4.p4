@@ -53,6 +53,9 @@ MARKER rm_core_words
 \ (C: xu xu-1 ... x0 u -- xu-1 ... x0 xu )
 ' ROLL alias CS-ROLL compile-only
 
+\ (S: x -- x' )
+' INVERT alias NOT $11 _set_pp
+
 \ value CONSTANT name
 \
 \ (C: x <spaces>name -- ) (S: -- x )
@@ -1782,10 +1785,32 @@ BEGIN-STRUCTURE p4_word
 	FIELD: w.prev		\ pointer previous word
 	p4_string +FIELD w.name
 	FIELD: w.bits
+	FIELD: w.poppush
 	FIELD: w.code		\ pointer
 	FIELD: w.ndata		\ data length
 	FIELD: w.data		\ pointer to data cells
 END-STRUCTURE
+
+%0001 CONSTANT w.bit_imm
+%0010 CONSTANT w.bit_created
+%0100 CONSTANT w.bit_hidden
+%1000 CONSTANT w.bit_compile
+
+\ (S: bit xt -- )
+: _word_set w.bits DUP @ ROT OR SWAP ! ;
+: _word_clear w.bits DUP @ ROT INVERT AND SWAP ! ;
+: _word_bit? w.bits DUP @ ROT AND 0<> ;
+
+ 0 CONSTANT w.pp_ds_push
+ 4 CONSTANT w.pp_ds_pop
+ 8 CONSTANT w.pp_rs_push
+12 CONSTANT w.pp_rs_pop
+16 CONSTANT w.pp_fs_push
+20 CONSTANT w.pp_fs_pop
+24 CONSTANT w.pp_lit
+
+\ (S: shift xt -- u )
+: _word_pp@ w.poppush @ SWAP RSHIFT $0F AND ;
 
 BEGIN-STRUCTURE p4_block
 	FIELD: blk.state	\ 0 free, 1 clean, 2 dirty, 3 lock
