@@ -117,6 +117,7 @@ extern "C" {
 #include <stdint.h>
 #include <stdlib.h>
 #include <string.h>
+#include <strings.h>	/* GH-35 strncasecmp.  Bugger me. */
 #include <setjmp.h>
 #include <signal.h>
 #include <time.h>
