@@ -2952,6 +2952,56 @@ p4EvalString(P4_Ctx *ctx, const P4_Char *str, size_t len)
 	return rc;
 }
 
+typedef struct {
+	int signal;
+	int exception;
+	void (*handler)(int);
+} sig_map;
+
+static sig_map signalmap[] = {
+	{ SIGBUS, P4_THROW_SIGBUS, NULL },
+	{ SIGINT, P4_THROW_SIGINT, NULL },
+	{ SIGFPE, P4_THROW_SIGFPE, NULL },
+	{ SIGQUIT, P4_THROW_QUIT, NULL },
+	{ SIGSEGV, P4_THROW_SIGSEGV, NULL },
+	{ SIGTERM, P4_THROW_SIGTERM, NULL },
+	{ 0, P4_THROW_OK, NULL }
+};
+
+JMP_BUF sig_break_glass;
+static P4_Ctx *ctx_main;
+
+static void
+sig_int(int signum)
+{
+	for (sig_map *map = signalmap; map->signal != 0; map++) {
+		if (signum == map->signal) {
+			signum = map->exception;
+			break;
+		}
+	}
+	LONGJMP(sig_break_glass, signum);
+}
+
+void
+sig_init(void)
+{
+	for (sig_map *map = signalmap; map->signal != 0; map++) {
+		map->handler = signal(map->signal, sig_int);
+	}
+}
+
+void
+sig_fini(void)
+{
+	for (sig_map *map = signalmap; map->signal != 0; map++) {
+		if (map->handler != NULL) {
+			(void) signal(map->signal, map->handler);
+			map->handler = NULL;
+		}
+	}
+}
+
 #ifdef TEST
 /***********************************************************************
  *** Main
@@ -2992,56 +3042,6 @@ static const char p4_build_info[] =
 	"LIBS=\"" P4_LIBS "\"\r\n"
 	"POST4_PATH=\"" P4_CORE_PATH "\"\r\n"
 ;
-
-typedef struct {
-	int signal;
-	int exception;
-	void (*handler)(int);
-} sig_map;
-
-static sig_map signalmap[] = {
-	{ SIGBUS, P4_THROW_SIGBUS, NULL },
-	{ SIGINT, P4_THROW_SIGINT, NULL },
-	{ SIGFPE, P4_THROW_SIGFPE, NULL },
-	{ SIGQUIT, P4_THROW_QUIT, NULL },
-	{ SIGSEGV, P4_THROW_SIGSEGV, NULL },
-	{ SIGTERM, P4_THROW_SIGTERM, NULL },
-	{ 0, P4_THROW_OK, NULL }
-};
-
-static P4_Ctx *ctx_main;
-static JMP_BUF break_glass;
-
-static void
-sig_int(int signum)
-{
-	for (sig_map *map = signalmap; map->signal != 0; map++) {
-		if (signum == map->signal) {
-			signum = map->exception;
-			break;
-		}
-	}
-	LONGJMP(break_glass, signum);
-}
-
-static void
-sig_init(void)
-{
-	for (sig_map *map = signalmap; map->signal != 0; map++) {
-		map->handler = signal(map->signal, sig_int);
-	}
-}
-
-static void
-sig_fini(void)
-{
-	for (sig_map *map = signalmap; map->signal != 0; map++) {
-		if (map->handler != NULL) {
-			(void) signal(map->signal, map->handler);
-			map->handler = NULL;
-		}
-	}
-}
 
 static void
 cleanup(void)
@@ -3110,7 +3110,7 @@ main(int argc, char **argv)
 	options.argv = argv + optind;
 
 	p4Init();
-	if ((rc = SETJMP(break_glass)) != 0) {
+	if ((rc = SETJMP(sig_break_glass)) != 0) {
 		THROW_MSG(rc);
 		(void) fprintf(STDERR, crlf);
 		return EXIT_FAILURE;
@@ -3130,7 +3130,7 @@ main(int argc, char **argv)
 	}
 
 	if (argc <= optind || (argv[optind][0] == '-' && argv[optind][1] == '\0')) {
-		rc = SETJMP(break_glass);
+		rc = SETJMP(sig_break_glass);
 		p4ResetInput(ctx_main, stdin);
 		rc = p4Repl(ctx_main, rc);
 	} else if (optind < argc && (rc = p4EvalFile(ctx_main, argv[optind]))) {

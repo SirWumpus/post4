@@ -620,6 +620,10 @@ extern int p4EvalFile(P4_Ctx *ctx, const char *filepath);
  */
 extern int p4EvalString(P4_Ctx *ctx, const P4_Char *string, size_t length);
 
+extern JMP_BUF sig_break_glass;
+extern void sig_init(void);
+extern void sig_fini(void);
+
 #ifdef HAVE_HOOKS
 extern int p4HookInit(P4_Ctx *ctx);
 extern int p4HookAdd(P4_Ctx *ctx, const char *name, void (*func)(P4_Ctx *ctx));

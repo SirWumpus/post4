@@ -124,9 +124,14 @@ getStacks(JNIEnv *env, P4_Ctx *ctx)
 JNIEXPORT jint JNICALL
 Java_post4_jni_Post4_repl(JNIEnv *env, jobject self)
 {
+	int rc;
 	P4_Ctx *ctx = getCtx(env, self);
 	ctx->jenv = env;
-	return p4Repl(ctx, P4_THROW_OK);
+	sig_init();
+	rc = SETJMP(sig_break_glass);
+	rc = p4Repl(ctx, P4_THROW_OK);
+	sig_fini();
+	return rc;
 }
 
 JNIEXPORT jobject JNICALL
