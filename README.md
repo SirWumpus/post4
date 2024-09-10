@@ -295,3 +295,6 @@ Forth
 
 Starting Forth  
 <https://www.forth.com/starting-forth/>
+
+Moving Forth Series  
+<https://www.bradrodriguez.com/papers/>
