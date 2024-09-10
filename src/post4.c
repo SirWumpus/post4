@@ -1482,13 +1482,13 @@ p4Repl(P4_Ctx *ctx, int rc)
 				P4_PUSH(ctx->ds, (P4_Int)(e)); goto _forth; } THROWHARD(e); }
 
 #if !defined(NDEBUG) && defined(WITH_JAVA)
-# define ODD_ADDR(a)	if (((P4_Uint)(a) & 1) == 1) { THROW(P4_THROW_SIGBUS); }
-# define FAULT_ADDR(a)	if ((a) < repl || (P4_Cell *)ctx->end <= (a)) { THROW(P4_THROW_SIGSEGV); }
-# define VALID_ADDR(a)	FAULT_ADDR(a); ODD_ADDR(a)
+/* Not standardised symbols, but common to Unix and Linux; see end(3). */
+extern P4_Char end;
+extern P4_Char etext;
+extern P4_Char edata;
+# define FAULT_ADDR(a)	if ((P4_Char *)(a) < &etext) { THROW(P4_THROW_SIGSEGV); }
 #else
-# define ODD_ADDR(a)
 # define FAULT_ADDR(a)
-# define VALID_ADDR(a)
 #endif
 
 	static const P4_Word w_inter_loop = P4_WORD("_inter_loop", &&_inter_loop, P4_BIT_HIDDEN, 0x00);
@@ -1637,7 +1637,7 @@ _bp:		p4Bp(ctx);
 		/*@fallthrough@*/
 
 		/* Ideally this is a good choke point test for respectable
-		 * IP address with VALID_ADDR, but due to the high frequency
+		 * IP address with FAULT_ADDR, but due to the high frequency
 		 * of NEXT this would probably degrade performance too much.
 		 * _exit is used instead as the next best choke point.
 		 */
@@ -1662,7 +1662,7 @@ _enter:		P4_PUSH(ctx->rs, ip);
 _exit:		P4STACKGUARDS(ctx);
 		ip = P4_POP(ctx->rs).p;
 		/* Did we mess up the IP on the return stack? */
-		VALID_ADDR(ip);
+		FAULT_ADDR(ip);
 		ctx->level--;
 		NEXT;
 
@@ -1678,27 +1678,27 @@ _ctx:		P4_PUSH(ctx->ds, (P4_Cell *) ctx);
 _call:		w = *ip;
 		P4_PUSH(ctx->rs, ip + 1);
 		ip = (P4_Cell *)((P4_Char *) ip + w.n);
-//		VALID_ADDR(ip);
+//		FAULT_ADDR(ip);
 		NEXT;
 
 		// ( -- )
 _branch:	w = *ip;
 		ip = (P4_Cell *)((P4_Char *) ip + w.n);
-//		VALID_ADDR(ip);
+//		FAULT_ADDR(ip);
 		NEXT;
 
 		// ( flag -- )
 _branchz:	w = *ip;
 		x = P4_POP(ctx->ds);
 		ip = (P4_Cell *)((P4_Char *) ip + (x.u == 0 ? w.n : P4_CELL));
-//		VALID_ADDR(ip);
+//		FAULT_ADDR(ip);
 		NEXT;
 
 		// ( flag -- )
 _branchnz:	w = *ip;
 		x = P4_POP(ctx->ds);
 		ip = (P4_Cell *)((P4_Char *) ip + (x.u != 0 ? w.n : P4_CELL));
-//		VALID_ADDR(ip);
+//		FAULT_ADDR(ip);
 		NEXT;
 
 #ifdef HAVE_HOOKS
@@ -2014,14 +2014,13 @@ _cstore:	w = P4_POP(ctx->ds);
 
 		// ( aaddr -- x )
 _fetch:		w = P4_TOP(ctx->ds);
-		ODD_ADDR(w.u);
 		P4_TOP(ctx->ds) = *w.p;
 		NEXT;
 
 		// ( x aaddr -- )
 _store:		w = P4_POP(ctx->ds);
 		x = P4_POP(ctx->ds);
-		ODD_ADDR(w.u);
+		FAULT_ADDR(w.s);
 		*w.p = x;
 		NEXT;
 
@@ -2529,7 +2528,7 @@ _fa_include:	w = P4_POP(ctx->ds);
 		P4_PUSH(ctx->rs, ip);
 		x.n = p4EvalFp(ctx, w.v);
 		ip = P4_POP(ctx->rs).p;
-		VALID_ADDR(ip);
+//		FAULT_ADDR(ip);
 		P4_PUSH(ctx->ds, x);
 		NEXT;
 
