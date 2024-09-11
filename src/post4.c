@@ -1258,8 +1258,9 @@ p4StackGuards(P4_Ctx *ctx)
 }
 
 int
-p4Repl(P4_Ctx *ctx, int rc)
+p4Repl(P4_Ctx *ctx, int thrown)
 {
+	int rc;
 	P4_Word *word;
 	P4_String str;
 	P4_Cell w, x, *ip;
@@ -1508,6 +1509,10 @@ extern P4_Char edata;
 
 	SETJMP_PUSH(ctx->longjmp);
 	rc = SETJMP(ctx->longjmp);
+	if (thrown) {
+		/* Signal thrown overrides context. */
+		rc = thrown;
+	}
 _thrown:
 	switch (rc) {
 	case P4_THROW_SIGTERM:
