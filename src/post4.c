@@ -1599,14 +1599,23 @@ _inter_loop:	while (ctx->input->offset < ctx->input->length) {
 					/* Not a word, not a number. */
 					THROW(P4_THROW_UNDEFINED);
 				}
+#ifdef HAVE_MATH_H
+				if (is_float) {
+					if (ctx->state == P4_STATE_COMPILE) {
+						if ((word = p4FindName(ctx, "flit", STRLEN("flit"))) == NULL) {
+							THROW(P4_THROW_UNDEFINED);
+						}
+						p4WordAppend(ctx, (P4_Cell) word);
+						p4WordAppend(ctx, x);
+					} else {
+						P4_PUSH(ctx->P4_FLOAT_STACK, x);
+					}
+					p4StackGuards(ctx);
+				} else
+#endif
 				if (ctx->state == P4_STATE_COMPILE) {
 					p4WordAppend(ctx, (P4_Cell) &w_lit);
 					p4WordAppend(ctx, x);
-#ifdef HAVE_MATH_H
-				} else if (is_float) {
-					P4_PUSH(ctx->P4_FLOAT_STACK, x);
-					p4StackGuards(ctx);
-#endif
 				} else {
 					P4_PUSH(ctx->ds, x);
 					p4StackGuards(ctx);
