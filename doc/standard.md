@@ -916,7 +916,7 @@ Left rotate the stack `u` cells.
 - - -
 #### ROT
 ( `x1` `x2` `x3` -- `x2` `x3` `x1` )  
-Rotate the top three stack entries.
+Left rotate the top three stack entries.
 
 - - -
 #### RSHIFT
@@ -1170,6 +1170,10 @@ Enter compilation state.
 
 ### Post4 Specific Words
 
+#### -ROT
+( `x1` `x2` `x3` -- `x3` `x1` `x2` )  
+Right rotate the top three stack entries.
+
 #### .\\" ccc"
 ( `ccc<quote>` -- ) immediate  
 Display the escaped string `ccc`.
@@ -1350,6 +1354,11 @@ Parse `ccc` delimited by the delimiter `char`.  `caddr` and `u` are the address 
 Backslash followed by any other character escapes that character, ie. `\\` is a literal backslash, `\"` is a literal double quote.  Note that alpha-numeric characters are reserved for future extensions.
 
 - - -
+#### post4
+( -- )  
+A defined word for the implementation.  Currently does nothing but subject to change.
+
+- - -
 #### puts
 ( `caddr` -- )  
 Print a NUL terminated string.
@@ -1368,14 +1377,21 @@ Similar to `ALLOT`, reserve `n` address-units of data-space and return its start
 Push the return stack's size.
 
 - - -
+#### rise
+( `a` `b` `c` -- `b` a` `c` )  
+
+- - -
+#### spin
+( `a` `b` `c` -- `c` b` `a` )  
+
+- - -
 #### stack-cells
 ( -- `u`) constant  
 Push the data stack's size.
 
 - - -
-#### post4
-( -- )  
-A defined word for the implementation.  Currently does nothing but subject to change.
+### stow
+( `a` `b` -- `a` a` `b` )  
 
 - - -
 #### _branch

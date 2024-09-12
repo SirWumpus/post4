@@ -22,20 +22,20 @@ MARKER rm_core_words
 \ ( char -- caddr u )
 \
 : PARSE 0 _parse ;
-: parse-escape 1 _parse ; $12 _set_pp
+: parse-escape 1 _parse ; $12 _pp!
 
 \ (S: u -- addr )
-: reserve DUP ALLOT HERE SWAP - ; $11 _set_pp
+: reserve DUP ALLOT HERE SWAP - ; $11 _pp!
 
 \ ( x -- )
-: , ALIGN 1 CELLS reserve ! ; $10 _set_pp
+: , ALIGN 1 CELLS reserve ! ; $10 _pp!
 
 \ ( char -- )
-: C, 1 CHARS reserve C! ; $10 _set_pp
+: C, 1 CHARS reserve C! ; $10 _pp!
 
 \ ( -- xt | 0 )
 \ xt is also an nt.
-: ' PARSE-NAME FIND-NAME ; $01 _set_pp
+: ' PARSE-NAME FIND-NAME ; $01 _pp!
 
 \ ( -- )
 ' _nop alias ok
@@ -45,7 +45,7 @@ MARKER rm_core_words
 ' _bp alias _bpnow immediate
 
 \ ( xt -- )
-' , alias COMPILE, compile-only $10 _set_pp
+' , alias COMPILE, compile-only $10 _pp!
 
 \ (C: xu ... x1 x0 u -- xu ... x1 x0 xu )
 ' PICK alias CS-PICK compile-only
@@ -54,51 +54,51 @@ MARKER rm_core_words
 ' ROLL alias CS-ROLL compile-only
 
 \ (S: x -- x' )
-' INVERT alias NOT $11 _set_pp
+' INVERT alias NOT $11 _pp!
 
 \ value CONSTANT name
 \
 \ (C: x <spaces>name -- ) (S: -- x )
 \
-: CONSTANT CREATE , DOES> @ ; $01 _set_pp
+: CONSTANT CREATE , DOES> @ ; $01 _pp!
 
 \ ... FALSE ...
 \ ... TRUE ...
 \
 \ (S: -- flag )
 \
-0 CONSTANT FALSE $01 _set_pp
-FALSE INVERT CONSTANT TRUE $01 _set_pp
+0 CONSTANT FALSE $01 _pp!
+FALSE INVERT CONSTANT TRUE $01 _pp!
 
 \ ... /CHAR ...
 \ ... /CELL ...
 \
 \ (S: -- n )
 \
-1 CHARS CONSTANT /CHAR $01 _set_pp
-1 CELLS CONSTANT /CELL $01 _set_pp
+1 CHARS CONSTANT /CHAR $01 _pp!
+1 CELLS CONSTANT /CELL $01 _pp!
 
 \ ... BL ...
 \
 \ (S: -- ' ' )
 \
-'\s' CONSTANT BL $01 _set_pp
+'\s' CONSTANT BL $01 _pp!
 
 
 \ ( -- u )
--3 2 / -2 - 0= CONSTANT floored $01 _set_pp
-1 CELLS address-unit-bits * CONSTANT cell-bits $01 _set_pp
-2 CELLS address-unit-bits * 2 + CONSTANT /hold $01 _set_pp
-1 address-unit-bits LSHIFT 1 - CONSTANT MAX-CHAR $01 _set_pp
-0 INVERT 1 RSHIFT CONSTANT MAX-N $01 _set_pp	\ 0x7fff...ffff
-MAX-N INVERT CONSTANT MIN-N $01 _set_pp		\ 0x8000...0000
-0 INVERT CONSTANT MAX-U	$01 _set_pp		\ 0xffff...ffff
+-3 2 / -2 - 0= CONSTANT floored $01 _pp!
+1 CELLS address-unit-bits * CONSTANT cell-bits $01 _pp!
+2 CELLS address-unit-bits * 2 + CONSTANT /hold $01 _pp!
+1 address-unit-bits LSHIFT 1 - CONSTANT MAX-CHAR $01 _pp!
+0 INVERT 1 RSHIFT CONSTANT MAX-N $01 _pp!	\ 0x7fff...ffff
+MAX-N INVERT CONSTANT MIN-N $01 _pp!		\ 0x8000...0000
+0 INVERT CONSTANT MAX-U	$01 _pp!		\ 0xffff...ffff
 
-_rs CONSTANT return-stack-cells $01 _set_pp DROP DROP
-_ds CONSTANT stack-cells $01 _set_pp DROP DROP
+_rs CONSTANT return-stack-cells $01 _pp! DROP DROP
+_ds CONSTANT stack-cells $01 _pp! DROP DROP
 
 \ ( u "<spaces>name" -- addr )
-: BUFFER: CREATE ALLOT ; $11 _set_pp
+: BUFFER: CREATE ALLOT ; $11 _pp!
 
 \ ... PAD ...
 \
@@ -110,23 +110,23 @@ _ds CONSTANT stack-cells $01 _set_pp DROP DROP
 \
 \ (C: <spaces>name -- ) \ (S: -- aaddr )
 \
-: VARIABLE CREATE 0 , ; $01 _set_pp
+: VARIABLE CREATE 0 , ; $01 _pp!
 
 \ 2VARIABLE name
 \
 \ (C: <spaces>name -- ) \ (S: -- aaddr )
 \
-: 2VARIABLE CREATE 0 , 0 , ; $01 _set_pp
+: 2VARIABLE CREATE 0 , 0 , ; $01 _pp!
 
 : [ FALSE STATE ! ; IMMEDIATE \ allow interpret
 : ] TRUE STATE ! ; \ allow interpret
 
 \ (S: aaddr1 -- aaddr2 )
-: CELL+ /CELL + ; $11 _set_pp
-: CELL- /CELL - ; $11 _set_pp
+: CELL+ /CELL + ; $11 _pp!
+: CELL- /CELL - ; $11 _pp!
 
 \ ( -- x )(R: x -- x)
-: R@ R> R> DUP >R SWAP >R ; compile-only $1101 _set_pp
+: R@ R> R> DUP >R SWAP >R ; compile-only $1101 _pp!
 
 \ ( i*x -- )
 : dropall _ds DROP DROP CELL- _dsp! ;
@@ -135,7 +135,7 @@ _ds CONSTANT stack-cells $01 _set_pp DROP DROP
 \
 \ (S: n1 -- n2 )
 \
-: NEGATE INVERT 1 + ; $11 _set_pp
+: NEGATE INVERT 1 + ; $11 _pp!
 
 \ ... ALIGNED ...
 \
@@ -143,14 +143,14 @@ _ds CONSTANT stack-cells $01 _set_pp DROP DROP
 \
 \ 	(addr + (pow2-1)) & -pow2
 \
-: ALIGNED /CELL 1 - + /CELL NEGATE AND ; $11 _set_pp
+: ALIGNED /CELL 1 - + /CELL NEGATE AND ; $11 _pp!
 
 \ ... CHAR+ ...
 \
 \ (S: caddr1 -- caddr2 )
 \
-: CHAR+ /CHAR + ; $11 _set_pp
-: CHAR- /CHAR - ; $11 _set_pp
+: CHAR+ /CHAR + ; $11 _pp!
+: CHAR- /CHAR - ; $11 _pp!
 
 \ ... DECIMAL ...
 \
@@ -180,100 +180,87 @@ _ds CONSTANT stack-cells $01 _set_pp DROP DROP
 \
 \ (S: x1 x2 -- x2 )
 \
-: NIP SWAP DROP ; $21 _set_pp
+: NIP SWAP DROP ; $21 _pp!
 
 \ ... OVER ...
 \
 \ (S: x1 x2 -- x1 x2 x1 )
 \
-: OVER 1 PICK ; $23 _set_pp
+: OVER 1 PICK ; $23 _pp!
 
 \ ... ROT ...
 \
 \ (S: a b c -- b c a )
 \
-: ROT 2 ROLL ; $33 _set_pp
+: ROT 2 ROLL ; $33 _pp!
 
 \ (S: x1 x2 x3 x4 x5 x6 -- x3 x4 x5 x6 x1 x2 )
-: 2ROT 5 ROLL 5 ROLL ; $66 _set_pp
+: 2ROT 5 ROLL 5 ROLL ; $66 _pp!
 
-\ (S: u -- xu )(R: xu ...x1 x0 -- xu ip ...x1 x0 ip )
-: rpick _rs DROP 1 - ROT - CELLS + @ ; $11 _set_pp
+\ (S: u -- xu )(R: xu ...x2 x1 -- xu ...x2 x1 )
+: rpick _rs DROP 2 - ROT - CELLS + @ ; $11 _pp!
 
-\ ... S>D ...
-\
-\ ( n -- d )
-\
 \ @note
 \	This assumes that 0< returns a proper flag (all bits 1) for true
-\	as oppose simply any non-zero value for true.
+\	as opposed simply any non-zero value for true.
 \
-: S>D DUP 0< ; $12 _set_pp	\ Sign extend into high word.
+\ (S: n -- d )
+: S>D DUP 0< ; $12 _pp!	\ Sign extend into high word.
 
 \ @note
 \	More useful to as way of explaining in code what is being done
 \	rather than rely on a zero value being pushed to the stack.
 \	Consider ` 123456789 0 67 UM/MOD ` vs ` 123456789 U>D 67 UM/MOD `
 \
-\ ( u -- d )
-: u>d 0 ; $12 _set_pp
+\ (S: u -- d )
+: u>d 0 ; $12 _pp!
 
 \ @note
 \	More useful to as way of explaining in code what is being done
 \	rather than rely on a zero value being pushed to the stack.
 \	Consider ` 123456789 0 67 UM/MOD ` vs ` 123456789 U>D 67 UM/MOD `
 \
-\ ( d -- u )
-: d>u DROP ; $21 _set_pp
+\ (S: d -- u )
+: d>u DROP ; $21 _pp!
 
-\ ... TUCK ...
-\
 \ (S: x1 x2 -- x2 x1 x2 )
-\
-: TUCK SWAP OVER ; $23 _set_pp
+: TUCK SWAP OVER ; $23 _pp!
 
-\ ... +! ...
-\
+\ (S: a b c -- c b a )
+: SPIN SWAP ROT ; $33 _pp!
+
+\ (S: a b c -- b a c )
+: RISE  >R SWAP R> ; $33 _pp!
+
+\ (S: a b -- a a b )
+: STOW OVER SWAP ; $23 _pp!
+
+\ (S: a b c -- c a b )
+\ or : -ROT ROT ROT ;
+\ or : -ROT SWAP >R SWAP R> ;
+: -ROT SPIN SWAP ; $33 _pp!
+
 \ (S: n addr --  )
-\
-: +! DUP @ ROT + SWAP ! ; $20 _set_pp
+: +! DUP @ ROT + SWAP ! ; $20 _pp!
 
-\ ... /STRING ...
-\
 \ (S: caddr u n -- caddr' u' )
-\
 : /STRING >R R@ - SWAP R> CHARS + SWAP ;
 
-\ ... 1+ ...
-\
 \ (S: nu1 -- nu2 )
-\
 : 1+ 1 + ;
 
-\ ... 1- ...
-\
 \ (S: nu1 -- nu2 )
-\
 : 1- 1 - ;
 
-\ ... 2! ...
-\
 \ (S: lo hi aaddr -- )
-\
 : 2! TUCK ! CELL+ ! ;
 
-\ ... 2@ ...
-\
-\ (S: aaddr -- lo hi )
-\
 \ Fetch from aaddr the two cells, hi lo, and place on stack lo hi.
 \
+\ (S: aaddr -- lo hi )
 : 2@ DUP CELL+ @ SWAP @ ;
 
-\ ... 2* ...
-\
 \ (S: x1 -- x2 )
-\
 : 2* 1 LSHIFT ;
 
 \ ... 2/ ...
@@ -854,7 +841,7 @@ DEFER _fsp!
 : ut/
 	DUP >R			\ S: tl tm th u		R: u
 	UM/MOD			\ S: tl r0 q0		R: u
-	ROT ROT R>		\ S: q0 tl r0 u
+	-ROT R>			\ S: q0 tl r0 u
 	UM/MOD			\ S: q0 r1 q1
 	NIP SWAP		\ S: q1 q0
 ;
@@ -1460,7 +1447,7 @@ MAX-CHAR CONSTANT /COUNTED-STRING
 	R> DUP DUP C@		\ S: ip ip u R: --
 	\ Update IP to point immediate after the counted string.
 	1+ CHARS + ALIGNED >R	\ S: caddr R: ip'
-; $01000001 _set_pp
+; $01000001 _pp!
 
 : _cstring_append
 	POSTPONE _clit		\ S: src u
@@ -1537,7 +1524,7 @@ VARIABLE _str_buf_curr
 	CHAR+			\ Account for terminating NUL byte.
 	CHARS + ALIGNED		\ S: caddr u ip' 	R: --
 	>R			\ S: caddr u 		R: ip'
-; $02000002 _set_pp
+; $02000002 _pp!
 
 \ (C: src u -- ) (S: src u -- caddr u )
 : SLITERAL
@@ -1639,7 +1626,7 @@ VARIABLE _str_buf_curr
 	  EXIT			\ S: bool
 	THEN
 	NIP DUP			\ S: s1 s2 u2 u2
-	ROT ROT			\ S: s1 u2 s2 u2
+	-ROT			\ S: s1 u2 s2 u2
  	strcmp 0=		\ S: bool
 ;
 
@@ -1799,7 +1786,10 @@ END-STRUCTURE
 \ (S: bit xt -- )
 : _word_set w.bits DUP @ ROT OR SWAP ! ;
 : _word_clear w.bits DUP @ ROT INVERT AND SWAP ! ;
-: _word_bit? w.bits DUP @ ROT AND 0<> ;
+: _word_bit? w.bits @ AND 0<> ;
+
+\ (S: xt -- )
+: hide w.bit_hidden SWAP _word_set ;
 
  0 CONSTANT w.pp_ds_push
  4 CONSTANT w.pp_ds_pop
@@ -2046,7 +2036,7 @@ END-STRUCTURE
 	BEGIN
 	  R@ LOAD		\ S: 		R: end start
 	  R> 1+ DUP >R		\ S: start'	R: end start'
-	  2 rpick >		\ S: bool	R: end start'
+	  1 rpick >		\ S: bool	R: end start'
 	UNTIL 2R> 2DROP
 ;
 
@@ -2272,7 +2262,7 @@ VARIABLE _do_sys_stk
 : I  R> R@ SWAP >R ; compile-only
 
 \ (S: -- index1 )(R: limit1 index1 limit0 index0 ip -- limit1 index1 limit0 index0 ip )
-: J 4 rpick ; compile-only
+: J 3 rpick ; compile-only
 
 \ ... limit first DO ... LOOP ...
 \
@@ -2296,8 +2286,8 @@ VARIABLE _do_sys_stk
 	R> DUP ROT + DUP >R	\ S: r0 x x'		R: l x'
 
 	\ (x-l) xor (x'-l) < 0
-	2 rpick -		\ S: r0 x d'		R: l x'
-	SWAP 2 rpick -		\ S: r0 d' d		R: l x'
+	1 rpick -		\ S: r0 x d'		R: l x'
+	SWAP 1 rpick -		\ S: r0 d' d		R: l x'
 	XOR 0<			\ S: r0 bool		R: l x'
 
 	\ Restore return stack.
@@ -2373,7 +2363,7 @@ _fs CONSTANT floating-stack DROP DROP
 : FROT fs>rs FSWAP rs>fs FSWAP ;
 
 \ (F: -- f ) (R: ip -- ip' )
-: flit R> DUP FLOAT+ >R F@ ; $01000001 _set_pp
+: flit R> DUP FLOAT+ >R F@ ; $01000001 _pp!
 
 \ Similar to LIT,
 \ (F: f -- )

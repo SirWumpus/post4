@@ -1364,7 +1364,7 @@ p4Repl(P4_Ctx *ctx, int thrown)
 		P4_WORD("_rs",		&&_rs,		0, 0x03),	// p4
 		P4_WORD("_rsp@",	&&_rsp_get,	0, 0x01),	// p4
 		P4_WORD("_rsp!",	&&_rsp_put,	0, 0x10),	// p4
-		P4_WORD("_set_pp",	&&_set_pp,	P4_BIT_IMM, 0x10), // p4
+		P4_WORD("_pp!",		&&_pp_put,	P4_BIT_IMM, 0x10), // p4
 		P4_WORD("_stack_check", &&_stack_check, 0, 0x00),	// p4
 		P4_WORD("_stack_dump",	&&_stack_dump,	0, 0x20),	// p4
 		P4_WORD("_window",	&&_window,	0, 0x02),	// p4
@@ -1831,7 +1831,7 @@ _immediate:	P4_WORD_SET_IMM(ctx->words);
 		NEXT;
 
 		// ( u -- )
-_set_pp:	w = P4_POP(ctx->ds);
+_pp_put:	w = P4_POP(ctx->ds);
 		ctx->words->poppush = w.u;
 		NEXT;
 

@@ -155,7 +155,7 @@ Dump the return stack.
 
 - - -
 #### alias
-( `xt` -- `<spaces>name` )  
+( `xt` `<spaces>name` --  )  
 Create an alias word for `xt`.
 
 - - -
