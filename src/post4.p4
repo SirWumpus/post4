@@ -97,6 +97,127 @@ MAX-N INVERT CONSTANT MIN-N $01 _pp!		\ 0x8000...0000
 _rs CONSTANT return-stack-cells $01 _pp! DROP DROP
 _ds CONSTANT stack-cells $01 _pp! DROP DROP
 
+\ (S: nu -- flag )
+: 0<> 0= 0= ;
+
+\ (S: n1 -- n2 )
+: NEGATE INVERT 1 + ; $11 _pp!
+
+\ ... ALIGNED ...
+\
+\ (S: addr -- aaddr )
+\
+\ 	(addr + (pow2-1)) & -pow2
+\
+: ALIGNED /CELL 1 - + /CELL NEGATE AND ; $11 _pp!
+
+\ (S: x1 x2 -- x2 )
+: NIP SWAP DROP ; $21 _pp!
+
+\ (S: x1 x2 -- x1 x2 x1 )
+: OVER 1 PICK ; $23 _pp!
+
+\ (S: a b c -- b c a )
+: ROT 2 ROLL ; $33 _pp!
+
+\ (C: <spaces>name -- aaddr 0 ) (S: -- size )
+: BEGIN-STRUCTURE
+	CREATE HERE 0 0 ,	\ C: aaddr 0
+	DOES> @			\ S: size
+;
+
+\ (C: aaddr size -- )
+: END-STRUCTURE SWAP ! ;
+
+\ ... +FIELD name ...
+\
+\ (C: offset size <spaces>name -- offset' ) \ (S: addr -- addr' )
+\
+\ Note does not align items.
+\
+\ Structure name defined last:
+\
+\	0			\ initial total byte count
+\	  1 CELLS +FIELD p.x	\ single cell field named p.x
+\	  1 CELLS +FIELD p.y	\ single cell field named p.y
+\	CONSTANT point 		\ save structure size
+\
+\ Structure name defined first:
+\
+\	BEGIN-STRUCTURE point	\ create the named structure
+\	  1 CELLS +FIELD p.x	\ A single cell filed named p.x
+\	  1 CELLS +FIELD p.y	\ A single cell field named p.y
+\	END-STRUCTURE
+\
+: +FIELD
+	CREATE OVER , +		\ C: aaddr offset size -- aaddr offset'
+	DOES> @ +		\ S: addr -- addr'
+;
+
+\ (C: offset <spaces>name -- offset' ) \ (S: addr -- addr' )
+: CFIELD: 1 CHARS +FIELD ;
+
+\ (C: offset <spaces>name -- offset' ) \ (S: addr -- addr' )
+: FIELD: ALIGNED 1 CELLS +FIELD ;
+
+BEGIN-STRUCTURE p4_string
+	FIELD: str.length
+	FIELD: str.string	\ pointer C string
+END-STRUCTURE
+
+BEGIN-STRUCTURE p4_word
+	FIELD: w.prev		\ pointer previous word
+	p4_string +FIELD w.name
+	FIELD: w.bits
+	FIELD: w.poppush
+	FIELD: w.code		\ pointer
+	FIELD: w.ndata		\ data length
+	FIELD: w.data		\ pointer to data cells
+END-STRUCTURE
+
+%0001 CONSTANT w.bit_imm
+%0010 CONSTANT w.bit_created
+%0100 CONSTANT w.bit_hidden
+%1000 CONSTANT w.bit_compile
+
+\ (S: bit xt -- )
+: _word_set w.bits DUP @ ROT OR SWAP ! ;
+: _word_clear w.bits DUP @ ROT INVERT AND SWAP ! ;
+: _word_bit? w.bits @ AND 0<> ;
+
+\ (S: xt -- )
+: hide w.bit_hidden SWAP _word_set ;
+: immediate? w.bit_imm SWAP _word_bit? ;
+: compile-only? w.bit_compile SWAP _word_bit? ;
+
+ 0 CONSTANT w.pp_ds_push
+ 4 CONSTANT w.pp_ds_pop
+ 8 CONSTANT w.pp_rs_push
+12 CONSTANT w.pp_rs_pop
+16 CONSTANT w.pp_fs_push
+20 CONSTANT w.pp_fs_pop
+24 CONSTANT w.pp_lit
+
+BEGIN-STRUCTURE p4_block
+	FIELD: blk.state	\ 0 free, 1 clean, 2 dirty, 3 lock
+	FIELD: blk.number	\ 0 < number
+	1024 +FIELD blk.buffer
+END-STRUCTURE
+
+BEGIN-STRUCTURE p4_stack
+	FIELD: stk.size
+	FIELD: stk.top		\ pointer
+	FIELD: stk.base		\ pointer
+END-STRUCTURE
+
+BEGIN-STRUCTURE p4_input
+	FIELD: in.fp		\ pointer
+	FIELD: in.blk
+	FIELD: in.length
+	FIELD: in.offset
+	FIELD: in.buffer	\ pointer
+END-STRUCTURE
+
 \ ( u "<spaces>name" -- addr )
 : BUFFER: CREATE ALLOT ; $11 _pp!
 
@@ -131,20 +252,6 @@ _ds CONSTANT stack-cells $01 _pp! DROP DROP
 \ ( i*x -- )
 : dropall _ds DROP DROP CELL- _dsp! ;
 
-\ ... NEGATE ...
-\
-\ (S: n1 -- n2 )
-\
-: NEGATE INVERT 1 + ; $11 _pp!
-
-\ ... ALIGNED ...
-\
-\ (S: addr -- aaddr )
-\
-\ 	(addr + (pow2-1)) & -pow2
-\
-: ALIGNED /CELL 1 - + /CELL NEGATE AND ; $11 _pp!
-
 \ ... CHAR+ ...
 \
 \ (S: caddr1 -- caddr2 )
@@ -175,24 +282,6 @@ _ds CONSTANT stack-cells $01 _pp! DROP DROP
 \ (S: -- )
 \
 : binary #2 BASE ! ;
-
-\ ... NIP ...
-\
-\ (S: x1 x2 -- x2 )
-\
-: NIP SWAP DROP ; $21 _pp!
-
-\ ... OVER ...
-\
-\ (S: x1 x2 -- x1 x2 x1 )
-\
-: OVER 1 PICK ; $23 _pp!
-
-\ ... ROT ...
-\
-\ (S: a b c -- b c a )
-\
-: ROT 2 ROLL ; $33 _pp!
 
 \ (S: x1 x2 x3 x4 x5 x6 -- x3 x4 x5 x6 x1 x2 )
 : 2ROT 5 ROLL 5 ROLL ; $66 _pp!
@@ -357,12 +446,6 @@ MAX-U MAX-N 2CONSTANT MAX-D
 \ (S: n1 n2 dsor -- rem quot )
 \
 : */MOD >R M* R> SM/REM ;
-
-\ ... 0<> ...
-\
-\ (S: nu -- flag )
-\
-: 0<> 0= 0= ;
 
 \ ... 0> ...
 \ Greater than zero.
@@ -1710,117 +1793,6 @@ VARIABLE _str_buf_curr
 	S\" \r\n" R> WRITE-FILE
 ;
 [THEN]
-
-\ ... BEGIN-STRUCTURE name ...
-\
-\ (C: <spaces>name -- aaddr 0 ) (S: -- size )
-\
-: BEGIN-STRUCTURE
-	CREATE HERE 0 0 ,	\ C: aaddr 0
-	DOES> @			\ S: size
-;
-
-\ ... END-STRUCTURE ...
-\
-\ (C: aaddr size -- )
-\
-: END-STRUCTURE SWAP ! ;
-
-\ ... +FIELD name ...
-\
-\ (C: offset size <spaces>name -- offset' ) \ (S: addr -- addr' )
-\
-\ Note does not align items.
-\
-\ Structure name defined last:
-\
-\	0			\ initial total byte count
-\	  1 CELLS +FIELD p.x	\ single cell field named p.x
-\	  1 CELLS +FIELD p.y	\ single cell field named p.y
-\	CONSTANT point 		\ save structure size
-\
-\ Structure name defined first:
-\
-\	BEGIN-STRUCTURE point	\ create the named structure
-\	  1 CELLS +FIELD p.x	\ A single cell filed named p.x
-\	  1 CELLS +FIELD p.y	\ A single cell field named p.y
-\	END-STRUCTURE
-\
-: +FIELD
-	CREATE OVER , +		\ C: aaddr offset size -- aaddr offset'
-	DOES> @ +		\ S: addr -- addr'
-;
-
-\ ... CFIELD: name ...
-\
-\ (C: offset <spaces>name -- offset' ) \ (S: addr -- addr' )
-\
-: CFIELD: 1 CHARS +FIELD ;
-
-\ ... FIELD: name ...
-\
-\ (C: offset <spaces>name -- offset' ) \ (S: addr -- addr' )
-\
-: FIELD: ALIGNED 1 CELLS +FIELD ;
-
-BEGIN-STRUCTURE p4_string
-	FIELD: str.length
-	FIELD: str.string	\ pointer C string
-END-STRUCTURE
-
-BEGIN-STRUCTURE p4_word
-	FIELD: w.prev		\ pointer previous word
-	p4_string +FIELD w.name
-	FIELD: w.bits
-	FIELD: w.poppush
-	FIELD: w.code		\ pointer
-	FIELD: w.ndata		\ data length
-	FIELD: w.data		\ pointer to data cells
-END-STRUCTURE
-
-%0001 CONSTANT w.bit_imm
-%0010 CONSTANT w.bit_created
-%0100 CONSTANT w.bit_hidden
-%1000 CONSTANT w.bit_compile
-
-\ (S: bit xt -- )
-: _word_set w.bits DUP @ ROT OR SWAP ! ;
-: _word_clear w.bits DUP @ ROT INVERT AND SWAP ! ;
-: _word_bit? w.bits @ AND 0<> ;
-
-\ (S: xt -- )
-: hide w.bit_hidden SWAP _word_set ;
-
- 0 CONSTANT w.pp_ds_push
- 4 CONSTANT w.pp_ds_pop
- 8 CONSTANT w.pp_rs_push
-12 CONSTANT w.pp_rs_pop
-16 CONSTANT w.pp_fs_push
-20 CONSTANT w.pp_fs_pop
-24 CONSTANT w.pp_lit
-
-\ (S: shift xt -- u )
-: _word_pp@ w.poppush @ SWAP RSHIFT $0F AND ;
-
-BEGIN-STRUCTURE p4_block
-	FIELD: blk.state	\ 0 free, 1 clean, 2 dirty, 3 lock
-	FIELD: blk.number	\ 0 < number
-	1024 +FIELD blk.buffer
-END-STRUCTURE
-
-BEGIN-STRUCTURE p4_stack
-	FIELD: stk.size
-	FIELD: stk.top		\ pointer
-	FIELD: stk.base		\ pointer
-END-STRUCTURE
-
-BEGIN-STRUCTURE p4_input
-	FIELD: in.fp		\ pointer
-	FIELD: in.blk
-	FIELD: in.length
-	FIELD: in.offset
-	FIELD: in.buffer	\ pointer
-END-STRUCTURE
 
 \ Example
 \

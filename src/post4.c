@@ -1371,7 +1371,6 @@ p4Repl(P4_Ctx *ctx, int thrown)
 
 		/* Compiling Words */
 		P4_WORD("compile-only",	&&_compile_only,0, 0x00),	//p4
-		P4_WORD("compile-only?",&&_is_compile,	P4_BIT_COMPILE, 0x11),// p4
 		P4_WORD(":NONAME",	&&_noname,	0, 0x00),
 		P4_WORD(":",		&&_colon,	0, 0x00),
 		P4_WORD(";",		&&_semicolon,	P4_BIT_IMM|P4_BIT_COMPILE, 0x00),
@@ -1382,7 +1381,6 @@ p4Repl(P4_Ctx *ctx, int thrown)
 		P4_WORD("EXECUTE",	&&_execute,	0, 0x10),
 		P4_WORD("EXIT",		&&_exit,	P4_BIT_COMPILE, 0x1000),
 		P4_WORD("IMMEDIATE",	&&_immediate,	0, 0x00),
-		P4_WORD("immediate?",	&&_is_immediate,0, 0x01),	// p4
 		P4_WORD("MARKER",	&&_marker,	0, 0x00),
 		P4_WORD("STATE",	&&_state,	0, 0x01),
 		P4_WORD("trace",	&&_trace,	0, 0x01),	// p4
@@ -1809,11 +1807,6 @@ _semicolon:	ctx->state = P4_STATE_INTERPRET;
 _compile_only:	P4_WORD_SET_COMPILE(ctx->words);
 		NEXT;
 
-		// ( xt -- bool )
-_is_compile:	w = P4_TOP(ctx->ds);
-		P4_TOP(ctx->ds).n = P4_BOOL(P4_WORD_IS_COMPILE(w.xt));
-		NEXT;
-
 		// ( -- )
 _immediate:	P4_WORD_SET_IMM(ctx->words);
 		NEXT;
@@ -1821,11 +1814,6 @@ _immediate:	P4_WORD_SET_IMM(ctx->words);
 		// ( u -- )
 _pp_put:	w = P4_POP(ctx->ds);
 		ctx->words->poppush = w.u;
-		NEXT;
-
-		// ( xt -- bool )
-_is_immediate:	w = P4_TOP(ctx->ds);
-		P4_TOP(ctx->ds).n = P4_BOOL(P4_WORD_IS_IMM(w.xt));
 		NEXT;
 
 _marker:	str = p4ParseName(ctx->input);
