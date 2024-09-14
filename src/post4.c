@@ -2688,6 +2688,7 @@ _to_float:	errno = 0;
 _f_dot:		if (ctx->radix != 10) {
 			THROW(P4_THROW_BAD_BASE);
 		}
+		P4STACKISEMPTY(ctx, &ctx->fs, P4_THROW_FS_UNDER);
 		w = P4_POP(ctx->P4_FLOAT_STACK);
 		(void) printf("%.*lF ", (int) ctx->precision, w.f);
 		NEXT;
@@ -2696,6 +2697,7 @@ _f_dot:		if (ctx->radix != 10) {
 _f_sdot:	if (ctx->radix != 10) {
 			THROW(P4_THROW_BAD_BASE);
 		}
+		P4STACKISEMPTY(ctx, &ctx->fs, P4_THROW_FS_UNDER);
 		w = P4_POP(ctx->P4_FLOAT_STACK);
 		(void) printf("%.*lE ", (int) ctx->precision, w.f);
 		NEXT;
