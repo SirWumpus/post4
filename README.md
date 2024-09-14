@@ -119,7 +119,7 @@ The following C-style backslash escapes are supported:
         \a      bell                            \s      space
         \b      backspace                       \t      tab
         \e      escape                          \v      vertical tab
-        \f      formfeed                        \0      nul
+        \f      formfeed                        \z      nul
 
 
 Because Forth uses whitespace for input delimiters, in particular space (ASCII 32), the only way to input a literal space character is with:

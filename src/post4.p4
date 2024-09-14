@@ -1,5 +1,3 @@
-MARKER rm_core_words
-
 : \ '\n' 0 _parse DROP DROP ; IMMEDIATE
 
 \ Post4 Copyright 2007, 2024 by Anthony Howe.  All rights reserved.
@@ -181,14 +179,17 @@ END-STRUCTURE
 %1000 CONSTANT w.bit_compile
 
 \ (S: bit xt -- )
-: _word_set w.bits DUP @ ROT OR SWAP ! ;
-: _word_clear w.bits DUP @ ROT INVERT AND SWAP ! ;
-: _word_bit? w.bits @ AND 0<> ;
+: _word_set w.bits DUP @ ROT OR SWAP ! ; $20 _pp!
+: _word_clear w.bits DUP @ ROT INVERT AND SWAP ! ; $20 _pp!
+: _word_bit? w.bits @ AND 0<> ; $20 _pp!
 
 \ (S: xt -- )
-: hide w.bit_hidden SWAP _word_set ;
-: immediate? w.bit_imm SWAP _word_bit? ;
-: compile-only? w.bit_compile SWAP _word_bit? ;
+: hide w.bit_hidden SWAP _word_set ; $10 _pp!
+: urgent w.bit_imm SWAP _word_set ; $10 _pp!
+
+\ (S: xt -- bool )
+: immediate? w.bit_imm SWAP _word_bit? ; $11 _pp!
+: compile-only? w.bit_compile SWAP _word_bit? ; $11 _pp!
 
  0 CONSTANT w.pp_ds_push
  4 CONSTANT w.pp_ds_pop
@@ -1525,7 +1526,7 @@ VARIABLE _>pic
 MAX-CHAR CONSTANT /COUNTED-STRING
 
 \ ( S: -- caddr )
-: _clit 			\ S: -- R: ip
+: clit 				\ S: -- R: ip
 	\ The IP points to counted string, get its length.
 	R> DUP DUP C@		\ S: ip ip u R: --
 	\ Update IP to point immediate after the counted string.
@@ -1533,11 +1534,11 @@ MAX-CHAR CONSTANT /COUNTED-STRING
 ; $01000001 _pp!
 
 : _cstring_append
-	POSTPONE _clit		\ S: src u
+	POSTPONE clit		\ S: src u
 	\ Reserve space for the length and string.
 	DUP CHAR+ reserve	\ S: src u dst
 	2DUP 2>R		\ S: src u dst   R: u dst
-	\ Append the input string just after _clit in the data space.
+	\ Append the input string just after clit in the data space.
 	CHAR+ SWAP		\ S: src dst' u  R: u dst
 	MOVE			\ S: --  R: u dst
 	\ Save the string length.
@@ -1592,7 +1593,7 @@ VARIABLE _str_buf_curr
 	_str_bufs +
 ;
 
-\ ... _slit ...
+\ ... slit ...
 \
 \ (S: -- caddr u )
 \
@@ -1601,7 +1602,7 @@ VARIABLE _str_buf_curr
 \	address and length of the string stored within the word.
 \	It is then modified to point to just after the string.
 \
-: _slit				\ S: -- 		R: ip
+: slit				\ S: -- 		R: ip
 	R@ @ R>			\ S: u ip 		R: --
 	CELL+ SWAP 2DUP		\ S: caddr u caddr u 	R: --
 	CHAR+			\ Account for terminating NUL byte.
@@ -1611,7 +1612,7 @@ VARIABLE _str_buf_curr
 
 \ (C: src u -- ) (S: src u -- caddr u )
 : SLITERAL
-	  POSTPONE _slit	\ S: src u
+	  POSTPONE slit	\ S: src u
 	  \ Append length.
 	  DUP ,			\ S: src u
 	  \ Append string and NUL terminate for C.
@@ -1780,11 +1781,6 @@ VARIABLE _str_buf_curr
 ; IMMEDIATE
 
 : [THEN] ( -- ) ; IMMEDIATE
-
-[DEFINED] _seext [IF]
-\ ( <spaces>name -- )
-: SEE ' _seext ;
-[THEN]
 
 [DEFINED] WRITE-FILE [IF]
 \ ( caddr u fid -- ior )
@@ -2300,7 +2296,7 @@ _fs CONSTANT floating-stack DROP DROP
 ' _fsp_get IS _fsp@
 ' _fsp_put IS _fsp!
 
-: FLOATS CELLS ;
+' CELLS alias FLOATS
 1 FLOATS CONSTANT /FLOAT
 : FLOAT+ /FLOAT + ;
 
@@ -2398,5 +2394,180 @@ _fs CONSTANT floating-stack DROP DROP
 : SET-PRECISION _ctx ctx.precision ! ;
 
 [THEN]
+
+\ (S: u -- )
+: #. BASE @ >R DECIMAL . R> BASE ! ; $10 _pp!
+: $. BASE @ >R HEX '$' EMIT U. R> BASE ! ; $10 _pp!
+
+\ (S: x -- )
+: $#. DUP -65535 65536 WITHIN IF #. ELSE $. THEN ; $10 _pp!
+
+\ (S: addr u -- )
+: .cells OVER + SWAP BEGIN 2DUP > WHILE DUP @ $#. CELL+ REPEAT 2DROP ; $20 _pp!
+
+\ (S: xt -- bool )
+: xt?
+   _ctx ctx.words @
+   BEGIN
+      2DUP = IF 2DROP TRUE EXIT THEN
+      w.prev @ DUP 0=
+   UNTIL
+   2DROP FALSE
+; $11 _pp!
+
+\ ( c -- c' )
+: _literal_backspace
+	CASE			\ S: char
+	  $0A OF [CHAR] n ENDOF	\ S: ascii char
+	  $0D OF [CHAR] r ENDOF	\ S: ascii char
+	  $09 OF [CHAR] t ENDOF	\ S: ascii char
+	  $1B OF [CHAR] e ENDOF	\ S: ascii char
+	  \ Less frequent
+	  $07 OF [CHAR] a ENDOF	\ S: ascii char
+	  $08 OF [CHAR] b ENDOF	\ S: ascii char
+	  $0C OF [CHAR] f ENDOF	\ S: ascii char
+	  $0B OF [CHAR] v ENDOF	\ S: ascii char
+	  $00 OF [CHAR] z ENDOF	\ S: ascii char
+	  $7F OF [CHAR] ? ENDOF	\ S: ascii char
+	  0 SWAP		\ S: ascii char
+	ENDCASE			\ S: ascii
+; $11 _pp!
+
+\ (S: caddr u -- )
+: \type
+	OVER + SWAP			\ S: b a
+	BEGIN 2DUP > WHILE		\ S: b a
+	  DUP C@ DUP _literal_backspace	\ S: b a c e
+	  ?DUP IF			\ S: b a c
+	    NIP '\' EMIT		\ S: b a e
+	  THEN
+	  EMIT CHAR+			\ S: b a'
+	REPEAT 2DROP
+; $20 _pp!
+
+\ (S: ip -- ip' )
+: _see_lit
+	CELL+ DUP @			\ S: ip' x
+	DUP xt? DUP IF 			\ S: ip' x b1
+	  DROP DUP NAME>STRING NIP 0<> 	\ S: ip' x b2
+	THEN IF				\ S: ip' x
+	  S" [ ' " TYPE NAME>STRING TYPE S"  ] LITERAL " TYPE
+	ELSE
+	  DUP 32 = IF
+	    #. S" ( '\s' ) " TYPE
+	  ELSE
+	    DUP 33 128 WITHIN IF
+	      DUP #. S" ( '" TYPE EMIT S" ' ) " TYPE
+	    ELSE
+	      $#.
+	    THEN
+	  THEN
+	THEN				\ S: ip'
+; $11 _pp!
+
+\ (S: ip -- ip' )
+: _see_clit
+	S\" C\\\" " TYPE		\ S: ip
+	CELL+ DUP C@			\ S: ip1 u
+	SWAP CHAR+ SWAP 2DUP		\ S: ip2 u a u
+	\type				\ S: ip2 u
+	S\" \" " TYPE			\ S: ip2 u
+	+ ALIGNED			\ S: ip3
+; $11 _pp!
+
+\ (S: ip -- ip' )
+: _see_slit
+	S\" S\\\" " TYPE		\ S: ip
+	CELL+ DUP @			\ S: ip1 u
+	SWAP CELL+ SWAP 2DUP		\ S: ip2 u ip2 u
+	\type				\ S: ip2 u
+	S\" \" " TYPE			\ S: ip2 u
+	+ ALIGNED			\ S: ip3
+; $11 _pp!
+
+\ (S: ip -- ip' )
+: _see_flit
+	FLOAT+ DUP F@ F.
+;
+
+\ (S: ip -- ip' )
+: _see_common
+	DUP @ NAME>STRING TYPE BL EMIT
+; $11 _pp!
+
+\ (S: ip -- ip' )
+\ Test: SEE THROW SEE ABS SEE FIND
+: _see_bra
+	_see_common
+	CELL+ DUP @ /CELL /
+	S" [ " TYPE #. S" CELLS , ] " TYPE
+; $11 _pp!
+
+\ (S: xt -- )
+\ Test most words, eg. SEE IF SEE ['] SEE \ SEE LIT,
+: _see_enter
+	DUP NAME>STRING ?DUP IF S" : " TYPE TYPE BL EMIT ELSE DROP S" :NONAME " TYPE THEN
+	DUP w.data @ BEGIN		\ S: xt ip
+	  DUP        @ ['] _; <>	\ S: xt ip b1
+	  OVER CELL+ @ ['] _nop =	\ S: xt ip b2
+	OR WHILE			\ S: xt ip
+	  DUP @ CASE			\ S: xt ip wp
+	    ['] LIT  OF _see_lit ENDOF
+	    ['] slit OF _see_slit ENDOF
+	    ['] clit OF _see_clit ENDOF
+	    ['] flit OF _see_flit ENDOF
+	    ['] _branch OF _see_bra ENDOF
+	    ['] _branchz OF _see_bra ENDOF
+	    ['] _branchnz OF _see_bra ENDOF
+	    ['] _call OF _see_bra ENDOF
+	    DROP DUP _see_common
+	  ENDCASE
+	  CELL+				\ S: xt ip"
+	REPEAT
+	DROP S" ; " TYPE DUP immediate? IF S" IMMEDIATE " TYPE THEN
+	compile-only? IF S" compile-only" TYPE THEN CR
+; $10 _pp!
+
+\ (S: xt -- )
+\ Test: SEE TRUE 123 VALUE x SEE x
+: _see_dodoes
+	\ Dump words' data.
+	DUP w.data @ CELL+ OVER w.ndata @ /CELL / 2 - .cells
+	\ data[0] = pointer to DOES>, data[n-1] = xt of defining word,
+        \ see _does.  data[1..n-1] is the actual data.
+	DUP w.data @ OVER w.ndata @ + cell- @ NAME>STRING TYPE BL EMIT
+	NAME>STRING TYPE CR
+; $10 _pp!
+
+\ (S: xt -- )
+\ Test: CREATE y 1 , 2 , 3 , SEE y
+: _see_data
+	S" CREATE " TYPE DUP NAME>STRING TYPE
+	S"  ( size " TYPE DUP w.ndata @ CELL- DUP >R #. S\" )" TYPE CR
+	w.data @ CELL+ R> DUMP
+; $10 _pp!
+
+\ (S: xt -- )
+\ Test: SEE LIT SEE CREATE
+: _see_internal
+	S" : " TYPE DUP NAME>STRING TYPE
+	S"  ( code " TYPE w.code @ $. S\" ) ;" TYPE CR
+; $10 _pp!
+
+\ Used to extract the default code field for a CREATEd word.
+CREATE _nada
+
+\ (S: xt -- )
+: _seext
+	DUP w.code @ CASE
+	  [ ' #. w.code @ ] LITERAL OF _see_enter ENDOF
+	  [ ' TRUE w.code @ ] LITERAL OF _see_dodoes ENDOF
+	  [ ' _nada w.code @ ] LITERAL OF _see_data ENDOF
+	  SWAP _see_internal
+	ENDCASE
+; $10 _pp!
+
+\ (S: <spaces>name -- )
+: SEE ' _seext ;
 
 MARKER rm_user_words

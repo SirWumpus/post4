@@ -246,7 +246,7 @@ error0:
  *** Conversion API
  ***********************************************************************/
 
-static const char escape_map[] = "s a\ab\bf\fn\nr\rt\tv\ve\033?\177\"\"\\\\z\00\0";
+static const char escape_map[] = "s a\ab\be\033f\fn\nr\rt\tv\v?\177\"\"\\\\z\x00";
 
 /**
  * @param ch
@@ -1268,9 +1268,9 @@ p4Repl(P4_Ctx *ctx, int thrown)
 	static P4_Word words[] = {
 		P4_WORD("_nop",		&&_nop,		0, 0x00),	//_p4
 #define w_nop		words[0]
-		P4_WORD("LIT",		&&_lit,		0, 0x01000001),		// historic
+		P4_WORD("LIT",		&&_lit,		0, 0x01000001),	// historic
 #define w_lit		words[1]
-		P4_WORD(";",		&&_exit,	P4_BIT_HIDDEN, 0x0100),	// _seext
+		P4_WORD("_;",		&&_exit,	0, 0x0100),	// _seext
 #define w_semi		words[2]
 		P4_WORD("_abort",	&&_abort,	0, 0x00),
 #define w_abort		words[3]
@@ -1876,7 +1876,6 @@ _does:		word = ctx->words;
 			THROW(P4_THROW_NOT_CREATED);
 		}
 		word->code = &&_do_does;
-#ifdef HAVE_SEE
 		/*** If we change (again) how a P4_Word and data are
 		 *** stored in memory, then most likely need to fix
 		 *** this and _seext.
@@ -1884,11 +1883,10 @@ _does:		word = ctx->words;
 		// Save defining word's xt for _seext.
 		x = P4_TOP(ctx->rs);
 		p4WordAppend(ctx, *--x.p);
-#endif
 		// Append the IP of the words following DOES> of the defining
 		// word after the data of the current word being defined.
 		//
-		//	: word CREATE ( store data) DOES> ( code words) ;
+		//	: word CREATE ( store data) DOES> ( words) ;
 		//	                                  ^--- IP
 		word->data[0].p = ip;
 		goto _exit;
@@ -2543,17 +2541,17 @@ _seext:		word = P4_POP(ctx->ds).xt;
 				x = *w.p;
 				if (x.w->code == &&_lit) {
 					x = *++w.p;
-					if (x.w != NULL && words <= x.w && p4IsWord(ctx, x.v) && 0 < x.w->name.length) {
+					if (words <= x.w && p4IsWord(ctx, x.v) && 0 < x.w->name.length) {
 						(void) printf("[ ' %.*s ] LITERAL ", (int) x.w->name.length, x.w->name.string);
 					} else {
 						int is_small = -65536 < x.n && x.n < 65536;
 						(void) printf(is_small ? "[ "P4_INT_FMT" ] LITERAL " : "[ "P4_HEX_FMT" ] LITERAL ", x.n);
 					}
-				} else if (strncmp(x.w->name.string, "_slit", STRLEN("_slit")) == 0) {
+				} else if (strncmp(x.w->name.string, "slit", STRLEN("slit")) == 0) {
 					/* Test: SEE AT-XY SEE PAGE SEE WRITE-FILE */
 					char *s;
 					(void) printf("S\\\" ");
-					for (char *s = (char *)&w.p[2];*s != '\0'; s++) {
+					for (char *s = (char *)&w.p[2]; *s != '\0'; s++) {
 						if ((x.n = (P4_Int) p4LiteralEscape(*s))) {
 							(void) printf("\\%c", (int) x.n);
 							continue;

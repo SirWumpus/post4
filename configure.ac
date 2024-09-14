@@ -39,17 +39,16 @@ AC_CONFIG_FILES([
 SNERT_OPTION_ENABLE_32BIT
 SNERT_OPTION_ENABLE_64BIT
 SNERT_OPTION_ENABLE_DEBUG
-SNERT_OPTION_ENABLE_MATH
 
 dnl Needs updating since much changed on Cygwin WRT mingw.
 dnl SNERT_OPTION_ENABLE_MINGW
 
-AC_ARG_ENABLE(see,[AS_HELP_STRING([--disable-see],[disable support for SEE])],[
-	:
-],[
+AC_ARG_ENABLE(see,[AS_HELP_STRING([--enable-see],[enable internal support for SEE])],[
 	enable_see='yes'
 ])
 AS_IF([test ${enable_see:-no} = 'yes'],[AC_DEFINE(HAVE_SEE)])
+
+SNERT_OPTION_ENABLE_MATH
 
 AC_ARG_ENABLE(hooks,[AS_HELP_STRING([--disable-hooks],[disable support for hooks])],[
 	:
