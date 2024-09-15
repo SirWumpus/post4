@@ -54,6 +54,9 @@
 \ (S: x -- x' )
 ' INVERT alias NOT $11 _pp!
 
+\ Just because I keep mistyping .s when other stacks are .rs and .fs
+' .s alias .ds
+
 \ value CONSTANT name
 \
 \ (C: x <spaces>name -- ) (S: -- x )
@@ -796,6 +799,9 @@ DEFER fsp!
 \	A.3.2.3.2 Control-flow stack
 \
 : UNTIL POSTPONE _branchz >HERE - , ; IMMEDIATE compile-only
+
+\  (C: dest -- ) (S: bool -- )
+: whilst POSTPONE _branchnz >HERE - , ; IMMEDIATE compile-only
 
 \ ... AHEAD ... THEN ...
 \
@@ -1699,7 +1705,7 @@ VARIABLE _str_buf_curr
 \
 \ (S: caddr1 u1 caddr2 u2 -- -1 | 0 | 1 )
 \
-: COMPARE strcmp ;
+' strcmp alias COMPARE
 
 \ (S: caddr1 u1 caddr2 u2 -- bool )
 : starts-with
@@ -2113,24 +2119,39 @@ VARIABLE SCR
 	  SWAP str.length @	\ S: name length
 ;
 
-\ ... WORDS ...
-\
+\ Find word ignoring hidden bit.
+\ (S: <spaces>name -- xt | 0 )
+: ''
+	PARSE-NAME 2>R		\ S: 			R: c u
+	_ctx ctx.words @	\ S: p
+	BEGIN
+	  DUP NAME>STRING 2R@	\ S: p c u d v		R: c u
+	  COMPARE 0= IF
+	    2R> 2DROP EXIT
+	  THEN
+	  w.prev @ DUP		\ S: p' p'		R: c u
+	whilst			\ S: p'
+	DROP 2R> 2DROP		\ S: 			R:
+	-13 THROW
+;
+
 \ ( -- )
-\
 : WORDS
-	0 >R			\ S: --  R: col
+	0 >R			\ S: --  		R: col
 	_ctx ctx.words @	\ S: w
 	BEGIN
-	  DUP NAME>STRING	\ S: w word  R: col
-	  DUP R> + 1+		\ S: w name length col'  R: --
-	  \ Does current column exceed terminal width?
-	  DUP _window NIP >= IF	\ S: w name length col'  R: --
-	    CR DROP DUP 1+	\ S: w name length col"  R: --
-	  THEN			\ S: w name length col  R: --
-	  >R TYPE SPACE		\ S: w  R: col
-	  w.prev @ DUP		\ S: w' w'  R: col
-	0= UNTIL		\ S: w'  R: col
-	R> 2DROP CR		\ S: --  R: --
+	  w.bit_hidden OVER _word_bit? 0= IF
+	    DUP NAME>STRING	\ S: w word  		R: col
+	    DUP R> + 1+		\ S: w name length col' R: --
+	    \ Does current column exceed terminal width?
+	    DUP _window NIP >= IF \ S: w name length col' R: --
+	      CR DROP DUP 1+	\ S: w name length col" R: --
+	    THEN		\ S: w name length col  R: --
+	    >R TYPE SPACE	\ S: w			R: col
+	  THEN
+	  w.prev @ DUP		\ S: w' w'		R: col
+	whilst			\ S: w'			R: col
+	R> 2DROP CR		\ S: --			R: --
 ;
 
 \ (S: -- word )
@@ -2589,5 +2610,12 @@ CREATE _nada
 
 \ (S: <spaces>name -- )
 : SEE ' _seext ;
+
+\ Interresting - make TYPE the primative.
+\ : EMIT dsp@ 1 TYPE DROP ; $10 _pp!
+
+\ Using locals
+\ : EMITS {: n char -- :} n 0 ?do char emit loop ;
+: EMITS ( n char -- )  SWAP 0 ?DO DUP EMIT LOOP DROP ; $20 _pp!
 
 MARKER rm_user_words

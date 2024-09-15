@@ -726,8 +726,8 @@ enable_option_checking
 enable_32bit
 enable_64bit
 enable_debug
-enable_math
 enable_see
+enable_math
 enable_hooks
 enable_exception_strings
 with_java
@@ -1365,8 +1365,8 @@ Optional Features:
   --enable-32bit          enable compile & link options for 32-bit
   --enable-64bit          enable compile & link options for 64-bit
   --enable-debug          enable compiler debug option
+  --enable-see            enable internal support for SEE
   --disable-math          disable libm support
-  --disable-see           disable support for SEE
   --disable-hooks         disable support for hooks
   --disable-exception-strings
                           disable exception strings in error messages
@@ -3257,6 +3257,22 @@ fi
 
 
 
+# Check whether --enable-see was given.
+if test ${enable_see+y}
+then :
+  enableval=$enable_see;
+	enable_see='yes'
+
+fi
+
+if test ${enable_see:-no} = 'yes'
+then :
+  printf "%s\n" "#define HAVE_SEE 1" >>confdefs.h
+
+fi
+
+
+
 
 
 
@@ -4351,26 +4367,6 @@ esac
 fi
 
 
-
-
-# Check whether --enable-see was given.
-if test ${enable_see+y}
-then :
-  enableval=$enable_see;
-	:
-
-else case e in #(
-  e)
-	enable_see='yes'
- ;;
-esac
-fi
-
-if test ${enable_see:-no} = 'yes'
-then :
-  printf "%s\n" "#define HAVE_SEE 1" >>confdefs.h
-
-fi
 
 # Check whether --enable-hooks was given.
 if test ${enable_hooks+y}

@@ -1414,6 +1414,16 @@ Push the data stack's size.
 ( `a` `b` -- `a` a` `b` )  
 
 - - -
+#### whilst
+( `x` -- ) immediate  
+Loop back to `BEGIN` while `x` is non-zero; opposite of `UNTIL`.
+
+        BEGIN
+            \ loop body
+            \ test expression
+        WHILST
+
+- - -
 #### _branch
 ( -- )  
 Branch relative.  The integer that immediately follows is the relative distance in address units from the integer's address.  Used in the definition of flow control words, like `AGAIN` and `AHEAD`, `ELSE`, `REPEAT`.
@@ -1422,6 +1432,11 @@ Branch relative.  The integer that immediately follows is the relative distance 
 #### _branchz
 ( `bool` -- )  
 Branch relative if zero (0).  The integer that immediately follows is the relative distance in address units from the integer's address.  Used in the definition of flow control words, like `IF`, `WHILE`, `UNTIL`.
+
+- - -
+#### _branchnz
+( `bool` -- )  
+Branch relative if non-zero.  The integer that immediately follows is the relative distance in address units from the integer's address.  Used in the definition of flow control words, like `WHILST`.
 
 - - -
 #### _call
