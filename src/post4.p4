@@ -2485,10 +2485,12 @@ _fs CONSTANT floating-stack DROP DROP
 	+ ALIGNED			\ S: ip3
 ; $11 _pp!
 
+[DEFINED] _fs [IF]
 \ (S: ip -- ip' )
 : _see_flit
 	FLOAT+ DUP F@ F.
 ;
+[THEN]
 
 \ (S: ip -- ip' )
 : _see_common
@@ -2506,7 +2508,11 @@ _fs CONSTANT floating-stack DROP DROP
 \ (S: xt -- )
 \ Test most words, eg. SEE IF SEE ['] SEE \ SEE LIT,
 : _see_enter
-	DUP NAME>STRING ?DUP IF S" : " TYPE TYPE BL EMIT ELSE DROP S" :NONAME " TYPE THEN
+	DUP NAME>STRING ?DUP IF
+	  S" : " TYPE TYPE BL EMIT
+	ELSE
+	  DROP S" :NONAME " TYPE
+	THEN
 	DUP w.data @ BEGIN		\ S: xt ip
 	  DUP        @ ['] _; <>	\ S: xt ip b1
 	  OVER CELL+ @ ['] _nop =	\ S: xt ip b2
@@ -2515,7 +2521,9 @@ _fs CONSTANT floating-stack DROP DROP
 	    ['] LIT  OF _see_lit ENDOF
 	    ['] slit OF _see_slit ENDOF
 	    ['] clit OF _see_clit ENDOF
+[DEFINED] _fs [IF]
 	    ['] flit OF _see_flit ENDOF
+[THEN]
 	    ['] _branch OF _see_bra ENDOF
 	    ['] _branchz OF _see_bra ENDOF
 	    ['] _branchnz OF _see_bra ENDOF
@@ -2566,6 +2574,18 @@ CREATE _nada
 	  SWAP _see_internal
 	ENDCASE
 ; $10 _pp!
+
+\ ' _nada hide
+\ ' _see_data hide
+\ ' _see_enter hide
+\ ' _see_dodoes hide
+\ ' _see_internal hide
+\ ' _see_lit hide
+\ ' _see_clit hide
+\ ' _see_flit hides
+\ ' _see_slit hide
+\ ' _see_bra hide
+\ ' _see_common hide
 
 \ (S: <spaces>name -- )
 : SEE ' _seext ;
