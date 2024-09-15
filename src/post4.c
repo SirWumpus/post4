@@ -280,6 +280,7 @@ p4CharLiteral(int ch)
 	return ch;
 }
 
+#ifdef HAVE_SEE
 int
 p4LiteralEscape(int ch)
 {
@@ -291,6 +292,7 @@ p4LiteralEscape(int ch)
 	}
 	return 0;
 }
+#endif
 
 int
 p4Base36(int digit)
@@ -305,6 +307,7 @@ p4Base36(int digit)
 	return 127;
 }
 
+#ifdef DEAD
 int
 p4IsPrintable(const char *str, size_t u)
 {
@@ -315,6 +318,7 @@ p4IsPrintable(const char *str, size_t u)
 	}
 	return 1;
 }
+#endif
 
 int
 p4StrNum(P4_String str, P4_Uint base, P4_Cell *out, int *is_float)
@@ -491,8 +495,9 @@ p4Nap(P4_Uint seconds, P4_Uint nanoseconds)
 {
 	unsigned unslept;
 
-	while (0 < (unslept = sleep(seconds)))
+	while (0 < (unslept = sleep(seconds))) {
 		seconds = unslept;
+	}
 }
 #endif
 }
@@ -987,6 +992,7 @@ p4FindName(P4_Ctx *ctx, P4_Char *caddr, P4_Size length)
 	return NULL;
 }
 
+#ifdef HAVE_SEE
 int
 p4IsWord(P4_Ctx *ctx, void *xt)
 {
@@ -997,6 +1003,7 @@ p4IsWord(P4_Ctx *ctx, void *xt)
 	}
 	return 0;
 }
+#endif
 
 static void
 p4FreeInput(P4_Input *input)
