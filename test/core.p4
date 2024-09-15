@@ -487,6 +487,17 @@ t{ MIN-N MIN-N MIN -> MIN-N }t
 t{ MIN-N 0 MIN -> MIN-N }t
 test_group_end
 
+.( C" FIND S" FIND-NAME ) test_group
+\ FIND and FIND-NAME should return the same XT.
+t{ : tw_c1 C" dup" ; -> }t
+t{ : tw_c2 C" .(" ; -> }t
+t{ : tw_c3 C" woot!" ; -> }t
+
+T{ tw_c1 FIND -> S" DUP"   FIND-NAME -1 }T
+T{ tw_c2 FIND -> S" .("    FIND-NAME 1  }T
+T{ tw_c3 FIND -> tw_c3 S" woot!" FIND-NAME }T
+test_group_end
+
 .( IMMEDIATE ) test_group
 T{ 123 CONSTANT tw_iw1 IMMEDIATE tw_iw1 -> 123 }T
 T{ : tw_iw2 tw_iw1 LITERAL ; tw_iw2 -> 123 }T
