@@ -668,7 +668,7 @@ MAX-U MAX-N 2CONSTANT MAX-D
 \
 \ (S: <spaces>name -- )
 \
-: DEFER CREATE ['] _quit , DOES> @ EXECUTE ;
+: DEFER CREATE ['] _nop , DOES> @ EXECUTE ;
 
 \ ... DEFER! ...
 \
