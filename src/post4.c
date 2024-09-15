@@ -1297,8 +1297,8 @@ p4Repl(P4_Ctx *ctx, int thrown)
 //		P4_WORD("min-float",	&&_min_float,	0, 0x01),	// p4
 		P4_WORD("max-float",	&&_max_float,	0, 0x01),	// p4
 		P4_WORD("_fs",		&&_fs,		0, 0x03),	// p4
-		P4_WORD("_fsp_get",	&&_fsp_get,	0, 0x01),	// p4
-		P4_WORD("_fsp_put",	&&_fsp_put,	0, 0x10),	// p4
+		P4_WORD("_fsp@",	&&_fsp_get,	0, 0x01),	// p4
+		P4_WORD("_fsp!",	&&_fsp_put,	0, 0x10),	// p4
 		P4_WORD(">FLOAT",	&&_to_float,	0, 0x010021),
 		P4_WORD("FROUND",	&&_f_round,	0, 0x110000),
 		P4_WORD("FTRUNC",	&&_f_trunc,	0, 0x110000),
@@ -1365,12 +1365,12 @@ p4Repl(P4_Ctx *ctx, int thrown)
 		P4_WORD("_call",	&&_call,	P4_BIT_COMPILE, 0x01000100),	// p4
 		P4_WORD("catch_frame",	&&_frame,	0, 0x01),	// p4
 		P4_WORD("_ds",		&&_ds,		0, 0x03),	// p4
-		P4_WORD("_dsp@",	&&_dsp_get,	0, 0x01),	// p4
-		P4_WORD("_dsp!",	&&_dsp_put,	0, 0x10),	// p4
+		P4_WORD("dsp@",		&&_dsp_get,	0, 0x01),	// p4
+		P4_WORD("dsp!",		&&_dsp_put,	0, 0x10),	// p4
 		P4_WORD("_longjmp",	&&_longjmp,	0, 0x10),	// p4
 		P4_WORD("_rs",		&&_rs,		0, 0x03),	// p4
-		P4_WORD("_rsp@",	&&_rsp_get,	0, 0x01),	// p4
-		P4_WORD("_rsp!",	&&_rsp_put,	0, 0x10),	// p4
+		P4_WORD("rsp@",		&&_rsp_get,	0, 0x01),	// p4
+		P4_WORD("rsp!",		&&_rsp_put,	0, 0x10),	// p4
 		P4_WORD("_pp!",		&&_pp_put,	P4_BIT_IMM, 0x10), // p4
 		P4_WORD("_stack_check", &&_stack_check, 0, 0x00),	// p4
 		P4_WORD("_stack_dump",	&&_stack_dump,	0, 0x20),	// p4

@@ -1279,6 +1279,16 @@ System clock time in seconds from the epoch.
 Empty the data stack.
 
 - - -
+#### dsp!
+( `aaddr` -- )  
+Store `aaddr` into the data stack pointer.
+
+- - -
+#### dsp@
+( -- `aaddr` )  
+Fetch the data stack pointer.
+
+- - -
 #### env
 ( `key` `k` -- `value` `v` )  
 Lookup the environment variable string `key` `k`.  Return string `value` `v`; if length `v` is `-1`, then the environment variable `key` was not found and `value` is invalid.
@@ -1381,6 +1391,16 @@ Push the return stack's size.
 ( `a` `b` `c` -- `b` a` `c` )  
 
 - - -
+#### rsp!
+( `aaddr` -- )  
+Store `aaddr` into the return stack pointer.
+
+- - -
+#### rsp@
+( -- `aaddr` )  
+Fetch the return stack pointer.
+
+- - -
 #### spin
 ( `a` `b` `c` -- `c` b` `a` )  
 
@@ -1419,16 +1439,6 @@ The base address of the Post4 current machine context.
 Push the data stack base `aaddr` address, depth `n`, and size `s` (before executing `_ds`).  This stack is a fixed size and grows upward.
 
 - - -
-#### _dsp!
-( `aaddr` -- )  
-Store `aaddr` into the data stack pointer.
-
-- - -
-#### _dsp@
-( -- `aaddr` )  
-Fetch the data stack pointer.
-
-- - -
 #### _longjmp
 ( `n` -- )  
 Return to the context saved at the start of the REPL (`QUIT`) passing `n`.  Values of `n` from -1 to -255 are the Forth 200x standard `THROW` codes.  Passing -256 is equivalent to `BYE`.
@@ -1442,16 +1452,6 @@ Parse `ccc` delimited by the delimiter `char`.  When `bool` is false, behaviour 
 #### _rs
 ( -- `aaddr` `n` `s` )  
 Push the return stack base address, depth `n`, and size `s`.  This stack is a fixed size and grows upward.
-
-- - -
-#### _rsp!
-( `aaddr` -- )  
-Store `aaddr` into the return stack pointer.
-
-- - -
-#### _rsp@
-( -- `aaddr` )  
-Fetch the return stack pointer.
 
 - - -
 #### _window

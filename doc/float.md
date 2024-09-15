@@ -273,3 +273,13 @@ Move top of the float stack to the return stack.
 Move top of the return stack to the float stack.
 
 - - -
+#### _fsp!
+( `aaddr` -- )  
+Store `aaddr` into the float stack pointer.
+
+- - -
+#### _fsp@
+( -- `aaddr` )  
+Fetch the float stack pointer.
+
+- - -

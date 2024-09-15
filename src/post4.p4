@@ -251,7 +251,7 @@ END-STRUCTURE
 : R@ R> R> DUP >R SWAP >R ; compile-only $1101 _pp!
 
 \ ( i*x -- )
-: dropall _ds DROP DROP CELL- _dsp! ;
+: dropall _ds DROP DROP CELL- dsp! ;
 
 \ ... CHAR+ ...
 \
@@ -682,21 +682,21 @@ MAX-U MAX-N 2CONSTANT MAX-D
 \
 : DEFER@ >BODY @ ;
 
-DEFER _fsp@
-DEFER _fsp!
+DEFER fsp@
+DEFER fsp!
 
-' TRUE ' _fsp@ DEFER!
-' DROP ' _fsp! DEFER!
+' TRUE ' fsp@ DEFER!
+' DROP ' fsp! DEFER!
 
 \ ... CATCH ...
 \
 \ ( i*x xt -- j*x 0 | i*x n )
 \
 : CATCH				\ S: xt   R: ip
-	_dsp@ >R		\ S: xt   R: ip ds
-	_fsp@ >R		\ S: xt   R: ip ds fs
+	dsp@ >R			\ S: xt   R: ip ds
+	fsp@ >R			\ S: xt   R: ip ds fs
 	catch_frame @ >R	\ S: xt   R: ip ds fs cf
-	_rsp@ catch_frame !	\ S: xt   R: ip ds fs cf
+	rsp@ catch_frame !	\ S: xt   R: ip ds fs cf
 	EXECUTE			\ S: --   R: ip ds fs cf
 	R> catch_frame !	\ S: --   R: ip ds fs
 	R> R> 2DROP 		\ S: --   R: ip
@@ -715,12 +715,12 @@ DEFER _fsp!
 	    _longjmp		\ S: --   R: --
 	  THEN
 	  \ Restore return stack of CATCH at EXECUTE.
-	  catch_frame @ _rsp!	\ S: n    R: ip ds fs cf
+	  catch_frame @ rsp!	\ S: n    R: ip ds fs cf
 	  R> catch_frame !	\ S: n    R: ip ds fs
-	  R> _fsp!		\ S: n    R: ip ds fs
+	  R> fsp!		\ S: n    R: ip ds fs
 	  R> SWAP >R		\ S: ds   R: ip n
 	  \ Restore data stack at start of CATCH
-	  _dsp!			\ S: xt   R: ip n
+	  dsp!			\ S: xt   R: ip n
 	  DROP R>		\ S: n    R: ip
 	THEN
 ;
@@ -2293,8 +2293,8 @@ VARIABLE _do_sys_stk
 
 [DEFINED] _fs [IF]
 _fs CONSTANT floating-stack DROP DROP
-' _fsp_get IS _fsp@
-' _fsp_put IS _fsp!
+' _fsp@ IS fsp@
+' _fsp! IS fsp!
 
 ' CELLS alias FLOATS
 1 FLOATS CONSTANT /FLOAT
