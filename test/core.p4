@@ -975,4 +975,83 @@ T{ 4 tw_recurse2 EXECUTE -> 33 22 11 0 }T
 T{ 25 tw_recurse2 EXECUTE -> 33 22 11 0 }T
 test_group_end
 
+.( FIND-NAME NAME>STRING NAME>INTERPRET NAME>COMPILE ) test_group
+: bounds ( addr len -- addr+len addr ) OVER + SWAP ;
+: >lower ( c1 -- c2 ) DUP 'A' 'Z' 1+ WITHIN BL AND OR ;
+: istr= ( addr1 u1 addr2 u2 -- flag )
+    ROT OVER <> IF 2DROP DROP FALSE EXIT THEN
+    bounds ?DO
+      DUP C@ >lower I C@ >lower <> IF
+        DROP FALSE UNLOOP EXIT
+      THEN
+      1+
+    LOOP
+    DROP TRUE
+;
+
+: fnt5 42 ;
+: fnt6 51 ; IMMEDIATE
+T{ S" fnt5" FIND-NAME NAME>INTERPRET EXECUTE -> 42 }T
+T{ : fnt7 [ S" fnt5" FIND-NAME NAME>COMPILE EXECUTE ] ; fnt7 -> 42 }T
+T{ S" fnt5" FIND-NAME NAME>STRING S" fnt5" istr= -> TRUE }T
+T{ S" fnt6" FIND-NAME NAME>INTERPRET EXECUTE -> 51 }T
+T{ S" fnt6" FIND-NAME NAME>COMPILE EXECUTE -> 51 }T
+: fnt8 FIND-NAME NAME>COMPILE EXECUTE ; IMMEDIATE
+T{ S" fnt6" ] fnt8 [ -> 51 }T
+T{ S" fnt0hfshkshdfskl" FIND-NAME -> 0 }T
+T{ S\" s\"" FIND-NAME NAME>INTERPRET EXECUTE bla" S" bla" COMPARE -> 0 }T
+T{ : fnt9 [ S\" s\"" FIND-NAME NAME>INTERPRET EXECUTE ble" ] 2LITERAL ; -> }T
+T{ fnt9 S" ble" COMPARE -> 0 }T
+: fnta FIND-NAME NAME>INTERPRET EXECUTE ; IMMEDIATE
+T{ : fntb [ S\" s\"" ] fnta bli" ; -> }T
+T{ fntb S" bli" COMPARE -> 0 }T
+
+: fnt-interpret-words ( ... "rest-of-line" -- ... )
+    BEGIN
+      PARSE-NAME DUP
+    WHILE
+      2DUP FIND-NAME DUP 0= -13 AND THROW
+      NIP NIP STATE @ IF
+        NAME>COMPILE
+      ELSE
+        NAME>INTERPRET
+      THEN EXECUTE
+    REPEAT 2DROP
+;
+T{ fnt-interpret-words fnt5 VALUE fntd fnt6 TO fntd fntd
+-> fnt6 }T
+T{ fnt-interpret-words S" yyy" : fnte S" yyy" ; fnte COMPARE
+-> 0 }T
+[DEFINED] {: [IF]
+T{ fnt-interpret-words
+    : fntc {: xa xb :} xa xb TO xa TO xb xa xb S" xxx" ;
+    S" xxx" SWAP fntc COMPARE
+-> 0 }T
+[THEN]
+test_group_end
+
+[DEFINED] FIND-NAME-IN [IF]
+.( FIND-NAME-IN ) test_group
+WORDLIST CONSTANT fntwl
+GET-CURRENT fntwl SET-CURRENT
+
+: fnt1 25 ;
+: fnt2 34 ; IMMEDIATE
+
+SET-CURRENT
+
+T{ S" fnt1" fntwl FIND-NAME-IN NAME>INTERPRET EXECUTE -> 25 }T
+T{ : fnt3
+[ S" fnt1" fntwl FIND-NAME-IN NAME>COMPILE EXECUTE ]
+;
+fnt3 -> 25 }T
+T{ S" fnt1" fntwl FIND-NAME-IN NAME>STRING S" fnt1" istr= -> TRUE }T
+T{ S" fnt2" fntwl FIND-NAME-IN NAME>INTERPRET EXECUTE -> 34 }T
+T{ S" fnt2" fntwl FIND-NAME-IN NAME>COMPILE EXECUTE -> 34 }T
+: fnt4 fntwl FIND-NAME-IN NAME>COMPILE EXECUTE ; IMMEDIATE
+T{ S" fnt2" ] fnt4 [ -> 34 }T
+T{ S" fnt0" fntwl FIND-NAME-IN -> 0 }T
+test_group_end
+[THEN]
+
 rm_core_words
