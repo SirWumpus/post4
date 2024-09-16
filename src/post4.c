@@ -1146,7 +1146,7 @@ p4Bp(P4_Ctx *ctx)
 {
 	P4_Input *input = ctx->input;
 	int has_nl = input->buffer[input->length-(0 < input->length)] == '\n';
-	(void) fprintf(STDERR, ">> ");
+	(void) fprintf(STDERR, "\r\n>> ");
 	for (int i = 0; i < input->length-has_nl; i++) {
 		(void) fputc(input->buffer[i] == '\t' ? ' ' : input->buffer[i], STDERR);
 	}
@@ -1515,6 +1515,7 @@ _thrown:
 		(void) printf(crlf);
 		exit(128+SIGTERM);
 	case P4_THROW_UNDEFINED:
+	case P4_THROW_BAD_CONTROL:
 		p4Bp(ctx);
 		/*@fallthrough@*/
 	default:
@@ -1570,6 +1571,8 @@ _quit:		P4_RESET(ctx->rs);
 		ctx->input->offset = ctx->input->length = 0;
 		ctx->state = P4_STATE_INTERPRET;
 		ctx->frame = 0;
+		/* Reset level, else next trace the indentation might be skewed. */
+		ctx->level = 0;
 		/*@fallthrough@*/
 	case P4_THROW_OK:
 		;
