@@ -65,6 +65,11 @@ Compare the two strings lexicographically.  Return `n` greater than, equal to, o
 String length of NUL terminated string.  See `args`, `env`, and `puts`.
 
 - - -
+#### strncpy
+( `src` `dst` `u` -- )  
+Copy `u` characters from `src` to `dst` and NUL terminate the `dst`.
+
+- - -
 #### strrev
 ( `caddr` `u` -- )  
 Reverse the string in place.

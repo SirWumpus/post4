@@ -1528,6 +1528,10 @@ VARIABLE _>pic
 \
 : strlen DUP BEGIN DUP C@ WHILE 1+ REPEAT SWAP - ;
 
+\ (S: src dst u -- )
+\ Copy and NUL terminate string.
+: strncpy 2DUP CHARS + >R MOVE 0 R> C! ;
+
 \ Maximum for octet addressable units.
 MAX-CHAR CONSTANT /COUNTED-STRING
 
@@ -1631,15 +1635,7 @@ VARIABLE _str_buf_curr
 	STATE @ IF
 	  POSTPONE SLITERAL
 	ELSE
-	  \ Select next transient buffer.
-	  DUP >R _str_buf_next	\ S: src u dst		R: u
-	  \ Copy string from source to transient buffer.
-	  DUP >R SWAP		\ S: src dst u		R: u dst
-	  MOVE			\ S: -- 		R: u dst
-	  \ Add terminating NUL byte for convenience for C.
-	  R> R>			\ S: dst u 		R: --
-	  2DUP CHARS + 0	\ S: dst u end NUL
-	  SWAP C!		\ S: dst u
+	  _str_buf_next SWAP 2DUP 2>R strncpy 2R>
 	THEN
 ;
 
