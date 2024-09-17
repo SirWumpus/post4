@@ -1795,7 +1795,7 @@ VARIABLE _str_buf_curr
 \ Example
 \
 \	_ctx		 	\ Post4 machine context pointer
-\	ctx.words @		\ pointer to most recent word
+\	ctx.active @ @		\ pointer to most recent word
 \	w.name str.string @	\ pointer to word name
 \	puts			\ write name
 \
@@ -1810,7 +1810,6 @@ BEGIN-STRUCTURE p4_ctx
 	FIELD: ctx.trace	\ see _trace
 	FIELD: ctx.level	\ see p4
 	FIELD: ctx.state	\ see STATE
-	FIELD: ctx.words	\ pointer
 	FIELD: ctx.radix	\ see BASE
 	FIELD: ctx.argc
 	FIELD: ctx.argv
@@ -1821,12 +1820,18 @@ BEGIN-STRUCTURE p4_ctx
 	FIELD: ctx.input	\ pointer
 	FIELD: ctx.block	\ pointer
 	FIELD: ctx.block_fd
-	/PAD +FIELD ctx.tty	\ buffer, see SOURCE
+	FIELD: ctx.active
+	WORDLISTS CELLS +FIELD ctx.lists
+	FIELD: ctx.norder
+	WORDLISTS CELLS +FIELD ctx.order
 [DEFINED] jcall [IF]
 	FIELD: ctx.jenv
 [THEN]
 \	0 +FIELD ctx.longjmp	\ size varies by host OS
 END-STRUCTURE
+
+\ (S: ctx -- aaddr )
+: ctx.words ctx.active @ ;
 
 \ (S: -- )
 : _input_ptr _ctx ctx.input ;

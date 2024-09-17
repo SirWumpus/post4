@@ -927,7 +927,7 @@ p4Allot(P4_Ctx *ctx, P4_Int n)
 		/* Attempt to reserve more data space than available. */
 		return NULL;
 	}
-	if (ctx->here + n < (P4_Char *) ctx->words->data) {
+	if (ctx->here + n < (P4_Char *)(*ctx->active)->data) {
 		/* Attempt to release data space below the most recently
 		 * created word.
 		 */
@@ -935,7 +935,7 @@ p4Allot(P4_Ctx *ctx, P4_Int n)
 	}
 	void *start = ctx->here;
 	MEMSET(start, BYTE_ME, n);
-	ctx->words->ndata += n;
+	(*ctx->active)->ndata += n;
 	ctx->here += n;
 	return start;
 }
@@ -948,18 +948,18 @@ p4WordCreate(P4_Ctx *ctx, const char *name, size_t length, P4_Code code)
 	if ((word = calloc(1, sizeof (*word))) == NULL) {
 		goto error0;
 	}
-	/* Make sure new word starts with aligned data. */
-	(void) p4Allot(ctx, P4_ALIGN_BY((P4_Uint) ctx->here));
-	word->data = (P4_Cell *) ctx->here;
-
 	if ((word->name.string = strndup(name, length)) == NULL) {
 		goto error1;
 	}
 	word->name.length = length;
+
+	/* Make sure new word starts with aligned data. */
+	ctx->here = (P4_Char *) P4_CELL_ALIGN((P4_Uint) ctx->here);
+	word->data = (P4_Cell *) ctx->here;
 	word->code = code;
 
-	word->prev = ctx->words;
-	ctx->words = word;
+	word->prev = *ctx->active;
+	*ctx->active = word;
 
 	return word;
 error1:
@@ -977,11 +977,13 @@ p4WordAppend(P4_Ctx *ctx, P4_Cell data)
 }
 
 P4_Word *
-p4FindName(P4_Ctx *ctx, P4_Char *caddr, P4_Size length)
+p4FindNameIn(P4_Ctx *ctx, P4_Char *caddr, P4_Size length, unsigned wid)
 {
 	P4_Word *word;
-
-	for (word = ctx->words; word != NULL; word = word->prev) {
+	if (wid < 1 || P4_WORDLISTS < wid) {
+		LONGJMP(ctx->longjmp, P4_THROW_EINVAL);
+	}
+	for (word = ctx->lists[wid-1]; word != NULL; word = word->prev) {
 		if (!P4_WORD_IS_HIDDEN(word)
 		&& word->name.length > 0 && word->name.length == length
 		&& strncasecmp((char *)word->name.string, caddr, length) == 0) {
@@ -992,11 +994,23 @@ p4FindName(P4_Ctx *ctx, P4_Char *caddr, P4_Size length)
 	return NULL;
 }
 
+P4_Word *
+p4FindName(P4_Ctx *ctx, P4_Char *caddr, P4_Size length)
+{
+	for (unsigned i = 0; i < ctx->norder; i++) {
+		P4_Word *word = p4FindNameIn(ctx, caddr, length, ctx->order[i]);
+		if (word != NULL) {
+			return word;
+		}
+	}
+	return NULL;
+}
+
 #ifdef HAVE_SEE
 int
 p4IsWord(P4_Ctx *ctx, void *xt)
 {
-	for (P4_Word *word = ctx->words; word != NULL; word = word->prev) {
+	for (P4_Word *word = *ctx->active; word != NULL; word = word->prev) {
 		if (xt == (void *) word) {
 			return 1;
 		}
@@ -1016,15 +1030,22 @@ p4FreeInput(P4_Input *input)
 	}
 }
 
+static void
+p4FreeWords(P4_Word *words)
+{
+	P4_Word *word, *prev;
+	for (word = words; word != NULL && p4_builtin_words != word; word = prev) {
+		prev = word->prev;
+		p4WordFree(word);
+	}
+}
+
 void
 p4Free(P4_Ctx *ctx)
 {
-	P4_Word *word, *prev;
-
 	if (ctx != NULL) {
-		for (word = ctx->words; p4_builtin_words != word; word = prev) {
-			prev = word->prev;
-			p4WordFree(word);
+		for (int i = 0; i < P4_WORDLISTS; i++) {
+			p4FreeWords(ctx->lists[i]);
 		}
 #if defined(HAVE_MATH_H)
 		free(ctx->fs.base - P4_GUARD_CELLS/2);
@@ -1131,6 +1152,9 @@ p4Create(P4_Options *opts)
 	&& (ctx->block_fd = fopen(opts->block_file, "wb+")) == NULL) {	/* Else create file. */
 		warn("%s", opts->block_file);
 	}
+	ctx->norder = 1;
+	ctx->order[0] = 1;
+	ctx->active = &ctx->lists[0];
 	if (p4LoadFile(ctx, opts->core_file)) {
 		goto error0;
 	}
@@ -1270,7 +1294,7 @@ p4Repl(P4_Ctx *ctx, int thrown)
 	int rc;
 	P4_Word *word;
 	P4_String str;
-	P4_Cell w, x, *ip;
+	P4_Cell w, x, y, *ip;
 
 	static P4_Word words[] = {
 		P4_WORD("_nop",		&&_nop,		0, 0x00),	//_p4
@@ -1357,6 +1381,7 @@ p4Repl(P4_Ctx *ctx, int thrown)
 		/* Constants. */
 		P4_WORD("/pad",			&&_pad_size,	0, 0x01),	// p4
 		P4_WORD("address-unit-bits",	&&_char_bit,	0, 0x01),	// p4
+		P4_WORD("WORDLISTS",		&&_wordlists,	0, 0x01),
 
 		/* Internal support. */
 		P4_WORD("_bp",		&&_bp,		0, 0x00),		// p4
@@ -1460,6 +1485,7 @@ p4Repl(P4_Ctx *ctx, int thrown)
 		P4_WORD("DUMP",		&&_dump,	0, 0x20),
 		P4_WORD("EMIT",		&&_emit,	0, 0x10),
 		P4_WORD("epoch-seconds", &&_epoch_seconds, 0, 0x01),	// p4
+		P4_WORD("FIND-NAME-IN",	&&_find_name_in, 0, 0x31),
 		P4_WORD("FIND-NAME",	&&_find_name,	0, 0x21),
 		P4_WORD("KEY",		&&_key,		0, 0x01),
 		P4_WORD("KEY?",		&&_key_ready,	0, 0x01),
@@ -1479,7 +1505,7 @@ p4Repl(P4_Ctx *ctx, int thrown)
 			word[1].prev = word;
 		}
 		p4_builtin_words = word->prev;
-		ctx->words = p4_builtin_words;
+		*ctx->active = p4_builtin_words;
 	}
 
 #define NEXT		goto _next
@@ -1516,6 +1542,7 @@ _thrown:
 		exit(128+SIGTERM);
 	case P4_THROW_UNDEFINED:
 	case P4_THROW_BAD_CONTROL:
+	case P4_THROW_WORDLIST:
 		p4Bp(ctx);
 		/*@fallthrough@*/
 	default:
@@ -1525,16 +1552,16 @@ _thrown:
 		 * compiling a word, eg `: word [ 123 ;`  Use the fact that
 		 * while compiling the word is hidden from use.
 		 */
-		if (P4_WORD_IS_HIDDEN(ctx->words)) {
+		if (P4_WORD_IS_HIDDEN(*ctx->active)) {
 			/* A thrown error while compiling a word leaves the
 			 * definition in an incomplete state; discard it.
 			 */
-			word = ctx->words;
+			word = *ctx->active;
 			(void) fprintf(STDERR,
 				" while compiling %s",
 				word->name.length == 0 ? ":NONAME" : (char *)word->name.string
 			);
-			ctx->words = word->prev;
+			*ctx->active = word->prev;
 			/* Rewind HERE, does not free ALLOCATE data. */
 			ctx->here = (P4_Char *) word->data;
 			p4WordFree(word);
@@ -1773,6 +1800,10 @@ _chars:		P4_TOP(ctx->ds).n *= sizeof (P4_Char);
 _cells:		P4_TOP(ctx->ds).n *= P4_CELL;
 		NEXT;
 
+		// ( -- u )
+_wordlists:	P4_PUSH(ctx->ds, (P4_Uint) P4_WORDLISTS);
+		NEXT;
+
 		/*
 		 * Defining words.
 		 */
@@ -1810,20 +1841,20 @@ _semicolon:	ctx->state = P4_STATE_INTERPRET;
 			THROW(P4_THROW_BAD_CONTROL);
 		}
 		p4WordAppend(ctx, (P4_Cell) &w_semi);
-		P4_WORD_CLEAR_HIDDEN(ctx->words);
+		P4_WORD_CLEAR_HIDDEN(*ctx->active);
 		NEXT;
 
 		// ( -- )
-_compile_only:	P4_WORD_SET_COMPILE(ctx->words);
+_compile_only:	P4_WORD_SET_COMPILE(*ctx->active);
 		NEXT;
 
 		// ( -- )
-_immediate:	P4_WORD_SET_IMM(ctx->words);
+_immediate:	P4_WORD_SET_IMM(*ctx->active);
 		NEXT;
 
 		// ( u -- )
 _pp_put:	w = P4_POP(ctx->ds);
-		ctx->words->poppush = w.u;
+		(*ctx->active)->poppush = w.u;
 		NEXT;
 
 _marker:	str = p4ParseName(ctx->input);
@@ -1831,11 +1862,11 @@ _marker:	str = p4ParseName(ctx->input);
 		NEXT;
 
 _rm_marker:	x.w = w.xt;
-		for (word = ctx->words; word != x.w; word = w.w) {
+		for (word = *ctx->active; word != x.w; word = w.w) {
 			w.w = word->prev;
 			p4WordFree(word);
 		}
-		ctx->words = word->prev;
+		*ctx->active = word->prev;
 		/* Rewind HERE, does not free ALLOCATE data. */
 		ctx->here = (P4_Char *) word->data;
 		p4WordFree(word);
@@ -1881,7 +1912,7 @@ _create:	str = p4ParseName(ctx->input);
 		NEXT;
 
 		// DOES>
-_does:		word = ctx->words;
+_does:		word = *ctx->active;
 		if (!P4_WORD_WAS_CREATED(word)) {
 			THROW(P4_THROW_NOT_CREATED);
 		}
@@ -2028,7 +2059,7 @@ _move:		w = P4_POP(ctx->ds);
 
 
 		// ( -- u )
-_here_offset:	P4_PUSH(ctx->ds, (P4_Size)(ctx->here - (P4_Char *) ctx->words->data));
+_here_offset:	P4_PUSH(ctx->ds, (P4_Size)(ctx->here - (P4_Char *) (*ctx->active)->data));
 		NEXT;
 
 		// ( -- addr )
@@ -2358,6 +2389,13 @@ _parse_name:	str = p4ParseName(ctx->input);
 _find_name:	w = P4_POP(ctx->ds);
 		x = P4_TOP(ctx->ds);
 		P4_TOP(ctx->ds).w = p4FindName(ctx, x.s, w.z);
+		NEXT;
+
+		// ( caddr u wid -- xt | 0 )
+_find_name_in:	y = P4_POP(ctx->ds);
+		w = P4_POP(ctx->ds);
+		x = P4_TOP(ctx->ds);
+		P4_TOP(ctx->ds).w = p4FindNameIn(ctx, x.s, w.z, y.u);
 		NEXT;
 
 		// ( ms -- )

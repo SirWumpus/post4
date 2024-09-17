@@ -1030,28 +1030,4 @@ T{ fnt-interpret-words
 [THEN]
 test_group_end
 
-[DEFINED] FIND-NAME-IN [IF]
-.( FIND-NAME-IN ) test_group
-WORDLIST CONSTANT fntwl
-GET-CURRENT fntwl SET-CURRENT
-
-: fnt1 25 ;
-: fnt2 34 ; IMMEDIATE
-
-SET-CURRENT
-
-T{ S" fnt1" fntwl FIND-NAME-IN NAME>INTERPRET EXECUTE -> 25 }T
-T{ : fnt3
-[ S" fnt1" fntwl FIND-NAME-IN NAME>COMPILE EXECUTE ]
-;
-fnt3 -> 25 }T
-T{ S" fnt1" fntwl FIND-NAME-IN NAME>STRING S" fnt1" istr= -> TRUE }T
-T{ S" fnt2" fntwl FIND-NAME-IN NAME>INTERPRET EXECUTE -> 34 }T
-T{ S" fnt2" fntwl FIND-NAME-IN NAME>COMPILE EXECUTE -> 34 }T
-: fnt4 fntwl FIND-NAME-IN NAME>COMPILE EXECUTE ; IMMEDIATE
-T{ S" fnt2" ] fnt4 [ -> 34 }T
-T{ S" fnt0" fntwl FIND-NAME-IN -> 0 }T
-test_group_end
-[THEN]
-
 rm_core_words

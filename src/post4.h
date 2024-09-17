@@ -71,6 +71,10 @@ extern "C" {
 #define P4_INPUT_SIZE			256		/* in bytes */
 #endif
 
+#ifndef P4_WORDLISTS
+#define P4_WORDLISTS			8
+#endif
+
 #ifndef P4_SAFE_PATH
 #define P4_SAFE_PATH			"/usr/bin:/bin"
 #endif
@@ -430,7 +434,6 @@ struct p4_ctx {
 	P4_Int          trace;          /* Word trace for debugging. */
 	P4_Int		level;		/* Tracing depth. */
 	P4_Int		state;
-	P4_Word *	words;		/* Head of the dictionary word list. */
 	P4_Uint		radix;		/* Input/Output radix */
 	P4_Int		argc;
 	char **		argv;
@@ -441,6 +444,10 @@ struct p4_ctx {
 	P4_Input *	input;
 	P4_Block *	block;
 	void *		block_fd;
+	P4_Word **	active;		/* Active compiliation word list. */
+	P4_Word *	lists[P4_WORDLISTS];
+	P4_Uint		norder;		/* Order length, [0, P4_WORDLISTS) */
+	P4_Uint		order[P4_WORDLISTS];
 #ifdef WITH_JAVA
 	void *		jenv;
 #endif
@@ -548,6 +555,7 @@ typedef struct {
 /* -4095..-256 reserved for the system (that's us). */
 
 #define P4_THROW_SIGTERM	(-256)
+#define P4_THROW_WORDLIST	(-257)	/* Out of word list space; invalid wid. */
 #define P4_THROW_GENERIC	(-4095)
 
 /***********************************************************************
