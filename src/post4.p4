@@ -550,7 +550,7 @@ MAX-U MAX-N 2CONSTANT MAX-D
 
 \ Compile LIT xt into the current word, which pushes xt when run.
 \ (C: <spaces>name -- ) (S: -- xt )
-: ['] LIT [ ' LIT COMPILE, ] COMPILE, ' COMPILE, ; IMMEDIATE compile-only
+: ['] LIT LIT COMPILE, ' COMPILE, ; IMMEDIATE compile-only
 
 \ (C: x -- ) (S: x -- )
 : LIT, ['] LIT COMPILE, , ;
@@ -762,11 +762,11 @@ DEFER fsp!
 
 \ ( -- xt )
 \ Redefine now that we can THROW for an undefined word.
-: ' ' DUP 0= -13 AND THROW ;
+: ' PARSE-NAME FIND-NAME DUP 0= -13 AND THROW ;
 
 \ (C: <spaces>name -- ) (S: -- xt )
 \ Redefine now that ' can THROW on undefined word.
-: ['] LIT [ ' LIT COMPILE, ] COMPILE, ' COMPILE, ; IMMEDIATE compile-only
+: ['] LIT LIT COMPILE, ' COMPILE, ; IMMEDIATE compile-only
 
 \ ...  [CHAR]  ...
 \
