@@ -1538,6 +1538,7 @@ _thrown:
 		(void) printf(crlf);
 		exit(128+SIGTERM);
 	case P4_THROW_UNDEFINED:
+	case P4_THROW_COMPILE_ONLY:
 	case P4_THROW_BAD_CONTROL:
 	case P4_THROW_WORDLIST:
 		p4Bp(ctx);
@@ -1642,6 +1643,8 @@ _inter_loop:	while (ctx->input->offset < ctx->input->length) {
 					P4_PUSH(ctx->ds, x);
 					p4StackGuards(ctx);
 				}
+			} else if (ctx->state == P4_STATE_INTERPRET && P4_WORD_IS(word, P4_BIT_COMPILE)) {
+				THROW(P4_THROW_COMPILE_ONLY);
 			} else if (ctx->state == P4_STATE_COMPILE && !P4_WORD_IS_IMM(word)) {
 				p4WordAppend(ctx, (P4_Cell) word);
 			} else {

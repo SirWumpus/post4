@@ -43,7 +43,7 @@
 ' _bp alias _bpnow immediate
 
 \ ( xt -- )
-' , alias COMPILE, compile-only $10 _pp!
+' , alias COMPILE, compile-only
 
 \ (C: xu ... x1 x0 u -- xu ... x1 x0 xu )
 ' PICK alias CS-PICK compile-only
@@ -251,7 +251,7 @@ END-STRUCTURE
 : CELL- /CELL - ; $11 _pp!
 
 \ ( -- x )(R: x -- x)
-: R@ R> R> DUP >R SWAP >R ; compile-only $1101 _pp!
+: R@ R> R> DUP >R SWAP >R ; $1101 _pp!
 
 \ ( i*x -- )
 : dropall _ds DROP DROP CELL- dsp! ;
