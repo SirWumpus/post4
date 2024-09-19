@@ -14,6 +14,7 @@
 	INCLUDE ../test/float.p4
 	INCLUDE ../test/memory.p4
 	INCLUDE ../test/string.p4
+	INCLUDE ../test/search.p4
 	INCLUDE ../test/tools.p4
 	INCLUDE ../test/facility.p4
 	INCLUDE ../test/block.p4

@@ -342,10 +342,10 @@ union p4_cell {
 	const P4_Word *	cw;
 };
 
-#define P4_CELL				((P4_Int) sizeof (P4_Cell))
-#define P4_ALIGN_SIZE(sz, pow2)    	(((sz) + (pow2-1)) & -(pow2))
+#define P4_CELL				sizeof (P4_Cell)
+#define P4_ALIGN_SIZE(sz, pow2)    	(((P4_Uint) (sz) + (pow2-1)) & -(pow2))
 #define P4_CELL_ALIGN(nbytes)		P4_ALIGN_SIZE(nbytes, sizeof (P4_Cell))
-#define P4_ALIGN_BY(nbytes)		(P4_CELL_ALIGN(nbytes) - nbytes)
+#define P4_ALIGN_BY(nbytes)		(P4_CELL_ALIGN(nbytes) - (P4_Uint)(nbytes))
 
 struct p4_word {
 	/* Header */

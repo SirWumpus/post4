@@ -990,18 +990,22 @@ test_group_end
 ;
 
 : fnt5 42 ;
-: fnt6 51 ; IMMEDIATE
 T{ S" fnt5" FIND-NAME NAME>INTERPRET EXECUTE -> 42 }T
 T{ : fnt7 [ S" fnt5" FIND-NAME NAME>COMPILE EXECUTE ] ; fnt7 -> 42 }T
 T{ S" fnt5" FIND-NAME NAME>STRING S" fnt5" istr= -> TRUE }T
+
+: fnt6 51 ; IMMEDIATE
 T{ S" fnt6" FIND-NAME NAME>INTERPRET EXECUTE -> 51 }T
 T{ S" fnt6" FIND-NAME NAME>COMPILE EXECUTE -> 51 }T
+
 : fnt8 FIND-NAME NAME>COMPILE EXECUTE ; IMMEDIATE
 T{ S" fnt6" ] fnt8 [ -> 51 }T
 T{ S" fnt0hfshkshdfskl" FIND-NAME -> 0 }T
 T{ S\" s\"" FIND-NAME NAME>INTERPRET EXECUTE bla" S" bla" COMPARE -> 0 }T
-T{ : fnt9 [ S\" s\"" FIND-NAME NAME>INTERPRET EXECUTE ble" ] 2LITERAL ; -> }T
+
+T{ : fnt9 [ S\" s\"" FIND-NAME NAME>COMPILE EXECUTE ble" ] 2LITERAL ; -> }T
 T{ fnt9 S" ble" COMPARE -> 0 }T
+
 : fnta FIND-NAME NAME>INTERPRET EXECUTE ; IMMEDIATE
 T{ : fntb [ S\" s\"" ] fnta bli" ; -> }T
 T{ fntb S" bli" COMPARE -> 0 }T

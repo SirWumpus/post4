@@ -621,6 +621,9 @@ MAX-U MAX-N 2CONSTANT MAX-D
 	DUP immediate?
 	IF
 	  ['] EXECUTE EXIT
+\ https://github.com/ForthHub/discussion/discussions/173#discussioncomment-10668897
+\	  ['] execute-compiling EXIT
+\ but the test suite fails.
 	THEN
 	['] COMPILE,
 ;
@@ -2618,5 +2621,86 @@ CREATE _nada
 \ Using locals
 \ : EMITS {: n char -- :} n 0 ?do char emit loop ;
 : EMITS ( n char -- )  SWAP 0 ?DO DUP EMIT LOOP DROP ; $20 _pp!
+
+[DEFINED] WORDLISTS [IF]
+1 CONSTANT FORTH-WORDLIST
+
+\ (S: -- wid )
+: GET-CURRENT _ctx ctx.words _ctx ctx.lists - /CELL / 1+ ;
+
+\ (S: wid -- )
+: SET-CURRENT
+	1- DUP 0 WORDLISTS WITHIN 0= -257 AND THROW
+	CELLS _ctx ctx.lists + _ctx ctx.active !
+;
+
+FORTH-WORDLIST SET-CURRENT
+
+\ (S: -- wid )
+: WORDLIST
+	_ctx ctx.lists DUP WORDLISTS CELLS + SWAP
+	BEGIN
+	  DUP @ 0= IF
+	    NIP _ctx ctx.lists - /CELL / 1+
+	    EXIT
+	  THEN
+	  CELL+ 2DUP U>
+	WHILST
+	2DROP -257 THROW
+;
+
+\ (S: -- )
+: FORTH FORTH-WORDLIST _ctx ctx.order ! ;
+
+\ (S: -- widn ... wid1 n )
+: GET-ORDER
+	_ctx ctx.order DUP		\ S: p p
+	_ctx ctx.norder @ CELLS +	\ S: p p"
+	2>R				\ S: 		R: p p'
+	BEGIN
+	  2R@ U<
+	WHILE
+	  R> CELL- DUP >R @		\ S: ... w	R: p p"
+	REPEAT
+	2R> 2DROP _ctx ctx.norder @	\ S: wn..w1 n
+;
+
+\ (S: wid1 ... widn n -- )
+: SET-ORDER
+	DUP 0< IF
+	  \ System default word lists.
+	  DROP FORTH-WORDLIST 1
+	THEN
+	\ Too many word lists?
+	DUP 0 WORDLISTS 1+ WITHIN 0= -49 AND THROW
+	DUP _ctx ctx.norder !		\ S: wn..w1 n
+	CELLS _ctx ctx.order TUCK + 	\ S: wn..w1 p p"
+	>R >R				\ S: wn..w1 	R: p" p
+	BEGIN
+	  2R@ U>			\ S: wn.. p b	R: p" p
+	WHILE
+	  R> DUP CELL+ >R !		\ S: wn.. 	R: p" p'
+	REPEAT
+	2R> 2DROP
+;
+
+\ (S: caddr u wid -- 0 | xt -1 | xt 1 )
+: SEARCH-WORDLIST
+	FIND-NAME-IN DUP IF
+	  DUP immediate? IF	\ S: xt
+	    1			\ S: xt 1
+	  ELSE
+	    -1			\ S: xt -1
+	  THEN
+	THEN
+;
+
+\ (S: --)
+: ONLY -1 SET-ORDER ;
+: PREVIOUS GET-ORDER NIP 1- SET-ORDER ;
+: ALSO GET-ORDER OVER SWAP 1+ SET-ORDER ;
+: DEFINITIONS GET-ORDER OVER SET-CURRENT SET-ORDER ;
+: ORDER GET-ORDER DUP BEGIN ?DUP WHILE 1- WORDS PREVIOUS REPEAT SET-ORDER ;
+[THEN]
 
 MARKER rm_user_words

@@ -52,7 +52,7 @@ static const char *p4_exceptions[] = {
 	"invalid memory address",
 	"division by zero",
 	"result out of range",
-	"argument type mismatch",
+	"invalid argument / type mismatch",
 	"undefined word",
 	"interpreting a compile-only word",
 	"invalid FORGET",
@@ -934,7 +934,6 @@ p4Allot(P4_Ctx *ctx, P4_Int n)
 		return NULL;
 	}
 	void *start = ctx->here;
-	MEMSET(start, BYTE_ME, n);
 	(*ctx->active)->ndata += n;
 	ctx->here += n;
 	return start;
@@ -954,7 +953,7 @@ p4WordCreate(P4_Ctx *ctx, const char *name, size_t length, P4_Code code)
 	word->name.length = length;
 
 	/* Make sure new word starts with aligned data. */
-	ctx->here = (P4_Char *) P4_CELL_ALIGN((P4_Uint) ctx->here);
+	ctx->here = (P4_Char *) P4_CELL_ALIGN(ctx->here);
 	word->data = (P4_Cell *) ctx->here;
 	word->code = code;
 
@@ -971,19 +970,17 @@ error0:
 void
 p4WordAppend(P4_Ctx *ctx, P4_Cell data)
 {
-	(void) p4Allot(ctx, P4_ALIGN_BY((P4_Uint) ctx->here));
-	P4_Cell *here = p4Allot(ctx, sizeof (data));
-	*here = data;
+	(void) p4Allot(ctx, P4_ALIGN_BY(ctx->here));
+	*(P4_Cell *)p4Allot(ctx, sizeof (data)) = data;
 }
 
 P4_Word *
 p4FindNameIn(P4_Ctx *ctx, P4_Char *caddr, P4_Size length, unsigned wid)
 {
-	P4_Word *word;
 	if (wid < 1 || P4_WORDLISTS < wid) {
 		LONGJMP(ctx->longjmp, P4_THROW_EINVAL);
 	}
-	for (word = ctx->lists[wid-1]; word != NULL; word = word->prev) {
+	for (P4_Word *word = ctx->lists[wid-1]; word != NULL; word = word->prev) {
 		if (!P4_WORD_IS_HIDDEN(word)
 		&& word->name.length > 0 && word->name.length == length
 		&& strncasecmp((char *)word->name.string, caddr, length) == 0) {
