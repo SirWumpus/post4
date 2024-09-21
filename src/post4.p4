@@ -2,6 +2,9 @@
 
 \ Post4 Copyright 2007, 2024 by Anthony Howe.  All rights reserved.
 
+\ Interresting - make TYPE the primative.
+: EMIT dsp@ 1 TYPE DROP ; $10 _pp!
+
 \ ( -- ⊥ )
 : BYE 0 bye-code ;
 
@@ -1075,18 +1078,6 @@ DEFER fsp!
 	UNTIL THEN
 	DROP
 ; IMMEDIATE
-
-\ ... TYPE ...
-\
-\ (S: caddr u -- )
-\
-: TYPE
-	BEGIN DUP 0> WHILE	\  S: caddr u
-	  1- SWAP		\  S: u' caddr
-	  DUP C@ EMIT		\  S: u' caddr
-	  CHAR+ SWAP		\  S: caddr' u'
-	REPEAT 2DROP		\  S: --
-;
 
 \ ... SPACES ...
 \
@@ -2613,9 +2604,6 @@ CREATE _nada
 
 \ (S: <spaces>name -- )
 : SEE ' _seext ;
-
-\ Interresting - make TYPE the primative.
-\ : EMIT dsp@ 1 TYPE DROP ; $10 _pp!
 
 \ Using locals
 \ : EMITS {: n char -- :} n 0 ?do char emit loop ;

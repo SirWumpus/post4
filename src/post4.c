@@ -1463,7 +1463,7 @@ p4Repl(P4_Ctx *ctx, int thrown)
 		P4_WORD(">IN",		&&_input_offset,0, 0x01),
 		P4_WORD("ACCEPT",	&&_accept,	0, 0x21),
 		P4_WORD("DUMP",		&&_dump,	0, 0x20),
-		P4_WORD("EMIT",		&&_emit,	0, 0x10),
+		P4_WORD("TYPE",		&&_type,	0, 0x20),
 		P4_WORD("epoch-seconds", &&_epoch_seconds, 0, 0x01),	// p4
 		P4_WORD("FIND-NAME-IN",	&&_find_name_in, 0, 0x31),
 		P4_WORD("FIND-NAME",	&&_find_name,	0, 0x21),
@@ -2349,9 +2349,10 @@ _key_ready:	(void) fflush(stdout);
 		P4_PUSH(ctx->ds, (P4_Uint) P4_BOOL(ctx->unkey != EOF));
 		NEXT;
 
-		// ( c -- )
-_emit:		w = P4_POP(ctx->ds);
-		(void) fputc(w.n, stdout);
+		// ( caddr u -- )
+_type:		x = P4_POP(ctx->ds);
+		w = P4_POP(ctx->ds);
+		(void) fwrite(w.s, sizeof (*w.s), x.z, stdout);
 		NEXT;
 
 		// ( char bool -- c-addr u )
