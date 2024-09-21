@@ -631,12 +631,12 @@ AC_DEFUN(SNERT_OPTION_ENABLE_DEBUG,[
 
 	AC_ARG_ENABLE(debug,[AS_HELP_STRING([--enable-debug],[enable compiler debug option])])
 	AS_IF([test ${enable_debug:-no} = 'yes'],[
-		CFLAGS="-g -O0${CFLAGS:+ $CFLAGS}"
+		DBG="-g -O0"
 	],[
 		AC_DEFINE(NDEBUG,[1],[Disable debug code])
-		CFLAGS="-Os${CFLAGS:+ $CFLAGS}"
 		enable_debug='no'
 	])
+	AC_SUBST(DBG)
 ])
 
 AC_DEFUN(SNERT_OPTION_ENABLE_64BIT,[
