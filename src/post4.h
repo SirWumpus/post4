@@ -424,6 +424,8 @@ typedef enum {
 } P4_State;
 
 struct p4_ctx {
+	P4_Char *	end;		/* End of data space memory. */
+	P4_Char *	here;		/* Next unused data space. */
 	P4_Stack	ds;		/* Data stack */
 	P4_Stack	rs;		/* Return stack */
 #ifdef HAVE_MATH_H
@@ -437,9 +439,6 @@ struct p4_ctx {
 	P4_Uint		radix;		/* Input/Output radix */
 	P4_Int		argc;
 	char **		argv;
-	P4_Char *	here;		/* Next unused data space. */
-	P4_Char *	end;		/* End of data space memory. */
-	P4_Char	*	mem;		/* Fixed, do not resize. */
 	P4_Int		unkey;		/* KEY and KEY? */
 	P4_Input *	input;
 	P4_Block *	block;

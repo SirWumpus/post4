@@ -31,7 +31,7 @@ x/8gx ctx->words->data
 end
 
 define showwords
-  set var $p = ctx->words
+  set var $p = *ctx->active
   while $p != 0
     printf "%#lx %s\n", $p, $p->name.string
     set var $p = $p->prev

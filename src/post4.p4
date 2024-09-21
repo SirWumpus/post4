@@ -1803,6 +1803,8 @@ VARIABLE _str_buf_curr
 \	puts			\ write name
 \
 BEGIN-STRUCTURE p4_ctx
+	FIELD: ctx.end		\ see UNUSED
+	FIELD: ctx.here		\ see HERE
 	p4_stack +FIELD ctx.ds	\ see _ds
 	p4_stack +FIELD ctx.rs	\ see _rs
 [DEFINED] _fs [IF]
@@ -1816,9 +1818,6 @@ BEGIN-STRUCTURE p4_ctx
 	FIELD: ctx.radix	\ see BASE
 	FIELD: ctx.argc
 	FIELD: ctx.argv
-	FIELD: ctx.here		\ see HERE
-	FIELD: ctx.end		\ see UNUSED
-	FIELD: ctx.mem		\ data space
 	FIELD: ctx.unkey	\ KEY and KEY?
 	FIELD: ctx.input	\ pointer
 	FIELD: ctx.block	\ pointer

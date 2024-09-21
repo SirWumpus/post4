@@ -1044,17 +1044,11 @@ p4Free(P4_Ctx *ctx)
 		for (int i = 0; i < P4_WORDLISTS; i++) {
 			p4FreeWords(ctx->lists[i]);
 		}
-#if defined(HAVE_MATH_H)
-		free(ctx->fs.base - P4_GUARD_CELLS/2);
-#endif
-		free(ctx->ds.base - P4_GUARD_CELLS/2);
-		free(ctx->rs.base - P4_GUARD_CELLS/2);
 		if (ctx->block_fd != NULL) {
 			(void) fclose(ctx->block_fd);
 		}
 		p4FreeInput(ctx->input);
 		free(ctx->block);
-		free(ctx->mem);
 		free(ctx);
 	}
 }
@@ -1068,19 +1062,17 @@ p4ResetInput(P4_Ctx *ctx, FILE *fp)
 	ctx->input->blk = 0;
 }
 
-static int
-p4CreateStack(P4_Stack *stk, int size)
+static void
+p4AllocStack(P4_Ctx *ctx, P4_Stack *stk, int size)
 {
-	if ((stk->base = calloc(size + P4_GUARD_CELLS, sizeof (*stk->base))) == NULL) {
-		return -1;
-	}
+	stk->base = (P4_Cell *) ctx->here;
+	ctx->here += (size + P4_GUARD_CELLS) * sizeof (*stk->base);
 	/* Adjust base for underflow guard. */
 	stk->base += P4_GUARD_CELLS/2;
 	stk->base[size].u = P4_SENTINEL;
 	stk->base[-1].u = P4_SENTINEL;
 	stk->size = size;
 	P4_PRESET(stk);
-	return 0;
 }
 
 static P4_Input *
@@ -1103,9 +1095,17 @@ p4Create(P4_Options *opts)
 {
 	P4_Ctx *ctx;
 
-	if ((ctx = calloc(1, sizeof (*ctx))) == NULL) {
+	/* GH-5 Clear initial memory space to placate Valgrind. */
+	if ((ctx = calloc(opts->mem_size, 1024)) == NULL) {
 		goto error0;
 	}
+	ctx->end = (P4_Char *)ctx + opts->mem_size * 1024;
+	/* GH-5 Setting memory to something other than zero can
+	 * help debug possible memory use before initialising.
+	 */
+	MEMSET(ctx+1, BYTE_ME, opts->mem_size * 1024);
+	ctx->here = (P4_Char*)(ctx+1);
+
 	ctx->radix = 10;
 	ctx->unkey = EOF;
 	ctx->argc = opts->argc;
@@ -1113,35 +1113,18 @@ p4Create(P4_Options *opts)
 	ctx->state = P4_STATE_INTERPRET;
 	ctx->trace = opts->trace;
 
+	p4AllocStack(ctx, &ctx->ds, opts->ds_size);
+	p4AllocStack(ctx, &ctx->rs, opts->rs_size);
+#ifdef HAVE_MATH_H
+	p4AllocStack(ctx, &ctx->fs, opts->fs_size);
+	ctx->precision = 6;
+#endif
 	if ((ctx->input = p4CreateInput()) == NULL) {
 		goto error0;
 	}
 	p4ResetInput(ctx, stdin);
 
-	/* GH-5 Clear initial memory space to placate Valgrind. */
-	if ((ctx->mem = calloc(1, opts->mem_size * 1024)) == NULL) {
-		goto error0;
-	}
-	/* GH-5 Setting memory to something other than zero can
-	 * help debug possible memory use before initialising.
-	 */
-	MEMSET(ctx->mem, BYTE_ME, opts->mem_size * 1024);
-	ctx->end = ctx->mem + opts->mem_size * 1024;
-	ctx->here = ctx->mem;
-
 	if ((ctx->block = calloc(1, sizeof (*ctx->block))) == NULL) {
-		goto error0;
-	}
-#ifdef HAVE_MATH_H
-	ctx->precision = 6;
-	if (p4CreateStack(&ctx->fs, opts->fs_size)) {
-		goto error0;
-	}
-#endif
-	if (p4CreateStack(&ctx->rs, opts->rs_size)) {
-		goto error0;
-	}
-	if (p4CreateStack(&ctx->ds, opts->ds_size)) {
 		goto error0;
 	}
 	if (opts->block_file != NULL					/* Block file name? */
