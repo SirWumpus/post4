@@ -2,11 +2,11 @@
 
 \ Post4 Copyright 2007, 2024 by Anthony Howe.  All rights reserved.
 
-\ Interresting - make TYPE the primative.
-: EMIT dsp@ 1 TYPE DROP ; $10 _pp!
-
 \ ( -- ⊥ )
 : BYE 0 bye-code ;
+
+\ (S: char u -- )
+: EMIT dsp@ 1 TYPE DROP ; $10 _pp!
 
 \ ( -- )
 : .S 'd' EMIT 's' EMIT '\r' EMIT '\n' EMIT _ds DROP _stack_dump ;
@@ -24,6 +24,25 @@
 \
 : PARSE 0 _parse ;
 : parse-escape 1 _parse ; $12 _pp!
+
+\ (S: addr u -- addr' )
+: _offset CELLS + ;
+: _coffset CHARS + ;
+
+\ (S: -- addr )
+\ See p4_ctx below.
+: _end _ctx 0 _offset @ ; $01 _pp!
+: HERE _ctx 1 _offset @ ; $01 _pp!
+: STATE _ctx 2 _offset ; $01 _pp!
+: catch_frame _ctx 3 _offset ; $01 _pp!
+: trace _ctx 4 _offset ; $01 _pp!
+: BASE _ctx 6 _offset ; $01 _pp!
+
+\ ( -- u )
+: UNUSED _end HERE - ; $01 _pp!
+
+\ (S: -- argv argc )
+: args _ctx 8 _offset @ _ctx _offset @ ; $02 _pp!
 
 \ (S: u -- addr )
 : reserve DUP ALLOT HERE SWAP - ; $11 _pp!
@@ -256,8 +275,14 @@ END-STRUCTURE
 \ ( -- x )(R: x -- x)
 : R@ R> R> DUP >R SWAP >R ; $1101 _pp!
 
+\ (S" -- u )
+: DEPTH _ds DROP NIP ;
+
+\ (S: xn ... x1 n -- )
+: dropn CELLS dsp@ SWAP - CELL- dsp! ;
+
 \ ( i*x -- )
-: dropall _ds DROP DROP CELL- dsp! ;
+: dropall DEPTH dropn ;
 
 \ ... CHAR+ ...
 \
@@ -526,12 +551,6 @@ MAX-U MAX-N 2CONSTANT MAX-D
 \ (S: -- )
 \
 : CR '\r' EMIT '\n' EMIT ;
-
-\ ... DEPTH ...
-\
-\  ( -- u )
-\
-: DEPTH _ds DROP NIP ;
 
 \ ... SPACE ...
 \
@@ -1796,19 +1815,19 @@ VARIABLE _str_buf_curr
 BEGIN-STRUCTURE p4_ctx
 	FIELD: ctx.end		\ see UNUSED
 	FIELD: ctx.here		\ see HERE
+	FIELD: ctx.state	\ see STATE
+	FIELD: ctx.frame  	\ see CATCH and THROW
+	FIELD: ctx.trace	\ see _trace
+	FIELD: ctx.level	\ see p4
+	FIELD: ctx.radix	\ see BASE
+	FIELD: ctx.argc		\ see args
+	FIELD: ctx.argv
 	p4_stack +FIELD ctx.ds	\ see _ds
 	p4_stack +FIELD ctx.rs	\ see _rs
 [DEFINED] _fs [IF]
 	p4_stack +FIELD ctx.fs	\ see _fs
 	FIELD: ctx.precision	\ see PRECISION and SET-PRECISION
 [THEN]
-	FIELD: ctx.frame  	\ see CATCH and THROW
-	FIELD: ctx.trace	\ see _trace
-	FIELD: ctx.level	\ see p4
-	FIELD: ctx.state	\ see STATE
-	FIELD: ctx.radix	\ see BASE
-	FIELD: ctx.argc
-	FIELD: ctx.argv
 	FIELD: ctx.unkey	\ KEY and KEY?
 	FIELD: ctx.input	\ pointer
 	FIELD: ctx.block	\ pointer

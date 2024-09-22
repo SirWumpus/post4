@@ -1328,7 +1328,6 @@ p4Repl(P4_Ctx *ctx, int thrown)
 		P4_WORD("_branch",	&&_branch,	P4_BIT_COMPILE, 0x01000000),	// p4
 		P4_WORD("_branchz",	&&_branchz,	P4_BIT_COMPILE, 0x01000010),	// p4
 		P4_WORD("_call",	&&_call,	P4_BIT_COMPILE, 0x01000100),	// p4
-		P4_WORD("catch_frame",	&&_frame,	0, 0x01),	// p4
 		P4_WORD("_ds",		&&_ds,		0, 0x03),	// p4
 		P4_WORD("dsp@",		&&_dsp_get,	0, 0x01),	// p4
 		P4_WORD("dsp!",		&&_dsp_put,	0, 0x10),	// p4
@@ -1354,17 +1353,13 @@ p4Repl(P4_Ctx *ctx, int thrown)
 		P4_WORD("EXIT",		&&_exit,	P4_BIT_COMPILE, 0x1000),
 		P4_WORD("IMMEDIATE",	&&_immediate,	0, 0x00),
 		P4_WORD("MARKER",	&&_marker,	0, 0x00),
-		P4_WORD("STATE",	&&_state,	0, 0x01),
-		P4_WORD("trace",	&&_trace,	0, 0x01),	// p4
 
 		/* Data Space - Alignment */
 		P4_WORD("CELLS",	&&_cells,	0, 0x11),
 		P4_WORD("CHARS",	&&_chars,	0, 0x11),
 		P4_WORD("ALIGN",	&&_align,	0, 0x00),
 		P4_WORD("ALLOT",	&&_allot,	0, 0x10),
-		P4_WORD("HERE", 	&&_here_addr,	0, 0x01),
 		P4_WORD(">here",	&&_here_offset,	0, 0x01),	// p4
-		P4_WORD("UNUSED",	&&_unused,	0, 0x01),
 
 		/* Data Space - Access */
 		P4_WORD("_ctx",		&&_ctx,		0, 0x01),	// p4
@@ -1380,7 +1375,6 @@ p4Repl(P4_Ctx *ctx, int thrown)
 		P4_WORD("R>",		&&_from_rs,	0, 0x1001),	// allow interpret
 		P4_WORD("ROLL",		&&_roll,	0, 0x10),
 		P4_WORD("SWAP",		&&_swap,	0, 0x22),
-		P4_WORD("BASE",		&&_base,	0, 0x01),
 
 		/* Dynamic Memory */
 		P4_WORD("ALLOCATE",	&&_allocate,	0, 0x12),
@@ -1412,7 +1406,6 @@ p4Repl(P4_Ctx *ctx, int thrown)
 
 		/* Tools*/
 		P4_WORD("alias",	&&_alias,	0, 0x10),	// p4
-		P4_WORD("args",		&&_args,	0, 0x02),	// p4
 		P4_WORD("bye-code",	&&_bye_code,	0, 0x10),	// p4
 		P4_WORD("env",		&&_env,		0, 0x22),	// p4
 
@@ -1918,11 +1911,6 @@ _align:		if (p4Allot(ctx, P4_ALIGN_BY((P4_Uint) ctx->here)) == NULL) {
 		/*
 		 * Context variables
 		 */
-		// ( -- argv argc )
-_args:		P4_PUSH(ctx->ds, (P4_Cell *) ctx->argv);
-		P4_PUSH(ctx->ds, (P4_Int) ctx->argc);
-		NEXT;
-
 		// ( key k -- value v )
 _env:		P4_DROP(ctx->ds, 1);		// Ignore k, S" NUL terminates.
 		w = P4_TOP(ctx->ds);
@@ -1931,25 +1919,9 @@ _env:		P4_DROP(ctx->ds, 1);		// Ignore k, S" NUL terminates.
 		P4_PUSH(ctx->ds, (P4_Int)(x.s == NULL ? -1 : strlen(x.s)));
 		NEXT;
 
-		// ( -- addr )
-_frame:		P4_PUSH(ctx->ds, (P4_Cell *) &ctx->frame);
-		NEXT;
-
-		// ( -- addr )
-_trace:		P4_PUSH(ctx->ds, (P4_Cell *) &ctx->trace);
-		NEXT;
-
-		// ( -- addr )
-_state:		P4_PUSH(ctx->ds, (P4_Cell *) &ctx->state);
-		NEXT;
-
 		/*
 		 * Numeric formatting
 		 */
-		// ( -- addr )
-_base:		P4_PUSH(ctx->ds, (P4_Cell *) &ctx->radix);
-		NEXT;
-
 		// ( -- u )
 _pad_size:	P4_PUSH(ctx->ds, (P4_Uint) P4_PAD_SIZE);
 		NEXT;
@@ -2000,14 +1972,6 @@ _move:		w = P4_POP(ctx->ds);
 
 		// ( -- u )
 _here_offset:	P4_PUSH(ctx->ds, (P4_Size)(ctx->here - (P4_Char *) (*ctx->active)->data));
-		NEXT;
-
-		// ( -- addr )
-_here_addr:	P4_PUSH(ctx->ds, ctx->here);
-		NEXT;
-
-		// ( -- u )
-_unused:	P4_PUSH(ctx->ds, ctx->end - ctx->here);
 		NEXT;
 
 		/*

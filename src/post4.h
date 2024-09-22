@@ -419,26 +419,26 @@ typedef struct {
 
 
 typedef enum {
-	P4_STATE_INTERPRET,
 	P4_STATE_COMPILE = (-1),	/* Match Forth value for TRUE. */
+	P4_STATE_INTERPRET,
 } P4_State;
 
 struct p4_ctx {
 	P4_Char *	end;		/* End of data space memory. */
 	P4_Char *	here;		/* Next unused data space. */
+	P4_Int		state;
+	P4_Int		frame;		/* See CATCH and THROW. */
+	P4_Int          trace;          /* Word trace for debugging. */
+	P4_Int		level;		/* Tracing depth. */
+	P4_Uint		radix;		/* Input/Output radix */
+	P4_Int		argc;
+	char **		argv;
 	P4_Stack	ds;		/* Data stack */
 	P4_Stack	rs;		/* Return stack */
 #ifdef HAVE_MATH_H
 	P4_Stack	fs;		/* Float stack */
 	P4_Int		precision;
 #endif
-	P4_Int		frame;		/* See CATCH and THROW. */
-	P4_Int          trace;          /* Word trace for debugging. */
-	P4_Int		level;		/* Tracing depth. */
-	P4_Int		state;
-	P4_Uint		radix;		/* Input/Output radix */
-	P4_Int		argc;
-	char **		argv;
 	P4_Int		unkey;		/* KEY and KEY? */
 	P4_Input *	input;
 	P4_Block *	block;
