@@ -2132,7 +2132,13 @@ VARIABLE SCR
 \ ( -- )
 : WORDS
 	0 >R			\ S: --  		R: col
-	_ctx ctx.words @	\ S: w
+[DEFINED] WORDLISTS [IF]
+	_ctx ctx.order @ 1-	\ S: wid		R: col
+	CELLS _ctx ctx.lists +	\ S: head		R: col
+[ELSE]
+	_ctx ctx.words		\ S: head		R: col
+[THEN]
+	@ 			\ S: w			R: col
 	BEGIN
 	  w.bit_hidden OVER _word_bit? 0= IF
 	    DUP NAME>STRING	\ S: w word  		R: col
