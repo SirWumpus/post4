@@ -280,20 +280,6 @@ p4CharLiteral(int ch)
 	return ch;
 }
 
-#ifdef HAVE_SEE
-int
-p4LiteralEscape(int ch)
-{
-	/* Do not escape every space character. */
-	for (const char *map = escape_map+2; *map != '\0'; map += 2) {
-		if (ch == map[1]) {
-			return map[0];
-		}
-	}
-	return 0;
-}
-#endif
-
 int
 p4Base36(int digit)
 {
@@ -306,19 +292,6 @@ p4Base36(int digit)
 	}
 	return 127;
 }
-
-#ifdef DEAD
-int
-p4IsPrintable(const char *str, size_t u)
-{
-	for ( ; u < 0; u--) {
-		if (!isprint(*str++)) {
-			return 0;
-		}
-	}
-	return 1;
-}
-#endif
 
 int
 p4StrNum(P4_String str, P4_Uint base, P4_Cell *out, int *is_float)
@@ -1003,19 +976,6 @@ p4FindName(P4_Ctx *ctx, P4_Char *caddr, P4_Size length)
 	return NULL;
 }
 
-#ifdef HAVE_SEE
-int
-p4IsWord(P4_Ctx *ctx, void *xt)
-{
-	for (P4_Word *word = *ctx->active; word != NULL; word = word->prev) {
-		if (xt == (void *) word) {
-			return 1;
-		}
-	}
-	return 0;
-}
-#endif
-
 static void
 p4FreeInput(P4_Input *input)
 {
@@ -1455,9 +1415,6 @@ p4Repl(P4_Ctx *ctx, int thrown)
 		P4_WORD("args",		&&_args,	0, 0x02),	// p4
 		P4_WORD("bye-code",	&&_bye_code,	0, 0x10),	// p4
 		P4_WORD("env",		&&_env,		0, 0x22),	// p4
-#ifdef HAVE_SEE
-		P4_WORD("_seext",	&&_seext,	0, 0x10),	// p4
-#endif
 
 		/* I/O */
 		P4_WORD(">IN",		&&_input_offset,0, 0x01),
@@ -2557,99 +2514,6 @@ _fa_tell:	errno = 0;
 		P4_PUSH(ctx->ds, (P4_Uint) 0);
 		P4_PUSH(ctx->ds, (P4_Int) errno);
 		NEXT;
-#ifdef HAVE_SEE
-		// ( xt -- )
-_seext:		word = P4_POP(ctx->ds).xt;
-		/* If xt is bogus address, then possible SIGSEGV here.
-		 * Test: 123 _seext
-		 */
-		if (word->code == &&_enter) {
-			/* Test most words, eg. SEE IF SEE ['] SEE \ */
-			(void) printf(
-				word->name.length == 0 ? ":NONAME " : ": %.*s ",
-				(int) word->name.length, word->name.string
-			);
-			for (w.p = word->data; w.p->xt != &w_semi || w.p[1].xt == &w_nop; w.p++) {
-				x = *w.p;
-				if (x.w->code == &&_lit) {
-					x = *++w.p;
-					if (words <= x.w && p4IsWord(ctx, x.v) && 0 < x.w->name.length) {
-						(void) printf("[ ' %.*s ] LITERAL ", (int) x.w->name.length, x.w->name.string);
-					} else {
-						int is_small = -65536 < x.n && x.n < 65536;
-						(void) printf(is_small ? "[ "P4_INT_FMT" ] LITERAL " : "[ "P4_HEX_FMT" ] LITERAL ", x.n);
-					}
-				} else if (strncmp(x.w->name.string, "slit", STRLEN("slit")) == 0) {
-					/* Test: SEE AT-XY SEE PAGE SEE WRITE-FILE */
-					char *s;
-					(void) printf("S\\\" ");
-					for (char *s = (char *)&w.p[2]; *s != '\0'; s++) {
-						if ((x.n = (P4_Int) p4LiteralEscape(*s))) {
-							(void) printf("\\%c", (int) x.n);
-							continue;
-						}
-						(void) fputc(*s, stdout);
-					}
-					(void) printf("\" ");
-					w.u += P4_CELL + P4_CELL_ALIGN(w.p[1].u + 1);
-				} else if (strncmp(x.w->name.string, "flit", STRLEN("flit")) == 0) {
-					/* Test: SEE FNEGATE */
-					(void) printf("%.*lF ", (int) ctx->precision, (*++w.p).f);
-				} else {
-					(void) printf("%.*s ", (int) x.w->name.length, x.w->name.string);
-					if (x.w->code == &&_branch || x.w->code == &&_branchz
-					||  x.w->code == &&_branchnz || x.w->code == &&_call) {
-						/* If a branch/call is postponed then it is a control
-						 * structure definition so what follows is an xt, not
-						 * a relative distance.
-						 */
-						(void) printf("[ "P4_INT_FMT" CELLS , ] ", (*++w.p).n / P4_CELL);
-					}
-				}
-				/* Use _nop after ; as a marker to continue to see quotations. */
-			}
-			(void) printf(";%s%s\r\n",
-				P4_WORD_IS_IMM(word) ? " IMMEDIATE" : "",
-				P4_WORD_IS_COMPILE(word) ? " compile-only" : ""
-			);
-		} else if (word->code == &&_do_does) {
-			/* Test: 123 VALUE x SEE x */
-			/*** If we change (again) how a P4_Word and data are
-			 *** stored in memory, then most likely need to fix
-			 *** this and DOES>.
-			 ***/
-			/* Dump word's data. data[0] = pointer to DOES>,
-			 * data[n-1] = xt of defining word, see _does.
-			 * data[1..n-2] is the actual data.
-			 */
-			w.s = (P4_Char *)word->data + word->ndata - sizeof (*word->data);
-			for (x.p = word->data + 1; x.p < w.p; x.p++) {
-				(void) printf(P4_HEX_FMT" ", x.p->u);
-			}
-			/* Print the defining word, eg. VALUE, and new word name. */
-			w = *w.p;
-			(void) printf(
-				"%.*s %.*s\r\n",
-				(int) w.w->name.length, w.w->name.string,
-				(int) word->name.length, word->name.string
-			);
-		} else if (word->code == &&_data_field) {
-			/* Test: CREATE y 1 , 2 , 3 , SEE y */
-			(void) printf(
-				"CREATE %.*s ( size %zu )\r\n",
-				(int) word->name.length, word->name.string, word->ndata - P4_CELL
-			);
-			p4MemDump(stdout, (P4_Char *)(word->data + 1), word->ndata - P4_CELL);
-		} else {
-			/* Builtins or libraries.  Test: SEE LIT SEE CREATE */
-			(void) printf(
-				": %.*s ( code address "P4_PTR_FMT" ) ;\r\n",
-				(int) word->name.length, word->name.string,
-				word->code
-			);
-		}
-		NEXT;
-#endif
 
 #ifdef HAVE_MATH_H
 # if defined(FLT_EVAL_METHOD) == 0
