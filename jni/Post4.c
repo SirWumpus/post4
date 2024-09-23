@@ -830,42 +830,27 @@ error0:
 }
 
 static P4_Hook jHooks[] = {
-	{ "jSetLocalCapacity", jSetLocalCapacity },
-	{ "jDeleteLocalRef", jDeleteLocalRef },
-	{ "jFindClass", jFindClass },
+	P4_HOOK("jSetLocalCapacity", jSetLocalCapacity),
+	P4_HOOK("jDeleteLocalRef", jDeleteLocalRef),
+	P4_HOOK("jFindClass", jFindClass),
 #ifdef HMM
-	{ "jObjectClass", jObjectClass },
-	{ "jMethodID", jMethodID },
-	{ "jFieldID", jFieldID },
+	P4_HOOK("jObjectClass", jObjectClass),
+	P4_HOOK("jMethodID", jMethodID),
+	P4_HOOK("jFieldID", jFieldID),
 #endif
-	{ "jPushLocalFrame", jPushLocalFrame },
-	{ "jPopLocalFrame", jPopLocalFrame },
-	{ "jStringByteLength", jStringByteLength },
-	{ "jUnboxString", jUnboxString },
-	{ "jArrayLength", jArrayLength },
-	{ "jUnboxArray", jUnboxArray },
-	{ "jBoxString", jBoxString },
-	{ "jBoxArray", jBoxArray },
-	{ "jSetField", jSetField },
-	{ "jField", jField },
-	{ "jCall", jCall },
-	{ NULL, NULL }
+	P4_HOOK("jPushLocalFrame", jPushLocalFrame),
+	P4_HOOK("jPopLocalFrame", jPopLocalFrame),
+	P4_HOOK("jStringByteLength", jStringByteLength),
+	P4_HOOK("jUnboxString", jUnboxString),
+	P4_HOOK("jArrayLength", jArrayLength),
+	P4_HOOK("jUnboxArray", jUnboxArray),
+	P4_HOOK("jBoxString", jBoxString),
+	P4_HOOK("jBoxArray", jBoxArray),
+	P4_HOOK("jSetField", jSetField),
+	P4_HOOK("jField", jField),
+	P4_HOOK("jCall", jCall),
+	{ 0, NULL, NULL }
 };
-
-static int
-post4HookInit(P4_Ctx *ctx)
-{
-	int rc;
-	P4_Hook *h;
-
-	for (h = jHooks; h->name != NULL; h++) {
-		if ((rc = p4HookAdd(ctx, h->name, h->func)) != P4_THROW_OK) {
-			errx(EXIT_FAILURE, "hook %s fail %d", h->name, rc);
-		}
-	}
-
-	return 0;
-}
 #endif
 
 JNIEXPORT jlong JNICALL
@@ -929,9 +914,7 @@ Java_post4_jni_Post4_p4Create(JNIEnv *env, jobject self, jobject opts)
 		(*env)->Throw(env, (*env)->FindClass(env, "java/lang/OutOfMemory"));
 	}
 
-#ifdef HAVE_HOOKS
-	(void) post4HookInit(ctx);
-#endif
+	p4HookInit(ctx, jHooks);
 
 	// https://stackoverflow.com/questions/1632367/passing-pointers-between-c-and-java-through-jni
 	return (jlong) ctx;

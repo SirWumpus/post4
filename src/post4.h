@@ -107,6 +107,10 @@ extern "C" {
 #define ASSERT_LINE_BUFFERING		1
 #endif
 
+#ifdef WITH_JAVA
+#define HAVE_HOOKS			1
+#endif
+
 #ifdef HAVE_HOOKS
 #define HOOK_SHELL			1
 #endif
@@ -456,7 +460,8 @@ struct p4_ctx {
 };
 
 typedef struct {
-	char *name;
+	size_t length;
+	const char *name;
 	void (*func)(P4_Ctx *);
 } P4_Hook;
 
@@ -637,11 +642,14 @@ extern void sig_init(void);
 extern void sig_fini(void);
 
 #ifdef HAVE_HOOKS
-extern int p4HookInit(P4_Ctx *ctx);
-extern int p4HookAdd(P4_Ctx *ctx, const char *name, void (*func)(P4_Ctx *ctx));
+extern P4_Hook p4_hooks[];
+extern P4_Word *p4_hook_call;
+extern void p4HookInit(P4_Ctx *ctx, P4_Hook *hooks);
+extern P4_Word *p4HookAdd(P4_Ctx *ctx, P4_Hook *hook);
+# define P4_HOOK(name, func)	{ STRLEN(name), name, func }
 #else
-# define p4HookInit(c)		(0)
-# define p4HookAdd(c, n, f)	(0)
+# define p4HookAdd(ctx, hook)		(NULL)
+# define p4HookInit(ctx, hooks)
 #endif
 
 /***********************************************************************
@@ -723,6 +731,9 @@ extern P4_String p4Parse(P4_Input *input, int delim, int escape);
 extern P4_String p4ParseName(P4_Input *input);
 
 extern P4_Word *p4FindName(P4_Ctx *ctx, P4_Char *caddr, P4_Size length);
+
+extern P4_Word *p4WordCreate(P4_Ctx *ctx, const char *name, size_t length, P4_Code code);
+extern void p4WordAppend(P4_Ctx *ctx, P4_Cell data);
 
 /***********************************************************************
  *** END

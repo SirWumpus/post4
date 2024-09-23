@@ -11,6 +11,7 @@
  ***********************************************************************/
 
 static P4_Word *p4_builtin_words;
+P4_Word *p4_hook_call;
 
 static int is_tty;
 #ifdef HAVE_TCGETATTR
@@ -1254,7 +1255,6 @@ p4Repl(P4_Ctx *ctx, int thrown)
 		P4_WORD("_branchnz",	&&_branchnz,	0, 0x01000010),
 #define w_branchnz	words[7]
 #ifdef HAVE_HOOKS
-		P4_WORD("_hook_add",	&&_hook_add,	0, 0x10),	// p4
 		P4_WORD("_hook_call",	&&_hook_call,	0, 0x00),	// p4
 #endif
 #ifdef HAVE_MATH_H
@@ -1436,6 +1436,8 @@ p4Repl(P4_Ctx *ctx, int thrown)
 		}
 		p4_builtin_words = word->prev;
 		*ctx->active = p4_builtin_words;
+		p4_hook_call = p4FindName(ctx, "_hook_call", STRLEN("_hook_call"));
+		p4HookInit(ctx, p4_hooks);
 	}
 
 #define NEXT		goto _next
@@ -1663,13 +1665,6 @@ _branchnz:	w = *ip;
 		NEXT;
 
 #ifdef HAVE_HOOKS
-		// ( func `<spaces>name` -- )
-_hook_add:	str = p4ParseName(ctx->input);
-		(void) p4WordCreate(ctx, str.string, str.length, &&_hook_call);
-		w = P4_POP(ctx->ds);
-		p4WordAppend(ctx, w);
-		NEXT;
-
 		// ( i*x -- j*y )
 _hook_call:	x = w.w->data[0];
 		(*(void (*)(P4_Ctx *)) x.p)(ctx);
@@ -2775,19 +2770,22 @@ int
 p4EvalString(P4_Ctx *ctx, const P4_Char *str, size_t len)
 {
 	int rc;
+	P4_Char *buffer;
 	P4_Input *input;
 
 	/* Do not save STATE, see A.6.1.2250 STATE. */
 	P4_INPUT_PUSH(ctx->input);
 	input = ctx->input;
+	/* buffer is allocated, don't loose the pointer */
+	buffer = input->buffer;
 	input->fp = (FILE *) -1;
 	input->buffer = (P4_Char *) str;
 	input->length = len;
 	input->offset = 0;
 	input->blk = 0;
 	rc = p4Repl(ctx, P4_THROW_OK);
+	input->buffer = buffer;
 	P4_INPUT_POP(ctx->input);
-
 	return rc;
 }
 
@@ -2959,7 +2957,6 @@ main(int argc, char **argv)
 		return EXIT_FAILURE;
 	}
 	(void) atexit(cleanup);
-	(void) p4HookInit(ctx_main);
 
 	optind = 1;
 	while ((ch = getopt(argc, argv, flags)) != -1) {

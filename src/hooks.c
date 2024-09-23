@@ -79,44 +79,36 @@ p4TimeDate(P4_Ctx *ctx)
 }
 # endif
 
-static P4_Hook p4_hooks[] = {
+P4_Hook p4_hooks[] = {
 # ifdef HOOK_SHELL
-	{ "SH", p4System },
-	{ "SHELL", p4SystemString },
+	P4_HOOK("SH", p4System),
+	P4_HOOK("SHELL", p4SystemString),
 # endif
 # ifdef HOOK_PRIMATIVES
-	{ "MOVE", p4Move },
-	{ "TIME&DATE", p4STimeDate },
+	P4_HOOK("MOVE", p4Move),
+	P4_HOOK("TIME&DATE", p4STimeDate),
 # endif
-	{ NULL, NULL }
+	{ 0, NULL, NULL }
 };
 
-int
-p4HookAdd(P4_Ctx *ctx, const char *name, void (*func)(P4_Ctx *))
+P4_Word *
+p4HookAdd(P4_Ctx *ctx, P4_Hook *hook)
 {
-	size_t len;
-	char buf[P4_INPUT_SIZE];
-
-	len = snprintf(buf, sizeof (buf), P4_PTR_FMT " _hook_add %s", func, name);
-	if (len < sizeof (buf)) {
-		return p4EvalString(ctx, buf, len);
+	P4_Word *word;
+	if ((word = p4WordCreate(ctx, hook->name, hook->length, p4_hook_call->code)) != NULL) {
+		p4WordAppend(ctx, (P4_Cell)(void *)hook->func);
 	}
-	return P4_THROW_NAME_TOO_LONG;
+	return word;
 }
 
-int
-p4HookInit(P4_Ctx *ctx)
+void
+p4HookInit(P4_Ctx *ctx, P4_Hook *hooks)
 {
-	int rc;
-	P4_Hook *h;
-
-	for (h = p4_hooks; h->name != NULL; h++) {
-		if ((rc = p4HookAdd(ctx, h->name, h->func)) != P4_THROW_OK) {
-			errx(EXIT_FAILURE, "hook %s fail %d", h->name, rc);
+	for (P4_Hook *h = hooks; h->name != NULL; h++) {
+		if (p4HookAdd(ctx, h) == NULL) {
+			errx(EXIT_FAILURE, "hook %s fail %d", h->name, P4_THROW_GENERIC);
 		}
 	}
-
-	return 0;
 }
 
 #endif /* HAVE_HOOKS */
