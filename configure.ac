@@ -191,6 +191,7 @@ AS_ECHO("Generating files...")
 AS_ECHO()
 AC_OUTPUT()
 SNERT_SUMMARY
+AC_MSG_RESULT([  DBG............: $DBG])
 AC_MSG_RESULT([  JAVA_HOME......: $JAVA_HOME])
 AC_MSG_RESULT([  JNI_CFLAGS.....: $JNI_CFLAGS])
 AC_MSG_RESULT([  JFLAGS.........: $JFLAGS])
