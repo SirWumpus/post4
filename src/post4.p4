@@ -2715,4 +2715,29 @@ FORTH-WORDLIST SET-CURRENT
 : ORDER GET-ORDER DUP BEGIN ?DUP WHILE 1- WORDS PREVIOUS REPEAT SET-ORDER ;
 [THEN]
 
+: free_word ( w -- )
+	?DUP IF
+	  DUP w.name str.string @ FREE DROP
+	  FREE DROP
+	THEN
+;
+
+: rm_marker ( xt -- )
+	\ Rewind HERE, does not free ALLOCATE data.
+	DUP w.data @ _ctx ctx.here !	\ S: xt
+	\ List head now points to word before marker.
+	w.prev @ DUP			\ S: stop stop
+	_ctx ctx.words DUP		\ S: stop stop head head
+	@ >R ! R>			\ S: stop word
+	\ Delete words from head to marker inclusive.
+	BEGIN
+	  2DUP <>			\ S: stop word
+	WHILE
+	  DUP w.prev @ SWAP free_word	\ S: stop word'
+	REPEAT
+	2DROP
+;
+
+: MARKER ( <spaces>name -- ) >IN @ CREATE >IN ! ' , DOES> @ rm_marker ;
+
 MARKER rm_user_words

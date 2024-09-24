@@ -1352,7 +1352,6 @@ p4Repl(P4_Ctx *ctx, int thrown)
 		P4_WORD("EXECUTE",	&&_execute,	0, 0x10),
 		P4_WORD("EXIT",		&&_exit,	P4_BIT_COMPILE, 0x1000),
 		P4_WORD("IMMEDIATE",	&&_immediate,	0, 0x00),
-		P4_WORD("MARKER",	&&_marker,	0, 0x00),
 
 		/* Data Space - Alignment */
 		P4_WORD("CELLS",	&&_cells,	0, 0x11),
@@ -1783,21 +1782,6 @@ _immediate:	P4_WORD_SET_IMM(*ctx->active);
 		// ( u -- )
 _pp_put:	w = P4_POP(ctx->ds);
 		(*ctx->active)->poppush = w.u;
-		NEXT;
-
-_marker:	str = p4ParseName(ctx->input);
-		(void) p4WordCreate(ctx, str.string, str.length, &&_rm_marker);
-		NEXT;
-
-_rm_marker:	x.w = w.xt;
-		for (word = *ctx->active; word != x.w; word = w.w) {
-			w.w = word->prev;
-			p4WordFree(word);
-		}
-		*ctx->active = word->prev;
-		/* Rewind HERE, does not free ALLOCATE data. */
-		ctx->here = (P4_Char *) word->data;
-		p4WordFree(word);
 		NEXT;
 
 		// ( i*x caddr u -- j*x )
