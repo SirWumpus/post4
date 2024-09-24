@@ -1356,7 +1356,6 @@ p4Repl(P4_Ctx *ctx, int thrown)
 		/* Data Space - Alignment */
 		P4_WORD("CELLS",	&&_cells,	0, 0x11),
 		P4_WORD("CHARS",	&&_chars,	0, 0x11),
-		P4_WORD("ALIGN",	&&_align,	0, 0x00),
 		P4_WORD("ALLOT",	&&_allot,	0, 0x10),
 		P4_WORD(">here",	&&_here_offset,	0, 0x01),	// p4
 
@@ -1879,12 +1878,6 @@ _alias:		w = P4_POP(ctx->ds);
 		word->bits = w.w->bits;
 		word->data = w.w->data;
 		word->ndata = w.w->ndata;
-		NEXT;
-
-		// ( -- )
-_align:		if (p4Allot(ctx, P4_ALIGN_BY((P4_Uint) ctx->here)) == NULL) {
-			THROW(P4_THROW_ALLOCATE);
-		}
 		NEXT;
 
 		/*

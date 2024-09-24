@@ -47,6 +47,17 @@
 \ (S: u -- addr )
 : reserve DUP ALLOT HERE SWAP - ; $11 _pp!
 
+\ (S: n1 -- n2 )
+: NEGATE INVERT 1 + ; $11 _pp!
+
+\ (addr + (pow2-1)) & -pow2
+\
+\ (S: addr -- aaddr )
+: ALIGNED 1 CELLS 1 - + 1 CELLS NEGATE AND ; $11 _pp!
+
+\ ( -- )
+: ALIGN HERE ALIGNED HERE - CHARS ALLOT ;
+
 \ ( x -- )
 : , ALIGN 1 CELLS reserve ! ; $10 _pp!
 
@@ -93,20 +104,12 @@
 0 CONSTANT FALSE $01 _pp!
 FALSE INVERT CONSTANT TRUE $01 _pp!
 
-\ ... /CHAR ...
-\ ... /CELL ...
-\
 \ (S: -- n )
-\
 1 CHARS CONSTANT /CHAR $01 _pp!
 1 CELLS CONSTANT /CELL $01 _pp!
 
-\ ... BL ...
-\
 \ (S: -- ' ' )
-\
 '\s' CONSTANT BL $01 _pp!
-
 
 \ ( -- u )
 -3 2 / -2 - 0= CONSTANT floored $01 _pp!
@@ -122,17 +125,6 @@ _ds CONSTANT stack-cells $01 _pp! DROP DROP
 
 \ (S: nu -- flag )
 : 0<> 0= 0= ;
-
-\ (S: n1 -- n2 )
-: NEGATE INVERT 1 + ; $11 _pp!
-
-\ ... ALIGNED ...
-\
-\ (S: addr -- aaddr )
-\
-\ 	(addr + (pow2-1)) & -pow2
-\
-: ALIGNED /CELL 1 - + /CELL NEGATE AND ; $11 _pp!
 
 \ (S: x1 x2 -- x2 )
 : NIP SWAP DROP ; $21 _pp!
