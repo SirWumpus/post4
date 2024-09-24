@@ -1279,6 +1279,11 @@ System clock time in seconds from the epoch.
 Empty the data stack.
 
 - - -
+#### dropn
+( i*x n*x n -- i*x )  
+Drop the top `n` data stack elements.
+
+- - -
 #### dsp!
 ( `aaddr` -- )  
 Store `aaddr` into the data stack pointer.
@@ -1399,6 +1404,16 @@ Store `aaddr` into the return stack pointer.
 #### rsp@
 ( -- `aaddr` )  
 Fetch the return stack pointer.
+
+- - -
+#### sh
+( `<spaces>rest_of_line` -- )  
+Pass a command line to the shell.  See `HAVE_HOOKS` and `HAVE_SHELL`.
+
+- - -
+#### shell
+( `caddr` `u` -- `n` )  
+Pass a NUL terminate string `caddr` `u` to the shell and return the exit status code `n`.  See `HAVE_HOOKS` and `HAVE_SHELL`.
 
 - - -
 #### spin
