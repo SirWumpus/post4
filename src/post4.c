@@ -1591,7 +1591,7 @@ _forth:				exec[0].w = word;
 		NEXT;
 
 _ok:		if (P4_INTERACTIVE(ctx)) {
-			(void) printf("ok ");
+			(void) printf(ANSI_CYAN"ok "ANSI_NORMAL);
 			(void) fflush(stdout);
 		}
 		NEXT;
