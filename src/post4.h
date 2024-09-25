@@ -302,7 +302,7 @@ typedef P4_Word *P4_Xt;
 
 typedef struct {
 	P4_Size		length;		/* Length of string less NUL byte. */
-	P4_Char *	string;		/* Pointer to content plus terminating NUL byte. */
+	char *		string;		/* Pointer to content plus terminating NUL byte. */
 } P4_String;
 
 typedef struct {
@@ -310,7 +310,7 @@ typedef struct {
 	P4_Uint		blk;		/* If 0< then buffer is a block and this is the block number. */
 	P4_Size		length;		/* Length of input in buffer. */
 	P4_Size		offset;		/* Offset of unconsumed input. */
-	P4_Char *	buffer;
+	char *		buffer;
 } P4_Input;
 
 #define P4_INPUT_IS_BLK(input)	((input)->fp == (FILE *) -1 && (input)->blk > 0)
@@ -339,9 +339,9 @@ union p4_cell {
 	P4_Time		t;
 	P4_Float	f;
 	P4_Cell	*	p;
-	P4_Char *	s;
-	P4_Word *	w;
+	char *		s;
 	void *		v;
+	P4_Word *	w;
 	P4_Xt		xt;
 	const P4_Word *	cw;
 };
@@ -635,7 +635,7 @@ extern int p4EvalFile(P4_Ctx *ctx, const char *filepath);
  * @return
  *	Zero on success, otherwise an exception code other than BYE.
  */
-extern int p4EvalString(P4_Ctx *ctx, const P4_Char *string, size_t length);
+extern int p4EvalString(P4_Ctx *ctx, const char *string, size_t length);
 
 extern JMP_BUF sig_break_glass;
 extern void sig_init(void);
@@ -691,7 +691,7 @@ extern int p4StrNum(P4_String str, P4_Uint base, P4_Cell *out, int *is_float);
 
 extern P4_Int p4GetC(P4_Input *source);
 
-extern P4_Int p4Accept(P4_Input *source, P4_Char *buffer, P4_Size size);
+extern P4_Int p4Accept(P4_Input *source, char *buffer, size_t size);
 
 /**
  * Handles parsing of "ccc<char>".
@@ -730,7 +730,7 @@ extern P4_String p4Parse(P4_Input *input, int delim, int escape);
  */
 extern P4_String p4ParseName(P4_Input *input);
 
-extern P4_Word *p4FindName(P4_Ctx *ctx, P4_Char *caddr, P4_Size length);
+extern P4_Word *p4FindName(P4_Ctx *ctx, const char *caddr, P4_Size length);
 
 extern P4_Word *p4WordCreate(P4_Ctx *ctx, const char *name, size_t length, P4_Code code);
 extern void p4WordAppend(P4_Ctx *ctx, P4_Cell data);

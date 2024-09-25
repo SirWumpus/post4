@@ -362,11 +362,11 @@ p4StrNum(P4_String str, P4_Uint base, P4_Cell *out, int *is_float)
 					raise(SIGFPE);
 				}
 				*is_float = 1;
-				unsigned char *stop;
+				char *stop;
 				/* Note that 1E 0E 123E not accepted.  strtod expects a
 				 * number after 'E'.  0.0, .0, 0E0, 123., 123.456 work fine.
 				 */
-				out->f = strtod(str.string, (char **)&stop);
+				out->f = strtod(str.string, &stop);
 				return stop - str.string;
 			}
 #endif
@@ -497,9 +497,9 @@ p4StackDump(FILE *fp, P4_Cell *base, P4_Uint length)
 }
 
 void
-p4MemDump(FILE *fp, P4_Char *addr, P4_Size length)
+p4MemDump(FILE *fp, const char *addr, P4_Size length)
 {
-	P4_Char *s;
+	const char *s;
 	unsigned count;
 
 	s = addr;
@@ -802,11 +802,11 @@ p4SetNonBlocking(int fd, int flag)
 
 	flags = (unsigned long) fcntl(fd, F_GETFL);
 
-	if (flag)
+	if (flag) {
 		flags |= O_NONBLOCK;
-	else
+	} else {
 		flags &= ~O_NONBLOCK;
-
+	}
 	return fcntl(fd, F_SETFL, flags);
 }
 #endif
@@ -833,10 +833,10 @@ p4GetC(P4_Input *input)
 }
 
 P4_Int
-p4Accept(P4_Input *input, P4_Char *buf, P4_Size size)
+p4Accept(P4_Input *input, char *buf, P4_Size size)
 {
 	int ch;
-	P4_Char *ptr;
+	char *ptr;
 
 	if (input->fp == (FILE *) -1 || size-- <= 1) {
 		return EOF;
@@ -949,7 +949,7 @@ p4WordAppend(P4_Ctx *ctx, P4_Cell data)
 }
 
 P4_Word *
-p4FindNameIn(P4_Ctx *ctx, P4_Char *caddr, P4_Size length, unsigned wid)
+p4FindNameIn(P4_Ctx *ctx, const char *caddr, P4_Size length, unsigned wid)
 {
 	if (wid < 1 || P4_WORDLISTS < wid) {
 		LONGJMP(ctx->longjmp, P4_THROW_EINVAL);
@@ -957,7 +957,7 @@ p4FindNameIn(P4_Ctx *ctx, P4_Char *caddr, P4_Size length, unsigned wid)
 	for (P4_Word *word = ctx->lists[wid-1]; word != NULL; word = word->prev) {
 		if (!P4_WORD_IS_HIDDEN(word)
 		&& word->name.length > 0 && word->name.length == length
-		&& strncasecmp((char *)word->name.string, caddr, length) == 0) {
+		&& strncasecmp(word->name.string, (const char *)caddr, length) == 0) {
 			return word;
 		}
 	}
@@ -966,7 +966,7 @@ p4FindNameIn(P4_Ctx *ctx, P4_Char *caddr, P4_Size length, unsigned wid)
 }
 
 P4_Word *
-p4FindName(P4_Ctx *ctx, P4_Char *caddr, P4_Size length)
+p4FindName(P4_Ctx *ctx, const char *caddr, P4_Size length)
 {
 	for (unsigned i = 0; i < ctx->norder; i++) {
 		P4_Word *word = p4FindNameIn(ctx, caddr, length, ctx->order[i]);
@@ -1362,7 +1362,7 @@ p4Repl(P4_Ctx *ctx, int thrown)
 		/* Data Space - Access */
 		P4_WORD("_ctx",		&&_ctx,		0, 0x01),	// p4
 		P4_WORD("!",		&&_store,	0, 0x20),
-		P4_WORD(">R",		&&_to_rs,	0, 0x0110),	// allow interpret
+		P4_WORD(">R",		&&_to_rs,	0, 0x0110),
 		P4_WORD("@",		&&_fetch,	0, 0x11),
 		P4_WORD("C!",		&&_cstore,	0, 0x20),
 		P4_WORD("C@",		&&_cfetch,	0, 0x11),
@@ -1370,7 +1370,7 @@ p4Repl(P4_Ctx *ctx, int thrown)
 		P4_WORD("DUP",		&&_dup,		0, 0x12),
 		P4_WORD("MOVE",		&&_move,	0, 0x30),
 		P4_WORD("PICK",		&&_pick,	0, 0x11),
-		P4_WORD("R>",		&&_from_rs,	0, 0x1001),	// allow interpret
+		P4_WORD("R>",		&&_from_rs,	0, 0x1001),
 		P4_WORD("ROLL",		&&_roll,	0, 0x10),
 		P4_WORD("SWAP",		&&_swap,	0, 0x22),
 
@@ -1886,9 +1886,9 @@ _alias:		w = P4_POP(ctx->ds);
 		// ( key k -- value v )
 _env:		P4_DROP(ctx->ds, 1);		// Ignore k, S" NUL terminates.
 		w = P4_TOP(ctx->ds);
-		x.s = getenv(w.s);
+		x.s = getenv((const char *)w.s);
 		P4_TOP(ctx->ds) = x;
-		P4_PUSH(ctx->ds, (P4_Int)(x.s == NULL ? -1 : strlen(x.s)));
+		P4_PUSH(ctx->ds, (P4_Int)(x.s == NULL ? -1 : strlen((const char *)x.s)));
 		NEXT;
 
 		/*
@@ -2373,7 +2373,7 @@ _fa_open:	errno = 0;
 		x = P4_POP(ctx->ds);
 		P4_DROP(ctx->ds, 1);
 		w = P4_TOP(ctx->ds);
-		fp = fopen((const char *) w.s, fmodes[x.u]);
+		fp = fopen(w.s, fmodes[x.u]);
 		P4_TOP(ctx->ds).v = fp;
 		P4_PUSH(ctx->ds, (P4_Int) errno);
 		NEXT;
@@ -2503,12 +2503,12 @@ _rs_to_fs:	P4STACKISEMPTY(ctx, &ctx->rs, P4_THROW_RS_UNDER);
 	{
 		// ( caddr u -- F:f bool )
 		P4_Cell f;
-		unsigned char *stop;
+		char *stop;
 _to_float:	errno = 0;
 		w = P4_POP(ctx->ds);
 		x = P4_TOP(ctx->ds);
-		f.f = strtod(x.s, (char **)&stop);
-		P4_PUSH(ctx->ds, (P4_Uint) P4_BOOL(errno == 0 && stop - x.s == w.u));
+		f.f = strtod((const char *)x.s, &stop);
+		P4_PUSH(ctx->ds, (P4_Uint) P4_BOOL(errno == 0 && stop - (char *)x.s == w.u));
 		if (P4_TOP(ctx->ds).n == P4_TRUE) {
 			P4_TOP(ctx->P4_FLOAT_STACK).f = f.f;
 		}
@@ -2744,10 +2744,10 @@ p4EvalFile(P4_Ctx *ctx, const char *file)
 }
 
 int
-p4EvalString(P4_Ctx *ctx, const P4_Char *str, size_t len)
+p4EvalString(P4_Ctx *ctx, const char *str, size_t len)
 {
 	int rc;
-	P4_Char *buffer;
+	char *buffer;
 	P4_Input *input;
 
 	/* Do not save STATE, see A.6.1.2250 STATE. */
@@ -2756,7 +2756,7 @@ p4EvalString(P4_Ctx *ctx, const P4_Char *str, size_t len)
 	/* buffer is allocated, don't loose the pointer */
 	buffer = input->buffer;
 	input->fp = (FILE *) -1;
-	input->buffer = (P4_Char *) str;
+	input->buffer = (char *)str;
 	input->length = len;
 	input->offset = 0;
 	input->blk = 0;
