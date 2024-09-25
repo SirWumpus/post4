@@ -12,6 +12,7 @@
 
 static P4_Word *p4_builtin_words;
 P4_Word *p4_hook_call;
+P4_Word *p4_throw;
 
 static int is_tty;
 #ifdef HAVE_TCGETATTR
@@ -234,6 +235,8 @@ p4LoadFile(P4_Ctx *ctx, const char *file)
 			break;
 		}
 	}
+	/* Find THROW to aid with throwing exceptions from C to Forth. */
+	p4_throw = p4FindName(ctx, "THROW", STRLEN("THROW"));
 	free(p4path);
 error1:
 	if (rc != P4_THROW_OK && ctx->frame == 0) {
@@ -1434,13 +1437,14 @@ p4Repl(P4_Ctx *ctx, int thrown)
 		}
 		p4_builtin_words = word->prev;
 		*ctx->active = p4_builtin_words;
+		/* Find _hook_call and install any hooked words, eg. SH SHELL. */
 		p4_hook_call = p4FindName(ctx, "_hook_call", STRLEN("_hook_call"));
 		p4HookInit(ctx, p4_hooks);
 	}
 
 #define NEXT		goto _next
 #define THROWHARD(e)	{ rc = (e); goto _thrown; }
-#define THROW(e)	{ if ((word = p4FindName(ctx, "THROW", STRLEN("THROW"))) != NULL) { \
+#define THROW(e)	{ if (p4_throw != NULL) { word = p4_throw; \
 				P4_PUSH(ctx->ds, (P4_Int)(e)); goto _forth; } THROWHARD(e); }
 
 	static const P4_Word w_inter_loop = P4_WORD("_inter_loop", &&_inter_loop, P4_BIT_HIDDEN, 0x00);
