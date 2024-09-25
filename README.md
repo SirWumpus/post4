@@ -45,17 +45,18 @@ Post4 reads input from standard input and writes to standard output, which can b
 Post4 cell size is equivalent to C's `intptr_t`, which for most current systems are 64 bits.
 
 
-Glossary
---------
+Glossary of Words
+-----------------
 
-* [Standard Core Words](./doc/standard.md)
-* [Block File Words](./doc/block.md)
-* [Double-Cell Words](./doc/double.md)
-* [File Access Words](./doc/file.md)
-* [Floating-Point Words](./doc/float.md)
-* [Memory Words](./doc/memory.md)
-* [String Words](./doc/string.md)
-* [Tool Words](./doc/tools.md)
+* [Standard Core](./doc/standard.md)
+* [Block File](./doc/block.md)
+* [Double-Cell](./doc/double.md)
+* [File Access](./doc/file.md)
+* [Floating-Point](./doc/float.md)
+* [Memory](./doc/memory.md)
+* [Seach-Order](./doc/search.md)
+* [String](./doc/string.md)
+* [Tool](./doc/tools.md)
 * [THROW Codes](./doc/throw_codes.md)
 
 
@@ -160,9 +161,9 @@ Simple demonstration on how to access the command line arguments.
         $ post4 dumpargs.p4 hello world, tell us more!
 
 
-### ed.p4 - Block Editor
+### ed.p4
 
-There are actually three block editor word sets:
+Block Editor;  actually three block editor word sets:
 
 1. An `ed(1)` like block line editor using `LIST`, `PRINT`, and `CHANGE`.
 2. An interactive single line editor using `EDIT`; left & right cursor keys, tab toggles insert or replace mode, delete backspace, ESC quits.
@@ -175,7 +176,9 @@ NOTE: that `EDIT` and `ED` are hard coded with ANSI terminal escape sequences.
         ok ED
 
 
-### life.p4 - [Conway's Game of Life](http://en.wikipedia.org/wiki/Conway%27s_Game_of_Life)
+### life.p4
+
+[Conway's Game of Life](http://en.wikipedia.org/wiki/Conway%27s_Game_of_Life)
 
 **Rules**
 
@@ -200,7 +203,9 @@ repeatedly to create further generations.
         $ post4 life.p4
 
 
-### life1d.p4 - [One Dimensional Cellular Atomata](https://en.wikipedia.org/wiki/Cellular_automaton)
+### life1d.p4
+
+[One Dimensional Cellular Atomata](https://en.wikipedia.org/wiki/Cellular_automaton)
 
 This example demostrates five Wolfram rules 30, 90, 110, 184, and 104 using the same initial state.
 
