@@ -1072,18 +1072,28 @@ static void
 p4Trace(P4_Ctx *ctx, P4_Xt xt, P4_Cell *ip)
 {
 	if (ctx->trace) {
+#ifdef HAVE_MATH_H
 		(void) fprintf(
 			STDERR, "ds=%-2d fs=%-2d rs=%-2d %*s%s ",
 			(int)P4_LENGTH(ctx->ds), (int)P4_LENGTH(ctx->fs), (int)P4_LENGTH(ctx->rs),
 			2 * (int)ctx->level, "", 0 < xt->name.length ? (char *)xt->name.string : ":NONAME"
 		);
+#else
+		(void) fprintf(
+			STDERR, "ds=%-2d rs=%-2d %*s%s ",
+			(int)P4_LENGTH(ctx->ds), (int)P4_LENGTH(ctx->rs),
+			2 * (int)ctx->level, "", 0 < xt->name.length ? (char *)xt->name.string : ":NONAME"
+		);
+#endif
 		for (int i = P4_WD_LIT(xt); 0 < i--; ip++) {
 			int is_small = -65536 < ip->n && ip->n < 65536;
 			(void) fprintf(STDERR, is_small ? P4_INT_FMT" " : P4_HEX_FMT" ", ip->n);
 		}
 		if (xt->poppush & 0xF0F0F0) {
 			p4TraceStack(ctx, &ctx->ds, P4_DS_CAN_POP(xt), "\t(");
+#ifdef HAVE_MATH_H
 			p4TraceStack(ctx, &ctx->fs, P4_FS_CAN_POP(xt), "/");
+#endif
 			p4TraceStack(ctx, &ctx->rs, P4_RS_CAN_POP(xt), "/");
 			(void) fputc(')', STDERR);
 		}
