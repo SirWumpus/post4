@@ -300,61 +300,36 @@ p4Base36(int digit)
 int
 p4StrNum(P4_String str, P4_Uint base, P4_Cell *out, int *is_float)
 {
+	int offset = 0;
+	*is_float = 0;
+	if (str.length == 0) {
+		return -1;
+	}
+	if (str.string[0] == '\'') {
+		if (str.length == 3 && str.string[2] == '\'') {
+			out->u = str.string[1];
+			return 0;
+		}
+		if (str.length == 4 && str.string[1] == '\\' && str.string[3] == '\'') {
+			out->u = p4CharLiteral(str.string[2]);
+			return 0;
+		}
+	}
+	static char prefix[] = { '$', 16, '#', 10, '%', 2, 0 };
+	for (char *p = prefix; *p != 0; p += 2) {
+		if (*p == str.string[0]) {
+			base = p[1];
+			offset++;
+			break;
+		}
+	}
 	P4_Cell num;
 	int negate = 0;
-	int offset = 0;
-
-	out->n = 0;
-	*is_float = 0;
-
-	if (str.length == 0) {
-		return 0;
-	}
-
-	switch (str.string[0]) {
-	case '$':	/* $F9 hex */
-		base = 16;
+	if (str.string[offset] == '-') {
+		negate = 1;
 		offset++;
-		break;
-	case '#':	/* #99 decimal */
-		base = 10;
+	} else 	if (str.string[offset] == '+') {
 		offset++;
-		break;
-	case '%':	/* %1011 binary */
-		base = 2;
-		offset++;
-		break;
-	case '0':	/* 0377 octal or 0xFF hex */
-		if (2 < str.length && tolower(str.string[1]) == 'x') {
-			offset += 2;
-			base = 16;
-		} else if (1 < str.length && (isdigit(str.string[1]) || str.string[1] == '-')) {
-			offset++;
-			base = 8;
-		}
-		break;
-	case '\'':	/* 'c' and '\x' escaped characters */
-		if (str.length == 3 && str.string[2] == '\'') {
-			out->n = (P4_Int) str.string[1];
-			return str.length;
-		}
-		/* Extension C style backslash literals */
-		if (str.length == 4 && str.string[1] == '\\' && str.string[3] == '\'') {
-			out->n = (P4_Int) p4CharLiteral(str.string[2]);
-			return str.length;
-		}
-		/* Nothing parsed. */
-		return 0;
-	}
-
-	if (offset < str.length) {
-		switch (str.string[offset]) {
-		case '-':
-			negate = 1;
-			/*@fallthrough@*/
-		case '+':
-			offset++;
-		}
 	}
 	for (num.n = 0; offset < str.length; offset++) {
 		int digit = p4Base36(str.string[offset]);
@@ -362,27 +337,26 @@ p4StrNum(P4_String str, P4_Uint base, P4_Cell *out, int *is_float)
 #ifdef HAVE_MATH_H
 			if (str.string[offset] == '.' || toupper(str.string[offset]) == 'E') {
 				if (base != 10) {
-					raise(SIGFPE);
+					return -1;
 				}
-				*is_float = 1;
-				char *stop;
 				/* Note that 1E 0E 123E not accepted.  strtod expects a
 				 * number after 'E'.  0.0, .0, 0E0, 123., 123.456 work fine.
 				 */
+				char *stop;
+				*is_float = 1;
 				out->f = strtod(str.string, &stop);
-				return stop - str.string;
+				return 0;
 			}
 #endif
-			break;
+			return -1;
 		}
 		num.n = num.n * base + digit;
 	}
 	if (negate) {
 		num.n = -num.n;
 	}
-
 	out->n = num.n;
-	return offset;
+	return 0;
 }
 
 /***********************************************************************
@@ -1555,7 +1529,7 @@ _inter_loop:	while (ctx->input->offset < ctx->input->length) {
 			word = p4FindName(ctx, str.string, str.length);
 			if (word == NULL) {
 				int is_float;
-				if (p4StrNum(str, ctx->radix, &x, &is_float) != str.length) {
+				if (p4StrNum(str, ctx->radix, &x, &is_float)) {
 					/* Not a word, not a number. */
 					THROW(P4_THROW_UNDEFINED);
 				}

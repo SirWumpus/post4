@@ -24,8 +24,8 @@ T{ HI-2INT D2* -> MAX-2INT 1 S>D D- }T
 T{ LO-2INT D2* -> MIN-2INT }T
 
 cell-bits 64 = [IF]
-t{ 0x8000000000000000 0x91a2 D2* -> 0 0x12345 }t
-t{ 0x8000000000000000 0xffffffffffff76e6 D2* -> 0 0xfffffffffffeedcd }t
+t{ $8000000000000000 $91a2 D2* -> 0 $12345 }t
+t{ $8000000000000000 $ffffffffffff76e6 D2* -> 0 $fffffffffffeedcd }t
 [THEN]
 test_group_end
 
@@ -38,8 +38,8 @@ T{ -1 S>D D2/ -> -1 S>D }T
 T{ MIN-2INT D2/ -> LO-2INT }T
 
 cell-bits 64 = [IF]
-t{ 0 0x12345 D2/ -> 0x8000000000000000 0x91a2 }t
-t{ 0 0xffffffffffffedcd D2/ -> 0x8000000000000000 0xfffffffffffff6e6 }t
-t{ 0 0xffffffffffffedcd D2/ D2/ -> 0x4000000000000000 0xfffffffffffffb73 }t
+t{ 0 $12345 D2/ -> $8000000000000000 $91a2 }t
+t{ 0 $ffffffffffffedcd D2/ -> $8000000000000000 $fffffffffffff6e6 }t
+t{ 0 $ffffffffffffedcd D2/ D2/ -> $4000000000000000 $fffffffffffffb73 }t
 [THEN]
 test_group_end

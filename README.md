@@ -89,10 +89,10 @@ To leave Post4 either type the `EOF` terminal character, `BYE`, or `code BYE-COD
 
 The default numeric input/output base is decimal (base 10).  Setting variable `BASE` will change the default radix used for numeric I/O, which can be between between 2 and 36, eg. `16 BASE !` sets hexadecimal.  There are four shorthand words `BINARY`, `OCTAL`, `DECIMAL`, and `HEX` that set `BASE` to 2, 8, 10, or 16 repectively.
 
-Regardless of the current value of `BASE`, it is possible to input numbers in one of the four common bases without having to change the value of `BASE`.  Prefixing a number with `%`, `0` (zero), `#`, `$` or `0x` can set a binary, octal, decimal, or hex value; an optional minus sign given after the prefix to indicate a negative number.  For example:
+Regardless of the current value of `BASE`, it is possible to input numbers in one of the four common bases without having to change the value of `BASE`.  Prefixing a number with `%`, `#`, `$` can set a binary, decimal, or hex value; an optional minus sign given after the prefix to indicate a negative number.  For example:
 
-        %1111111  = #127  = 0177  = $7f  = 0x7f  = $000000000000007f
-        %-1111111 = #-127 = 0-177 = $-7f = 0x-7f = $ffffffffffffff81
+        %1111111  = #127  = $7f  = $000000000000007f
+        %-1111111 = #-127 = $-7f = $ffffffffffffff81
 
 When current `BASE` is ten (10) its possible to input floating point numbers (provided support is enabled) with a decimal point and/or scientific notation.  For example:
 

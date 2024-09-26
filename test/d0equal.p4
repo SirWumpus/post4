@@ -218,12 +218,12 @@ test_group_end
 .( 2ROT ) test_group
 \ :NONAME 2 1 2ROT ; CATCH -4 = assert
 T{ 100 99 2 1 4 3 6 5 2ROT -> 100 99 4 3 6 5 2 1 }T
-T{ MAX-D MIN-D 0xCAFE 0xBABE 2ROT -> MIN-D 0xCAFE 0xBABE MAX-D }T
+T{ MAX-D MIN-D $CAFE $BABE 2ROT -> MIN-D $CAFE $BABE MAX-D }T
 T{ 1 S>D 2 S>D 3 S>D 2ROT -> 2 S>D 3 S>D 1 S>D }T
 test_group_end
 
 .( 2CONSTANT ) test_group
-T{ 0xCAFE 0xBABE 2CONSTANT tv_pair tv_pair -> 0xCAFE 0xBABE }T
+T{ $CAFE $BABE 2CONSTANT tv_pair tv_pair -> $CAFE $BABE }T
 T{ 1 2 2CONSTANT tv_2c1 -> }T
 T{ tv_2c1 -> 1 2 }T
 T{ : tw_cd1 tv_2c1 ; -> }T
@@ -237,9 +237,9 @@ test_group_end
 
 .( 2VARIABLE 2! 2@ ) test_group
 t{ 2VARIABLE var_pair var_pair 2@ -> 0 0 }t
-t{ 0xCAFE 0xBABE var_pair 2! var_pair 2@ -> 0xCAFE 0xBABE }t
-t{ 0xDEAD 0xBEEF var_pair 2! -> }t
-t{ var_pair 2@ -> 0xDEAD 0xBEEF }t
+t{ $CAFE $BABE var_pair 2! var_pair 2@ -> $CAFE $BABE }t
+t{ $DEAD $BEEF var_pair 2! -> }t
+t{ var_pair 2@ -> $DEAD $BEEF }t
 T{ 2VARIABLE tv_2v1 -> }T
 T{ 0 S>D tv_2v1 2! -> }T
 T{ tv_2v1 2@ -> 0 S>D }T

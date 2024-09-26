@@ -100,12 +100,14 @@ t{ $-12eF -> -4847 }t
 t{ %10010110 -> 150 }t
 \ t{ %10010110. -> 150. }t
 t{ %-10010110 -> -150 }t
+[DEFINED] 0x [IF]
 \ Post4 extensions.
 t{ 0x12eF -> 4847 }t
 t{ 0x-12eF -> -4847 }t
 t{ 0377 -> 255 }t
 t{ 0-377 -> -255 }t
 t{ 0177777 -> 65535 }t
+[THEN]
 test_group_end
 
 .( + ) test_group
@@ -293,13 +295,13 @@ t{ 12 34 DEPTH >R 2DROP R> -> 2 }t
 test_group_end
 
 .( CONSTANT ) test_group
-t{ 0xCAFE CONSTANT java java -> 0xCAFE }t
+t{ $CAFE CONSTANT java java -> $CAFE }t
 test_group_end
 
 .( VARIABLE ! @ +! ) test_group
 t{ VARIABLE tw_var_0 tw_var_0 @ -> 0 }t
-t{ 0xCAFE tw_var_0 ! tw_var_0 @ -> 0xCAFE }t
-t{ 0xDEAD tw_var_0 ! tw_var_0 @ -> 0xDEAD }t
+t{ $CAFE tw_var_0 ! tw_var_0 @ -> $CAFE }t
+t{ $DEAD tw_var_0 ! tw_var_0 @ -> $DEAD }t
 t{ 0 tw_var_0 ! DEPTH -> 0 }t
 t{ 1 tw_var_0 +! DEPTH -> 0 }t
 t{ tw_var_0 @ -> 1 }t

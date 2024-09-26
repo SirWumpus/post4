@@ -16,44 +16,44 @@ T{ MAX-N MAX-N UM* -> 1 1 INVERT 2 RSHIFT }T
 T{ MAX-U MAX-U UM* -> 1 1 INVERT }T
 
 cell-bits 64 = [IF]
-T{ 0xdeadbeefdeadbeef 0xbeefdeadbeefdead UM*
--> 0x3a522ca1ca1e4983 0xa615999d16497cbb }T
+T{ $deadbeefdeadbeef $beefdeadbeefdead UM*
+-> $3a522ca1ca1e4983 $a615999d16497cbb }T
 [THEN]
 test_group_end
 
 .( M* ) test_group
 cell-bits 64 = [IF]
 \ +ve * +ve = +ve
-t{ 0x7fffffffffffffff 0x7fffffffffffffff M*
--> 0x0000000000000001 0x3fffffffffffffff }t
+t{ $7fffffffffffffff $7fffffffffffffff M*
+-> $0000000000000001 $3fffffffffffffff }t
 
 \ -ve * -ve = +ve
-t{ 0x8000000000000000 0x8000000000000000 M*
--> 0x0000000000000000 0x4000000000000000 }t
+t{ $8000000000000000 $8000000000000000 M*
+-> $0000000000000000 $4000000000000000 }t
 
 \ -ve * -ve = +ve
-t{ 0xffffffffffffffff 0xffffffffffffffff M*
--> 0x0000000000000001 0x0000000000000000 }t
+t{ $ffffffffffffffff $ffffffffffffffff M*
+-> $0000000000000001 $0000000000000000 }t
 
 \ -ve * -ve = +ve
-t{ 0xdeadbeefdeadbeef 0xbeefdeadbeefdead M*
--> 0x3a522ca1ca1e4983 0x0877fbff78abdf1f }t
+t{ $deadbeefdeadbeef $beefdeadbeefdead M*
+-> $3a522ca1ca1e4983 $0877fbff78abdf1f }t
 
 \ -ve * -ve = +ve
-t{ 0xdeadbeefcafebabe 0xbabecafebeefdead M*
--> 0x6ea0c1026f76f666 0x0903a85214a96506 }t
+t{ $deadbeefcafebabe $babecafebeefdead M*
+-> $6ea0c1026f76f666 $0903a85214a96506 }t
 
 \ -ve * +ve = -ve
-t{ 0xdeadbeefdeadbeef 0x7fffffffffffffff M*
--> 0xa152411021524111 0xef56df77ef56df77 }t
+t{ $deadbeefdeadbeef $7fffffffffffffff M*
+-> $a152411021524111 $ef56df77ef56df77 }t
 
 \ -ve * +ve = -ve
-t{ 0xdeadbeefcafebabe 0x7fffffffffffffff M*
--> 0x2152411035014542 0xef56df77e57f5d5f }t
+t{ $deadbeefcafebabe $7fffffffffffffff M*
+-> $2152411035014542 $ef56df77e57f5d5f }t
 
 \ -ve * +ve = -ve
-t{ 0xdeadbeefcafebabe 0x7ee3cafebeefdead M*
--> 0xe416c1026f76f666 0xef7bdd9e44bcc2d0 }t
+t{ $deadbeefcafebabe $7ee3cafebeefdead M*
+-> $e416c1026f76f666 $ef7bdd9e44bcc2d0 }t
 [THEN]
 
 T{  0  0 M* ->  0 S>D }T
