@@ -2778,7 +2778,7 @@ FORTH-WORDLIST SET-CURRENT
 	THEN
 ;
 
-: rm_marker ( xt -- )
+: _rm_marker ( xt -- )
 	\ Rewind HERE, does not free ALLOCATE data.
 	DUP w.data @ _ctx ctx.here !	\ S: xt
 	\ List head now points to word before marker.
@@ -2794,6 +2794,7 @@ FORTH-WORDLIST SET-CURRENT
 	2DROP
 ;
 
-: MARKER ( <spaces>name -- ) >IN @ CREATE >IN ! ' , DOES> @ rm_marker ;
+: MARKER ( <spaces>name -- ) >IN @ CREATE >IN ! ' , DOES> @ _rm_marker ;
+' _rm_marker hide
 
 MARKER rm_user_words
