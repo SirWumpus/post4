@@ -1230,8 +1230,6 @@ DEFER fsp!
 
 VARIABLE _>pic
 
-: _dumppic _pic /HOLD dump ;
-
 \ ( char -- )
 : HOLD _pic _>pic @ + C! 1 _>pic +! ;
 
@@ -2211,6 +2209,21 @@ VARIABLE SCR
 	R> POSTPONE LITERAL	\ C:
 ; IMMEDIATE compile-only
 
+\ (S: char -- bool )
+: isblank DUP '\s' = SWAP '\t' = OR ;
+: iscntrl DUP 0 '\s' WITHIN SWAP $7F = OR ;
+: isprint 32 127 WITHIN ;
+: isspace
+	FALSE
+	OVER '\f' = OR
+	OVER '\n' = OR
+	OVER '\r' = OR
+	OVER '\s' = OR
+	OVER '\t' = OR
+	OVER '\v' = OR
+	SWAP DROP
+;
+
 : stack_new ( u <spaces>name -- ) CREATE 1+ CELLS reserve DUP CELL+ SWAP ! ;
 : stack_tmp ( u -- stack ) 1+ CELLS ALLOCATE THROW DUP DUP CELL+ SWAP ! ;
 : stack_push ( n stack -- ) TUCK @ ! /CELL SWAP +! ;
@@ -2436,6 +2449,49 @@ _fs CONSTANT floating-stack DROP DROP
 
 \ (S: addr u -- )
 : .cells OVER + SWAP BEGIN 2DUP > WHILE DUP @ $#. CELL+ REPEAT 2DROP ; $20 _pp!
+
+\ (S: end beg -- )
+: _dump_chars
+	BEGIN 2DUP U> WHILE
+	  DUP C@ DUP isprint 0= IF
+	    DROP '.'
+	  THEN EMIT
+	  1 CHARS +
+	REPEAT 2DROP
+; $20 _pp!
+
+\ (S: end beg -- )
+: _dump_pad
+	16 CHARS + SWAP			\ S: e b'
+	BEGIN 2DUP U> WHILE
+	  S\" \s\s\s" TYPE
+	  1 CHARS +
+	REPEAT 2DROP
+; $20 _pp!
+
+\ (S: end beg -- )
+: _dump_row
+	DUP >R 16 CHARS +		\ S: e b"		R: b
+	2DUP U> IF NIP ELSE DROP THEN	\ S: e'			R: b
+	R> 2DUP 2>R			\ S: e' b		R: e' b
+	DUP $. BL EMIT
+	BEGIN 2DUP U> WHILE		\ S: e' b		R: e' b
+	  DUP C@ .			\ S: e' b		R: e' b
+	  1 CHARS +			\ S: e' b'		R: e' b
+	REPEAT 2DROP
+	2R@ _dump_pad 2R> BL EMIT _dump_chars CR
+; $20 _pp!
+
+\ (S: addr u -- )
+: DUMP
+	CHARS OVER + SWAP		\ S: a' a
+	BASE @ >R HEX
+	BEGIN 2DUP U> WHILE
+	  2DUP _dump_row
+	  16 CHARS +
+	REPEAT
+	2DROP R> BASE !
+; $20 _pp!
 
 \ (S: xt -- bool )
 : xt?

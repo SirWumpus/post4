@@ -473,48 +473,6 @@ p4StackDump(FILE *fp, P4_Cell *base, P4_Uint length)
 	}
 }
 
-void
-p4MemDump(FILE *fp, const char *addr, P4_Size length)
-{
-	const char *s;
-	unsigned count;
-
-	s = addr;
-	for (count = 0; count < length; addr++) {
-		if ((count & 0xF) == 0) {
-			/* Format with fixed width hex string, instead
-			 * of as pointer to maintain the dump layout.
-			 */
-			(void) fprintf(fp, P4_H0X_FMT"  ", (long)addr);
-			s = addr;
-		}
-		(void) fprintf(fp, "%.2x", (unsigned char) *addr);
-		if ((++count & 0x1) == 0) {
-			(void) fputc(' ', fp);
-		}
-		if ((count & 0xF) == 0) {
-			(void) fputc(' ', fp);
-			for ( ; s <= addr; s++) {
-				(void) fputc(isprint(*s) ? *s : '.', fp);
-			}
-			(void) fprintf(fp, crlf);
-		}
-	}
-	if ((count & 0xF) != 0) {
-		do {
-			(void) fprintf(fp, "  ");
-			if ((++count & 0x1) == 0) {
-				(void) fputc(' ', fp);
-			}
-		} while ((count & 0xF) != 0);
-		(void) fputc(' ', fp);
-		for ( ; s < addr; s++) {
-			(void) fputc(isprint(*s) ? *s : '.', fp);
-		}
-		(void) fprintf(fp, crlf);
-	}
-}
-
 /***********************************************************************
  *** Double Cell Math
  ***********************************************************************/
@@ -1387,7 +1345,6 @@ p4Repl(P4_Ctx *ctx, int thrown)
 		/* I/O */
 		P4_WORD(">IN",		&&_input_offset,0, 0x01),
 		P4_WORD("ACCEPT",	&&_accept,	0, 0x21),
-		P4_WORD("DUMP",		&&_dump,	0, 0x20),
 		P4_WORD("TYPE",		&&_type,	0, 0x20),
 		P4_WORD("epoch-seconds", &&_epoch_seconds, 0, 0x01),	// p4
 		P4_WORD("FIND-NAME-IN",	&&_find_name_in, 0, 0x31),
@@ -2300,12 +2257,6 @@ _stack_check:	p4StackGuards(ctx);
 _stack_dump:	x = P4_POP(ctx->ds);
 		w = P4_POP(ctx->ds);
 		p4StackDump(stdout, w.p, x.u);
-		NEXT;
-
-		// ( addr u -- )
-_dump:		x = P4_POP(ctx->ds);
-		w = P4_POP(ctx->ds);
-		p4MemDump(stdout, w.s, x.u);
 		NEXT;
 
 		FILE *fp;
