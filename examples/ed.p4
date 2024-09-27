@@ -32,9 +32,6 @@ block_width block_height * CONSTANT block_size
 	THEN
 ;
 
-\ Assert block file has at least one block.
-block_append
-
 ( row -- c- )
 : block_row block_width * SCR @ BLOCK + ;
 
@@ -355,7 +352,11 @@ MARKER rm_ed
 ;
 
 ( -- )
-: ED PAGE 'I' edit_mode ! BEGIN ed_screen ed_command AGAIN ;
+: ED
+	\ Assert block file has at least one block.
+	['] block_append CATCH ABORT" Try BLOCK-OPEN first." DROP
+	PAGE 'I' edit_mode ! BEGIN ed_screen ed_command AGAIN
+;
 
 .( Type ED to start editor.
 )

@@ -1408,6 +1408,7 @@ p4Repl(P4_Ctx *ctx, int thrown)
 	if (thrown) {
 		/* Signal thrown overrides context. */
 		rc = thrown;
+		THROW(rc);
 	}
 _thrown:
 	switch (rc) {
