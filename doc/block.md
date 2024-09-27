@@ -4,6 +4,30 @@ Post4 (Post-Forth)
 Copyright 2007, 2024 Anthony Howe.  All rights reserved.
 
 
+Block Files
+-----------
+
+Block files are an emulation of block devices, like floppy disks, hard disks, solid-state drives, and USB memory sticks; essentially any read-write mass storage device.  Post4 is a hosted Forth implementation so sits on top of an existing OS and takes advantage of the OS to interface with storage devices.  The Block word set is of historical interest and curio, modern Forth system will more likely use the File Access word set.
+
+A Block device, or file as implemented by Post4, consists of 1024 byte data (binary or text) blocks numbered from one (1).  The `blocks` word will show the current number of blocks in the file.  If a block number off the end of the file is accessed, the file will grow to encompass that block number; intervening blocks from the last block to the new EOF are filled with blanks.
+
+A block of text data is displayed as 16 lines of 64 byte rows per block, see `LIST` and the `ed.p4` block editor.  Most conventional text editors will have trouble trying to edit a text block file, especially if mixed with binary data.  On [SUS](https://pubs.opengroup.org/onlinepubs/9699919799.2018edition/) platforms it is possible to use `dd(1)` to convert a text block file to and from a sequential text file.
+
+To convert from a text block to a text file, where lines are at most of 64 bytes long, trailing whitespace truncated, and newline terminated:
+
+        $ dd cbs=64 conv=unblock if=some_file.blk  of=some_file.txt
+        $ vi some_file.txt
+
+To convert a text file back to a block file:
+
+        $ dd cbs=64 conv=block if=some_file.txt  of=some_file.blk
+        $ post4 -b some_file.blk
+        ok include /usr/local/lib/post4/ed.p4
+        ok ed
+
+Note that when editing a text file that will be converted back to a block format, lines must be kept to 64 bytes (or columns).  UTF8 multibyte characters will disrupt line lengths, since text editors think in terms of characters, not bytes, unless you restrict yourself to ASCII only.
+
+
 ### Block File Words
 
 #### BLK

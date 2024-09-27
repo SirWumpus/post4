@@ -196,7 +196,7 @@ Allocate a stack of `u` cells returning `stk`.  Use `FREE` to discard.
 - - -
 #### trace
 ( -- `aaddr` )  
-Return the address `aaddr` of the trace variable; set true for tracing, otherwise false to disable.
+Return the address `aaddr` of the trace variable; set true for tracing, otherwise false to disable.  See also option `-T`.
 
 - - -
 #### _bp
