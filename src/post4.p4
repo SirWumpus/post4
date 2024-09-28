@@ -2583,7 +2583,7 @@ _fs CONSTANT floating-stack DROP DROP
 
 \ (S: ip -- ip' )
 : _see_common
-	DUP @ NAME>STRING TYPE BL EMIT
+	DUP @ NAME>STRING TYPE SPACE
 ; $11 _pp!
 
 \ (S: ip -- ip' )
@@ -2598,7 +2598,7 @@ _fs CONSTANT floating-stack DROP DROP
 \ Test most words, eg. SEE IF SEE ['] SEE \ SEE LIT,
 : _see_enter
 	DUP NAME>STRING ?DUP IF
-	  S" : " TYPE TYPE BL EMIT
+	  S" : " TYPE TYPE SPACE
 	ELSE
 	  DROP S" :NONAME " TYPE
 	THEN
@@ -2632,7 +2632,7 @@ _fs CONSTANT floating-stack DROP DROP
 	DUP w.data @ CELL+ OVER w.ndata @ /CELL / 2 - .cells
 	\ data[0] = pointer to DOES>, data[n-1] = xt of defining word,
         \ see _does.  data[1..n-1] is the actual data.
-	DUP w.data @ OVER w.ndata @ + cell- @ NAME>STRING TYPE BL EMIT
+	DUP w.data @ OVER w.ndata @ + cell- @ NAME>STRING TYPE SPACE
 	NAME>STRING TYPE CR
 ; $10 _pp!
 
