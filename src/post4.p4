@@ -2474,12 +2474,13 @@ _fs CONSTANT floating-stack DROP DROP
 	DUP >R 16 CHARS +		\ S: e b"		R: b
 	2DUP U> IF NIP ELSE DROP THEN	\ S: e'			R: b
 	R> 2DUP 2>R			\ S: e' b		R: e' b
-	DUP $. BL EMIT
+	DUP $. SPACE
 	BEGIN 2DUP U> WHILE		\ S: e' b		R: e' b
-	  DUP C@ .			\ S: e' b		R: e' b
+	  DUP C@ S>D			\ S: e' b c 0		R: e' b
+	  <# BL HOLD # # #> TYPE 	\ S: e' b		R: e' b
 	  1 CHARS +			\ S: e' b'		R: e' b
 	REPEAT 2DROP
-	2R@ _dump_pad 2R> BL EMIT _dump_chars CR
+	2R@ _dump_pad 2R> SPACE _dump_chars CR
 ; $20 _pp!
 
 \ (S: addr u -- )
