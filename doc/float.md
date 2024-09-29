@@ -243,6 +243,11 @@ Set the number of significant digits currently used by `F.`, `FE.`, or `FS.` to 
 
 ### Post4 Specific Words
 
+- - -
+#### ds>fs
+(F: -- `f` ) (S: `f` -- )  
+Move top of the data stack to the float stack *without* format conversion.  `S>F` will convert formats.
+
 #### _fs
 ( -- `aaddr` `n` `s` )  
 Push the float stack base `aaddr` address, depth `n`, and size `s` (before executing `_fs`).  This stack is a fixed size and grows upward.  See `.fs` and `_stack_dump`.
@@ -261,6 +266,11 @@ Return `bool` as true if `f1` and `f2` are exactly equal (same internal represen
 #### floating-stack
 (  -- `u` ) constant  
 Size of the float stack.  Zero (0) if the float stack is combined with the data stack.  This is a deviation from `ENVIRONMENT?` queries.
+
+- - -
+#### fs>ds
+(F: `f` -- ) (S: -- `f` )  
+Move top of the float stack to the data stack *without* format conversion.  `F>S` will  convert formats.
 
 - - -
 #### fs>rs

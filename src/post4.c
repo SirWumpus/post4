@@ -1178,6 +1178,7 @@ int
 p4Repl(P4_Ctx *ctx, int thrown)
 {
 	int rc;
+	char *stop;
 	P4_Word *word;
 	P4_String str;
 	P4_Cell w, x, y, *ip;
@@ -2440,34 +2441,26 @@ _rs_to_fs:	P4STACKISEMPTY(ctx, &ctx->rs, P4_THROW_RS_UNDER);
 		P4_PUSH(ctx->P4_FLOAT_STACK, w);
 		P4STACKGUARDS(ctx);
 		NEXT;
-	{
+
 		// ( caddr u -- F:f bool )
-		P4_Cell f;
-		char *stop;
 _to_float:	errno = 0;
 		w = P4_POP(ctx->ds);
 		x = P4_TOP(ctx->ds);
-		f.f = strtod((const char *)x.s, &stop);
+		y.f = strtod((const char *)x.s, &stop);
 		P4_PUSH(ctx->ds, (P4_Uint) P4_BOOL(errno == 0 && stop - (char *)x.s == w.u));
 		if (P4_TOP(ctx->ds).n == P4_TRUE) {
-			P4_TOP(ctx->P4_FLOAT_STACK).f = f.f;
+			P4_PUSH(ctx->P4_FLOAT_STACK, y);
 		}
-	}
+		NEXT;
 
 		// (F: f -- )
-_f_dot:		if (ctx->radix != 10) {
-			THROW(P4_THROW_BAD_BASE);
-		}
-		P4STACKISEMPTY(ctx, &ctx->fs, P4_THROW_FS_UNDER);
+_f_dot:		P4STACKISEMPTY(ctx, &ctx->fs, P4_THROW_FS_UNDER);
 		w = P4_POP(ctx->P4_FLOAT_STACK);
 		(void) printf("%.*lF ", (int) ctx->precision, w.f);
 		NEXT;
 
 		// (F: f -- )
-_f_sdot:	if (ctx->radix != 10) {
-			THROW(P4_THROW_BAD_BASE);
-		}
-		P4STACKISEMPTY(ctx, &ctx->fs, P4_THROW_FS_UNDER);
+_f_sdot:	P4STACKISEMPTY(ctx, &ctx->fs, P4_THROW_FS_UNDER);
 		w = P4_POP(ctx->P4_FLOAT_STACK);
 		(void) printf("%.*lE ", (int) ctx->precision, w.f);
 		NEXT;

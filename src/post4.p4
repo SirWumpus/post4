@@ -2351,6 +2351,8 @@ _fs CONSTANT floating-stack DROP DROP
 
 : .fs S\" fs\r\n" TYPE _fs DROP _stack_dump ;
 
+\ (S: -- f )(F: f -- )
+\ Move f between stacks _without_ conversion; F>S and S>F convert formats.
 : fs>ds fs>rs R> ;
 : ds>fs >R rs>fs ;
 
