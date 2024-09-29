@@ -72,6 +72,22 @@ Post4 is written in ISO C11 using only one extension, `Labels As Values`, which 
         $ sudo make install
         $ post4
 
+If `gcc` is the default compiler, it is possible to override that to test building with a different C compiler suite, most likely [Clang](https://clang.llvm.org/) for example:
+
+        $ make CC=clang clean build
+
+Building for debug can be done in two ways.  The first enables debug options in Post4 amd JNI as needed:
+
+        $ ./configure --enable-debug
+        $ make clean build tests
+
+Alternative following an earlier configuration, possible to build a temporary debug build:
+
+        $ ./configure
+        $ cd src
+        $ make DBG='-g -O0' clean build
+
+The `DBG` macro can be used to override default `CFLAGS` to try different compiler optimisations.  In the case of `-O` the last one specified overrides the previous occurences.  By default Post4 builds with `-Os`, because `small is beautiful`.  If speed is more of concerning simply use `DBG='-O2'` or `DBG='-O3'`.
 
 Java Native Interface
 ---------------------
