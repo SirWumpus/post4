@@ -98,3 +98,8 @@ valgrind: post4$E
 	echo BYE | valgrind --leak-check=full ./post4$E
 	valgrind --leak-check=full --show-leak-kinds=all ./post4$E ../test/units.p4
 	valgrind --leak-check=full ./post4$E ../examples/life1d.p4
+
+strip:
+	${MAKE} DBG='-DNDEBUG' clean build
+	@strip -s post4$E
+	@ls -l post4*
