@@ -211,4 +211,58 @@ t{ 0 FFIELD: tv_field_d FIELD: tv_field_e FFIELD: tv_field_f CONSTANT tv_struct_
 t{ tv_struct_2 0 tv_field_d 0 tv_field_e 0 tv_field_f -> 2 FLOATS CELL+ 0 1 FLOATS 1 FLOATS CELL+ }t
 test_group_end
 
+\ Construct some floating point numbers based on IEEE 754.
+_exponent_mask	                  ds>fs FCONSTANT +inf
+_exponent_mask _sign_mask OR      ds>fs FCONSTANT -inf
+_exponent_mask	             1 OR ds>fs FCONSTANT +nan
+_exponent_mask _sign_mask OR 1 OR ds>fs FCONSTANT -nan
+
+2.718281828459 FCONSTANT e
+3.141592653589 FCONSTANT pi
+6.62607015e-34 FCONSTANT planck
+
+.( inf? ) test_group
+t{  123.45 inf? -> FALSE }t
+t{ -123.45 inf? -> FALSE }t
+t{ +nan    inf? -> FALSE }t
+t{ -nan    inf? -> FALSE }t
+t{ +inf    inf? -> TRUE }t
+t{ -inf    inf? -> TRUE }t
+test_group_end
+
+.( nan? ) test_group
+t{  123.45 nan? -> FALSE }t
+t{ -123.45 nan? -> FALSE }t
+t{ +inf    nan? -> FALSE }t
+t{ -inf    nan? -> FALSE }t
+t{ +nan    nan? -> TRUE }t
+t{ -nan    nan? -> TRUE }t
+test_group_end
+
+.( REPRESENT ) test_group
+6 SET-PRECISION
+: dumppad pad PRECISION dump ;
+
+t{ 0.1e PAD PRECISION REPRESENT S" 100000" PAD PRECISION COMPARE -> 0 FALSE TRUE 0 }t
+t{ 0.4e PAD PRECISION REPRESENT S" 400000" PAD PRECISION COMPARE -> 0 FALSE TRUE 0 }t
+t{ 0.6e PAD PRECISION REPRESENT S" 600000" PAD PRECISION COMPARE -> 0 FALSE TRUE 0 }t
+
+t{    0.0   PAD PRECISION REPRESENT S" 000000" PAD PRECISION COMPARE -> 0 FALSE TRUE 0 }t
+t{  123.45  PAD PRECISION REPRESENT S" 123450" PAD PRECISION COMPARE -> 3 FALSE TRUE 0 }t
+t{ -123.45  PAD PRECISION REPRESENT S" 123450" PAD PRECISION COMPARE -> 3  TRUE TRUE 0 }t
+t{  0.12345 PAD PRECISION REPRESENT S" 123450" PAD PRECISION COMPARE -> 0 FALSE TRUE 0 }t
+t{ -0.12345 PAD PRECISION REPRESENT S" 123450" PAD PRECISION COMPARE -> 0  TRUE TRUE 0 }t
+
+t{ e        PAD PRECISION REPRESENT S" 271828" PAD PRECISION COMPARE -> 1  FALSE TRUE 0 }t
+t{ pi       PAD PRECISION REPRESENT S" 314159" PAD PRECISION COMPARE -> 1  FALSE TRUE 0 }t
+t{ planck   PAD PRECISION REPRESENT S" 662607" PAD PRECISION COMPARE -> -33 FALSE TRUE 0 }t
+
+\ The exp and sign are undefined when the number is undefined.
+t{ +nan     PAD PRECISION REPRESENT -ROT 2DROP -> FALSE }t
+t{ -nan     PAD PRECISION REPRESENT -ROT 2DROP -> FALSE }t
+t{ +inf     PAD PRECISION REPRESENT -ROT 2DROP -> FALSE }t
+t{ -inf     PAD PRECISION REPRESENT -ROT 2DROP -> FALSE }t
+test_group_end
+[THEN]
+
 [THEN]

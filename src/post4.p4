@@ -2440,6 +2440,48 @@ _fs CONSTANT floating-stack DROP DROP
 \ (S: u -- )
 : SET-PRECISION _ctx ctx.precision ! ;
 
+\ IEEE 754-2019 aka IEC 60559
+cell-bits 64 = [IF]
+$000FFFFFFFFFFFFF CONSTANT _significand_mask
+$7FF0000000000000 CONSTANT _exponent_mask
+1023 CONSTANT _exponent_bias
+MIN-N CONSTANT _sign_mask
+52 CONSTANT _significand
+11 CONSTANT _exponent
+[THEN]
+
+cell-bits 32 = [IF]
+$007FFFFF CONSTANT _significand_mask
+$7F800000 CONSTANT _exponent_mask
+127 CONSTANT _exponent_bias
+MIN-N CONSTANT _sign_mask
+23 CONSTANT _significand
+ 8 CONSTANT _exponent
+[THEN]
+
+cell-bits 16 = [IF]
+$03FF CONSTANT _significand_mask
+$7C00 CONSTANT _exponent_mask
+15 CONSTANT _exponent_bias
+MIN-N CONSTANT _sign_mask
+10 CONSTANT _significand
+ 5 CONSTANT _exponent
+[THEN]
+
+[DEFINED] _significand_mask [IF]
+: _exp_sig
+	fs>ds DUP 			\ S: r r
+	_exponent_mask TUCK AND =	\ S: r b1
+	SWAP _significand_mask AND	\ S: b1 b2
+ ; $100002 _pp!
+
+\ (S: -- bool )(F: r -- )
+\ If e(r) == 2^w-1 && m(r) != 0 then NaN.
+: nan? _exp_sig 0<> AND ; $100001 _pp!
+
+\ (S: -- -n | 0 | +n )(F: r -- )
+\ If e(r) == 2^w-1 && m(r) == 0 then (-1)^s*INF.
+: inf? _exp_sig 0= AND ; $100001 _pp!
 [THEN]
 
 \ (S: u -- )

@@ -1243,6 +1243,7 @@ p4Repl(P4_Ctx *ctx, int thrown)
 		P4_WORD("F0=",		&&_f_eq0,	0, 0x110000),
 		P4_WORD("FS.",		&&_f_sdot,	0, 0x100000),
 		P4_WORD("F.",		&&_f_dot,	0, 0x100000),
+		P4_WORD("REPRESENT",	&&_f_represent,	0, 0x100023),
 		P4_WORD("F>S",		&&_f_to_s,	0, 0x100001),	// p4
 		P4_WORD("S>F",		&&_s_to_f,	0, 0x010010),	// p4
 		P4_WORD("fs>rs",	&&_fs_to_rs,	0, 0x100100),	// p4
@@ -2456,13 +2457,45 @@ _to_float:	errno = 0;
 		// (F: f -- )
 _f_dot:		P4STACKISEMPTY(ctx, &ctx->fs, P4_THROW_FS_UNDER);
 		w = P4_POP(ctx->P4_FLOAT_STACK);
-		(void) printf("%.*lF ", (int) ctx->precision, w.f);
+		(void) printf(P4_FLT_PRE_FMT, (int) ctx->precision, w.f);
 		NEXT;
 
 		// (F: f -- )
 _f_sdot:	P4STACKISEMPTY(ctx, &ctx->fs, P4_THROW_FS_UNDER);
 		w = P4_POP(ctx->P4_FLOAT_STACK);
-		(void) printf("%.*lE ", (int) ctx->precision, w.f);
+		(void) printf(P4_SCI_PRE_FMT, (int) ctx->precision, w.f);
+		NEXT;
+
+		// (F: f -- )(S: caddr u -- n sign ok )
+		//
+		char num[DECIMAL_DIG+STRLEN(".e-999")+1];
+_f_represent:	x = P4_POP(ctx->ds);
+		w = P4_POP(ctx->ds);
+		y = P4_POP(ctx->P4_FLOAT_STACK);
+		(void) snprintf(num, sizeof (num), P4_SCI_PRE_FMT, (int) x.n, fabs(y.f));
+		int E = strcspn(num, "eE");
+		num[E] = '\0';
+		E = (int) strtol(num+E+1, NULL, 10);
+		/* 12.6.1.2143 REPRESENT
+		 * ... The character string shall consist of the u most
+		 * significant digits of the significand represented as
+		 * a decimal fraction with the IMPLIED DECIMAL POINT TO
+		 * THE LEFT OF THE FIRST DIGIT, and the first digit zero
+		 * only if all digits are zero.
+		 *
+		 * So not 1.2345e02, but 0.12345e03 => 123450 n=3 0 -1
+		 */
+		char *fraction = num+2;
+		if (isdigit(*num) && *num != '0') {
+			/* Shuffle leading integer digit, eg. 1.2345 -> .12345 */
+			fraction = num+1;
+			num[1] = num[0];
+			E++;
+		}
+		(void) strncpy(w.s, fraction, x.z);
+		P4_PUSH(ctx->ds, (P4_Int) E);
+		P4_PUSH(ctx->ds, P4_BOOL(y.n < 0));
+		P4_PUSH(ctx->ds, P4_BOOL(isdigit(*num) != 0));
 		NEXT;
 
 		// (F: f1 f2 -- f3 )
