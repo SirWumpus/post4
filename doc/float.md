@@ -235,6 +235,11 @@ Create `name` with one float of data.  When `name` is executed push the `faddr` 
 Return the number of significant digits currently used by `F.`, `FE.`, or `FS.` as `u`.
 
 - - -
+#### REPRESENT
+(F: `f` -- )( `caddr` `u` -- `n` `isneg` `isok` )  
+Taking the float `f` return the first `u` digits of the significand, where the is an *implied* decimal point to the left of the first digit, the base-10 exponent `n`, `TRUE` if the value is negative, and `TRUE` if the number is valid (not ± infinity nor NaN).  If `f` does not represent a number, where `isok` is `FALSE`, then the values of `n` and `isneg` are undefined.
+
+- - -
 #### SET-PRECISION
 ( u -- )  
 Set the number of significant digits currently used by `F.`, `FE.`, or `FS.` to `u`.
@@ -243,11 +248,11 @@ Set the number of significant digits currently used by `F.`, `FE.`, or `FS.` to 
 
 ### Post4 Specific Words
 
-- - -
 #### ds>fs
 (F: -- `f` ) (S: `f` -- )  
 Move top of the data stack to the float stack *without* format conversion.  `S>F` will convert formats.
 
+- - -
 #### _fs
 ( -- `aaddr` `n` `s` )  
 Push the float stack base `aaddr` address, depth `n`, and size `s` (before executing `_fs`).  This stack is a fixed size and grows upward.  See `.fs` and `_stack_dump`.
