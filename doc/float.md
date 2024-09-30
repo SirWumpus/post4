@@ -71,6 +71,11 @@ Display, with a trailing space, the top number on the float stack using fixed-po
 `bool` is true if and only if `f1` is less than `f2`.
 
 - - -
+#### F>S
+(F: `f` -- )( -- `n`)  
+Convert the float `f` to a single-cell signed integer `n`, the fractional portion of `f` is discarded.
+
+- - -
 #### F@
 ( `faddr` -- ) (F: -- `f` )  
 Fetch from `faddr` the value `f` stored there.
@@ -238,6 +243,11 @@ Return the number of significant digits currently used by `F.`, `FE.`, or `FS.` 
 #### REPRESENT
 (F: `f` -- )( `caddr` `u` -- `n` `isneg` `isok` )  
 Taking the float `f` return the first `u` digits of the significand, where the is an *implied* decimal point to the left of the first digit, the base-10 exponent `n`, `TRUE` if the value is negative, and `TRUE` if the number is valid (not ± infinity nor NaN).  If `f` does not represent a number, where `isok` is `FALSE`, then the values of `n` and `isneg` are undefined.
+
+- - -
+#### S>F
+(F: -- `f` )( `n` -- )  
+Convert the single-cell signed integer to a float `f`.
 
 - - -
 #### SET-PRECISION
