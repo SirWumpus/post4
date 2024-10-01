@@ -413,6 +413,7 @@ typedef struct {
 # define P4_PICK(stack, offset)		((stack).top[-(offset)])
 # define P4_INDEX(stack, index)		((stack).base[index])
 # define P4_TOP(stack)			(*(stack).top)
+# define P4_DROPTOP(stack)		(*--(stack).top)
 # define P4_POP(stack)			(*(stack).top--)
 # define P4_PUSH(stack, x)		(*++(stack).top = (P4_Cell)(x))
 # define P4_LENGTH(stack)		((stack).top + 1 - (stack).base)
@@ -724,9 +725,9 @@ extern void p4StrRev(P4_Char *s, P4_Size length);
 
 extern int p4StrNum(P4_String str, P4_Uint base, P4_Cell *out, int *is_float);
 
-extern P4_Int p4GetC(P4_Input *source);
+extern int p4GetC(P4_Input *source);
 
-extern P4_Int p4Accept(P4_Input *source, char *buffer, size_t size);
+extern int p4Accept(P4_Input *source, char *buffer, size_t size);
 
 /**
  * Handles parsing of "ccc<char>".
