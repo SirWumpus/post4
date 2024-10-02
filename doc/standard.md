@@ -700,15 +700,14 @@ Make the most recent definition an immediate word.
 - - -
 #### INCLUDE
 ( `<spaces>filepath` --  )  
-Skip leading white space and parse `filepath` delimited by a white space character.  Push the
-address and length of the `filepath` on the stack and perform the function of `INCLUDED`.
+Skip leading white space and parse `filepath` delimited by a white space character.  Push the address and length of the `filepath` on the stack and perform the function of `INCLUDED`.  See also `INCLUDE-PATH` below.
 
         ok INCLUDE ../examples/wumpus.p4
 
 - - -
 #### INCLUDED
 ( `caddr` `u` -- )  
-Save the current input source specification, including the current value of `SOURCE-ID`.  Open the file specified by `caddr` `u`, store the resulting file-id in `SOURCE-ID`, and make it the input source.  Store zero (0) in `BLK`.  Interpret the file line by line until end of file.  Other stack effects are due to the words included.  The input source specification is restored after the file is closed.
+Save the current input source specification, including the current value of `SOURCE-ID`.  Open the file specified by `caddr` `u`, store the resulting file-id in `SOURCE-ID`, and make it the input source.  Store zero (0) in `BLK`.  Interpret the file line by line until end of file.  Other stack effects are due to the words included.  The input source specification is restored after the file is closed.  See also `INCLUDED-PATH` below.
 
 - - -
 #### INVERT
@@ -1310,6 +1309,19 @@ True if floored division is the default.  This is a deviation from `ENVIRONMENT?
 #### immediate?
 ( `xt` -- `bool` )  
 Return `TRUE` if `xt` references an immediate word; otherwise `FALSE`.
+
+- - -
+#### include-path
+( `<spaces>filepath` --  )  
+Skip leading white space and parse `filepath` delimited by a white space character.  Push the
+address and length of the `filepath` on the stack and perform the function of `included-path`.
+
+        ok INCLUDE-PATH ed.p4
+
+- - -
+#### included-path
+( `file` `f` -- )  
+Save the current input source specification, including the current value of `SOURCE-ID`.  Search the colon (:) separated path list given by the environment variable `POST4_PATH` for the first file, `file` `f`, found & open, store the resulting file-id in `SOURCE-ID`, and make it the input source.  Store zero (0) in `BLK`.  Interpret the file line by line until end of file.  Other stack effects are due to the words included.  The input source specification is restored after the file is closed.
 
 - - -
 #### max-char

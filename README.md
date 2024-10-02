@@ -38,7 +38,7 @@ Post4 reads input from standard input and writes to standard output, which can b
 **Example 2 - here document**  
 
         post4 - hey babe <<EOF
-        include dumpargs.p4
+        include-path dumpargs.p4
         args .s dropall cr
         s\" Hello world (again)!\r\n" type
         EOF
@@ -69,6 +69,8 @@ Post4 is written in ISO C11 using only one extension, `Labels As Values`, which 
         $ ./configure --help
         $ ./configure
         $ make tests
+        $ make run              # Manually test in the source tree.
+        ok BYE
         $ sudo make install
         $ post4
 

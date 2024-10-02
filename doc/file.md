@@ -89,3 +89,13 @@ Write `u` characters from address `caddr` to the file `fid` and return `ior` wit
 #### WRITE-LINE
 ( `caddr` `u` `fid` -- `ior` )  
 Write `u` characters from address `caddr` to the file `fid` followed by an implementation-dependent newline and return `ior` with zero on success or non-zero on error.
+
+- - -
+
+### Post4 Specific Words
+
+#### open-file-path
+( `path` `p` `file` `f`  `mode` -- `fid` `ior` )  
+Search the colon (:) separated path list, `path` `p`, and open the first file, `file` `f`, found using the file access `mode`.  On success return the file id `fid` and `ior` equal to zero; otherwise on error `fid` is zero and `ior` is a non-zero error code (see `errno(2)`).
+
+- - -
