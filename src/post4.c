@@ -209,36 +209,46 @@ p4Init(void)
 	sig_winch(SIGWINCH);
 }
 
+FILE *
+p4OpenFilePath(const char *path_list, const char *file)
+{
+	FILE *fp = NULL;
+	char *paths, *path, *next, filepath[PATH_MAX];
+	if (path_list == NULL || *path_list == '\0') {
+		path_list = P4_CORE_PATH;
+	}
+	/* Need a duplicate because strtok modifies the string with NUL. */
+	if ((paths = strdup(path_list)) == NULL) {
+		goto error1;
+	}
+	/* Search "dir0:dir1:...:dirN" string. */
+	errno = 0;
+	for (next = paths; (path = strtok(next, ":")) != NULL; next = NULL) {
+		(void) snprintf(filepath, sizeof (filepath), "%s/%s", path, file);
+		if ((fp = fopen(filepath, "r")) != NULL) {
+			errno = 0;
+			break;
+		}
+	}
+error1:
+	free(paths);
+	return fp;
+}
+
 int
 p4LoadFile(P4_Ctx *ctx, const char *file)
 {
 	FILE *fp;
 	int rc = P4_THROW_ENOENT;
-	char *p4path, *path, *next, filepath[PATH_MAX];
-
 	if (file == NULL || *file == '\0') {
 		goto error0;
 	}
-	/* strtok() modifies the string as it parses it. */
-	if ((p4path = getenv("POST4_PATH")) == NULL || *p4path == '\0') {
-		p4path = P4_CORE_PATH;
-	}
-	if ((p4path = strdup(p4path)) == NULL) {
-		goto error1;
-	}
-	/* Search "dir0:dir1:...:dirN" string. */
-	for (next = p4path; (path = strtok(next, ":")) != NULL; next = NULL) {
-		(void) snprintf(filepath, sizeof (filepath), "%s/%s", path, file);
-		if ((fp = fopen(filepath, "r")) != NULL) {
-			rc = p4EvalFp(ctx, fp);
-			(void) fclose(fp);
-			break;
-		}
+	if ((fp = p4OpenFilePath(getenv("POST4_PATH"), file)) != NULL) {
+		rc = p4EvalFp(ctx, fp);
+		(void) fclose(fp);
 	}
 	/* Find THROW to aid with throwing exceptions from C to Forth. */
 	p4_throw = p4FindName(ctx, "THROW", STRLEN("THROW"));
-	free(p4path);
-error1:
 	if (rc != P4_THROW_OK && ctx->frame == 0) {
 		warn("%s", file);
 	}
@@ -1088,12 +1098,11 @@ p4Trace(P4_Ctx *ctx, P4_Xt xt, P4_Cell *ip)
 			(void) fprintf(STDERR, is_small ? P4_INT_FMT" " : P4_HEX_FMT" ", ip->n);
 		}
 		if (xt->poppush & 0xF0F0F0) {
-			p4TraceStack(ctx, &ctx->ds, P4_DS_CAN_POP(xt), "\t(");
+			p4TraceStack(ctx, &ctx->ds, P4_DS_CAN_POP(xt), "\t");
 #ifdef HAVE_MATH_H
 			p4TraceStack(ctx, &ctx->fs, P4_FS_CAN_POP(xt), "/");
 #endif
 			p4TraceStack(ctx, &ctx->rs, P4_RS_CAN_POP(xt), "/");
-			(void) fputc(')', STDERR);
 		}
 		(void) fputs(crlf, STDERR);
 	}
@@ -1257,7 +1266,8 @@ p4Repl(P4_Ctx *ctx, int thrown)
 		P4_WORD("FILE-SIZE",		&&_fa_fsize,	0, 0x12),
 		P4_WORD("FLUSH-FILE",		&&_fa_flush,	0, 0x11),
 		P4_WORD("INCLUDE-FILE",		&&_fa_include,	0, 0x10),
-		P4_WORD("OPEN-FILE",		&&_fa_open,	0, 0x22),
+		P4_WORD("open-file-path",	&&_fa_open_path,0, 0x52),	// p4
+		P4_WORD("OPEN-FILE",		&&_fa_open,	0, 0x32),
 		P4_WORD("READ-FILE",		&&_fa_read,	0, 0x32),
 		P4_WORD("READ-LINE",		&&_fa_rline,	0, 0x33),
 		P4_WORD("REPOSITION-FILE",	&&_fa_seek,	0, 0x21),
@@ -1837,7 +1847,7 @@ _env:		P4_DROP(ctx->ds, 1);		// Ignore k, S" NUL terminates.
 		w = P4_TOP(ctx->ds);
 		x.s = getenv((const char *)w.s);
 		P4_TOP(ctx->ds) = x;
-		P4_PUSH(ctx->ds, (P4_Int)(x.s == NULL ? -1 : strlen((const char *)x.s)));
+		P4_PUSH(ctx->ds, (P4_Int)(x.s == NULL ? 0 : strlen((const char *)x.s)));
 		NEXT;
 
 		/*
@@ -2287,6 +2297,15 @@ _fa_open:	errno = 0;
 		P4_DROP(ctx->ds, 1);
 		w = P4_TOP(ctx->ds);
 		fp = fopen(w.s, fmodes[x.u]);
+		P4_TOP(ctx->ds).v = fp;
+		P4_PUSH(ctx->ds, (P4_Int) errno);
+		NEXT;
+
+		// ( paths p file f fam -- fd ior )
+_fa_open_path:	P4_DROP(ctx->ds, 2);
+		w = P4_POP(ctx->ds);
+		y = P4_DROPTOP(ctx->ds);
+		fp = p4OpenFilePath(y.s, w.s);
 		P4_TOP(ctx->ds).v = fp;
 		P4_PUSH(ctx->ds, (P4_Int) errno);
 		NEXT;
