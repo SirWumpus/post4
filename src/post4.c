@@ -214,6 +214,16 @@ p4OpenFilePath(const char *path_list, const char *file)
 {
 	FILE *fp = NULL;
 	char *paths, *path, *next, filepath[PATH_MAX];
+	errno = 0;
+	if (file == NULL || *file == '\0') {
+		errno = EINVAL;
+		goto error0;
+	}
+	/* Absolute file path? */
+	if (*file == '/' && (fp = fopen(file, "r")) != NULL) {
+		return fp;
+	}
+	/* Path list supplied or use the default? */
 	if (path_list == NULL || *path_list == '\0') {
 		path_list = P4_CORE_PATH;
 	}
@@ -222,7 +232,6 @@ p4OpenFilePath(const char *path_list, const char *file)
 		goto error1;
 	}
 	/* Search "dir0:dir1:...:dirN" string. */
-	errno = 0;
 	for (next = paths; (path = strtok(next, ":")) != NULL; next = NULL) {
 		(void) snprintf(filepath, sizeof (filepath), "%s/%s", path, file);
 		if ((fp = fopen(filepath, "r")) != NULL) {
@@ -232,6 +241,7 @@ p4OpenFilePath(const char *path_list, const char *file)
 	}
 error1:
 	free(paths);
+error0:
 	return fp;
 }
 
