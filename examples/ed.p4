@@ -17,6 +17,20 @@
 \ The interactive editors assume ANSI escape sequences.
 \
 
+[DEFINED] WORDLIST [IF]
+WORDLIST CONSTANT editor-wordlist
+: EDITOR ( -- )
+	GET-ORDER DUP 1 = IF
+	  \ Keep Forth and add editor word list to search.
+	  DROP editor-wordlist 2
+	ELSE
+	  \ Replace first word list in search.
+	  NIP editor-wordlist SWAP
+	THEN SET-ORDER
+;
+ONLY FORTH ALSO EDITOR DEFINITIONS
+[THEN]
+
 MARKER rm_change
 
 #64 CONSTANT block_width
@@ -351,8 +365,7 @@ MARKER rm_ed
 	2DROP				\ --
 ;
 
-( -- )
-: ED
+: ED ( -- )
 	\ Assert block file has at least one block.
 	['] block_append CATCH ABORT" Try BLOCK-OPEN first." DROP
 	PAGE 'I' edit_mode ! BEGIN ed_screen ed_command AGAIN
