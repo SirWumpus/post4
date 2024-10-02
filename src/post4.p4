@@ -721,7 +721,7 @@ DEFER fsp!
 	R> catch_frame !	\ S: --   R: ip ds fs
 	R> R> 2DROP 		\ S: --   R: ip
 	0			\ S: 0    R: ip
-;
+; $11 _pp!
 
 \ ... THROW ...
 \
@@ -743,7 +743,7 @@ DEFER fsp!
 	  dsp!			\ S: xt   R: ip n
 	  DROP R>		\ S: n    R: ip
 	THEN
-;
+; $10 _pp!
 
 \ ( i*x -- ⊥ )(F: k*x -- ⊥ )( R: j*x -- ⊥ )
 : ABORT -1 THROW ;
@@ -2076,15 +2076,23 @@ VARIABLE SCR
 \
 : PAGE 0 0 AT-XY S\" \e[0J" TYPE ;
 
-\ (S: i*x caddr u -- j*x )
-: INCLUDED
-	R/O OPEN-FILE THROW
+\ (S: i*x fd -- j*x )
+: _include_and_close
 	DUP >R INCLUDE-FILE DROP
 	R> CLOSE-FILE DROP
-;
+; $10 _pp!
+
+\ (S: i*x caddr u -- j*x )
+: INCLUDED R/O OPEN-FILE THROW _include_and_close ; $20 _pp!
 
 \ (S: i*x <spaces>filename" -- j*x )
 : INCLUDE PARSE-NAME _string0_store INCLUDED ;
+
+\ (S: i*x caddr u -- j*x )
+: included-path S" POST4_PATH" env 2SWAP R/O open-file-path THROW _include_and_close ; $20 _pp!
+
+\ (S: i*x <spaces>filename" -- j*x )
+: include-path PARSE-NAME _string0_store included-path ;
 
 \ ... ACTION-OF ...
 \
