@@ -23,8 +23,11 @@ exec_prefix 	= @exec_prefix@
 bindir 		= @bindir@
 libdir 		= @libdir@/post4
 
-# Override from the command-line, eg. make DBG='-O0 -g'
-DBG		:= @DBG@
+PROG		= ${top_srcdir}/src/post4$E
+POST4_PATH	= POST4_PATH='.:${top_srcdir}/src:${top_srcdir}/examples'
+
+# Override from the command-line, eg. make DBG='-O0 -g' or make DBG='-fno-ident -flto'
+DBG		= @DBG@
 
 CC		= @CC@
 CC_E		= @CC_E@
@@ -95,11 +98,11 @@ test tests: post4$E
 	cd ../test && ${MAKE} $@
 
 valgrind: post4$E
-	echo BYE | valgrind --leak-check=full ./post4$E
-	valgrind --leak-check=full --show-leak-kinds=all ./post4$E ../test/units.p4
-	valgrind --leak-check=full ./post4$E ../examples/life1d.p4
+	echo BYE | valgrind --leak-check=full ${PROG}
+	valgrind --leak-check=full --show-leak-kinds=all ${PROG} ../test/units.p4
+	valgrind --leak-check=full ${PROG} ../examples/life1d.p4
 
 strip:
-	${MAKE} DBG='-DNDEBUG' clean build
-	@strip -s post4$E
+	${MAKE} DBG='-DNDEBUG ${DBG}' clean build
+	@strip -s ${PROG}
 	@ls -l post4*

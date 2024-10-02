@@ -31,8 +31,9 @@ CFLAGS		= @CFLAGS@ -Wno-unused-label -funsigned-char -Wno-unused-const-variable
 LDFLAGS		= @LDFLAGS@
 LIBS		= @LIBS@
 
-POST4		= ../src/post4$E
-WORDS		= ../src/post4.p4
+PROG		= ${top_srcdir}/src/post4$E
+WORDS		= ${top_srcdir}/src/post4.p4
+POST4_PATH	= POST4_PATH='.:${top_srcdir}/src:${top_srcdir}/examples'
 
 BUILT		:= `date +'%a, %d %b %Y %H:%M:%S %z'`
 
@@ -62,21 +63,21 @@ title :
 
 tests: test test_quit see_all
 
-test : ${POST4}
-	POST4_PATH=../src ${POST4} ./units.p4
+test : ${PROG}
+	${POST4_PATH} ${PROG} ./units.p4
 
-test_quit : ${POST4}
+test_quit : ${PROG}
 	@echo Testing QUIT...
-	! printf "' QUIT CATCH \n ABORT" | ${POST4} -c ${WORDS}
-	! printf "' QUIT CATCH \n -1 THROW" | ${POST4} -c ${WORDS}
-	! printf "' QUIT CATCH \n -123 THROW" | ${POST4} -c ${WORDS}
-	printf 'S" 0 THROW" '\'' EVALUATE CATCH' | ${POST4} -c ${WORDS}
-	printf 'S" -1 THROW" '\'' EVALUATE CATCH' | ${POST4} -c ${WORDS}
-	printf ": tw_keep_ds [: 123 QUIT ;] CATCH 456 . THROW ;\n tw_keep_ds \n . CR" | ${POST4} -c ${WORDS}
+	! printf "' QUIT CATCH \n ABORT" | ${PROG} -c ${WORDS}
+	! printf "' QUIT CATCH \n -1 THROW" | ${PROG} -c ${WORDS}
+	! printf "' QUIT CATCH \n -123 THROW" | ${PROG} -c ${WORDS}
+	printf 'S" 0 THROW" '\'' EVALUATE CATCH' | ${PROG} -c ${WORDS}
+	printf 'S" -1 THROW" '\'' EVALUATE CATCH' | ${PROG} -c ${WORDS}
+	printf ": tw_keep_ds [: 123 QUIT ;] CATCH 456 . THROW ;\n tw_keep_ds \n . CR" | ${PROG} -c ${WORDS}
 
 # Test SEE against all words to check if any result in some failure like SEGFAULT.
-see_all: ${POST4}
-	echo WORDS | ${POST4} -c ${WORDS} \
+see_all: ${PROG}
+	echo WORDS | ${PROG} -c ${WORDS} \
 	  | sed 's/[[:space:][:cntrl:]]*$$//; s/[^[:space:][:cntrl:]]*/SEE &/g'\
-	  | ${POST4} -c ${WORDS} >see.out 2>&1
+	  | ${PROG} -c ${WORDS} >see.out 2>&1
 	@echo "-OK-"
