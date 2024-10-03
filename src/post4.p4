@@ -2157,6 +2157,8 @@ VARIABLE SCR
 [THEN]
 	@ 									\ S: w					R: col
 	BEGIN
+		DUP
+	WHILE
 		w.bit_hidden OVER _word_bit? 0= IF
 			DUP NAME>STRING				\ S: w word				R: col
 			DUP R> + 1+					\ S: w name length col' R: --
@@ -2166,8 +2168,8 @@ VARIABLE SCR
 			THEN						\ S: w name length col	R: --
 			>R TYPE SPACE				\ S: w					R: col
 		THEN
-		w.prev @ DUP					\ S: w' w'				R: col
-	whilst								\ S: w'					R: col
+		w.prev @						\ S: w'					R: col
+	REPEAT
 	R> 2DROP CR							\ S: --					R: --
 ;
 
