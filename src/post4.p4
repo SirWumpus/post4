@@ -2833,23 +2833,27 @@ FORTH-WORDLIST SET-CURRENT
 	THEN
 ;
 
-: _rm_marker ( xt -- )
+\ Remove a marker from a word list.
+: _rm_marker ( xt wid -- )
+	GET-CURRENT >R SET-CURRENT			\ S: xt		R: curr_wid
 	\ Rewind HERE, does not free ALLOCATE data.
-	DUP w.data @ _ctx ctx.here !	\ S: xt
+	DUP w.data @ _ctx ctx.here !		\ S: xt
 	\ List head now points to word before marker.
-	w.prev @ DUP			\ S: stop stop
-	_ctx ctx.words DUP		\ S: stop stop head head
-	@ >R ! R>			\ S: stop word
+	w.prev @ DUP						\ S: stop stop
+	_ctx ctx.words DUP					\ S: stop stop head head
+	@ >R ! R>							\ S: stop word
 	\ Delete words from head to marker inclusive.
 	BEGIN
-	  2DUP <>			\ S: stop word
+		2DUP <>							\ S: stop word
 	WHILE
-	  DUP w.prev @ SWAP free_word	\ S: stop word'
+		DUP w.prev @ SWAP free_word		\ S: stop word'
 	REPEAT
-	2DROP
+	2DROP R> SET-CURRENT				\ S:		R:
 ;
 
-: MARKER ( <spaces>name -- ) >IN @ CREATE >IN ! ' , DOES> @ _rm_marker ;
-' _rm_marker hide
+: MARKER ( <spaces>name -- )
+	>IN @ CREATE >IN ! ' , GET-CURRENT ,
+	DOES> DUP @ SWAP 1 CELLS + @ _rm_marker
+;
 
 MARKER rm_user_words
