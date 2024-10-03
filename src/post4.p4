@@ -2151,6 +2151,7 @@ VARIABLE SCR
 	0 >R								\ S: --					R: col
 [DEFINED] WORDLISTS [IF]
 	_ctx ctx.order @ 1-					\ S: wid				R: col
+	DUP 0 WORDLISTS WITHIN 0= -257 AND THROW
 	CELLS _ctx ctx.lists +				\ S: head				R: col
 [ELSE]
 	_ctx ctx.words						\ S: head				R: col
