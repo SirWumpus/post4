@@ -1443,6 +1443,16 @@ Push the data stack's size.
 ( `a` `b` -- `a` a` `b` )  
 
 - - -
+#### umax
+( `u1` `u2` -- `u3` )  
+`u3` is the greater of `u1` and `u2`.
+
+- - -
+#### umin
+( `u1` `u2` -- `u3` )  
+`u3` is the lesser of `u1` and `u2`.
+
+- - -
 #### whilst
 ( `x` -- ) immediate  
 Loop back to `BEGIN` while `x` is non-zero; opposite of `UNTIL`.

@@ -886,17 +886,13 @@ DEFER fsp!
 \
 : ABS DUP 0< IF NEGATE THEN ;
 
-\ ... MAX ...
-\
 \ (S: n1 n2 -- n3 )
-\
 : MAX 2DUP < IF SWAP THEN DROP ;
-
-\ ... MIN ...
-\
-\ (S: n1 n2 -- n3 )
-\
 : MIN 2DUP > IF SWAP THEN DROP ;
+
+\ (S: u1 u2 -- u3 )
+: umax 2DUP U< IF SWAP THEN DROP ;
+: umin 2DUP U> IF SWAP THEN DROP ;
 
 \ (S: d1 d2 -- d3 )
 : DMAX 2OVER 2OVER D< IF 2SWAP THEN 2DROP ;
