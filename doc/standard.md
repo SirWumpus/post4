@@ -1169,7 +1169,7 @@ Enter compilation state.
 
 ### Post4 Specific Words
 
-#### -ROT
+#### -rot
 ( `x1` `x2` `x3` -- `x3` `x1` `x2` )  
 Right rotate the top three stack entries.
 
@@ -1323,6 +1323,8 @@ address and length of the `filepath` on the stack and perform the function of `i
 ( `file` `f` -- )  
 Save the current input source specification, including the current value of `SOURCE-ID`.  Search the colon (:) separated path list given by the environment variable `POST4_PATH` for the first file, `file` `f`, found & open, store the resulting file-id in `SOURCE-ID`, and make it the input source.  Store zero (0) in `BLK`.  Interpret the file line by line until end of file.  Other stack effects are due to the words included.  The input source specification is restored after the file is closed.
 
+        ok S" ed.p4" INCLUDED-PATH
+
 - - -
 #### max-char
 ( -- `u` ) constant  
@@ -1437,7 +1439,7 @@ Pass a NUL terminate string `caddr` `u` to the shell and return the exit status 
 Push the data stack's size.
 
 - - -
-### stow
+#### stow
 ( `a` `b` -- `a` a` `b` )  
 
 - - -
@@ -1493,7 +1495,7 @@ Parse `ccc` delimited by the delimiter `char`.  When `bool` is false, behaviour 
 - - -
 #### _rs
 ( -- `aaddr` `n` `s` )  
-Push the return stack base address, depth `n`, and size `s`.  This stack is a fixed size and grows upward.
+Push the return stack base address, depth `n`, and size `s`.  This stack is a fixed size and grows upward.  Some Forth systems implement the return stack using the CPU's return stack, growing down from top of memory and without limit (well until it hits something important); Post4 uses an independent return stack.
 
 - - -
 #### _window

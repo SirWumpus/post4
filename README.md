@@ -108,7 +108,7 @@ To leave Post4 either type the `EOF` terminal character, `BYE`, or `code BYE-COD
 
 The default numeric input/output base is decimal (base 10).  Setting variable `BASE` will change the default radix used for numeric I/O, which can be between between 2 and 36, eg. `16 BASE !` sets hexadecimal.  There are four shorthand words `BINARY`, `OCTAL`, `DECIMAL`, and `HEX` that set `BASE` to 2, 8, 10, or 16 repectively.
 
-Regardless of the current value of `BASE`, it is possible to input numbers in one of the four common bases without having to change the value of `BASE`.  Prefixing a number with `%`, `#`, `$` can set a binary, decimal, or hex value; an optional minus sign given after the prefix to indicate a negative number.  For example:
+Regardless of the current value of `BASE`, it is possible to input numbers in one of the three common bases without having to change the value of `BASE`.  Prefixing a number with `%`, `#`, `$` can set a binary, decimal, or hex value; an optional minus sign given after the prefix to indicate a negative number.  For example:
 
         %1111111  = #127  = $7f  = $000000000000007f
         %-1111111 = #-127 = $-7f = $ffffffffffffff81
@@ -152,13 +152,16 @@ Forth has strings: counted and length prefixed.  Counted strings are a carry-ove
 
 Some examples of words using strings.  Note that the whitespace character (space, tab, newline) immediately after the word, eg. `S\"`, delimits the word from the text that follows and is not part of the text:
 
-        ." some text"                       Print some text at runtime.
-        C" counted text"                    Define a counted string.
-        ."  <- space printed"               Print textt with leading space.
-        S" some text"                       Store some text.
-        S\" escaped text"                   Store some escaped text.
-        .( lots of text)                    Show some text (now).
-        ABORT" text message"                What I do wrong now?
+        ." some text"                           Print some text at runtime.
+        C" counted text"                        Define a counted string.
+        ."  <- space printed"                   Print text with leading space (or tab, hard to tell).
+        .\" \s<- space printed"                 Print text with leading space escaped for clarity.
+        S" some text"                           Store some text.
+        S\" escaped\atext\r\n"                  Store some escaped text.
+        .( lots of text
+           spanning multiple lines)             Show some text (now).
+        .( ed(1\) is the standard text editor)  Escape terminating delimiter.
+        ABORT" text message"                    What I do wrong now?
 
 
 Examples
