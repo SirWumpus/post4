@@ -2872,11 +2872,13 @@ main(int argc, char **argv)
 		case 'V':
 			(void) printf(
 				"%s\r\nsizeof char=%zu short=%zu int=%zu long=%zu size_t=%zu "
-				"intptr_t=%zu float=%zu double=%zu\r\nvoid *=%zu long long=%zu long double=%zu\r\n",
+				"intptr_t=%zu float=%zu double=%zu\r\nvoid *=%zu long long=%zu "
+				"long double=%zu JMP_BUF=%zu\r\n",
 				p4_build_info,
 				sizeof (char), sizeof (short), sizeof (int), sizeof (long),
 				sizeof (size_t), sizeof (intptr_t), sizeof (float), sizeof (double),
-				sizeof (void *), sizeof (long long), sizeof (long double)
+				sizeof (void *), sizeof (long long), sizeof (long double),
+				sizeof (JMP_BUF)
 			);
 			return EXIT_SUCCESS;
 		default:
