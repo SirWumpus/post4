@@ -287,11 +287,19 @@ t{ MAX-U >R R> -> MAX-U }t
 test_group_end
 
 .( DEPTH ) test_group
+\ Assumes an empty stack.
 t{ DEPTH -> 0 }t
 t{ 12 DEPTH -> 12 1 }t
 t{ 12 34 DEPTH -> 12 34 2 }t
 t{ 12 DEPTH >R DROP R> -> 1 }t
 t{ 12 34 DEPTH >R 2DROP R> -> 2 }t
+
+\ Stack not necessarily empty.
+T{ DEPTH DEPTH - 			-> -1       }T
+T{ DEPTH 0 SWAP DEPTH - 	->  0 -2    }T
+T{ DEPTH 0 1 ROT DEPTH -	->  0  1 -3 }T
+T{ DEPTH 9 8  ->  9 8 DEPTH 5 - ROT ROT }T
+T{ DEPTH 9    ->  9   DEPTH 3 - SWAP    }T
 test_group_end
 
 .( CONSTANT ) test_group
@@ -322,6 +330,11 @@ T{ tv_v2 -> -999 }T
 T{ -333 tw_vd2 -> }T
 T{ tv_v2 -> -333 }T
 T{ tv_v1 -> 222 }T
+
+\ https://forth-standard.org/standard/core/TO#contribution-360
+t{ 0 value vfoo immediate -> }t
+t{ : change-vfoo 1 to vfoo ; -> }t
+t{ vfoo change-vfoo vfoo -> 0 1 }t
 test_group_end
 
 .( BASE HEX DECIMAL ) test_group
