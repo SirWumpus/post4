@@ -14,6 +14,8 @@
 *.wsa binary
 config.guess -diff -merge
 config.sub -diff -merge
-configure -diff -merge linguist-generated
+configure -merge linguist-generated
+#configure -diff linguist-generated
 makefile linguist-generated
+Makefile linguist-generated
 reference/** linguist-documentation
