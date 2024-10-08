@@ -136,5 +136,42 @@ CR .( ONLY FORTH DEFINITIONS search order and compilation list: ) CR
 T{ ONLY FORTH DEFINITIONS ORDER -> }T
 test_group_end
 
+.( MARKER with word lists ) test_group
+VARIABLE tv_wid
+VARIABLE here_before
+
+\ Assert current state.
+t{ GET-ORDER GET-CURRENT -> FORTH-WORDLIST 1 FORTH-WORDLIST }t
+
+\ Add words and marker to current definitions.
+t{ : tw_x 123 ; -> }t
+t{ HERE here_before ! -> }t
+t{ MARKER tw_mark -> }t
+t{ : tw_y 456 ; -> }t
+
+\ New word list and switch.  Add word.
+t{ WORDLIST tv_wid ! -> }t
+t{ tv_wid @ SET-CURRENT -> }t
+t{ tv_wid @ FORTH-WORDLIST 2 SET-ORDER -> }t
+
+\ Assert new state.
+t{ GET-ORDER GET-CURRENT -> tv_wid @ FORTH-WORDLIST 2 tv_wid @ }t
+t{ : tw_z 789 ; -> }t
+
+\ Restore previous dictionary state.
+t{ tw_mark -> }t
+
+\ Previous state restored.
+t{ GET-ORDER GET-CURRENT -> FORTH-WORDLIST 1 FORTH-WORDLIST }t
+t{ HERE -> here_before @ }t
+
+\ Words removed.
+t{ ' ' CATCH tw_z -> -13 }t
+t{ ' ' CATCH tw_y -> -13 }t
+
+\ Last word remains.
+t{ ' ' CATCH tw_x NIP -> 0 }t
+
+test_group_end
 
 [THEN]

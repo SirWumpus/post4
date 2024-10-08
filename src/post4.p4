@@ -2734,7 +2734,6 @@ CREATE _nada
 \ : EMITS {: n char -- :} n 0 ?do char emit loop ;
 : EMITS ( n char -- )	SWAP 0 ?DO DUP EMIT LOOP DROP ; $20 _pp!
 
-[DEFINED] WORDLISTS [IF]
 1 CONSTANT FORTH-WORDLIST
 
 \ (S: -- wid )
@@ -2821,36 +2820,44 @@ FORTH-WORDLIST SET-CURRENT
 	GET-CURRENT DUP 1 SET-ORDER show_wid WORDS
 	SET-ORDER
 ;
-[THEN]
 
-: free_word ( w -- )
+: _free_word ( w -- )
 	?DUP IF
 		DUP w.name str.string @ FREE DROP
 		FREE DROP
 	THEN
 ;
 
-\ Remove a marker from a word list.
-: _rm_marker ( xt wid -- )
-	GET-CURRENT >R SET-CURRENT			\ S: xt		R: curr_wid
-	\ Rewind HERE, does not free ALLOCATE data.
-	DUP w.data @ _ctx ctx.here !		\ S: xt
-	\ List head now points to word before marker.
-	w.prev @ DUP						\ S: stop stop
-	_ctx ctx.words DUP					\ S: stop stop head head
-	@ >R ! R>							\ S: stop word
-	\ Delete words from head to marker inclusive.
-	BEGIN
-		2DUP <>							\ S: stop word
-	WHILE
-		DUP w.prev @ SWAP free_word		\ S: stop word'
-	REPEAT
-	2DROP R> SET-CURRENT				\ S:		R:
+\ Free words from head of the word list down-to stop.
+: _free_words ( stop wid -- )
+	1- DUP 0 WORDLISTS WITHIN 0= -257 AND THROW	\ S: stop wid'
+	CELLS _ctx ctx.lists + 2DUP 		\ S: stop ptr stop ptr
+	\ Set new list head.
+	@ >R SWAP ! R>						\ S: stop word
+	\ Delete words from old list head to stop exclusive.
+	BEGIN 2DUP <> WHILE					\ S: stop word
+		DUP w.prev @ SWAP _free_word	\ S: stop word'
+	REPEAT 2DROP
 ;
 
+: @+ ( addr -- addr' x ) DUP CELL+ SWAP @ ;
+
 : MARKER ( <spaces>name -- )
-	>IN @ CREATE >IN ! ' , GET-CURRENT ,
-	DOES> DUP @ SWAP 1 CELLS + @ _rm_marker
+	\ Collect head of all word lists BEFORE creating the marker.
+	_ctx ctx.lists WORDLISTS 0 DO @+ SWAP LOOP DROP
+	\ Save HERE and all the list pointers with the marker.
+	GET-CURRENT HERE CREATE WORDLISTS -2 DO , LOOP
+	\ Save search order.
+	GET-ORDER DUP -1 DO , LOOP
+	DOES>
+	\ Restore HERE.
+	@+ _ctx ctx.here !
+	\ Restore compilation list.
+	@+ SET-CURRENT
+	\ Delete words from each list to restore earlier state.
+	1 WORDLISTS DO @+ I _free_words -1 +LOOP
+	\ Restore search order.
+	DUP @ CELLS OVER + DO I @ /CELL NEGATE +LOOP SET-ORDER
 ;
 
 MARKER rm_user_words
