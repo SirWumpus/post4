@@ -46,64 +46,64 @@ VARIABLE tc_fs_expect
 : fs>ds ;
 [THEN]
 
-: tc_fs_drop BEGIN FDEPTH tc_fs_start @ > WHILE FDROP REPEAT ;
-: tc_ds_drop BEGIN DEPTH tc_ds_start @ > WHILE DROP REPEAT ;
-: tc_drop_all tc_ds_drop tc_fs_drop ;
+: tc_fs_drop ( F: i*f -- ) BEGIN FDEPTH tc_fs_start @ > WHILE FDROP REPEAT ;
+: tc_ds_drop ( i*x -- ) BEGIN DEPTH tc_ds_start @ > WHILE DROP REPEAT ;
+: tc_drop_all ( F: i*f -- )( i*x -- ) tc_ds_drop tc_fs_drop ;
 
 : xt{ ( xt -- )
 	IS test_skip_fail
 	DEPTH tc_ds_start !
 	FDEPTH tc_fs_start !
 ;
-: ts{ ['] test_skip xt{ ;
-: t{ ['] test_fail xt{ ;
+: ts{ ( -- ) ['] test_skip xt{ ;
+: t{ ( -- ) ['] test_fail xt{ ;
 
-: ->
+: -> ( -- )
 	DEPTH tc_ds_expect !
 	FDEPTH tc_fs_expect !
 ;
 
-: }t_ds
+: }t_ds ( i*x j*x -- i*x j*x bool )
 	DEPTH tc_ds_expect @ - DUP >R
 	tc_ds_expect @ tc_ds_start @ -
 	<> IF R> DROP TRUE EXIT THEN
 	R@ BEGIN
-	  ?DUP
+		?DUP
 	WHILE
-	  1-
-	  R@ 1+ PICK ROT
-	  <> IF R> 2DROP TRUE EXIT THEN
+		1-
+		R@ 1+ PICK ROT
+		<> IF R> 2DROP TRUE EXIT THEN
 	REPEAT
 	R> DROP FALSE
 ;
-: }t_fs
+: }t_fs ( F: i*f j*f -- i*f j*f )( -- bool )
 	FDEPTH tc_fs_expect @ - DUP 1- >R
 	tc_fs_expect @ tc_fs_start @ -
 	<> IF R> DROP TRUE EXIT THEN
 	R@ 1+ BEGIN
-	  ?DUP
+		?DUP
 	WHILE
-	  1-
-	  \ Float stack is typically small (6) size, so need
-	  \ to juggle and compare using the data stck.
-	  fs>ds R@ FPICK fs>ds
-	  <> IF R> 2DROP TRUE EXIT THEN
+		1-
+		\ Float stack is typically small (6) size, so need
+		\ to juggle and compare using the data stck.
+		fs>ds R@ FPICK fs>ds
+		<> IF R> 2DROP TRUE EXIT THEN
 	REPEAT
 	R> DROP FALSE
 ;
-: }t
+: }t ( F: i*f -- )( i*x -- )
 	}t_ds }t_fs OR IF
-	  tc_drop_all test_skip_fail EXIT
+		tc_drop_all test_skip_fail EXIT
 	THEN
 	tc_drop_all test_pass
 ;
-: test_suite
+: test_suite ( -- )
 	0 tests_passed ! 0 tests_failed ! 0 tests_skipped !
 	tc_drop_all
 	DECIMAL
 ;
 
-: test_suite_end
+: test_suite_end ( -- )
 	." Total Pass " tests_passed @ ansi_green U. ansi_normal
 	." Fail " tests_failed @ ansi_red U. ansi_normal
 	." Skip " tests_skipped @ ansi_magenta U. ansi_normal CR

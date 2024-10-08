@@ -24,7 +24,8 @@ indent_size = 4
 indent_size = 4
 indent_style = space
 
-[*.p4]
+# .f should be Fortran, but alas some people.
+[*.{p4,f,fs,fth,4th}]
 indent_size = 4
 indent_style = tab
 
