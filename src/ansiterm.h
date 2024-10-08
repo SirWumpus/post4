@@ -49,6 +49,9 @@ extern "C" {
 #define ANSI_ERASE_HEAD		"\e[1K"
 #define ANSI_ERASE_LINE		"\e[2K"
 
+#define ANSI_SAVE_CURSOR	"\e[s"
+#define ANSI_RESTORE_CURSOR	"\e[u"
+
 /***********************************************************************
  *** END
  ***********************************************************************/

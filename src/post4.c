@@ -5,6 +5,7 @@
  */
 
 #include "post4.h"
+#include "aline.h"
 
 /***********************************************************************
  *** Globals
@@ -13,20 +14,6 @@
 static P4_Word *p4_builtin_words;
 P4_Word *p4_hook_call;
 P4_Word *p4_throw;
-
-static int is_tty;
-#ifdef HAVE_TCGETATTR
-static int tty_fd = -1;
-static struct termios tty_raw;
-static struct termios tty_raw_nb;
-static struct termios tty_saved;
-static struct termios *tty_mode;
-#endif
-
-static struct winsize window = {
-	.ws_row = 24,
-	.ws_col = 80,
-};
 
 #define P4_INTERACTIVE(ctx)	(ctx->state == P4_STATE_INTERPRET && is_tty && P4_INPUT_IS_TERM(ctx->input))
 
@@ -132,81 +119,16 @@ static const char crlf[] = "\r\n";
  *** Context
  ***********************************************************************/
 
-static void
-sig_winch(int signum)
-{
-#if defined(HAVE_TCGETWINSIZE)
-	if (is_tty) {
-		(void) tcgetwinsize(0, &window);
-	}
-#elif defined(TIOCGWINSZ)
-	if (is_tty) {
-		(void) ioctl(0, TIOCGWINSZ, &window);
-	}
-#endif
-}
-
-static void
-p4Fini(void)
-{
-#ifdef HAVE_TCSETATTR
-	if (0 <= tty_fd) {
-		(void) tcsetattr(tty_fd, TCSADRAIN, &tty_saved);
-	}
-#endif
-}
-
 /**
  */
 void
 p4Init(void)
 {
-	char *p;
-	unsigned i;
-
-	(void) atexit(p4Fini);
-
-	signal(SIGWINCH, sig_winch);
-
-	is_tty = isatty(fileno(stdin));
 #ifdef ASSERT_LINE_BUFFERING
 	setvbuf(stdout, NULL, _IOLBF, 0);
 	setvbuf(stderr, NULL, _IOLBF, 0);
 #endif
-
-#ifdef HAVE_TCGETATTR
-# ifdef HAVE_CTERMID
-	tty_fd = open(ctermid(NULL), O_RDWR, S_IRWXU|S_IRWXG|S_IRWXO);
-# else
-	tty_fd = fileno(stdin);
-# endif
-	if (tty_fd != -1) {
-		(void) tcgetattr(tty_fd, &tty_saved);
-		tty_mode = &tty_saved;
-
-		tty_raw = tty_saved;
-
-		/* Non-canonical blocking input. */
-		tty_raw.c_cc[VMIN] = 1;
-		tty_raw.c_cc[VTIME] = 0;
-		tty_raw.c_lflag |= ISIG;
-		tty_raw.c_lflag &= ~(ICANON|ECHO|ECHONL|ECHOCTL);
-
-		/* Non-canonical non-blocking input. */
-		tty_raw_nb = tty_raw;
-		tty_raw_nb.c_cc[VMIN] = 0;
-
-		/* Disable ECHO now. This allows KEY and KEY? to
-		 * function correctly with interactive scripts;
-		 * see life.p4, pressing a key skips to the next
-		 * set of patterns. ECHO is turned back on for
-		 * line input like REFILL or ACCEPT.
-		 */
-//		(void) tcsetattr(tty_fd, TCSADRAIN, &tty_raw);
-	}
-#endif /* HAVE_TCGETATTR */
-
-	sig_winch(SIGWINCH);
+	alineInit();
 }
 
 FILE *
@@ -753,72 +675,13 @@ p4Divs(P4_Int dend0, P4_Int dend1, P4_Int dsor, P4_Int *rem)
  *** Input / Ouput
  ***********************************************************************/
 
-#ifndef HAVE_TCSETATTR
-int
-p4SetNonBlocking(int fd, int flag)
-{
-	unsigned long flags;
-
-	flags = (unsigned long) fcntl(fd, F_GETFL);
-
-	if (flag) {
-		flags |= O_NONBLOCK;
-	} else {
-		flags &= ~O_NONBLOCK;
-	}
-	return fcntl(fd, F_SETFL, flags);
-}
-#endif
-
-int
-p4ReadByte(int fd)
-{
-	unsigned char ch;
-	if (read(fd, &ch, sizeof (ch)) != sizeof (ch)) {
-		return EOF;
-	}
-	return (int) ch;
-}
-
-int
-p4GetC(P4_Input *input)
-{
-	if (input->fp == (FILE *) -1) {
-		return input->offset < input->length ? input->buffer[input->offset++] : EOF;
-	}
-	return fgetc(input->fp == NULL ? stdin : input->fp);
-}
-
 int
 p4Accept(P4_Input *input, char *buf, P4_Size size)
 {
-	int ch;
-	char *ptr;
-
 	if (input->fp == (FILE *) -1 || size-- <= 1) {
 		return EOF;
 	}
-#ifdef HAVE_TCSETATTR
-	/* For a terminal restore original line input and echo settings. */
-	if (is_tty && tty_mode != &tty_saved) {
-		(void) tcsetattr(tty_fd, TCSADRAIN, &tty_saved);
-		tty_mode = &tty_saved;
-	}
-#endif
-	for (ptr = buf; ptr - buf < size; ) {
-		if ((ch = p4GetC(input)) == EOF) {
-			if (ptr - buf == 0) {
-				return EOF;
-			}
-			break;
-		}
-		*ptr++ = (P4_Char) ch;
-		if (ch == '\n') {
-			break;
-		}
-	}
-
-	return ptr - buf;
+	return alineInput(input->fp, "", buf, (size_t) size);
 }
 
 P4_Int
@@ -2152,13 +2015,8 @@ _refill:	w.n = p4Refill(ctx->input);
 		// ( -- n )
 _key:		(void) fflush(stdout);
 		if (ctx->unkey == EOF) {
-#ifdef HAVE_TCSETATTR
-			if (is_tty && tty_mode != &tty_raw) {
-				(void) tcsetattr(tty_fd, TCSANOW, &tty_raw);
-				tty_mode = &tty_raw;
-			}
-#endif
-			x.n = p4ReadByte(tty_fd);
+			alineSetMode(ALINE_RAW);
+			x.n = alineReadByte();
 		} else {
 			x.n = ctx->unkey;
 			ctx->unkey = EOF;
@@ -2169,18 +2027,8 @@ _key:		(void) fflush(stdout);
 		// ( -- flag )
 _key_ready:	(void) fflush(stdout);
 		if (ctx->unkey == EOF) {
-#ifdef HAVE_TCSETATTR
-			if (is_tty && tty_mode != &tty_raw_nb) {
-				(void) tcsetattr(tty_fd, TCSANOW, &tty_raw_nb);
-				tty_mode = &tty_raw_nb;
-			}
-			ctx->unkey = p4ReadByte(tty_fd);
-#else
-			if (p4SetNonBlocking(tty_fd, 1) == 0) {
-				ctx->unkey = p4ReadByte(tty_fd);
-				(void) p4SetNonBlocking(tty_fd, 0);
-			}
-#endif
+			alineSetMode(ALINE_RAW_NB);
+			ctx->unkey = alineReadByte();
 		}
 		P4_PUSH(ctx->ds, (P4_Uint) P4_BOOL(ctx->unkey != EOF));
 		NEXT;
@@ -2321,7 +2169,8 @@ _fa_open_path:	P4_DROP(ctx->ds, 2);
 		NEXT;
 
 		// ( caddr u1 fd -- u2 ior )
-_fa_read:	fp = P4_POP(ctx->ds).v;
+_fa_read:	errno = 0;
+		fp = P4_POP(ctx->ds).v;
 		x = P4_POP(ctx->ds);
 		w = P4_POP(ctx->ds);
 		w.u = fread(w.s, sizeof (*w.s), x.z, fp);

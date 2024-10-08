@@ -103,7 +103,7 @@ Post4$A: build
 ${LIBNAME}: Post4$O ../src/post4$O
 	${CC} ${CFLAGS} -shared -o $@ ../src/*$O Post4$O ${LIBS}
 
-../src/post4$O : ../src/post4.h ../src/post4.c
+../src/post4$O : ../src/*.h ../src/*.c
 	cd ../src; ${MAKE} post4$O
 
 run: build

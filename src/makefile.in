@@ -61,13 +61,16 @@ $O$E :
 
 .MAIN : build
 
+CHDR	:= config.h aline.h ansiterm.h post4.h
+CSRC	:= post4.c hooks.c aline.c
+
 all: build
 
 build: title post4$E
 
 clean : title
 	-rm -f *.o *.obj *.i *.gch *.map *.tds *.TR2 *.stackdump *.core *.log
-	-rm -f a.out$E post4$E
+	-rm -f a.out$E aline$E post4$E
 
 clobber distclean: clean
 	-rm -f config.h config.h.in makefile
@@ -84,15 +87,17 @@ install: build
 	install -p -o root -g 0 post4.p4 ${libdir}
 	install -p -o root -g 0 post4$E ${bindir}
 
+aline$E : ansiterm.h aline.h aline.c
+	${CC} ${CFLAGS} -DALINE_TEST -o $@ aline.c
+
+aline$O : config.h ansiterm.h aline.h aline.c
+
 hooks$O : config.h post4.h hooks.c
 
-post4$O : config.h post4.h post4.c hooks$O
+post4$O : ${CHDR} ${CSRC}
 
-post4$E : config.h post4.h hooks.c post4.c
-	${CC} ${CFLAGS} ${LDFLAGS} -DTEST -DP4_BUILT="\"${BUILT}\"" -o $@ post4.c hooks.c ${LIBS}
-
-post4.i : config.h post4.h post4.c
-	${CC} -E ${CFLAGS} -DTEST -DP4_BUILT="\"${BUILT}\"" post4.c >$*.i
+post4$E : ${CHDR} ${CSRC}
+	${CC} ${CFLAGS} ${LDFLAGS} -DTEST -DP4_BUILT="\"${BUILT}\"" -o $@ ${CSRC} ${LIBS}
 
 test tests: post4$E
 	cd ../test && ${MAKE} $@
