@@ -31,13 +31,15 @@ struct winsize window = {
 	.ws_col = 80,
 };
 
-void
+int
 alineSetMode(int mode)
 {
+	int prev = tty_mode;
 	if (is_tty && tty_mode != mode) {
 		(void) tcsetattr(tty_fd, TCSANOW, &tty_modes[mode]);
 		tty_mode = mode;
 	}
+	return prev;
 }
 
 static void
@@ -91,6 +93,19 @@ alineInit(void)
 	}
 }
 
+static void
+alineGetRowCol(int pos[2])
+{
+	char report[12];
+	int n, fd = fileno(stdout);
+	(void) tcsetattr(fd, TCSANOW, &tty_modes[ALINE_RAW]);
+	(void) write(fd, ANSI_REPORT, sizeof (ANSI_REPORT)-1);
+	n = read(fd, report, sizeof (report));
+	report[n] = '\0';
+	pos[0] = (unsigned) strtoul(report+2, NULL, 10);
+	pos[1] = (unsigned) strtoul(strchr(report, ';')+1, NULL, 10);
+}
+
 /* Simple tty line editor with last line history.
  *
  * \a		Get last input line.
@@ -107,7 +122,7 @@ int
 alineInput(FILE *fp, const char *prompt, char *buf, size_t size)
 {
 	unsigned char ch;
-	int i, is_esc = 0;
+	int pcol, i, pos[2];
 
 	if (buf == NULL || size < 1) {
 		return EOF;
@@ -123,13 +138,15 @@ alineInput(FILE *fp, const char *prompt, char *buf, size_t size)
 	if (prompt == NULL) {
 		prompt = ps2;
 	}
+	pcol = strlen(prompt);
 	if (sizeof (lastline) < size) {
 		size = sizeof (lastline);
 	}
-	alineSetMode(ALINE_RAW);
+	alineGetRowCol(pos);
 	(void) printf(ANSI_SAVE_CURSOR);
+	(void) alineSetMode(ALINE_RAW);
 	for (buf[i = 0] = '\0';	; ) {
-		(void) printf(ANSI_RESTORE_CURSOR"%s%s%s", prompt, buf, ANSI_ERASE_TAIL);
+		(void) printf(ANSI_RESTORE_CURSOR"%s%s"ANSI_ERASE_TAIL""ANSI_GOTO, prompt, buf, pos[0], pos[1]+pcol+i);
 		(void) fflush(stdout);
 		clearerr(stdin);
 		ch = fgetc(stdin);
@@ -137,27 +154,27 @@ alineInput(FILE *fp, const char *prompt, char *buf, size_t size)
 			(void) fputs("\r\n", stdout);
 			break;
 		}
-#ifdef ANSI_FUNC_KEYS
-		if (ch == '\a' || ch == '\033') {
-			/* Restore intput to last input line. */
-			(void) strncpy(buf, lastline, size-1);
-			i = strlen(lastline);
-			is_esc = ch * (ch == '\033');
-		}
-#else
 		if (ch == '\e') {
-			continue;
+			if ((ch = fgetc(stdin)) == '[') {
+				ch = fgetc(stdin);
+				if (ch == 'A' || ch == 'B') {
+					ch = '\v';
+				} else if (ch == 'C') {
+					i += i < size && buf[i] != '\0';
+					continue;
+				} else if (ch == 'D') {
+					i -= 0 < i;
+					continue;
+				}
+			}
 		}
-		if (ch == '\a') {
+		if (ch == '\v') {
 			/* Restore intput to last input line. */
 			(void) strncpy(buf, lastline, size-1);
 			i = strlen(lastline);
-		}
-#endif
-		else if (ch == tty_saved.c_cc[VERASE] || ch == '\b' || ch == 127) {
-			if (0 < i) {
-				buf[--i] = '\0';
-			}
+		} else if (ch == tty_saved.c_cc[VERASE] || ch == '\b' || ch == 127) {
+			i -= 0 < i;
+			(void) memmove(buf+i, buf+i+1, strlen(buf+i)+1);
 		} else if (ch == tty_saved.c_cc[VWERASE]) {
 			while (0 < i) {
 				if (isspace(buf[i-1])) {
@@ -177,48 +194,14 @@ alineInput(FILE *fp, const char *prompt, char *buf, size_t size)
 		} else if (i == 0 && ch == tty_saved.c_cc[VEOF]) {
 			return EOF;
 		} else if (i < size) {
-#ifdef ANSI_FUNC_KEYS
-/* Not sure I want to support this just yet and there is better way
- * if I stop to think about it a little while, but for now I'll just
- * leave note-to-self.
- */
-			/* Some ANSI function key? */
-			if (is_esc) {
-				/* https://en.wikipedia.org/wiki/ANSI_escape_code#Terminal_input_sequences */
-				/* ESC ESC or ESC [ digits ; digits ~ */
-				if (ch == '\033' || ch == '~') {
-					is_esc = 0;
-					continue;
-				}
-				/* ESC [ ABCD or ESC O PQRS  */
-				if (ch == '[' || ch == 'O') {
-					is_esc = ch;
-					continue;
-				}
-				/* Arrow key ESC [ A .. ESC [ D */
-				if ((is_esc == '[' && 'A' <= ch && ch <= 'D')
-				/* Function F1..F4 ESC O P .. ESC O S */
-				||  (is_esc == 'O' && 'P' <= ch && ch <= 'S')) {
-					is_esc = 0;
-					continue;
-				}
-				/* Function key ESC [ digits ; digits ~ */
-				if (is_esc == '[' && (isdigit(ch) || ch == ';')) {
-					continue;
-				}
-				/* ESC timeout */
-			}
-#endif
-			/* Append ASCII character. */
+			(void) memmove(buf+i+1, buf+i, strlen(buf+i)+1);
 			buf[i++] = ch;
-			buf[i] = '\0';
-			is_esc = 0;
 		}
 	}
 	if (0 < i) {
 		(void) strncpy(lastline, buf, size-1);
 	}
-	return (int) i;
+	return (int) strlen(buf);
 }
 
 #ifdef ALINE_TEST

@@ -45,10 +45,13 @@ extern "C" {
 #define ANSI_END_LINE		"\e[256G"
 #define ANSI_HOME_LINE		"\e[1G"
 #define ANSI_GOTO		"\e[%u;%uH"	/* CSI row ; col H 1-based */
+#define ANSI_RIGHT		"\e[%uC"	/* CSI col C 1-based */
+#define ANSI_COLUMN		"\e[%uG"	/* CSI col G 1-based */
 #define ANSI_ERASE_TAIL		"\e[0K"
 #define ANSI_ERASE_HEAD		"\e[1K"
 #define ANSI_ERASE_LINE		"\e[2K"
 
+#define ANSI_REPORT		"\e[6n"		/* CSI row ; col R */
 #define ANSI_SAVE_CURSOR	"\e[s"
 #define ANSI_RESTORE_CURSOR	"\e[u"
 

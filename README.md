@@ -107,16 +107,17 @@ To leave Post4 either type the `EOF` terminal character, `BYE`, or `code BYE-COD
 
 ### TTY Line Editing
 
-Post4 implements simple TTY style line editing for the last interactive input line.  GNU `readline` or BSD `libedit` are not supported.  Essentially the `stty(1)` keys are supported, in addition to BEL (^G) to edit the last input line.
+Post4 implements simple TTY style line editing for the last interactive input line.  GNU `readline` or BSD `libedit` are not supported.  Essentially the `stty(1)` keys are supported, in addition to being able to edit the last input line.
 
-        ^G              Edit the previous input line.
-        ERASE   ^H  ^?  Erase character before cursor.
+        up      ^K      Edit the previous input line.
+        left    right   Cursor left or right within line.
+        ERASE   ^H  ^?  Erase character before the cursor.
         WERASE          Erase the previous white space delimited word.
         KILL            Erase current line input.
         EOL     ^M  ^J  Newline submits input line.
         EOF             End of file.
 
-* *Note the ANSI terminal function keys are not supported.*
+* *Assumes ANSI terminal escape sequences.*
 
 ### Numeric I/O
 
