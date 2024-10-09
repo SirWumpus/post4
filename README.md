@@ -104,6 +104,20 @@ When Post4 is invoked without a script file argument or redirected input, then t
 
 To leave Post4 either type the `EOF` terminal character, `BYE`, or `code BYE-CODE` (where `code` is number to return to the user's shell).  For those not familiar with Forth, there is a `QUIT` word, but it only terminates a running program; it does not return to the host OS.
 
+
+### TTY Line Editing
+
+Post4 implements simple TTY style line editing for the last interactive input line.  GNU `readline` or BSD `libedit` are not supported.  Essentially the `stty(1)` keys are supported, in addition to BEL (^G) to edit the last input line.
+
+        ^G              Edit the previous input line.
+        ERASE   ^H  ^?  Erase character before cursor.
+        WERASE          Erase the previous white space delimited word.
+        KILL            Erase current line input.
+        EOL     ^M  ^J  Newline submits input line.
+        EOF             End of file.
+
+* *Note the ANSI terminal function keys are not supported.*
+
 ### Numeric I/O
 
 The default numeric input/output base is decimal (base 10).  Setting variable `BASE` will change the default radix used for numeric I/O, which can be between between 2 and 36, eg. `16 BASE !` sets hexadecimal.  There are four shorthand words `BINARY`, `OCTAL`, `DECIMAL`, and `HEX` that set `BASE` to 2, 8, 10, or 16 repectively.
