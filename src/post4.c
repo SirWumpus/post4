@@ -1006,8 +1006,7 @@ p4Trace(P4_Ctx *ctx, P4_Xt xt, P4_Cell *ip)
 static void
 p4StackIsEmpty(P4_Ctx *ctx, P4_Stack *stack, int under)
 {
-	ptrdiff_t length = P4_PLENGTH(stack);
-	if (length <= 0) {
+	if (P4_PLENGTH(stack) <= 0) {
 		p4Bp(ctx);
 		LONGJMP(ctx->longjmp, under);
 	}
@@ -1016,8 +1015,7 @@ p4StackIsEmpty(P4_Ctx *ctx, P4_Stack *stack, int under)
 static void
 p4StackIsFull(P4_Ctx *ctx, P4_Stack *stack, int over)
 {
-	ptrdiff_t length = P4_PLENGTH(stack);
-	if (stack->size <= length) {
+	if (stack->size <= P4_PLENGTH(stack)) {
 		p4Bp(ctx);
 		LONGJMP(ctx->longjmp, over);
 	}
@@ -1811,13 +1809,14 @@ _resize_null:	if (x.n < 0 && -1024 <= x.n) {
 		 * Stack manipulation.
 		 */
 		// ( x -- )
-_drop:		P4_DROP(ctx->ds, 1);
-		P4STACKGUARD(ctx, &ctx->ds, P4_THROW_DS_OVER, P4_THROW_DS_UNDER);
+_drop:		P4STACKISEMPTY(ctx, &ctx->ds, P4_THROW_DS_UNDER);
+		P4_DROP(ctx->ds, 1);
 		NEXT;
 
 		// ( x -- x x )
-_dup:		P4_PUSH(ctx->ds, x);
-		P4STACKGUARD(ctx, &ctx->ds, P4_THROW_DS_OVER, P4_THROW_DS_UNDER);
+_dup:		P4STACKISEMPTY(ctx, &ctx->ds, P4_THROW_DS_UNDER);
+		P4_PUSH(ctx->ds, x);
+		P4STACKISFULL(ctx, &ctx->ds, P4_THROW_DS_OVER);
 		NEXT;
 
 		// ( xu ... x1 x0 u -- xu ... x1 x0 xu )
