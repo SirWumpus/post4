@@ -54,16 +54,6 @@ sig_winch(int signum)
 #endif
 }
 
-int
-alineReadByte(void)
-{
-	unsigned char ch;
-	if (read(tty_fd, &ch, sizeof (ch)) != sizeof (ch)) {
-		return EOF;
-	}
-	return ch;
-}
-
 void
 alineFini(void)
 {
@@ -76,10 +66,12 @@ alineInit(void)
 	if (tty_fd != -1  || !(is_tty = isatty(fileno(stdin)))) {
 		return;
 	}
+	tty_fd = fileno(stdin);
 
-	tty_fd = 0;
 	sig_winch(SIGWINCH);
 	signal(SIGWINCH, sig_winch);
+
+	setvbuf(stdin, NULL, _IONBF, 0);
 	(void) tcgetattr(tty_fd, &tty_modes[ALINE_CANONICAL]);
 	(void) atexit(alineFini);
 
@@ -139,7 +131,8 @@ alineInput(FILE *fp, const char *prompt, char *buf, size_t size)
 	for (buf[i = 0] = '\0';	; ) {
 		(void) printf(ANSI_RESTORE_CURSOR"%s%s%s", prompt, buf, ANSI_ERASE_TAIL);
 		(void) fflush(stdout);
-		ch = alineReadByte();
+		clearerr(stdin);
+		ch = fgetc(stdin);
 		if (ch == EOF || ch == tty_saved.c_cc[VEOL] || ch == '\r' || ch == '\n') {
 			(void) fputs("\r\n", stdout);
 			break;
@@ -236,7 +229,7 @@ main(int argc, char **argv)
 
 	alineInit();
 	while (alineInput(stdin, NULL, buf, sizeof (buf)) != EOF) {
-		printf("\r\nEh? %s\n", buf);
+		printf("Eh? %s\n", buf);
 	}
 
 	return 0;

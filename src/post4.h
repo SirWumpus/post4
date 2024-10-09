@@ -449,7 +449,6 @@ struct p4_ctx {
 	P4_Stack	fs;		/* Float stack */
 	P4_Int		precision;
 #endif
-	P4_Int		unkey;		/* KEY and KEY? */
 	P4_Input *	input;
 	P4_Block *	block;
 	void *		block_fd;

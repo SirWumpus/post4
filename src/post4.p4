@@ -1814,7 +1814,6 @@ BEGIN-STRUCTURE p4_ctx
 	p4_stack +FIELD ctx.fs		\ see _fs
 	FIELD: ctx.precision		\ see PRECISION and SET-PRECISION
 [THEN]
-	FIELD: ctx.unkey			\ KEY and KEY?
 	FIELD: ctx.input			\ pointer
 	FIELD: ctx.block			\ pointer
 	FIELD: ctx.block_fd
