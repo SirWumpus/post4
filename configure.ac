@@ -101,10 +101,13 @@ CC_O='-o'
 CC_O_NAME='-o $''*$O'
 LD=$CC
 
+AS_IF([test "$OBJEXT" = 'obj'],[LIBEXT='lib'],[LIBEXT='a'])
+
 AC_SUBST(CC_E)
 AC_SUBST(CC_E_NAME)
 AC_SUBST(CC_O)
 AC_SUBST(CC_O_NAME)
+AC_SUBST(LIBEXT)
 
 AC_CHECK_HEADERS([ctype.h errno.h inttypes.h limits.h stdarg.h stddef.h stdint.h stdio.h unistd.h sys/ioctl.h])
 

@@ -642,6 +642,7 @@ extern int p4EvalFile(P4_Ctx *ctx, const char *filepath);
  */
 extern int p4EvalString(P4_Ctx *ctx, const char *string, size_t length);
 
+extern const char *p4_exceptions[];
 extern JMP_BUF sig_break_glass;
 extern void sig_init(void);
 extern void sig_fini(void);
@@ -660,6 +661,9 @@ extern P4_Word *p4HookAdd(P4_Ctx *ctx, P4_Hook *hook);
 /***********************************************************************
  *** Utility Functions
  ***********************************************************************/
+
+extern void p4ResetInput(P4_Ctx *ctx, FILE *fp);
+
 
 /**
  * @param ch
@@ -693,8 +697,6 @@ extern int p4CharLiteral(int ch);
 extern void p4StrRev(P4_Char *s, P4_Size length);
 
 extern int p4StrNum(P4_String str, P4_Uint base, P4_Cell *out, int *is_float);
-
-extern int p4GetC(P4_Input *source);
 
 extern int p4Accept(P4_Input *source, char *buffer, size_t size);
 

@@ -659,6 +659,7 @@ build_cpu
 build
 LIBOBJS
 HAVE_LIB_RT
+LIBEXT
 CC_O_NAME
 CC_O
 CC_E_NAME
@@ -5368,6 +5369,15 @@ CC_E_NAME='-o $@'
 CC_O='-o'
 CC_O_NAME='-o $''*$O'
 LD=$CC
+
+if test "$OBJEXT" = 'obj'
+then :
+  LIBEXT='lib'
+else case e in #(
+  e) LIBEXT='a' ;;
+esac
+fi
+
 
 
 

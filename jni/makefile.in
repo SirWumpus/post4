@@ -7,12 +7,12 @@
 .POSIX :
 
 .SUFFIXES :
-A = .jar
+A = .@LIBEXT@
 C = .class
 J = .java
 L = .so
 O = .@OBJEXT@
-.SUFFIXES : .c $J .i $O $C $L $A
+.SUFFIXES : .c $J .i $O $C $L $A .jar
 
 LIBNAME		= libpost4jni$L
 MAIN		= post4.jni.Post4
@@ -26,7 +26,7 @@ bindir 		= @bindir@
 libdir 		= @libdir@/post4
 
 PROG		= ${top_srcdir}/src/post4$E
-POST4_PATH	= POST4_PATH='.:${top_srcdir}/src:${top_srcdir}/examples'
+POST4_PATH	= .:${top_srcdir}/src:${top_srcdir}/examples
 
 # Override from the command-line, eg. make DBG='-O0 -g'
 DBG		:= @DBG@
@@ -74,7 +74,7 @@ clean: title
 	-rm *.i *$O *.class *.core *.log
 
 clobber distclean: clean
-	-rm -rf *$L *.so *.dll *$A makefile ./post4
+	-rm -rf *$L *.so *.dll *$A *.jar makefile ./post4
 
 build: title ${LIBNAME} Post4Exception$C Post4Options$C Post4Stacks$C Post4$C
 
@@ -88,23 +88,23 @@ title :
 install: build
 	install -p -o root -g 0 -d ${libdir}
 	install -p -o root -g 0 *.p4 ${libdir}
-	install -p -o root -g 0 Post4$A ${libdir}
+	install -p -o root -g 0 Post4.jar ${libdir}
 	install -p -o root -g 0 ${LIBNAME} ${libdir}
 
 # See also
 # https://stackoverflow.com/questions/2937406/how-to-bundle-a-native-library-and-a-jni-library-inside-a-jar
-Post4$A: build
+Post4.jar: build
 	mkdir -p ./post4/jni/${OS}/${CPU}
 	cp -p *.class ./post4/jni
 	cp -p ${LIBNAME} ./post4/jni/${OS}/${CPU}
 	jar -v -c -f $@ -e ${MAIN} post4/ -C ../src/ post4.p4 -C ./ *.p4
 	rm -rf post4
 
-${LIBNAME}: Post4$O ../src/post4$O
-	${CC} ${CFLAGS} -shared -o $@ ../src/*$O Post4$O ${LIBS}
+${LIBNAME}: Post4$O ../src/libpost4$A
+	${CC} ${CFLAGS} -shared -static -o $@ Post4$O ../src/libpost4$A ${LIBS}
 
-../src/post4$O : ../src/*.h ../src/*.c
-	cd ../src; ${MAKE} post4$O
+../src/libpost4$A : ../src/*.h ../src/*.c
+	cd ../src; ${MAKE} libpost4$A
 
 run: build
 	POST4_PATH="${POST4_PATH}" java -Djava.library.path="$${POST4_PATH}" -cp ../.. ${MAIN}
@@ -112,8 +112,8 @@ run: build
 test: build
 	POST4_PATH="${POST4_PATH}" java -Djava.library.path="$${POST4_PATH}" -cp ../.. ${MAIN} ../test/units.p4
 
-testjar: Post4$A
-	POST4_PATH="${POST4_PATH}" java -Djava.library.path="$${POST4_PATH}" -jar Post4$A
+testjar: Post4.jar
+	POST4_PATH="${POST4_PATH}" java -Djava.library.path="$${POST4_PATH}" -jar Post4.jar
 
 cygtest: build
 	cp ${LIBNAME} post4jni.dll

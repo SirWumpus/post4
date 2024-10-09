@@ -28,7 +28,7 @@ P4_Word *p4_throw;
  *	CFLAGS="-DUSE_EXCEPTION_STRINGS" ./configure
  *	make clean build
  */
-static const char *p4_exceptions[] = {
+const char *p4_exceptions[] = {
 	"",
 	"ABORT",
 	"ABORT\"",
@@ -830,7 +830,7 @@ p4Free(P4_Ctx *ctx)
 	}
 }
 
-static void
+void
 p4ResetInput(P4_Ctx *ctx, FILE *fp)
 {
 	ctx->input->fp = fp;
@@ -2589,7 +2589,6 @@ static sig_map signalmap[] = {
 };
 
 JMP_BUF sig_break_glass;
-static P4_Ctx *ctx_main;
 
 static void
 sig_int(int signum)
@@ -2644,6 +2643,8 @@ static const char usage[] =
 ;
 
 static char *flags = "b:c:d:f:i:m:r:TV";
+
+static P4_Ctx *ctx_main;
 
 static P4_Options options = {
 	.ds_size = P4_DATA_STACK_SIZE,

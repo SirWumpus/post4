@@ -24,6 +24,7 @@ bindir 		= @bindir@
 libdir 		= @libdir@/post4
 
 PROG		= ${top_srcdir}/src/post4$E
+LIBNAME		= ${top_srcdir}/src/libpost4$A
 POST4_PATH	= POST4_PATH='.:${top_srcdir}/src:${top_srcdir}/examples'
 
 # Override from the command-line, eg. make DBG='-O0 -g' or make DBG='-fno-ident -flto'
@@ -63,6 +64,7 @@ $O$E :
 
 CHDR	:= config.h aline.h ansiterm.h post4.h
 CSRC	:= post4.c hooks.c aline.c
+OBJS	:= post4$O hooks$O aline$O
 
 all: build
 
@@ -70,7 +72,7 @@ build: title post4$E
 
 clean : title
 	-rm -f *.o *.obj *.i *.gch *.map *.tds *.TR2 *.stackdump *.core *.log
-	-rm -f a.out$E aline$E post4$E
+	-rm -f a.out$E aline$E post4$E libpost4$A
 
 clobber distclean: clean
 	-rm -f config.h config.h.in makefile
@@ -94,10 +96,14 @@ aline$O : config.h ansiterm.h aline.h aline.c
 
 hooks$O : config.h post4.h hooks.c
 
-post4$O : ${CHDR} ${CSRC}
+post4$O : ${CHDR} post4.c
+	${CC} ${CFLAGS} -fPIC -DP4_BUILT="\"${BUILT}\"" -c post4.c
 
-post4$E : ${CHDR} ${CSRC}
-	${CC} ${CFLAGS} ${LDFLAGS} -DTEST -DP4_BUILT="\"${BUILT}\"" -o $@ ${CSRC} ${LIBS}
+libpost4$A : ${OBJS}
+	ar rcs $@ ${OBJS}
+
+post4$E : ${CHDR} ${CSRC} main.c
+	${CC} ${CFLAGS} ${LDFLAGS} -DP4_BUILT="\"${BUILT}\"" -o $@ main.c ${CSRC} ${LIBS}
 
 test tests: post4$E
 	cd ../test && ${MAKE} $@
