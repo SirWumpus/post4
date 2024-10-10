@@ -18,14 +18,15 @@ extern "C" {
 #define _DEFAULT_SOURCE			1
 #define _XOPEN_SOURCE			700
 
-#ifdef __NetBSD__
-# define _NETBSD_SOURCE			1
-#else
-# define ECHOCTL			0
-#endif
-
 #ifdef __APPLE__
 # define _DARWIN_C_SOURCE 		1
+#endif
+
+#ifdef __NetBSD__
+# define _NETBSD_SOURCE			1
+#endif
+#ifndef ECHOCTL
+# define ECHOCTL			0
 #endif
 
 #include "config.h"

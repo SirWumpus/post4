@@ -108,12 +108,13 @@ alineGetRowCol(int pos[2])
 
 /* Simple tty line editor with last line history.
  *
- * \a		Get last input line.
- * ERASE \b \?	Erase character before the cursor.
- * WERASE	Erase previous whitespace delimited word.
- * KILL		Erase entire line.
- * \r \n	End input line.
- * EOF		End of file.
+ *      up      ^K      Edit the previous input line.
+ *      left    right   Cursor left or right within line.
+ *      ERASE   ^H  ^?  Erase character before the cursor.
+ *      WERASE          Erase the previous white space delimited word.
+ *      KILL            Erase current line input.
+ *      EOL     ^M  ^J  Newline submits input line.
+ *      EOF             End of file.
  *
  * @return
  *	Length of input read or EOF.

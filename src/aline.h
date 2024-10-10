@@ -13,10 +13,24 @@
 extern "C" {
 #endif
 
+#define _DEFAULT_SOURCE			1
+#define _XOPEN_SOURCE			700
+
+#ifdef __APPLE__
+# define _DARWIN_C_SOURCE 		1
+#endif
+
+#ifdef __NetBSD__
+# define _NETBSD_SOURCE			1
+#endif
+#ifndef ECHOCTL
+# define ECHOCTL			0
+#endif
+
 #include "config.h"
+#include "ansiterm.h"
 
 #include <stdio.h>
-#include "ansiterm.h"
 
 #ifdef HAVE_TERMIOS_H
 # include <termios.h>
@@ -42,12 +56,13 @@ extern int alineSetMode(int mode);
 
 /* Simple tty line editor with last line history.
  *
- * \a		Get last input line.
- * ERASE \b \?	Erase character before the cursor.
- * WERASE	Erase previous whitespace delimited word.
- * KILL		Erase entire line.
- * \r \n	End input line.
- * EOF		End of file.
+ *      up      ^K      Edit the previous input line.
+ *      left    right   Cursor left or right within line.
+ *      ERASE   ^H  ^?  Erase character before the cursor.
+ *      WERASE          Erase the previous white space delimited word.
+ *      KILL            Erase current line input.
+ *      EOL     ^M  ^J  Newline submits input line.
+ *      EOF             End of file.
  *
  * @return
  *	Zero (0) on success, EOF, or some errno value.
