@@ -972,9 +972,9 @@ p4Trace(P4_Ctx *ctx, P4_Xt xt, P4_Cell *ip)
 		if (xt->poppush & 0xF0F0F0) {
 			p4TraceStack(ctx, &ctx->ds, P4_DS_CAN_POP(xt), "\t");
 #ifdef HAVE_MATH_H
-			p4TraceStack(ctx, &ctx->fs, P4_FS_CAN_POP(xt), "/");
+			p4TraceStack(ctx, &ctx->fs, P4_FS_CAN_POP(xt), " ; ");
 #endif
-			p4TraceStack(ctx, &ctx->rs, P4_RS_CAN_POP(xt), "/");
+			p4TraceStack(ctx, &ctx->rs, P4_RS_CAN_POP(xt), " ; ");
 		}
 		(void) fputs(crlf, STDERR);
 	}
@@ -2297,13 +2297,13 @@ _to_float:	errno = 0;
 		// (F: f -- )
 _f_dot:		P4STACKISEMPTY(ctx, &ctx->fs, P4_THROW_FS_UNDER);
 		w = P4_POP(ctx->P4_FLOAT_STACK);
-		(void) printf(P4_FLT_PRE_FMT, (int) ctx->precision, w.f);
+		(void) printf(P4_FLT_PRE_FMT" ", (int) ctx->precision, w.f);
 		NEXT;
 
 		// (F: f -- )
 _f_sdot:	P4STACKISEMPTY(ctx, &ctx->fs, P4_THROW_FS_UNDER);
 		w = P4_POP(ctx->P4_FLOAT_STACK);
-		(void) printf(P4_SCI_PRE_FMT, (int) ctx->precision, w.f);
+		(void) printf(P4_SCI_PRE_FMT" ", (int) ctx->precision, w.f);
 		NEXT;
 
 		// (F: f -- )(S: caddr u -- n sign ok )

@@ -967,12 +967,7 @@ DEFER fsp!
 : 2LITERAL SWAP POSTPONE LITERAL POSTPONE LITERAL ; IMMEDIATE compile-only
 
 \ (S: x*i i -- )
-: n,
-	DUP ,						\ S: x1 .. xi i
-	BEGIN ?DUP WHILE			\ S: x1 .. xi i
-		1- SWAP ,				\ S: x1 .. xi' i'
-	REPEAT
-;
+: n, DUP , BEGIN SWAP , 1- DUP whilst DROP ; $10 _pp!
 
 \ (S: aaddr -- x*i )
 : n@
@@ -983,7 +978,7 @@ DEFER fsp!
 		DUP @ SWAP CELL-		\ S: xi ... addr" 		R: i'
 		R>						\ S: xi ... addr" i'
 	REPEAT DROP					\ S: x*i
-;
+; $10 _pp!
 
 \ (S: x*i aaddr -- )
 : n!
@@ -993,7 +988,7 @@ DEFER fsp!
 		CELL+ TUCK !			\ S: x1 .. xi' addr' 	R: i'
 		R>						\ S: x1 .. xi' i'
 	REPEAT DROP					\ S: --
-;
+; $10 _pp!
 
 \	value VALUE name
 \
@@ -1011,7 +1006,7 @@ DEFER fsp!
 \ @see
 \	TO
 \
-: VALUE CREATE 1 n, DOES> n@ ;
+: VALUE CREATE 1 n, DOES> n@ ; $10 _pp!
 
 \	lo hi 2VALUE name
 \
@@ -1020,7 +1015,7 @@ DEFER fsp!
 \ @see
 \	TO
 \
-: 2VALUE CREATE 2 n, DOES> n@ ;
+: 2VALUE CREATE 2 n, DOES> n@ ; $20 _pp!
 
 \ ... x TO name ...
 \
@@ -1041,10 +1036,10 @@ DEFER fsp!
 		EXIT
 	THEN
 	n!
-; IMMEDIATE
+; IMMEDIATE $10 _pp!
 
 \ ( -- caddr u )
-: source-remaining SOURCE >IN @ /STRING ;
+: source-remaining SOURCE >IN @ /STRING ; $02 _pp!
 
 \ ( delim -- bool )
 \
@@ -2498,7 +2493,11 @@ MIN-N CONSTANT _sign_mask
 : $#. DUP -65535 65536 WITHIN IF #. ELSE $. THEN ; $10 _pp!
 
 \ (S: addr u -- )
-: .cells OVER + SWAP BEGIN 2DUP > WHILE DUP @ $#. CELL+ REPEAT 2DROP ; $20 _pp!
+: .cells
+	OVER + SWAP BEGIN 2DUP > WHILE
+		DUP @ $#. CELL+
+	REPEAT 2DROP
+; $20 _pp!
 
 \ (S: end beg -- )
 : _dump_chars
@@ -2572,15 +2571,18 @@ MIN-N CONSTANT _sign_mask
 	ENDCASE								\ S: ascii
 ; $11 _pp!
 
+: @+ ( addr -- addr' x ) DUP CELL+ SWAP @ ;
+: C@+ ( addr -- addr' x ) DUP CHAR+ SWAP C@ ;
+
 \ (S: caddr u -- )
 : \type
 	OVER + SWAP							\ S: b a
 	BEGIN 2DUP > WHILE					\ S: b a
-		DUP C@ DUP _literal_backspace	\ S: b a c e
-		?DUP IF							\ S: b a c
-			NIP '\' EMIT				\ S: b a e
+		C@+ DUP _literal_backspace		\ S: b a' c e
+		?DUP IF							\ S: b a' c
+			NIP '\' EMIT				\ S: b a' e
 		THEN
-		EMIT CHAR+						\ S: b a'
+		EMIT 							\ S: b a'
 	REPEAT 2DROP
 ; $20 _pp!
 
@@ -2590,7 +2592,7 @@ MIN-N CONSTANT _sign_mask
 	DUP xt? DUP IF 						\ S: ip' x b1
 		DROP DUP NAME>STRING NIP 0<> 	\ S: ip' x b2
 	THEN IF								\ S: ip' x
-		S" [ ' " TYPE NAME>STRING TYPE S"	] LITERAL " TYPE
+		S" [ ' " TYPE NAME>STRING TYPE S\" \s] LITERAL " TYPE
 	ELSE
 		DUP 32 = IF
 			#. S" ( '\s' ) " TYPE
@@ -2611,7 +2613,7 @@ MIN-N CONSTANT _sign_mask
 	SWAP CHAR+ SWAP 2DUP				\ S: ip2 u a u
 	\type								\ S: ip2 u
 	S\" \" " TYPE						\ S: ip2 u
-	+ ALIGNED							\ S: ip3
+	CHARS + ALIGNED	CELL-				\ S: ip3
 ; $11 _pp!
 
 \ (S: ip -- ip' )
@@ -2621,7 +2623,7 @@ MIN-N CONSTANT _sign_mask
 	SWAP CELL+ SWAP 2DUP				\ S: ip2 u ip2 u
 	\type								\ S: ip2 u
 	S\" \" " TYPE						\ S: ip2 u
-	+ ALIGNED							\ S: ip3
+	CHAR+ CHARS + ALIGNED CELL-			\ S: ip3
 ; $11 _pp!
 
 [DEFINED] _fs [IF]
@@ -2653,14 +2655,14 @@ MIN-N CONSTANT _sign_mask
 		DROP S" :NONAME " TYPE
 	THEN
 	DUP w.data @ BEGIN					\ S: xt ip
-		DUP				@ ['] _; <>		\ S: xt ip b1
+		DUP	@ ['] _; <>		\ S: xt ip b1
 		OVER CELL+ @ ['] _nop =			\ S: xt ip b2
 	OR WHILE							\ S: xt ip
 		DUP @ CASE						\ S: xt ip wp
 			['] LIT	OF _see_lit ENDOF
 			['] slit OF _see_slit ENDOF
 			['] clit OF _see_clit ENDOF
-[DEFINED] _fs [IF]
+[DEFINED] flit [IF]
 			['] flit OF _see_flit ENDOF
 [THEN]
 			['] _branch OF _see_bra ENDOF
@@ -2679,18 +2681,28 @@ MIN-N CONSTANT _sign_mask
 \ Test: SEE TRUE 123 VALUE x SEE x
 : _see_dodoes
 	\ Dump words' data.
-	DUP w.data @ CELL+ OVER w.ndata @ /CELL / 2 - .cells
+	DUP w.data @	 					\ S: xt a
+	OVER w.ndata @						\ S: xt a u
 	\ data[0] = pointer to DOES>, data[n-1] = xt of defining word,
-	\ see _does.	data[1..n-1] is the actual data.
-	DUP w.data @ OVER w.ndata @ + cell- @ NAME>STRING TYPE SPACE
-	NAME>STRING TYPE CR
+	\ see _does.  data[1..n-1] is the actual data.
+	2DUP + cell- @						\ S: xt a u xt'
+    DUP >R CASE							\ S: xt a u' xt'	R: xt'
+		['] VALUE OF DROP CELL+ CELL+ /cell .cells ENDOF
+		['] 2VALUE OF DROP CELL+ CELL+ DUP CELL+ @ $#. @ $#. ENDOF
+[DEFINED] FVALUE [IF]
+		['] FVALUE OF DROP CELL+ CELL+ F@ F. ENDOF
+[THEN]
+		-rot 2 CELLS - SWAP CELL+ SWAP .cells
+	ENDCASE
+	R> NAME>STRING TYPE SPACE			\ S: xt				R:
+	NAME>STRING TYPE CR					\ S:
 ; $10 _pp!
 
 \ (S: xt -- )
 \ Test: CREATE y 1 , 2 , 3 , SEE y
 : _see_data
 	S" CREATE " TYPE DUP NAME>STRING TYPE
-	S"	( size " TYPE DUP w.ndata @ CELL- DUP >R #. S\" )" TYPE CR
+	S\" \s( size " TYPE DUP w.ndata @ CELL- DUP >R #. S\" )" TYPE CR
 	w.data @ CELL+ R> DUMP
 ; $10 _pp!
 
@@ -2838,8 +2850,6 @@ FORTH-WORDLIST SET-CURRENT
 		DUP w.prev @ SWAP _free_word	\ S: stop word'
 	REPEAT 2DROP
 ;
-
-: @+ ( addr -- addr' x ) DUP CELL+ SWAP @ ;
 
 : MARKER ( <spaces>name -- )
 	\ Collect head of all word lists BEFORE creating the marker.
