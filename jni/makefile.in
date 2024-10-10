@@ -101,7 +101,7 @@ Post4.jar: build
 	rm -rf post4
 
 ${LIBNAME}: Post4$O ../src/libpost4$A
-	${CC} ${CFLAGS} -no-pie -shared -static -o $@ Post4$O ../src/libpost4$A ${LIBS}
+	${CC} ${CFLAGS} -shared -o $@ Post4$O ../src/libpost4$A ${LIBS}
 
 ../src/libpost4$A : ../src/*.h ../src/*.c
 	cd ../src; ${MAKE} libpost4$A
@@ -114,6 +114,9 @@ test: build
 
 testjar: Post4.jar
 	POST4_PATH="${POST4_PATH}" java -Djava.library.path="$${POST4_PATH}" -jar Post4.jar
+
+testbye: build
+	echo bye | POST4_PATH="${POST4_PATH}" java -Djava.library.path="$${POST4_PATH}" -cp ../.. ${MAIN}
 
 cygtest: build
 	cp ${LIBNAME} post4jni.dll
