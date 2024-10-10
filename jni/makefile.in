@@ -12,7 +12,7 @@ C = .class
 J = .java
 L = .so
 O = .@OBJEXT@
-.SUFFIXES : .c $J .i $O $C $L $A .jar
+.SUFFIXES : .c $J .i $O $C $A $L .jar
 
 LIBNAME		= libpost4jni$L
 MAIN		= post4.jni.Post4
@@ -71,10 +71,10 @@ $O$E :
 all: build
 
 clean: title
-	-rm *.i *$O *.class *.core *.log
+	-rm *.i *$O *.class *.core *.log *$L *$A *.jar
 
 clobber distclean: clean
-	-rm -rf *$L *.so *.dll *$A *.jar makefile ./post4
+	-rm makefile
 
 build: title ${LIBNAME} Post4Exception$C Post4Options$C Post4Stacks$C Post4$C
 
@@ -101,7 +101,7 @@ Post4.jar: build
 	rm -rf post4
 
 ${LIBNAME}: Post4$O ../src/libpost4$A
-	${CC} ${CFLAGS} -shared -static -o $@ Post4$O ../src/libpost4$A ${LIBS}
+	${CC} ${CFLAGS} -no-pie -shared -static -o $@ Post4$O ../src/libpost4$A ${LIBS}
 
 ../src/libpost4$A : ../src/*.h ../src/*.c
 	cd ../src; ${MAKE} libpost4$A
