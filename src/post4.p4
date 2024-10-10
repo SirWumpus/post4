@@ -2698,7 +2698,7 @@ MIN-N CONSTANT _sign_mask
 \ Test: SEE LIT SEE CREATE
 : _see_internal
 	S" : " TYPE DUP NAME>STRING TYPE
-	S"	( code " TYPE w.code @ $. S\" ) ;" TYPE CR
+	S\" \s( code " TYPE w.code @ $. S" ) ;" TYPE CR
 ; $10 _pp!
 
 \ Used to extract the default code field for a CREATEd word.

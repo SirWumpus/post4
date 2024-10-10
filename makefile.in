@@ -101,7 +101,7 @@ title :
 	@echo
 
 _clean :
-	rm -rf autom4te.cache configure.lineno core *.core core.*
+	rm -rf autom4te.cache configure.lineno core *.core core.* a.out
 	find . \( -name 'tmp.*' -o -name '*.core' \) -exec rm -f \{\} \;
 
 _distclean : _clean
