@@ -1,10 +1,12 @@
 *.bak
 #*.blk
+*.a
 *.o
 *.so
 *.dll
 *.obj
 *.exe
+*.lib
 *.tds
 *.stackdump
 *.core
