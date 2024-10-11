@@ -39,6 +39,8 @@ isClassClass(JNIEnv *env, jobject obj)
 	return is_class;
 }
 
+#ifdef HMM
+
 #ifdef NDEBUG
 # define getClassName(e, o)	(NULL)
 # define prints(e, s)
@@ -63,6 +65,8 @@ prints(JNIEnv *env, jstring jstr)
 }
 #endif
 
+#endif /* HMM */
+
 static jobject
 post4Exception(JNIEnv *env, int code)
 {
@@ -73,6 +77,8 @@ post4Exception(JNIEnv *env, int code)
 	return p4err;
 }
 
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wunused-parameter"
 JNIEXPORT void JNICALL
 Java_post4_jni_Post4_p4Init(JNIEnv *env, jobject self)
 {
@@ -91,6 +97,7 @@ Java_post4_jni_Post4_p4Free(JNIEnv *env, jobject self, jlong xtc)
 	}
 	p4Free(ctx);
 }
+#pragma GCC diagnostic pop
 
 static jobject
 getStacks(JNIEnv *env, P4_Ctx *ctx)
@@ -312,7 +319,7 @@ static void
 jUnboxArray(P4_Ctx *ctx)
 {
 	JNIEnv *env = ctx->jenv;
-	size_t ds_depth = P4_LENGTH(ctx->ds);
+	ptrdiff_t ds_depth = P4_LENGTH(ctx->ds);
 	jarray arr = (jarray) P4_POP(ctx->ds).v;
 	jsize size = (*env)->GetArrayLength(env, arr);
 	/* Enough stack space to hold array items? */
@@ -619,7 +626,7 @@ jField(P4_Ctx *ctx)
 	int is_static = 0;
 	JNIEnv *env = ctx->jenv;
 
-	size_t len = P4_POP(ctx->ds).z;
+	P4_DROP(ctx->ds, 1);		/* Ignore s */
 	char *sig = P4_POP(ctx->ds).s;
 	P4_DROP(ctx->ds, 1);
 	char *field = P4_POP(ctx->ds).s;
@@ -729,7 +736,7 @@ jSetField(P4_Ctx *ctx)
 	int is_static = 0;
 	JNIEnv *env = ctx->jenv;
 
-	size_t len = P4_POP(ctx->ds).z;
+	P4_DROP(ctx->ds, 1);		/* Ignore s */
 	char *sig = P4_POP(ctx->ds).s;
 	P4_DROP(ctx->ds, 1);
 	char *field = P4_POP(ctx->ds).s;
@@ -853,6 +860,8 @@ static P4_Hook jHooks[] = {
 };
 #endif
 
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wunused-parameter"
 JNIEXPORT jlong JNICALL
 Java_post4_jni_Post4_p4Create(JNIEnv *env, jobject self, jobject opts)
 {
@@ -919,3 +928,4 @@ Java_post4_jni_Post4_p4Create(JNIEnv *env, jobject self, jobject opts)
 	// https://stackoverflow.com/questions/1632367/passing-pointers-between-c-and-java-through-jni
 	return (jlong) ctx;
 }
+#pragma GCC diagnostic pop

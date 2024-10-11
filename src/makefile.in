@@ -34,8 +34,12 @@ CC		= @CC@
 CC_E		= @CC_E@
 CC_O		= @CC_O@
 CPPFLAGS	= @CPPFLAGS@
-CWARNINGS	= -Wno-unused-label -funsigned-char -Wno-unused-const-variable
-CFLAGS		= -Os -std=c11 ${CPPFLAGS} ${CWARNINGS} ${DBG}
+
+# Note do not use -pedantic as it generates way too many warnings.
+CWARNINGS	= -Wall -Wextra -Wno-char-subscripts -Wno-unused-label \
+		-Wno-unused-const-variable -Wno-missing-field-initializers
+
+CFLAGS		= -Os -std=c11 -funsigned-char ${CPPFLAGS} ${CWARNINGS} ${DBG}
 LDFLAGS		= @LDFLAGS@
 LIBS		= @LIBS@
 

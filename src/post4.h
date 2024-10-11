@@ -361,7 +361,7 @@ struct p4_word {
 	/* Header */
 	P4_Word *	prev;		/* Previous word definition. */
 	P4_Size		length;
-	P4_Char *	name;
+	char *		name;
 	P4_Uint		bits;
 
 #define P4_BIT_IMM			0x0001
@@ -408,7 +408,7 @@ struct p4_word {
 # define P4_WORD(name, code, bits, pp)	{ NULL, STRLEN(name), name, bits, pp, code, 0 }
 
 typedef struct {
-	P4_Size		size;		/* Size of table in cells. */
+	P4_Int		size;		/* Size of table in cells. */
 	P4_Cell *	top;		/* Last element in the stack / array. */
 	P4_Cell *	base;		/* Base of array; might be reallocated. */
 } P4_Array, P4_Stack;
@@ -419,13 +419,13 @@ typedef struct {
 # define P4_DROPTOP(stack)		(*--(stack).top)
 # define P4_POP(stack)			(*(stack).top--)
 # define P4_PUSH(stack, x)		(*++(stack).top = (P4_Cell)(x))
-# define P4_LENGTH(stack)		((stack).top + 1 - (stack).base)
+# define P4_LENGTH(stack)		((ptrdiff_t)((stack).top + 1 - (stack).base))
 # define P4_DROP(stack, n)		((stack).top -= (n))
 # define P4_SET(stack, n)		((stack).top = (stack).base + (n) - 1)
 # define P4_RESET(stack)		P4_SET(stack, 0)
 # define P4_GUARD_CELLS			4
 
-# define P4_PLENGTH(stk)		((stk)->top + 1 - (stk)->base)
+# define P4_PLENGTH(stk)		((ptrdiff_t)((stk)->top + 1 - (stk)->base))
 # define P4_PSET(stk, n)		((stk)->top = (stk)->base + (n) - 1)
 # define P4_PRESET(stk)			P4_PSET(stk, 0)
 
@@ -698,7 +698,7 @@ extern int p4CharLiteral(int ch);
  */
 extern void p4StrRev(P4_Char *s, P4_Size length);
 
-extern int p4StrNum(P4_String str, P4_Uint base, P4_Cell *out, int *is_float);
+extern int p4StrNum(P4_String str, int base, P4_Cell *out, int *is_float);
 
 extern int p4Accept(P4_Input *source, char *buffer, size_t size);
 

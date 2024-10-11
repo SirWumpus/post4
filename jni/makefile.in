@@ -35,7 +35,8 @@ CC		= @CC@
 CC_E		= @CC_E@
 CC_O		= @CC_O@
 CPPFLAGS	= @CPPFLAGS@
-CFLAGS		= -O2 @JNI_CFLAGS@ ${DBG}
+CWARNINGS	= -Wall -Wextra
+CFLAGS		= -O2 -std=c11 @JNI_CFLAGS@ ${CWARNINGS} ${DBG}
 LDFLAGS		= @LDFLAGS@
 JFLAGS		= -Xlint:deprecation @JFLAGS@
 LIBS		= @LIBS@

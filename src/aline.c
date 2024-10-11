@@ -42,6 +42,8 @@ alineSetMode(int mode)
 	return prev;
 }
 
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wunused-parameter"
 static void
 sig_winch(int signum)
 {
@@ -55,6 +57,7 @@ sig_winch(int signum)
 	}
 #endif
 }
+#pragma GCC diagnostic pop
 
 void
 alineFini(void)
@@ -122,8 +125,8 @@ alineGetRowCol(int pos[2])
 int
 alineInput(FILE *fp, const char *prompt, char *buf, size_t size)
 {
-	unsigned char ch;
-	int pcol, i, pos[2];
+	unsigned i;
+	int ch, pcol, pos[2];
 
 	if (buf == NULL || size < 1) {
 		return EOF;
@@ -196,7 +199,7 @@ alineInput(FILE *fp, const char *prompt, char *buf, size_t size)
 			return EOF;
 		} else if (i < size) {
 			(void) memmove(buf+i+1, buf+i, strlen(buf+i)+1);
-			buf[i++] = ch;
+			buf[i++] = (unsigned char) ch;
 		}
 	}
 	if (0 < i) {

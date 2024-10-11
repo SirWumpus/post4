@@ -240,9 +240,9 @@ p4Base36(int digit)
 }
 
 int
-p4StrNum(P4_String str, P4_Uint base, P4_Cell *out, int *is_float)
+p4StrNum(P4_String str, int base, P4_Cell *out, int *is_float)
 {
-	int offset = 0;
+	size_t offset = 0;
 	*is_float = 0;
 	if (str.length == 0) {
 		return -1;
@@ -538,9 +538,9 @@ p4LeadZeroBits(P4_Uint x)
 #  endif
 # endif
 	/* Count the ones */
-	x -= x >> 1 & (P4_Uint)0x5555555555555555L;
-	x = (x >> 2 & (P4_Uint)0x3333333333333333L) + (x & (P4_Uint)0x3333333333333333L);
-	x = (x >> 4) + x & (P4_Uint)0x0f0f0f0f0f0f0f0fL;
+	x -= (x >> 1) & (P4_Uint)0x5555555555555555L;
+	x = ((x >> 2) & (P4_Uint)0x3333333333333333L) + (x & (P4_Uint)0x3333333333333333L);
+	x = ((x >> 4) + x) & (P4_Uint)0x0f0f0f0f0f0f0f0fL;
 	x += x >> 8;
 # if P4_UINT_BITS >= 32
 	x += x >> 16;
@@ -773,7 +773,7 @@ p4FindNameIn(P4_Ctx *ctx, const char *caddr, P4_Size length, unsigned wid)
 	for (P4_Word *word = ctx->lists[wid-1]; word != NULL; word = word->prev) {
 		if (!P4_WORD_IS_HIDDEN(word)
 		&& word->length > 0 && word->length == length
-		&& strncasecmp(word->name, (const char *)caddr, length) == 0) {
+		&& strncasecmp(word->name, caddr, length) == 0) {
 			return word;
 		}
 	}
@@ -927,17 +927,18 @@ p4Bp(P4_Ctx *ctx)
 	P4_Input *input = ctx->input;
 	int has_nl = input->buffer[input->length-(0 < input->length)] == '\n';
 	(void) fprintf(STDERR, "\r\n>> ");
-	for (int i = 0; i < input->length-has_nl; i++) {
+	for (unsigned i = 0; i < input->length-has_nl; i++) {
 		(void) fputc(input->buffer[i] == '\t' ? ' ' : input->buffer[i], STDERR);
 	}
 	(void) fprintf(STDERR, "\r\n>> %*c\r\n", (int)input->offset, '^' );
 }
 
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wunused-parameter"
 static void
 p4TraceStack(P4_Ctx *ctx, P4_Stack *stk, int u, const char *prefix)
 {
 	P4_Cell w;
-	unsigned i;
 	int is_small;
 
 	(void) fprintf(STDERR, "%s%s", prefix, 0 < u ? "" : "-");
@@ -947,6 +948,7 @@ p4TraceStack(P4_Ctx *ctx, P4_Stack *stk, int u, const char *prefix)
 		(void) fprintf(STDERR, is_small ? P4_INT_FMT"%s" : P4_HEX_FMT"%s", w.n, 1 < u ? " " : "");
 	}
 }
+#pragma GCC diagnostic pop
 
 static void
 p4Trace(P4_Ctx *ctx, P4_Xt xt, P4_Cell *ip)
@@ -1027,7 +1029,6 @@ p4StackIsFull(P4_Ctx *ctx, P4_Stack *stack, int over)
 static void
 p4StackGuard(P4_Ctx *ctx, P4_Stack *stack, int over, int under)
 {
-	int i;
 	ptrdiff_t length = P4_PLENGTH(stack);
 	if (length < 0 || stack->base[-1].u != P4_SENTINEL) {
 		p4Bp(ctx);
@@ -1060,6 +1061,9 @@ p4Repl(P4_Ctx *ctx, int thrown)
 	P4_String str;
 	P4_Cell w, x, y, *ip;
 
+#pragma GCC diagnostic push
+/* Ignore pedantic warning about "address of a label", required extension. */
+#pragma GCC diagnostic ignored "-Wpedantic"
 	static P4_Word words[] = {
 		P4_WORD("_nop",		&&_nop,		0, 0x00),	//_p4
 #define w_nop		words[0]
@@ -1250,6 +1254,7 @@ p4Repl(P4_Ctx *ctx, int thrown)
 
 		P4_WORD(NULL,		NULL,		0, 0),
 	};
+#pragma GCC diagnostic pop
 
 	if (p4_builtin_words == NULL) {
 		/* Link up the base dictionary. */
@@ -1268,6 +1273,9 @@ p4Repl(P4_Ctx *ctx, int thrown)
 #define THROW(e)	{ if (p4_throw != NULL) { word = p4_throw; \
 				P4_PUSH(ctx->ds, (P4_Int)(e)); goto _forth; } THROWHARD(e); }
 
+#pragma GCC diagnostic push
+/* Ignore pedantic warning about "address of a label", required extension. */
+#pragma GCC diagnostic ignored "-Wpedantic"
 	static const P4_Word w_inter_loop = P4_WORD("_inter_loop", &&_inter_loop, P4_BIT_HIDDEN, 0x00);
 	static const P4_Word w_halt = P4_WORD("_halt", &&_halt, P4_BIT_HIDDEN, 0x00);
 	static const P4_Word w_ok = P4_WORD("_ok", &&_ok, P4_BIT_HIDDEN, 0x00);
@@ -1282,6 +1290,7 @@ p4Repl(P4_Ctx *ctx, int thrown)
 	 * into the C driven REPL.
 	 */
 	static P4_Cell exec[] = { { 0 }, {.cw = &w_inter_loop} };
+#pragma GCC diagnostic pop
 
 	SETJMP_PUSH(ctx->longjmp);
 	rc = SETJMP(ctx->longjmp);
@@ -1390,17 +1399,18 @@ _inter_loop:	while (ctx->input->offset < ctx->input->length) {
 						p4WordAppend(ctx, (P4_Cell) word);
 						p4WordAppend(ctx, x);
 					} else {
+						p4StackIsFull(ctx, &ctx->P4_FLOAT_STACK, P4_THROW_FS_OVER);
 						P4_PUSH(ctx->P4_FLOAT_STACK, x);
+//						p4StackGuard(ctx, &ctx->fs, P4_THROW_FS_OVER, P4_THROW_FS_UNDER);
 					}
-					p4StackGuards(ctx);
 				} else
 #endif
 				if (ctx->state == P4_STATE_COMPILE) {
 					p4WordAppend(ctx, (P4_Cell) &w_lit);
 					p4WordAppend(ctx, x);
 				} else {
+					p4StackIsFull(ctx, &ctx->ds, P4_THROW_DS_OVER);
 					P4_PUSH(ctx->ds, x);
-					p4StackGuards(ctx);
 				}
 			} else if (ctx->state == P4_STATE_INTERPRET && P4_WORD_IS(word, P4_BIT_COMPILE)) {
 				THROW(P4_THROW_COMPILE_ONLY);
@@ -1482,13 +1492,19 @@ _branch:	w = *ip;
 		// ( flag -- )
 _branchz:	w = *ip;
 		P4_DROP(ctx->ds, 1);
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wsign-compare"
 		ip = (P4_Cell *)((P4_Char *) ip + (x.u == 0 ? w.n : P4_CELL));
+#pragma GCC diagnostic pop
 		NEXT;
 
 		// ( flag -- )
 _branchnz:	w = *ip;
 		P4_DROP(ctx->ds, 1);
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wsign-compare"
 		ip = (P4_Cell *)((P4_Char *) ip + (x.u != 0 ? w.n : P4_CELL));
+#pragma GCC diagnostic pop
 		NEXT;
 
 #ifdef HAVE_HOOKS
@@ -1815,8 +1831,8 @@ _drop:		P4STACKISEMPTY(ctx, &ctx->ds, P4_THROW_DS_UNDER);
 
 		// ( x -- x x )
 _dup:		P4STACKISEMPTY(ctx, &ctx->ds, P4_THROW_DS_UNDER);
-		P4_PUSH(ctx->ds, x);
 		P4STACKISFULL(ctx, &ctx->ds, P4_THROW_DS_OVER);
+		P4_PUSH(ctx->ds, x);
 		NEXT;
 
 		// ( xu ... x1 x0 u -- xu ... x1 x0 xu )
@@ -2179,7 +2195,10 @@ _fa_rline:	errno = 0;
 		(void) fgets(w.s, (int) x.n, fp);
 		x.z = strlen(w.s);
 		if (0 < x.z && w.s[x.z-1] == '\n') {
-			x.z -= 0 < --x.z && w.s[x.z-1] == '\r';
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wsequence-point"
+			x.z -= (0 < --x.z && w.s[x.z-1] == '\r');
+#pragma GCC diagnostic pop
 		}
 		P4_PUSH(ctx->ds, x.z);
 		P4_PUSH(ctx->ds, P4_BOOL(!eof));
@@ -2288,7 +2307,7 @@ _rs_to_fs:	P4STACKISEMPTY(ctx, &ctx->rs, P4_THROW_RS_UNDER);
 _to_float:	errno = 0;
 		w = P4_DROPTOP(ctx->ds);
 		y.f = strtod((const char *)w.s, &stop);
-		P4_PUSH(ctx->ds, (P4_Uint) P4_BOOL(errno == 0 && stop - (char *)w.s == x.u));
+		P4_PUSH(ctx->ds, (P4_Uint) P4_BOOL(errno == 0 && stop - (char *)w.s == x.n));
 		if (P4_TOP(ctx->ds).n == P4_TRUE) {
 			P4_PUSH(ctx->P4_FLOAT_STACK, y);
 		}

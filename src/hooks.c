@@ -28,7 +28,7 @@ p4System(P4_Ctx *ctx)
 static void
 p4SystemString(P4_Ctx *ctx)
 {
-	P4_POP(ctx->ds);
+	P4_DROP(ctx->ds, 1);	/* Ignore u */
 	char *s = P4_TOP(ctx->ds).s;
 	// Assumes caddr NUL terminated.
 	P4_TOP(ctx->ds).n = system(s);
