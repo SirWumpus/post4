@@ -360,7 +360,8 @@ union p4_cell {
 struct p4_word {
 	/* Header */
 	P4_Word *	prev;		/* Previous word definition. */
-	P4_String	name;
+	P4_Size		length;
+	P4_Char *	name;
 	P4_Uint		bits;
 
 #define P4_BIT_IMM			0x0001
@@ -404,7 +405,7 @@ struct p4_word {
 	P4_Cell *	data;		/* Word grows by data cells. */
 };
 
-# define P4_WORD(name, code, bits, pp)	{ NULL, { STRLEN(name), name }, bits, pp, code, 0 }
+# define P4_WORD(name, code, bits, pp)	{ NULL, STRLEN(name), name, bits, pp, code, 0 }
 
 typedef struct {
 	P4_Size		size;		/* Size of table in cells. */

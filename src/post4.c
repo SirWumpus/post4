@@ -705,7 +705,7 @@ void
 p4WordFree(P4_Word *word)
 {
 	if (word != NULL) {
-		free(word->name.string);
+		free(word->name);
 		free(word);
 	}
 }
@@ -737,10 +737,10 @@ p4WordCreate(P4_Ctx *ctx, const char *name, size_t length, P4_Code code)
 	if ((word = calloc(1, sizeof (*word))) == NULL) {
 		goto error0;
 	}
-	if ((word->name.string = strndup(name, length)) == NULL) {
+	if ((word->name = strndup(name, length)) == NULL) {
 		goto error1;
 	}
-	word->name.length = length;
+	word->length = length;
 
 	/* Make sure new word starts with aligned data. */
 	ctx->here = (P4_Char *) P4_CELL_ALIGN(ctx->here);
@@ -772,8 +772,8 @@ p4FindNameIn(P4_Ctx *ctx, const char *caddr, P4_Size length, unsigned wid)
 	}
 	for (P4_Word *word = ctx->lists[wid-1]; word != NULL; word = word->prev) {
 		if (!P4_WORD_IS_HIDDEN(word)
-		&& word->name.length > 0 && word->name.length == length
-		&& strncasecmp(word->name.string, (const char *)caddr, length) == 0) {
+		&& word->length > 0 && word->length == length
+		&& strncasecmp(word->name, (const char *)caddr, length) == 0) {
 			return word;
 		}
 	}
@@ -956,13 +956,13 @@ p4Trace(P4_Ctx *ctx, P4_Xt xt, P4_Cell *ip)
 		(void) fprintf(
 			STDERR, "ds=%-2d fs=%-2d rs=%-2d %*s%s ",
 			(int)P4_LENGTH(ctx->ds), (int)P4_LENGTH(ctx->fs), (int)P4_LENGTH(ctx->rs),
-			2 * (int)ctx->level, "", 0 < xt->name.length ? (char *)xt->name.string : ":NONAME"
+			2 * (int)ctx->level, "", 0 < xt->length ? (char *)xt->name : ":NONAME"
 		);
 #else
 		(void) fprintf(
 			STDERR, "ds=%-2d rs=%-2d %*s%s ",
 			(int)P4_LENGTH(ctx->ds), (int)P4_LENGTH(ctx->rs),
-			2 * (int)ctx->level, "", 0 < xt->name.length ? (char *)xt->name.string : ":NONAME"
+			2 * (int)ctx->level, "", 0 < xt->length ? (char *)xt->name : ":NONAME"
 		);
 #endif
 		for (int i = P4_WD_LIT(xt); 0 < i--; ip++) {
@@ -1316,7 +1316,7 @@ _thrown:
 			word = *ctx->active;
 			(void) fprintf(STDERR,
 				" while compiling %s",
-				word->name.length == 0 ? ":NONAME" : (char *)word->name.string
+				word->length == 0 ? ":NONAME" : (char *)word->name
 			);
 			*ctx->active = word->prev;
 			/* Rewind HERE, does not free ALLOCATE data. */
@@ -1577,7 +1577,7 @@ _do_colon:	ctx->state = P4_STATE_COMPILE;
 			(void) printf("%*s%.*s\r\n", 19+2*(int)ctx->level, "", (int)str.length, str.string);
 		}
 		word = p4WordCreate(ctx, str.string, str.length, &&_enter);
-		if (word->name.length == 0) {
+		if (word->length == 0) {
 			/* :NONAME leaves xt on stack. */
 			P4_PUSH(ctx->ds, word);
 		}

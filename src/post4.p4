@@ -175,14 +175,10 @@ _ds CONSTANT stack-cells $01 _pp! DROP DROP
 \ (C: offset <spaces>name -- offset' ) \ (S: addr -- addr' )
 : FIELD: ALIGNED 1 CELLS +FIELD ;
 
-BEGIN-STRUCTURE p4_string
-	FIELD: str.length
-	FIELD: str.string			\ pointer C string
-END-STRUCTURE
-
 BEGIN-STRUCTURE p4_word
 	FIELD: w.prev				\ pointer previous word
-	p4_string +FIELD w.name
+	FIELD: w.length
+	FIELD: w.name
 	FIELD: w.bits
 	FIELD: w.poppush
 	FIELD: w.code				\ pointer
@@ -1790,7 +1786,7 @@ VARIABLE _str_buf_curr
 \
 \	_ctx		 		\ Post4 machine context pointer
 \	ctx.active @ @		\ pointer to most recent word
-\	w.name str.string @	\ pointer to word name
+\	w.name @			\ pointer to word name
 \	puts				\ write name
 \
 BEGIN-STRUCTURE p4_ctx
@@ -2115,9 +2111,8 @@ VARIABLE SCR
 \ ( nt -- caddr u )
 \
 : NAME>STRING
-		w.name 					\ S: nt
-		DUP str.string @		\ S: nt name
-		SWAP str.length @		\ S: name length
+		DUP w.name @			\ S: nt
+		SWAP w.length @			\ S: name length
 ;
 
 \ Find word ignoring hidden bit.
@@ -2834,7 +2829,7 @@ FORTH-WORDLIST SET-CURRENT
 
 : _free_word ( w -- )
 	?DUP IF
-		DUP w.name str.string @ FREE DROP
+		DUP w.name @ FREE DROP
 		FREE DROP
 	THEN
 ;
