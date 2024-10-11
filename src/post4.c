@@ -1401,7 +1401,6 @@ _inter_loop:	while (ctx->input->offset < ctx->input->length) {
 					} else {
 						p4StackIsFull(ctx, &ctx->P4_FLOAT_STACK, P4_THROW_FS_OVER);
 						P4_PUSH(ctx->P4_FLOAT_STACK, x);
-//						p4StackGuard(ctx, &ctx->fs, P4_THROW_FS_OVER, P4_THROW_FS_UNDER);
 					}
 				} else
 #endif

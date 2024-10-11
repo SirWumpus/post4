@@ -12,8 +12,7 @@ typedef int64_t __int64;
 #endif
 
 #include <jni.h>
-
-#include "../src/post4.h"
+#include <post4.h>
 
 #define POST4_CLASS	"post4/jni/Post4"
 #define ERROR_CLASS	"post4/jni/Post4Exception"
