@@ -11,6 +11,14 @@
 extern "C" {
 #endif
 
+/* Because Linux gcc is a nightmare of stupid feature test macros
+ * that never seem to work when you really want them to shut-up
+ * errors.  Oddly NetBSD gcc doesn't seem to be as annoying.
+ */
+#define _DEFAULT_SOURCE			1
+#define _XOPEN_SOURCE			700
+#define _POSIX_C_SOURCE			200809L
+
 #undef P4_NAME
 #undef P4_MAJOR
 #undef P4_MINOR
@@ -161,9 +169,6 @@ extern "C" {
 #undef HAVE_JMP_BUF
 #undef HAVE_SIGJMP_BUF
 
-#ifdef HAVE_SETJMP_H
-#include <setjmp.h>
-
 #ifdef HAVE_SIGJMP_BUF
 # define JMP_BUF		sigjmp_buf
 # define SETJMP(e)		sigsetjmp(e, 1)
@@ -180,7 +185,6 @@ extern "C" {
 
 #define SETJMP_PUSH(jb)		{ JMP_BUF jb_save; (void) memcpy(&jb_save, jb, sizeof (jb))
 #define SETJMP_POP(jb)		(void) memcpy(jb, &jb_save, sizeof (jb)); }
-#endif
 
 /*
  * Termios

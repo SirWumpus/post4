@@ -64,7 +64,7 @@ Glossary of Words
 Building
 --------
 
-Post4 is written in ISO C11 using only one extension, `Labels As Values`, which is supported by `gcc` and `clang` compilers.  Post4 has been built and tested on [NetBSD](https://netbsd.org/), [Cygwin](https://www.cygwin.com/), [Alpine Linux](https://alpinelinux.org/), and [Rocky Linux](https://rockylinux.org).
+Post4 is written in ISO C17 using only one extension, `Labels As Values`, which is supported by `gcc` and `clang` compilers.  Post4 has been built and tested on [NetBSD](https://netbsd.org/), [Cygwin](https://www.cygwin.com/), [Alpine Linux](https://alpinelinux.org/), and [Rocky Linux](https://rockylinux.org).
 
         $ ./configure --help
         $ ./configure

@@ -39,7 +39,7 @@ CPPFLAGS	= @CPPFLAGS@
 CWARNINGS	= -Wall -Wextra -Wno-char-subscripts -Wno-unused-label \
 		-Wno-unused-const-variable -Wno-missing-field-initializers
 
-CFLAGS		= -Os -std=c11 -funsigned-char ${CPPFLAGS} ${CWARNINGS} ${DBG}
+CFLAGS		= -Os -std=gnu17 -funsigned-char ${CPPFLAGS} ${CWARNINGS} ${DBG}
 LDFLAGS		= @LDFLAGS@
 LIBS		= @LIBS@
 

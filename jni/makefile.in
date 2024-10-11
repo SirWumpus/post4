@@ -36,7 +36,7 @@ CC_E		= @CC_E@
 CC_O		= @CC_O@
 CPPFLAGS	= @CPPFLAGS@
 CWARNINGS	= -Wall -Wextra
-CFLAGS		= -O2 -std=c11 @JNI_CFLAGS@ ${CWARNINGS} -I${top_srcdir}/src ${DBG}
+CFLAGS		= -O2 -std=gnu17 @JNI_CFLAGS@ ${CWARNINGS} -I${top_srcdir}/src ${DBG}
 LDFLAGS		= @LDFLAGS@
 JFLAGS		= -Xlint:deprecation @JFLAGS@
 LIBS		= @LIBS@

@@ -541,6 +541,7 @@ jCall(P4_Ctx *ctx)
 		// Static methods come from a class.
 		switch (sig[len-1]) {
 		case 'V':
+			ret.u = 0;
 			(*env)->CallStaticVoidMethodA(env, cls, mid, jargs);
 			break;
 		case 'Z':
@@ -574,6 +575,7 @@ jCall(P4_Ctx *ctx)
 		// Instance methods come from an object.
 		switch (sig[len-1]) {
 		case 'V':
+			ret.u = 0;
 			(*env)->CallVoidMethodA(env, cls_or_obj, mid, jargs);
 			break;
 		case 'Z':
