@@ -125,16 +125,29 @@ AC_CHECK_SIZEOF(intptr_t)
 #	Check for library, header, and function families.
 #######################################################################
 
-SNERT_ANSI_TIME
-SNERT_ANSI_STRING
+dnl Do need all of them.
+dnl SNERT_ANSI_TIME
+AS_ECHO()
+AS_ECHO("Check for time related stuff...")
+AS_ECHO()
+AC_CHECK_HEADERS(time.h sys/time.h)
+AC_CHECK_FUNCS(tzset sleep usleep nanosleep)
+AC_STRUCT_TM
+AC_STRUCT_TIMEZONE
+
+dnl Assume all are stock favourites are present.
+dnl SNERT_ANSI_STRING
+
 SNERT_EXTRA_STRING
 SNERT_EXTRA_STDIO
 SNERT_OPTIONS
-SNERT_REGEX
 SNERT_SETJMP
-SNERT_POSIX_IO
-SNERT_FILE_LOCKS
 SNERT_TERMIOS
+
+dnl Do need yet.
+dnl SNERT_REGEX
+dnl SNERT_POSIX_IO
+dnl SNERT_FILE_LOCKS
 
 AS_IF([test -d "${JAVA_HOME}/include"],[
 	JNI_DIR=$(dirname $(find $JAVA_HOME/include -name jni.h))
@@ -181,7 +194,7 @@ AC_FUNC_MALLOC
 AC_FUNC_REALLOC
 AC_LIBOBJ(malloc)
 
-AC_CHECK_FUNCS(atexit getenv putenv toupper tolower)
+AC_CHECK_FUNCS(atexit getenv putenv)
 
 #######################################################################
 #	Generate output.

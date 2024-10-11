@@ -646,9 +646,7 @@ ac_includes_default="\
 ac_header_c_list=
 ac_func_c_list=
 ac_subst_vars='LTLIBOBJS
-JFLAGS
-JNI_CFLAGS
-EXTRA_BUILDS
+LIBOBJS
 host_os
 host_vendor
 host_cpu
@@ -657,8 +655,9 @@ build_os
 build_vendor
 build_cpu
 build
-LIBOBJS
-HAVE_LIB_RT
+JFLAGS
+JNI_CFLAGS
+EXTRA_BUILDS
 LIBEXT
 CC_O_NAME
 CC_O
@@ -1896,65 +1895,6 @@ printf "%s\n" "$ac_res" >&6; }
 
 } # ac_fn_c_check_func
 
-# ac_fn_c_check_type LINENO TYPE VAR INCLUDES
-# -------------------------------------------
-# Tests whether TYPE exists after having included INCLUDES, setting cache
-# variable VAR accordingly.
-ac_fn_c_check_type ()
-{
-  as_lineno=${as_lineno-"$1"} as_lineno_stack=as_lineno_stack=$as_lineno_stack
-  { printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking for $2" >&5
-printf %s "checking for $2... " >&6; }
-if eval test \${$3+y}
-then :
-  printf %s "(cached) " >&6
-else case e in #(
-  e) eval "$3=no"
-  cat confdefs.h - <<_ACEOF >conftest.$ac_ext
-/* end confdefs.h.  */
-$4
-int
-main (void)
-{
-if (sizeof ($2))
-	 return 0;
-  ;
-  return 0;
-}
-_ACEOF
-if ac_fn_c_try_compile "$LINENO"
-then :
-  cat confdefs.h - <<_ACEOF >conftest.$ac_ext
-/* end confdefs.h.  */
-$4
-int
-main (void)
-{
-if (sizeof (($2)))
-	    return 0;
-  ;
-  return 0;
-}
-_ACEOF
-if ac_fn_c_try_compile "$LINENO"
-then :
-
-else case e in #(
-  e) eval "$3=yes" ;;
-esac
-fi
-rm -f core conftest.err conftest.$ac_objext conftest.beam conftest.$ac_ext
-fi
-rm -f core conftest.err conftest.$ac_objext conftest.beam conftest.$ac_ext ;;
-esac
-fi
-eval ac_res=\$$3
-	       { printf "%s\n" "$as_me:${as_lineno-$LINENO}: result: $ac_res" >&5
-printf "%s\n" "$ac_res" >&6; }
-  eval $as_lineno_stack; ${as_lineno_stack:+:} unset as_lineno
-
-} # ac_fn_c_check_type
-
 # ac_fn_c_check_member LINENO AGGR MEMBER VAR INCLUDES
 # ----------------------------------------------------
 # Tries to find if the field MEMBER exists in type AGGR, after including
@@ -2071,6 +2011,65 @@ printf "%s\n" "$ac_res" >&6; }
   eval $as_lineno_stack; ${as_lineno_stack:+:} unset as_lineno
 
 } # ac_fn_check_decl
+
+# ac_fn_c_check_type LINENO TYPE VAR INCLUDES
+# -------------------------------------------
+# Tests whether TYPE exists after having included INCLUDES, setting cache
+# variable VAR accordingly.
+ac_fn_c_check_type ()
+{
+  as_lineno=${as_lineno-"$1"} as_lineno_stack=as_lineno_stack=$as_lineno_stack
+  { printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking for $2" >&5
+printf %s "checking for $2... " >&6; }
+if eval test \${$3+y}
+then :
+  printf %s "(cached) " >&6
+else case e in #(
+  e) eval "$3=no"
+  cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+$4
+int
+main (void)
+{
+if (sizeof ($2))
+	 return 0;
+  ;
+  return 0;
+}
+_ACEOF
+if ac_fn_c_try_compile "$LINENO"
+then :
+  cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+$4
+int
+main (void)
+{
+if (sizeof (($2)))
+	    return 0;
+  ;
+  return 0;
+}
+_ACEOF
+if ac_fn_c_try_compile "$LINENO"
+then :
+
+else case e in #(
+  e) eval "$3=yes" ;;
+esac
+fi
+rm -f core conftest.err conftest.$ac_objext conftest.beam conftest.$ac_ext
+fi
+rm -f core conftest.err conftest.$ac_objext conftest.beam conftest.$ac_ext ;;
+esac
+fi
+eval ac_res=\$$3
+	       { printf "%s\n" "$as_me:${as_lineno-$LINENO}: result: $ac_res" >&5
+printf "%s\n" "$ac_res" >&6; }
+  eval $as_lineno_stack; ${as_lineno_stack:+:} unset as_lineno
+
+} # ac_fn_c_check_type
 ac_configure_args_raw=
 for ac_arg
 do
@@ -2700,8 +2699,6 @@ as_fn_append ac_header_c_list " strings.h strings_h HAVE_STRINGS_H"
 as_fn_append ac_header_c_list " sys/stat.h sys_stat_h HAVE_SYS_STAT_H"
 as_fn_append ac_header_c_list " sys/types.h sys_types_h HAVE_SYS_TYPES_H"
 as_fn_append ac_header_c_list " unistd.h unistd_h HAVE_UNISTD_H"
-as_fn_append ac_header_c_list " sys/time.h sys_time_h HAVE_SYS_TIME_H"
-as_fn_append ac_func_c_list " alarm HAVE_ALARM"
 as_fn_append ac_func_c_list " vprintf HAVE_VPRINTF"
 
 # Auxiliary files required by this configure script.
@@ -5766,20 +5763,86 @@ printf "%s\n" "#define SIZEOF_INTPTR_T $ac_cv_sizeof_intptr_t" >>confdefs.h
 #	Check for library, header, and function families.
 #######################################################################
 
+printf "%s\n"
+printf "%s\n" "Check for time related stuff..."
+printf "%s\n"
+ac_fn_c_check_header_compile "$LINENO" "time.h" "ac_cv_header_time_h" "$ac_includes_default"
+if test "x$ac_cv_header_time_h" = xyes
+then :
+  printf "%s\n" "#define HAVE_TIME_H 1" >>confdefs.h
 
-ac_func=
-for ac_item in $ac_func_c_list
-do
-  if test $ac_func; then
-    ac_fn_c_check_func "$LINENO" $ac_func ac_cv_func_$ac_func
-    if eval test \"x\$ac_cv_func_$ac_func\" = xyes; then
-      echo "#define $ac_item 1" >> confdefs.h
-    fi
-    ac_func=
-  else
-    ac_func=$ac_item
-  fi
-done
+fi
+ac_fn_c_check_header_compile "$LINENO" "sys/time.h" "ac_cv_header_sys_time_h" "$ac_includes_default"
+if test "x$ac_cv_header_sys_time_h" = xyes
+then :
+  printf "%s\n" "#define HAVE_SYS_TIME_H 1" >>confdefs.h
+
+fi
+
+ac_fn_c_check_func "$LINENO" "tzset" "ac_cv_func_tzset"
+if test "x$ac_cv_func_tzset" = xyes
+then :
+  printf "%s\n" "#define HAVE_TZSET 1" >>confdefs.h
+
+fi
+ac_fn_c_check_func "$LINENO" "sleep" "ac_cv_func_sleep"
+if test "x$ac_cv_func_sleep" = xyes
+then :
+  printf "%s\n" "#define HAVE_SLEEP 1" >>confdefs.h
+
+fi
+ac_fn_c_check_func "$LINENO" "usleep" "ac_cv_func_usleep"
+if test "x$ac_cv_func_usleep" = xyes
+then :
+  printf "%s\n" "#define HAVE_USLEEP 1" >>confdefs.h
+
+fi
+ac_fn_c_check_func "$LINENO" "nanosleep" "ac_cv_func_nanosleep"
+if test "x$ac_cv_func_nanosleep" = xyes
+then :
+  printf "%s\n" "#define HAVE_NANOSLEEP 1" >>confdefs.h
+
+fi
+
+{ printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking whether struct tm is in sys/time.h or time.h" >&5
+printf %s "checking whether struct tm is in sys/time.h or time.h... " >&6; }
+if test ${ac_cv_struct_tm+y}
+then :
+  printf %s "(cached) " >&6
+else case e in #(
+  e) cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+#include <sys/types.h>
+#include <time.h>
+
+int
+main (void)
+{
+struct tm tm;
+				     int *p = &tm.tm_sec;
+				     return !p;
+  ;
+  return 0;
+}
+_ACEOF
+if ac_fn_c_try_compile "$LINENO"
+then :
+  ac_cv_struct_tm=time.h
+else case e in #(
+  e) ac_cv_struct_tm=sys/time.h ;;
+esac
+fi
+rm -f core conftest.err conftest.$ac_objext conftest.beam conftest.$ac_ext ;;
+esac
+fi
+{ printf "%s\n" "$as_me:${as_lineno-$LINENO}: result: $ac_cv_struct_tm" >&5
+printf "%s\n" "$ac_cv_struct_tm" >&6; }
+if test $ac_cv_struct_tm = sys/time.h; then
+
+printf "%s\n" "#define TM_IN_SYS_TIME 1" >>confdefs.h
+
+fi
+
 { printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking for $CC options needed to detect all undeclared functions" >&5
 printf %s "checking for $CC options needed to detect all undeclared functions... " >&6; }
 if test ${ac_cv_c_undeclared_builtin_options+y}
@@ -5863,603 +5926,7 @@ See 'config.log' for more details" "$LINENO" 5; } ;; #(
     ac_c_undeclared_builtin_options=$ac_cv_c_undeclared_builtin_options ;;
 esac
 
-
-	echo
-	echo "Check for ANSI & supplemental time support..."
-	echo
-
-
-	case "${platform}" in
-	Linux|SunOS|Solaris)
-
-	if echo "$LIBS" | grep -- "-lrt" >/dev/null ; then
-		echo "checking for clock_gettime in rt... (cached) yes"
-	else
-		{ printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking for clock_gettime in -lrt" >&5
-printf %s "checking for clock_gettime in -lrt... " >&6; }
-if test ${ac_cv_lib_rt_clock_gettime+y}
-then :
-  printf %s "(cached) " >&6
-else case e in #(
-  e) ac_check_lib_save_LIBS=$LIBS
-LIBS="-lrt  $LIBS"
-cat confdefs.h - <<_ACEOF >conftest.$ac_ext
-/* end confdefs.h.  */
-
-/* Override any GCC internal prototype to avoid an error.
-   Use char because int might match the return type of a GCC
-   builtin and then its argument prototype would still apply.
-   The 'extern "C"' is for builds by C++ compilers;
-   although this is not generally supported in C code supporting it here
-   has little cost and some practical benefit (sr 110532).  */
-#ifdef __cplusplus
-extern "C"
-#endif
-char clock_gettime (void);
-int
-main (void)
-{
-return clock_gettime ();
-  ;
-  return 0;
-}
-_ACEOF
-if ac_fn_c_try_link "$LINENO"
-then :
-  ac_cv_lib_rt_clock_gettime=yes
-else case e in #(
-  e) ac_cv_lib_rt_clock_gettime=no ;;
-esac
-fi
-rm -f core conftest.err conftest.$ac_objext conftest.beam \
-    conftest$ac_exeext conftest.$ac_ext
-LIBS=$ac_check_lib_save_LIBS ;;
-esac
-fi
-{ printf "%s\n" "$as_me:${as_lineno-$LINENO}: result: $ac_cv_lib_rt_clock_gettime" >&5
-printf "%s\n" "$ac_cv_lib_rt_clock_gettime" >&6; }
-if test "x$ac_cv_lib_rt_clock_gettime" = xyes
-then :
-  printf "%s\n" "#define HAVE_LIBRT 1" >>confdefs.h
-
-  LIBS="-lrt $LIBS"
-
-fi
-
-	fi
-
-		if test "$ac_cv_lib_rt_clock_gettime" != 'no'; then
-			HAVE_LIB_RT='-lrt'
-
-		fi
-		;;
-	esac
-
-	ac_fn_c_check_header_compile "$LINENO" "time.h" "ac_cv_header_time_h" "$ac_includes_default"
-if test "x$ac_cv_header_time_h" = xyes
-then :
-  printf "%s\n" "#define HAVE_TIME_H 1" >>confdefs.h
-
-fi
-ac_fn_c_check_header_compile "$LINENO" "sys/time.h" "ac_cv_header_sys_time_h" "$ac_includes_default"
-if test "x$ac_cv_header_sys_time_h" = xyes
-then :
-  printf "%s\n" "#define HAVE_SYS_TIME_H 1" >>confdefs.h
-
-fi
-
-	ac_fn_c_check_func "$LINENO" "clock" "ac_cv_func_clock"
-if test "x$ac_cv_func_clock" = xyes
-then :
-  printf "%s\n" "#define HAVE_CLOCK 1" >>confdefs.h
-
-fi
-ac_fn_c_check_func "$LINENO" "difftime" "ac_cv_func_difftime"
-if test "x$ac_cv_func_difftime" = xyes
-then :
-  printf "%s\n" "#define HAVE_DIFFTIME 1" >>confdefs.h
-
-fi
-ac_fn_c_check_func "$LINENO" "mktime" "ac_cv_func_mktime"
-if test "x$ac_cv_func_mktime" = xyes
-then :
-  printf "%s\n" "#define HAVE_MKTIME 1" >>confdefs.h
-
-fi
-ac_fn_c_check_func "$LINENO" "time" "ac_cv_func_time"
-if test "x$ac_cv_func_time" = xyes
-then :
-  printf "%s\n" "#define HAVE_TIME 1" >>confdefs.h
-
-fi
-ac_fn_c_check_func "$LINENO" "asctime" "ac_cv_func_asctime"
-if test "x$ac_cv_func_asctime" = xyes
-then :
-  printf "%s\n" "#define HAVE_ASCTIME 1" >>confdefs.h
-
-fi
-ac_fn_c_check_func "$LINENO" "ctime" "ac_cv_func_ctime"
-if test "x$ac_cv_func_ctime" = xyes
-then :
-  printf "%s\n" "#define HAVE_CTIME 1" >>confdefs.h
-
-fi
-ac_fn_c_check_func "$LINENO" "gmtime" "ac_cv_func_gmtime"
-if test "x$ac_cv_func_gmtime" = xyes
-then :
-  printf "%s\n" "#define HAVE_GMTIME 1" >>confdefs.h
-
-fi
-ac_fn_c_check_func "$LINENO" "localtime" "ac_cv_func_localtime"
-if test "x$ac_cv_func_localtime" = xyes
-then :
-  printf "%s\n" "#define HAVE_LOCALTIME 1" >>confdefs.h
-
-fi
-ac_fn_c_check_func "$LINENO" "tzset" "ac_cv_func_tzset"
-if test "x$ac_cv_func_tzset" = xyes
-then :
-  printf "%s\n" "#define HAVE_TZSET 1" >>confdefs.h
-
-fi
-ac_fn_c_check_func "$LINENO" "sleep" "ac_cv_func_sleep"
-if test "x$ac_cv_func_sleep" = xyes
-then :
-  printf "%s\n" "#define HAVE_SLEEP 1" >>confdefs.h
-
-fi
-ac_fn_c_check_func "$LINENO" "usleep" "ac_cv_func_usleep"
-if test "x$ac_cv_func_usleep" = xyes
-then :
-  printf "%s\n" "#define HAVE_USLEEP 1" >>confdefs.h
-
-fi
-ac_fn_c_check_func "$LINENO" "nanosleep" "ac_cv_func_nanosleep"
-if test "x$ac_cv_func_nanosleep" = xyes
-then :
-  printf "%s\n" "#define HAVE_NANOSLEEP 1" >>confdefs.h
-
-fi
-
-	ac_fn_c_check_func "$LINENO" "asctime_r" "ac_cv_func_asctime_r"
-if test "x$ac_cv_func_asctime_r" = xyes
-then :
-  printf "%s\n" "#define HAVE_ASCTIME_R 1" >>confdefs.h
-
-fi
-ac_fn_c_check_func "$LINENO" "ctime_r" "ac_cv_func_ctime_r"
-if test "x$ac_cv_func_ctime_r" = xyes
-then :
-  printf "%s\n" "#define HAVE_CTIME_R 1" >>confdefs.h
-
-fi
-ac_fn_c_check_func "$LINENO" "gmtime_r" "ac_cv_func_gmtime_r"
-if test "x$ac_cv_func_gmtime_r" = xyes
-then :
-  printf "%s\n" "#define HAVE_GMTIME_R 1" >>confdefs.h
-
-fi
-ac_fn_c_check_func "$LINENO" "localtime_r" "ac_cv_func_localtime_r"
-if test "x$ac_cv_func_localtime_r" = xyes
-then :
-  printf "%s\n" "#define HAVE_LOCALTIME_R 1" >>confdefs.h
-
-fi
-ac_fn_c_check_func "$LINENO" "clock_gettime" "ac_cv_func_clock_gettime"
-if test "x$ac_cv_func_clock_gettime" = xyes
-then :
-  printf "%s\n" "#define HAVE_CLOCK_GETTIME 1" >>confdefs.h
-
-fi
-ac_fn_c_check_func "$LINENO" "gettimeofday" "ac_cv_func_gettimeofday"
-if test "x$ac_cv_func_gettimeofday" = xyes
-then :
-  printf "%s\n" "#define HAVE_GETTIMEOFDAY 1" >>confdefs.h
-
-fi
-
-	ac_fn_c_check_func "$LINENO" "alarm" "ac_cv_func_alarm"
-if test "x$ac_cv_func_alarm" = xyes
-then :
-  printf "%s\n" "#define HAVE_ALARM 1" >>confdefs.h
-
-fi
-ac_fn_c_check_func "$LINENO" "getitimer" "ac_cv_func_getitimer"
-if test "x$ac_cv_func_getitimer" = xyes
-then :
-  printf "%s\n" "#define HAVE_GETITIMER 1" >>confdefs.h
-
-fi
-ac_fn_c_check_func "$LINENO" "setitimer" "ac_cv_func_setitimer"
-if test "x$ac_cv_func_setitimer" = xyes
-then :
-  printf "%s\n" "#define HAVE_SETITIMER 1" >>confdefs.h
-
-fi
-
-
-
-{ printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking for working mktime" >&5
-printf %s "checking for working mktime... " >&6; }
-if test ${ac_cv_func_working_mktime+y}
-then :
-  printf %s "(cached) " >&6
-else case e in #(
-  e) if test "$cross_compiling" = yes
-then :
-  ac_cv_func_working_mktime=no
-else case e in #(
-  e) cat confdefs.h - <<_ACEOF >conftest.$ac_ext
-/* end confdefs.h.  */
-/* Test program from Paul Eggert and Tony Leneis.  */
-#include <time.h>
-#ifdef HAVE_SYS_TIME_H
-# include <sys/time.h>
-#endif
-
-#include <limits.h>
-#include <stdlib.h>
-
-#ifdef HAVE_UNISTD_H
-# include <unistd.h>
-#endif
-
-#ifndef HAVE_ALARM
-# define alarm(X) /* empty */
-#endif
-
-/* Work around redefinition to rpl_putenv by other config tests.  */
-#undef putenv
-
-static time_t time_t_max;
-static time_t time_t_min;
-
-/* Values we'll use to set the TZ environment variable.  */
-static const char *tz_strings[] = {
-  (const char *) 0, "TZ=GMT0", "TZ=JST-9",
-  "TZ=EST+3EDT+2,M10.1.0/00:00:00,M2.3.0/00:00:00"
-};
-#define N_STRINGS (sizeof (tz_strings) / sizeof (tz_strings[0]))
-
-/* Return 0 if mktime fails to convert a date in the spring-forward gap.
-   Based on a problem report from Andreas Jaeger.  */
-static int
-spring_forward_gap (void)
-{
-  /* glibc (up to about 1998-10-07) failed this test. */
-  struct tm tm;
-
-  /* Use the portable POSIX.1 specification "TZ=PST8PDT,M4.1.0,M10.5.0"
-     instead of "TZ=America/Vancouver" in order to detect the bug even
-     on systems that don't support the Olson extension, or don't have the
-     full zoneinfo tables installed.  */
-  putenv ((char*) "TZ=PST8PDT,M4.1.0,M10.5.0");
-
-  tm.tm_year = 98;
-  tm.tm_mon = 3;
-  tm.tm_mday = 5;
-  tm.tm_hour = 2;
-  tm.tm_min = 0;
-  tm.tm_sec = 0;
-  tm.tm_isdst = -1;
-  return mktime (&tm) != (time_t) -1;
-}
-
-static int
-mktime_test1 (time_t now)
-{
-  struct tm *lt;
-  return ! (lt = localtime (&now)) || mktime (lt) == now;
-}
-
-static int
-mktime_test (time_t now)
-{
-  return (mktime_test1 (now)
-	  && mktime_test1 ((time_t) (time_t_max - now))
-	  && mktime_test1 ((time_t) (time_t_min + now)));
-}
-
-static int
-irix_6_4_bug (void)
-{
-  /* Based on code from Ariel Faigon.  */
-  struct tm tm;
-  tm.tm_year = 96;
-  tm.tm_mon = 3;
-  tm.tm_mday = 0;
-  tm.tm_hour = 0;
-  tm.tm_min = 0;
-  tm.tm_sec = 0;
-  tm.tm_isdst = -1;
-  mktime (&tm);
-  return tm.tm_mon == 2 && tm.tm_mday == 31;
-}
-
-static int
-bigtime_test (int j)
-{
-  struct tm tm;
-  time_t now;
-  tm.tm_year = tm.tm_mon = tm.tm_mday = tm.tm_hour = tm.tm_min = tm.tm_sec = j;
-  now = mktime (&tm);
-  if (now != (time_t) -1)
-    {
-      struct tm *lt = localtime (&now);
-      if (! (lt
-	     && lt->tm_year == tm.tm_year
-	     && lt->tm_mon == tm.tm_mon
-	     && lt->tm_mday == tm.tm_mday
-	     && lt->tm_hour == tm.tm_hour
-	     && lt->tm_min == tm.tm_min
-	     && lt->tm_sec == tm.tm_sec
-	     && lt->tm_yday == tm.tm_yday
-	     && lt->tm_wday == tm.tm_wday
-	     && ((lt->tm_isdst < 0 ? -1 : 0 < lt->tm_isdst)
-		  == (tm.tm_isdst < 0 ? -1 : 0 < tm.tm_isdst))))
-	return 0;
-    }
-  return 1;
-}
-
-static int
-year_2050_test (void)
-{
-  /* The correct answer for 2050-02-01 00:00:00 in Pacific time,
-     ignoring leap seconds.  */
-  unsigned long int answer = 2527315200UL;
-
-  struct tm tm;
-  time_t t;
-  tm.tm_year = 2050 - 1900;
-  tm.tm_mon = 2 - 1;
-  tm.tm_mday = 1;
-  tm.tm_hour = tm.tm_min = tm.tm_sec = 0;
-  tm.tm_isdst = -1;
-
-  /* Use the portable POSIX.1 specification "TZ=PST8PDT,M4.1.0,M10.5.0"
-     instead of "TZ=America/Vancouver" in order to detect the bug even
-     on systems that don't support the Olson extension, or don't have the
-     full zoneinfo tables installed.  */
-  putenv ((char*) "TZ=PST8PDT,M4.1.0,M10.5.0");
-
-  t = mktime (&tm);
-
-  /* Check that the result is either a failure, or close enough
-     to the correct answer that we can assume the discrepancy is
-     due to leap seconds.  */
-  return (t == (time_t) -1
-	  || (0 < t && answer - 120 <= t && t <= answer + 120));
-}
-
-int
-main (void)
-{
-  time_t t, delta;
-  int i, j;
-
-  /* This test makes some buggy mktime implementations loop.
-     Give up after 60 seconds; a mktime slower than that
-     isn't worth using anyway.  */
-  alarm (60);
-
-  for (;;)
-    {
-      t = (time_t_max << 1) + 1;
-      if (t <= time_t_max)
-	break;
-      time_t_max = t;
-    }
-  time_t_min = - ((time_t) ~ (time_t) 0 == (time_t) -1) - time_t_max;
-
-  delta = time_t_max / 997; /* a suitable prime number */
-  for (i = 0; i < N_STRINGS; i++)
-    {
-      if (tz_strings[i])
-	putenv ((char*) tz_strings[i]);
-
-      for (t = 0; t <= time_t_max - delta; t += delta)
-	if (! mktime_test (t))
-	  return 1;
-      if (! (mktime_test ((time_t) 1)
-	     && mktime_test ((time_t) (60 * 60))
-	     && mktime_test ((time_t) (60 * 60 * 24))))
-	return 1;
-
-      for (j = 1; ; j <<= 1)
-	if (! bigtime_test (j))
-	  return 1;
-	else if (INT_MAX / 2 < j)
-	  break;
-      if (! bigtime_test (INT_MAX))
-	return 1;
-    }
-  return ! (irix_6_4_bug () && spring_forward_gap () && year_2050_test ());
-}
-_ACEOF
-if ac_fn_c_try_run "$LINENO"
-then :
-  ac_cv_func_working_mktime=yes
-else case e in #(
-  e) ac_cv_func_working_mktime=no ;;
-esac
-fi
-rm -f core *.core core.conftest.* gmon.out bb.out conftest$ac_exeext \
-  conftest.$ac_objext conftest.beam conftest.$ac_ext ;;
-esac
-fi
- ;;
-esac
-fi
-{ printf "%s\n" "$as_me:${as_lineno-$LINENO}: result: $ac_cv_func_working_mktime" >&5
-printf "%s\n" "$ac_cv_func_working_mktime" >&6; }
-if test $ac_cv_func_working_mktime = no; then
-  case " $LIBOBJS " in
-  *" mktime.$ac_objext "* ) ;;
-  *) LIBOBJS="$LIBOBJS mktime.$ac_objext"
- ;;
-esac
-
-fi
-
-	case " $LIBOBJS " in
-  *" mktime.$ac_objext "* ) ;;
-  *) LIBOBJS="$LIBOBJS mktime.$ac_objext"
- ;;
-esac
-
-
-  for ac_func in strftime
-do :
-  ac_fn_c_check_func "$LINENO" "strftime" "ac_cv_func_strftime"
-if test "x$ac_cv_func_strftime" = xyes
-then :
-  printf "%s\n" "#define HAVE_STRFTIME 1" >>confdefs.h
-
-else case e in #(
-  e) # strftime is in -lintl on SCO UNIX.
-{ printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking for strftime in -lintl" >&5
-printf %s "checking for strftime in -lintl... " >&6; }
-if test ${ac_cv_lib_intl_strftime+y}
-then :
-  printf %s "(cached) " >&6
-else case e in #(
-  e) ac_check_lib_save_LIBS=$LIBS
-LIBS="-lintl  $LIBS"
-cat confdefs.h - <<_ACEOF >conftest.$ac_ext
-/* end confdefs.h.  */
-
-/* Override any GCC internal prototype to avoid an error.
-   Use char because int might match the return type of a GCC
-   builtin and then its argument prototype would still apply.
-   The 'extern "C"' is for builds by C++ compilers;
-   although this is not generally supported in C code supporting it here
-   has little cost and some practical benefit (sr 110532).  */
-#ifdef __cplusplus
-extern "C"
-#endif
-char strftime (void);
-int
-main (void)
-{
-return strftime ();
-  ;
-  return 0;
-}
-_ACEOF
-if ac_fn_c_try_link "$LINENO"
-then :
-  ac_cv_lib_intl_strftime=yes
-else case e in #(
-  e) ac_cv_lib_intl_strftime=no ;;
-esac
-fi
-rm -f core conftest.err conftest.$ac_objext conftest.beam \
-    conftest$ac_exeext conftest.$ac_ext
-LIBS=$ac_check_lib_save_LIBS ;;
-esac
-fi
-{ printf "%s\n" "$as_me:${as_lineno-$LINENO}: result: $ac_cv_lib_intl_strftime" >&5
-printf "%s\n" "$ac_cv_lib_intl_strftime" >&6; }
-if test "x$ac_cv_lib_intl_strftime" = xyes
-then :
-  printf "%s\n" "#define HAVE_STRFTIME 1" >>confdefs.h
-
-LIBS="-lintl $LIBS"
-fi
- ;;
-esac
-fi
-
-done
-	ac_fn_c_check_type "$LINENO" "struct timespec" "ac_cv_type_struct_timespec" "
-#ifdef HAVE_SYS_TYPES_H
-# include <sys/types.h>
-#endif
-#ifdef TIME_WITH_SYS_TIME
-# include <sys/time.h>
-# include <time.h>
-#else
-# ifdef HAVE_SYS_TIME_H
-#  include <sys/time.h>
-# else
-#  include <time.h>
-# endif
-#endif
-
-"
-if test "x$ac_cv_type_struct_timespec" = xyes
-then :
-
-printf "%s\n" "#define HAVE_STRUCT_TIMESPEC 1" >>confdefs.h
-
-
-fi
-ac_fn_c_check_type "$LINENO" "struct timeval" "ac_cv_type_struct_timeval" "
-#ifdef HAVE_SYS_TYPES_H
-# include <sys/types.h>
-#endif
-#ifdef TIME_WITH_SYS_TIME
-# include <sys/time.h>
-# include <time.h>
-#else
-# ifdef HAVE_SYS_TIME_H
-#  include <sys/time.h>
-# else
-#  include <time.h>
-# endif
-#endif
-
-"
-if test "x$ac_cv_type_struct_timeval" = xyes
-then :
-
-printf "%s\n" "#define HAVE_STRUCT_TIMEVAL 1" >>confdefs.h
-
-
-fi
-
-
-	{ printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking whether struct tm is in sys/time.h or time.h" >&5
-printf %s "checking whether struct tm is in sys/time.h or time.h... " >&6; }
-if test ${ac_cv_struct_tm+y}
-then :
-  printf %s "(cached) " >&6
-else case e in #(
-  e) cat confdefs.h - <<_ACEOF >conftest.$ac_ext
-/* end confdefs.h.  */
-#include <sys/types.h>
-#include <time.h>
-
-int
-main (void)
-{
-struct tm tm;
-				     int *p = &tm.tm_sec;
-				     return !p;
-  ;
-  return 0;
-}
-_ACEOF
-if ac_fn_c_try_compile "$LINENO"
-then :
-  ac_cv_struct_tm=time.h
-else case e in #(
-  e) ac_cv_struct_tm=sys/time.h ;;
-esac
-fi
-rm -f core conftest.err conftest.$ac_objext conftest.beam conftest.$ac_ext ;;
-esac
-fi
-{ printf "%s\n" "$as_me:${as_lineno-$LINENO}: result: $ac_cv_struct_tm" >&5
-printf "%s\n" "$ac_cv_struct_tm" >&6; }
-if test $ac_cv_struct_tm = sys/time.h; then
-
-printf "%s\n" "#define TM_IN_SYS_TIME 1" >>confdefs.h
-
-fi
-
-	ac_fn_c_check_member "$LINENO" "struct tm" "tm_zone" "ac_cv_member_struct_tm_tm_zone" "#include <sys/types.h>
+ac_fn_c_check_member "$LINENO" "struct tm" "tm_zone" "ac_cv_member_struct_tm_tm_zone" "#include <sys/types.h>
 #include <$ac_cv_struct_tm>
 
 "
@@ -6530,406 +5997,19 @@ fi
 
 
 
-
-
-
-  # Make sure we can run config.sub.
-$SHELL "${ac_aux_dir}config.sub" sun4 >/dev/null 2>&1 ||
-  as_fn_error $? "cannot run $SHELL ${ac_aux_dir}config.sub" "$LINENO" 5
-
-{ printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking build system type" >&5
-printf %s "checking build system type... " >&6; }
-if test ${ac_cv_build+y}
-then :
-  printf %s "(cached) " >&6
-else case e in #(
-  e) ac_build_alias=$build_alias
-test "x$ac_build_alias" = x &&
-  ac_build_alias=`$SHELL "${ac_aux_dir}config.guess"`
-test "x$ac_build_alias" = x &&
-  as_fn_error $? "cannot guess build type; you must specify one" "$LINENO" 5
-ac_cv_build=`$SHELL "${ac_aux_dir}config.sub" $ac_build_alias` ||
-  as_fn_error $? "$SHELL ${ac_aux_dir}config.sub $ac_build_alias failed" "$LINENO" 5
- ;;
-esac
-fi
-{ printf "%s\n" "$as_me:${as_lineno-$LINENO}: result: $ac_cv_build" >&5
-printf "%s\n" "$ac_cv_build" >&6; }
-case $ac_cv_build in
-*-*-*) ;;
-*) as_fn_error $? "invalid value of canonical build" "$LINENO" 5;;
-esac
-build=$ac_cv_build
-ac_save_IFS=$IFS; IFS='-'
-set x $ac_cv_build
-shift
-build_cpu=$1
-build_vendor=$2
-shift; shift
-# Remember, the first character of IFS is used to create $*,
-# except with old shells:
-build_os=$*
-IFS=$ac_save_IFS
-case $build_os in *\ *) build_os=`echo "$build_os" | sed 's/ /-/g'`;; esac
-
-
-{ printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking host system type" >&5
-printf %s "checking host system type... " >&6; }
-if test ${ac_cv_host+y}
-then :
-  printf %s "(cached) " >&6
-else case e in #(
-  e) if test "x$host_alias" = x; then
-  ac_cv_host=$ac_cv_build
-else
-  ac_cv_host=`$SHELL "${ac_aux_dir}config.sub" $host_alias` ||
-    as_fn_error $? "$SHELL ${ac_aux_dir}config.sub $host_alias failed" "$LINENO" 5
-fi
- ;;
-esac
-fi
-{ printf "%s\n" "$as_me:${as_lineno-$LINENO}: result: $ac_cv_host" >&5
-printf "%s\n" "$ac_cv_host" >&6; }
-case $ac_cv_host in
-*-*-*) ;;
-*) as_fn_error $? "invalid value of canonical host" "$LINENO" 5;;
-esac
-host=$ac_cv_host
-ac_save_IFS=$IFS; IFS='-'
-set x $ac_cv_host
-shift
-host_cpu=$1
-host_vendor=$2
-shift; shift
-# Remember, the first character of IFS is used to create $*,
-# except with old shells:
-host_os=$*
-IFS=$ac_save_IFS
-case $host_os in *\ *) host_os=`echo "$host_os" | sed 's/ /-/g'`;; esac
-
-
-ac_fn_check_decl "$LINENO" "strerror_r" "ac_cv_have_decl_strerror_r" "$ac_includes_default" "$ac_c_undeclared_builtin_options" "CFLAGS"
-if test "x$ac_cv_have_decl_strerror_r" = xyes
-then :
-  ac_have_decl=1
-else case e in #(
-  e) ac_have_decl=0 ;;
-esac
-fi
-printf "%s\n" "#define HAVE_DECL_STRERROR_R $ac_have_decl" >>confdefs.h
-
-
-	echo
-	echo "Check for ANSI string functions..."
-	echo
-	ac_fn_c_check_func "$LINENO" "memchr" "ac_cv_func_memchr"
-if test "x$ac_cv_func_memchr" = xyes
-then :
-  printf "%s\n" "#define HAVE_MEMCHR 1" >>confdefs.h
-
-fi
-ac_fn_c_check_func "$LINENO" "memcmp" "ac_cv_func_memcmp"
-if test "x$ac_cv_func_memcmp" = xyes
-then :
-  printf "%s\n" "#define HAVE_MEMCMP 1" >>confdefs.h
-
-fi
-ac_fn_c_check_func "$LINENO" "memcpy" "ac_cv_func_memcpy"
-if test "x$ac_cv_func_memcpy" = xyes
-then :
-  printf "%s\n" "#define HAVE_MEMCPY 1" >>confdefs.h
-
-fi
-ac_fn_c_check_func "$LINENO" "memmove" "ac_cv_func_memmove"
-if test "x$ac_cv_func_memmove" = xyes
-then :
-  printf "%s\n" "#define HAVE_MEMMOVE 1" >>confdefs.h
-
-fi
-ac_fn_c_check_func "$LINENO" "memset" "ac_cv_func_memset"
-if test "x$ac_cv_func_memset" = xyes
-then :
-  printf "%s\n" "#define HAVE_MEMSET 1" >>confdefs.h
-
-fi
-
-	{ printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking for working memcmp" >&5
-printf %s "checking for working memcmp... " >&6; }
-if test ${ac_cv_func_memcmp_working+y}
-then :
-  printf %s "(cached) " >&6
-else case e in #(
-  e) if test "$cross_compiling" = yes
-then :
-  ac_cv_func_memcmp_working=no
-else case e in #(
-  e) cat confdefs.h - <<_ACEOF >conftest.$ac_ext
-/* end confdefs.h.  */
-$ac_includes_default
-int
-main (void)
-{
-
-  /* Some versions of memcmp are not 8-bit clean.  */
-  char c0 = '\100', c1 = '\200', c2 = '\201';
-  if (memcmp(&c0, &c2, 1) >= 0 || memcmp(&c1, &c2, 1) >= 0)
-    return 1;
-
-  /* The Next x86 OpenStep bug shows up only when comparing 16 bytes
-     or more and with at least one buffer not starting on a 4-byte boundary.
-     William Lewis provided this test program.   */
-  {
-    char foo[21];
-    char bar[21];
-    int i;
-    for (i = 0; i < 4; i++)
-      {
-	char *a = foo + i;
-	char *b = bar + i;
-	strcpy (a, "--------01111111");
-	strcpy (b, "--------10000000");
-	if (memcmp (a, b, 16) >= 0)
-	  return 1;
-      }
-    return 0;
-  }
-
-  ;
-  return 0;
-}
-_ACEOF
-if ac_fn_c_try_run "$LINENO"
-then :
-  ac_cv_func_memcmp_working=yes
-else case e in #(
-  e) ac_cv_func_memcmp_working=no ;;
-esac
-fi
-rm -f core *.core core.conftest.* gmon.out bb.out conftest$ac_exeext \
-  conftest.$ac_objext conftest.beam conftest.$ac_ext ;;
-esac
-fi
- ;;
-esac
-fi
-{ printf "%s\n" "$as_me:${as_lineno-$LINENO}: result: $ac_cv_func_memcmp_working" >&5
-printf "%s\n" "$ac_cv_func_memcmp_working" >&6; }
-test $ac_cv_func_memcmp_working = no && case " $LIBOBJS " in
-  *" memcmp.$ac_objext "* ) ;;
-  *) LIBOBJS="$LIBOBJS memcmp.$ac_objext"
- ;;
-esac
-
-
-	case " $LIBOBJS " in
-  *" memcmp.$ac_objext "* ) ;;
-  *) LIBOBJS="$LIBOBJS memcmp.$ac_objext"
- ;;
-esac
-
-	ac_fn_c_check_func "$LINENO" "strcat" "ac_cv_func_strcat"
-if test "x$ac_cv_func_strcat" = xyes
-then :
-  printf "%s\n" "#define HAVE_STRCAT 1" >>confdefs.h
-
-fi
-ac_fn_c_check_func "$LINENO" "strncat" "ac_cv_func_strncat"
-if test "x$ac_cv_func_strncat" = xyes
-then :
-  printf "%s\n" "#define HAVE_STRNCAT 1" >>confdefs.h
-
-fi
-ac_fn_c_check_func "$LINENO" "strcpy" "ac_cv_func_strcpy"
-if test "x$ac_cv_func_strcpy" = xyes
-then :
-  printf "%s\n" "#define HAVE_STRCPY 1" >>confdefs.h
-
-fi
-ac_fn_c_check_func "$LINENO" "strncpy" "ac_cv_func_strncpy"
-if test "x$ac_cv_func_strncpy" = xyes
-then :
-  printf "%s\n" "#define HAVE_STRNCPY 1" >>confdefs.h
-
-fi
-ac_fn_c_check_func "$LINENO" "strcmp" "ac_cv_func_strcmp"
-if test "x$ac_cv_func_strcmp" = xyes
-then :
-  printf "%s\n" "#define HAVE_STRCMP 1" >>confdefs.h
-
-fi
-ac_fn_c_check_func "$LINENO" "strncmp" "ac_cv_func_strncmp"
-if test "x$ac_cv_func_strncmp" = xyes
-then :
-  printf "%s\n" "#define HAVE_STRNCMP 1" >>confdefs.h
-
-fi
-ac_fn_c_check_func "$LINENO" "strxfrm" "ac_cv_func_strxfrm"
-if test "x$ac_cv_func_strxfrm" = xyes
-then :
-  printf "%s\n" "#define HAVE_STRXFRM 1" >>confdefs.h
-
-fi
-
-	ac_fn_c_check_func "$LINENO" "strchr" "ac_cv_func_strchr"
-if test "x$ac_cv_func_strchr" = xyes
-then :
-  printf "%s\n" "#define HAVE_STRCHR 1" >>confdefs.h
-
-fi
-ac_fn_c_check_func "$LINENO" "strcspn" "ac_cv_func_strcspn"
-if test "x$ac_cv_func_strcspn" = xyes
-then :
-  printf "%s\n" "#define HAVE_STRCSPN 1" >>confdefs.h
-
-fi
-ac_fn_c_check_func "$LINENO" "strerror" "ac_cv_func_strerror"
-if test "x$ac_cv_func_strerror" = xyes
-then :
-  printf "%s\n" "#define HAVE_STRERROR 1" >>confdefs.h
-
-fi
-ac_fn_c_check_func "$LINENO" "strlen" "ac_cv_func_strlen"
-if test "x$ac_cv_func_strlen" = xyes
-then :
-  printf "%s\n" "#define HAVE_STRLEN 1" >>confdefs.h
-
-fi
-ac_fn_c_check_func "$LINENO" "strpbrk" "ac_cv_func_strpbrk"
-if test "x$ac_cv_func_strpbrk" = xyes
-then :
-  printf "%s\n" "#define HAVE_STRPBRK 1" >>confdefs.h
-
-fi
-ac_fn_c_check_func "$LINENO" "strrchr" "ac_cv_func_strrchr"
-if test "x$ac_cv_func_strrchr" = xyes
-then :
-  printf "%s\n" "#define HAVE_STRRCHR 1" >>confdefs.h
-
-fi
-ac_fn_c_check_func "$LINENO" "strspn" "ac_cv_func_strspn"
-if test "x$ac_cv_func_strspn" = xyes
-then :
-  printf "%s\n" "#define HAVE_STRSPN 1" >>confdefs.h
-
-fi
-ac_fn_c_check_func "$LINENO" "strstr" "ac_cv_func_strstr"
-if test "x$ac_cv_func_strstr" = xyes
-then :
-  printf "%s\n" "#define HAVE_STRSTR 1" >>confdefs.h
-
-fi
-ac_fn_c_check_func "$LINENO" "strtok" "ac_cv_func_strtok"
-if test "x$ac_cv_func_strtok" = xyes
-then :
-  printf "%s\n" "#define HAVE_STRTOK 1" >>confdefs.h
-
-fi
-
-	{ printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking for working strcoll" >&5
-printf %s "checking for working strcoll... " >&6; }
-if test ${ac_cv_func_strcoll_works+y}
-then :
-  printf %s "(cached) " >&6
-else case e in #(
-  e) if test "$cross_compiling" = yes
-then :
-  case "$host_os" in # ((
-			  # Guess yes on glibc systems.
-		  *-gnu*) ac_cv_func_strcoll_works=yes ;;
-			  # If we don't know, assume the worst.
-		  *)      ac_cv_func_strcoll_works=no ;;
-		esac
-else case e in #(
-  e) cat confdefs.h - <<_ACEOF >conftest.$ac_ext
-/* end confdefs.h.  */
-$ac_includes_default
-int
-main (void)
-{
-return (strcoll ("abc", "def") >= 0 ||
-	 strcoll ("ABC", "DEF") >= 0 ||
-	 strcoll ("123", "456") >= 0)
-  ;
-  return 0;
-}
-_ACEOF
-if ac_fn_c_try_run "$LINENO"
-then :
-  ac_cv_func_strcoll_works=yes
-else case e in #(
-  e) ac_cv_func_strcoll_works=no ;;
-esac
-fi
-rm -f core *.core core.conftest.* gmon.out bb.out conftest$ac_exeext \
-  conftest.$ac_objext conftest.beam conftest.$ac_ext ;;
-esac
-fi
- ;;
-esac
-fi
-{ printf "%s\n" "$as_me:${as_lineno-$LINENO}: result: $ac_cv_func_strcoll_works" >&5
-printf "%s\n" "$ac_cv_func_strcoll_works" >&6; }
-if test $ac_cv_func_strcoll_works = yes; then
-
-printf "%s\n" "#define HAVE_STRCOLL 1" >>confdefs.h
-
-fi
-
-
-if test $ac_cv_have_decl_strerror_r = yes; then
-  # For backward compatibility's sake, define HAVE_STRERROR_R.
-  # (We used to run AC_CHECK_FUNCS_ONCE for strerror_r, as well
-  # as AC_CHECK_DECLS_ONCE.)
-
-printf "%s\n" "#define HAVE_STRERROR_R 1" >>confdefs.h
-
-fi
-
-{ printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking whether strerror_r returns char *" >&5
-printf %s "checking whether strerror_r returns char *... " >&6; }
-if test ${ac_cv_func_strerror_r_char_p+y}
-then :
-  printf %s "(cached) " >&6
-else case e in #(
-  e)
-    ac_cv_func_strerror_r_char_p=no
-    if test $ac_cv_have_decl_strerror_r = yes; then
-      cat confdefs.h - <<_ACEOF >conftest.$ac_ext
-/* end confdefs.h.  */
-#include <string.h>
-int
-main (void)
-{
-
-	  char buf[100];
-	  char x = *strerror_r (0, buf, sizeof buf);
-	  char *p = strerror_r (0, buf, sizeof buf);
-	  return !p || x;
-
-  ;
-  return 0;
-}
-_ACEOF
-if ac_fn_c_try_compile "$LINENO"
-then :
-  ac_cv_func_strerror_r_char_p=yes
-fi
-rm -f core conftest.err conftest.$ac_objext conftest.beam conftest.$ac_ext
-
+ac_func=
+for ac_item in $ac_func_c_list
+do
+  if test $ac_func; then
+    ac_fn_c_check_func "$LINENO" $ac_func ac_cv_func_$ac_func
+    if eval test \"x\$ac_cv_func_$ac_func\" = xyes; then
+      echo "#define $ac_item 1" >> confdefs.h
     fi
-   ;;
-esac
-fi
-{ printf "%s\n" "$as_me:${as_lineno-$LINENO}: result: $ac_cv_func_strerror_r_char_p" >&5
-printf "%s\n" "$ac_cv_func_strerror_r_char_p" >&6; }
-if test $ac_cv_func_strerror_r_char_p = yes; then
-
-printf "%s\n" "#define STRERROR_R_CHAR_P 1" >>confdefs.h
-
-fi
-
-
-
+    ac_func=
+  else
+    ac_func=$ac_item
+  fi
+done
 
 	echo
 	echo "Check for supplemental string support..."
@@ -7192,114 +6272,6 @@ fi
 
 
 	echo
-	echo "Check for regex..."
-	echo
-	       for ac_header in regex.h
-do :
-  ac_fn_c_check_header_compile "$LINENO" "regex.h" "ac_cv_header_regex_h" "$ac_includes_default"
-if test "x$ac_cv_header_regex_h" = xyes
-then :
-  printf "%s\n" "#define HAVE_REGEX_H 1" >>confdefs.h
-
-		{ printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking for library containing regcomp" >&5
-printf %s "checking for library containing regcomp... " >&6; }
-if test ${ac_cv_search_regcomp+y}
-then :
-  printf %s "(cached) " >&6
-else case e in #(
-  e) ac_func_search_save_LIBS=$LIBS
-cat confdefs.h - <<_ACEOF >conftest.$ac_ext
-/* end confdefs.h.  */
-
-/* Override any GCC internal prototype to avoid an error.
-   Use char because int might match the return type of a GCC
-   builtin and then its argument prototype would still apply.
-   The 'extern "C"' is for builds by C++ compilers;
-   although this is not generally supported in C code supporting it here
-   has little cost and some practical benefit (sr 110532).  */
-#ifdef __cplusplus
-extern "C"
-#endif
-char regcomp (void);
-int
-main (void)
-{
-return regcomp ();
-  ;
-  return 0;
-}
-_ACEOF
-for ac_lib in '' regex
-do
-  if test -z "$ac_lib"; then
-    ac_res="none required"
-  else
-    ac_res=-l$ac_lib
-    LIBS="-l$ac_lib  $ac_func_search_save_LIBS"
-  fi
-  if ac_fn_c_try_link "$LINENO"
-then :
-  ac_cv_search_regcomp=$ac_res
-fi
-rm -f core conftest.err conftest.$ac_objext conftest.beam \
-    conftest$ac_exeext
-  if test ${ac_cv_search_regcomp+y}
-then :
-  break
-fi
-done
-if test ${ac_cv_search_regcomp+y}
-then :
-
-else case e in #(
-  e) ac_cv_search_regcomp=no ;;
-esac
-fi
-rm conftest.$ac_ext
-LIBS=$ac_func_search_save_LIBS ;;
-esac
-fi
-{ printf "%s\n" "$as_me:${as_lineno-$LINENO}: result: $ac_cv_search_regcomp" >&5
-printf "%s\n" "$ac_cv_search_regcomp" >&6; }
-ac_res=$ac_cv_search_regcomp
-if test "$ac_res" != no
-then :
-  test "$ac_res" = "none required" || LIBS="$ac_res $LIBS"
-
-fi
-
-		ac_fn_c_check_func "$LINENO" "regcomp" "ac_cv_func_regcomp"
-if test "x$ac_cv_func_regcomp" = xyes
-then :
-  printf "%s\n" "#define HAVE_REGCOMP 1" >>confdefs.h
-
-fi
-ac_fn_c_check_func "$LINENO" "regexec" "ac_cv_func_regexec"
-if test "x$ac_cv_func_regexec" = xyes
-then :
-  printf "%s\n" "#define HAVE_REGEXEC 1" >>confdefs.h
-
-fi
-ac_fn_c_check_func "$LINENO" "regerror" "ac_cv_func_regerror"
-if test "x$ac_cv_func_regerror" = xyes
-then :
-  printf "%s\n" "#define HAVE_REGERROR 1" >>confdefs.h
-
-fi
-ac_fn_c_check_func "$LINENO" "regfree" "ac_cv_func_regfree"
-if test "x$ac_cv_func_regfree" = xyes
-then :
-  printf "%s\n" "#define HAVE_REGFREE 1" >>confdefs.h
-
-fi
-
-
-fi
-
-done
-
-
-	echo
 	echo "Check for setjmp support..."
 	echo
 	ac_fn_c_check_header_compile "$LINENO" "setjmp.h" "ac_cv_header_setjmp_h" "$ac_includes_default"
@@ -7334,693 +6306,6 @@ printf "%s\n" "#define HAVE_SIGJMP_BUF 1" >>confdefs.h
 
 
 fi
-
-
-fi
-
-
-ac_fn_c_check_type "$LINENO" "uid_t" "ac_cv_type_uid_t" "$ac_includes_default"
-if test "x$ac_cv_type_uid_t" = xyes
-then :
-
-else case e in #(
-  e)
-printf "%s\n" "#define uid_t int" >>confdefs.h
- ;;
-esac
-fi
-
-ac_fn_c_check_type "$LINENO" "gid_t" "ac_cv_type_gid_t" "$ac_includes_default"
-if test "x$ac_cv_type_gid_t" = xyes
-then :
-
-else case e in #(
-  e)
-printf "%s\n" "#define gid_t int" >>confdefs.h
- ;;
-esac
-fi
-
-
-	echo
-	echo "Check for POSIX File & Directory I/O support..."
-	echo
-	ac_header_dirent=no
-for ac_hdr in dirent.h sys/ndir.h sys/dir.h ndir.h; do
-  as_ac_Header=`printf "%s\n" "ac_cv_header_dirent_$ac_hdr" | sed "$as_sed_sh"`
-{ printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking for $ac_hdr that defines DIR" >&5
-printf %s "checking for $ac_hdr that defines DIR... " >&6; }
-if eval test \${$as_ac_Header+y}
-then :
-  printf %s "(cached) " >&6
-else case e in #(
-  e) cat confdefs.h - <<_ACEOF >conftest.$ac_ext
-/* end confdefs.h.  */
-#include <sys/types.h>
-#include <$ac_hdr>
-
-int
-main (void)
-{
-if ((DIR *) 0)
-return 0;
-  ;
-  return 0;
-}
-_ACEOF
-if ac_fn_c_try_compile "$LINENO"
-then :
-  eval "$as_ac_Header=yes"
-else case e in #(
-  e) eval "$as_ac_Header=no" ;;
-esac
-fi
-rm -f core conftest.err conftest.$ac_objext conftest.beam conftest.$ac_ext ;;
-esac
-fi
-eval ac_res=\$$as_ac_Header
-	       { printf "%s\n" "$as_me:${as_lineno-$LINENO}: result: $ac_res" >&5
-printf "%s\n" "$ac_res" >&6; }
-if eval test \"x\$"$as_ac_Header"\" = x"yes"
-then :
-  cat >>confdefs.h <<_ACEOF
-#define `printf "%s\n" "HAVE_$ac_hdr" | sed "$as_sed_cpp"` 1
-_ACEOF
-
-ac_header_dirent=$ac_hdr; break
-fi
-
-done
-# Two versions of opendir et al. are in -ldir and -lx on SCO Xenix.
-if test $ac_header_dirent = dirent.h; then
-  { printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking for library containing opendir" >&5
-printf %s "checking for library containing opendir... " >&6; }
-if test ${ac_cv_search_opendir+y}
-then :
-  printf %s "(cached) " >&6
-else case e in #(
-  e) ac_func_search_save_LIBS=$LIBS
-cat confdefs.h - <<_ACEOF >conftest.$ac_ext
-/* end confdefs.h.  */
-
-/* Override any GCC internal prototype to avoid an error.
-   Use char because int might match the return type of a GCC
-   builtin and then its argument prototype would still apply.
-   The 'extern "C"' is for builds by C++ compilers;
-   although this is not generally supported in C code supporting it here
-   has little cost and some practical benefit (sr 110532).  */
-#ifdef __cplusplus
-extern "C"
-#endif
-char opendir (void);
-int
-main (void)
-{
-return opendir ();
-  ;
-  return 0;
-}
-_ACEOF
-for ac_lib in '' dir
-do
-  if test -z "$ac_lib"; then
-    ac_res="none required"
-  else
-    ac_res=-l$ac_lib
-    LIBS="-l$ac_lib  $ac_func_search_save_LIBS"
-  fi
-  if ac_fn_c_try_link "$LINENO"
-then :
-  ac_cv_search_opendir=$ac_res
-fi
-rm -f core conftest.err conftest.$ac_objext conftest.beam \
-    conftest$ac_exeext
-  if test ${ac_cv_search_opendir+y}
-then :
-  break
-fi
-done
-if test ${ac_cv_search_opendir+y}
-then :
-
-else case e in #(
-  e) ac_cv_search_opendir=no ;;
-esac
-fi
-rm conftest.$ac_ext
-LIBS=$ac_func_search_save_LIBS ;;
-esac
-fi
-{ printf "%s\n" "$as_me:${as_lineno-$LINENO}: result: $ac_cv_search_opendir" >&5
-printf "%s\n" "$ac_cv_search_opendir" >&6; }
-ac_res=$ac_cv_search_opendir
-if test "$ac_res" != no
-then :
-  test "$ac_res" = "none required" || LIBS="$ac_res $LIBS"
-
-fi
-
-else
-  { printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking for library containing opendir" >&5
-printf %s "checking for library containing opendir... " >&6; }
-if test ${ac_cv_search_opendir+y}
-then :
-  printf %s "(cached) " >&6
-else case e in #(
-  e) ac_func_search_save_LIBS=$LIBS
-cat confdefs.h - <<_ACEOF >conftest.$ac_ext
-/* end confdefs.h.  */
-
-/* Override any GCC internal prototype to avoid an error.
-   Use char because int might match the return type of a GCC
-   builtin and then its argument prototype would still apply.
-   The 'extern "C"' is for builds by C++ compilers;
-   although this is not generally supported in C code supporting it here
-   has little cost and some practical benefit (sr 110532).  */
-#ifdef __cplusplus
-extern "C"
-#endif
-char opendir (void);
-int
-main (void)
-{
-return opendir ();
-  ;
-  return 0;
-}
-_ACEOF
-for ac_lib in '' x
-do
-  if test -z "$ac_lib"; then
-    ac_res="none required"
-  else
-    ac_res=-l$ac_lib
-    LIBS="-l$ac_lib  $ac_func_search_save_LIBS"
-  fi
-  if ac_fn_c_try_link "$LINENO"
-then :
-  ac_cv_search_opendir=$ac_res
-fi
-rm -f core conftest.err conftest.$ac_objext conftest.beam \
-    conftest$ac_exeext
-  if test ${ac_cv_search_opendir+y}
-then :
-  break
-fi
-done
-if test ${ac_cv_search_opendir+y}
-then :
-
-else case e in #(
-  e) ac_cv_search_opendir=no ;;
-esac
-fi
-rm conftest.$ac_ext
-LIBS=$ac_func_search_save_LIBS ;;
-esac
-fi
-{ printf "%s\n" "$as_me:${as_lineno-$LINENO}: result: $ac_cv_search_opendir" >&5
-printf "%s\n" "$ac_cv_search_opendir" >&6; }
-ac_res=$ac_cv_search_opendir
-if test "$ac_res" != no
-then :
-  test "$ac_res" = "none required" || LIBS="$ac_res $LIBS"
-
-fi
-
-fi
-
-
-	ac_fn_c_check_header_compile "$LINENO" "unistd.h" "ac_cv_header_unistd_h" "$ac_includes_default"
-if test "x$ac_cv_header_unistd_h" = xyes
-then :
-  printf "%s\n" "#define HAVE_UNISTD_H 1" >>confdefs.h
-
-fi
-ac_fn_c_check_header_compile "$LINENO" "fcntl.h" "ac_cv_header_fcntl_h" "$ac_includes_default"
-if test "x$ac_cv_header_fcntl_h" = xyes
-then :
-  printf "%s\n" "#define HAVE_FCNTL_H 1" >>confdefs.h
-
-fi
-ac_fn_c_check_header_compile "$LINENO" "sys/stat.h" "ac_cv_header_sys_stat_h" "$ac_includes_default"
-if test "x$ac_cv_header_sys_stat_h" = xyes
-then :
-  printf "%s\n" "#define HAVE_SYS_STAT_H 1" >>confdefs.h
-
-fi
-ac_fn_c_check_header_compile "$LINENO" "utime.h" "ac_cv_header_utime_h" "$ac_includes_default"
-if test "x$ac_cv_header_utime_h" = xyes
-then :
-  printf "%s\n" "#define HAVE_UTIME_H 1" >>confdefs.h
-
-fi
-
-	ac_fn_c_check_func "$LINENO" "chdir" "ac_cv_func_chdir"
-if test "x$ac_cv_func_chdir" = xyes
-then :
-  printf "%s\n" "#define HAVE_CHDIR 1" >>confdefs.h
-
-fi
-ac_fn_c_check_func "$LINENO" "getcwd" "ac_cv_func_getcwd"
-if test "x$ac_cv_func_getcwd" = xyes
-then :
-  printf "%s\n" "#define HAVE_GETCWD 1" >>confdefs.h
-
-fi
-ac_fn_c_check_func "$LINENO" "mkdir" "ac_cv_func_mkdir"
-if test "x$ac_cv_func_mkdir" = xyes
-then :
-  printf "%s\n" "#define HAVE_MKDIR 1" >>confdefs.h
-
-fi
-ac_fn_c_check_func "$LINENO" "rmdir" "ac_cv_func_rmdir"
-if test "x$ac_cv_func_rmdir" = xyes
-then :
-  printf "%s\n" "#define HAVE_RMDIR 1" >>confdefs.h
-
-fi
-ac_fn_c_check_func "$LINENO" "closedir" "ac_cv_func_closedir"
-if test "x$ac_cv_func_closedir" = xyes
-then :
-  printf "%s\n" "#define HAVE_CLOSEDIR 1" >>confdefs.h
-
-fi
-ac_fn_c_check_func "$LINENO" "opendir" "ac_cv_func_opendir"
-if test "x$ac_cv_func_opendir" = xyes
-then :
-  printf "%s\n" "#define HAVE_OPENDIR 1" >>confdefs.h
-
-fi
-ac_fn_c_check_func "$LINENO" "readdir" "ac_cv_func_readdir"
-if test "x$ac_cv_func_readdir" = xyes
-then :
-  printf "%s\n" "#define HAVE_READDIR 1" >>confdefs.h
-
-fi
-
-	ac_fn_c_check_func "$LINENO" "chmod" "ac_cv_func_chmod"
-if test "x$ac_cv_func_chmod" = xyes
-then :
-  printf "%s\n" "#define HAVE_CHMOD 1" >>confdefs.h
-
-fi
-ac_fn_c_check_func "$LINENO" "chown" "ac_cv_func_chown"
-if test "x$ac_cv_func_chown" = xyes
-then :
-  printf "%s\n" "#define HAVE_CHOWN 1" >>confdefs.h
-
-fi
-ac_fn_c_check_func "$LINENO" "chroot" "ac_cv_func_chroot"
-if test "x$ac_cv_func_chroot" = xyes
-then :
-  printf "%s\n" "#define HAVE_CHROOT 1" >>confdefs.h
-
-fi
-ac_fn_c_check_func "$LINENO" "fchmod" "ac_cv_func_fchmod"
-if test "x$ac_cv_func_fchmod" = xyes
-then :
-  printf "%s\n" "#define HAVE_FCHMOD 1" >>confdefs.h
-
-fi
-ac_fn_c_check_func "$LINENO" "stat" "ac_cv_func_stat"
-if test "x$ac_cv_func_stat" = xyes
-then :
-  printf "%s\n" "#define HAVE_STAT 1" >>confdefs.h
-
-fi
-ac_fn_c_check_func "$LINENO" "fstat" "ac_cv_func_fstat"
-if test "x$ac_cv_func_fstat" = xyes
-then :
-  printf "%s\n" "#define HAVE_FSTAT 1" >>confdefs.h
-
-fi
-ac_fn_c_check_func "$LINENO" "link" "ac_cv_func_link"
-if test "x$ac_cv_func_link" = xyes
-then :
-  printf "%s\n" "#define HAVE_LINK 1" >>confdefs.h
-
-fi
-ac_fn_c_check_func "$LINENO" "rename" "ac_cv_func_rename"
-if test "x$ac_cv_func_rename" = xyes
-then :
-  printf "%s\n" "#define HAVE_RENAME 1" >>confdefs.h
-
-fi
-ac_fn_c_check_func "$LINENO" "symlink" "ac_cv_func_symlink"
-if test "x$ac_cv_func_symlink" = xyes
-then :
-  printf "%s\n" "#define HAVE_SYMLINK 1" >>confdefs.h
-
-fi
-ac_fn_c_check_func "$LINENO" "unlink" "ac_cv_func_unlink"
-if test "x$ac_cv_func_unlink" = xyes
-then :
-  printf "%s\n" "#define HAVE_UNLINK 1" >>confdefs.h
-
-fi
-ac_fn_c_check_func "$LINENO" "umask" "ac_cv_func_umask"
-if test "x$ac_cv_func_umask" = xyes
-then :
-  printf "%s\n" "#define HAVE_UMASK 1" >>confdefs.h
-
-fi
-ac_fn_c_check_func "$LINENO" "utime" "ac_cv_func_utime"
-if test "x$ac_cv_func_utime" = xyes
-then :
-  printf "%s\n" "#define HAVE_UTIME 1" >>confdefs.h
-
-fi
-
-	ac_fn_c_check_func "$LINENO" "close" "ac_cv_func_close"
-if test "x$ac_cv_func_close" = xyes
-then :
-  printf "%s\n" "#define HAVE_CLOSE 1" >>confdefs.h
-
-fi
-ac_fn_c_check_func "$LINENO" "creat" "ac_cv_func_creat"
-if test "x$ac_cv_func_creat" = xyes
-then :
-  printf "%s\n" "#define HAVE_CREAT 1" >>confdefs.h
-
-fi
-ac_fn_c_check_func "$LINENO" "dup" "ac_cv_func_dup"
-if test "x$ac_cv_func_dup" = xyes
-then :
-  printf "%s\n" "#define HAVE_DUP 1" >>confdefs.h
-
-fi
-ac_fn_c_check_func "$LINENO" "dup2" "ac_cv_func_dup2"
-if test "x$ac_cv_func_dup2" = xyes
-then :
-  printf "%s\n" "#define HAVE_DUP2 1" >>confdefs.h
-
-fi
-ac_fn_c_check_func "$LINENO" "ftruncate" "ac_cv_func_ftruncate"
-if test "x$ac_cv_func_ftruncate" = xyes
-then :
-  printf "%s\n" "#define HAVE_FTRUNCATE 1" >>confdefs.h
-
-fi
-ac_fn_c_check_func "$LINENO" "chsize" "ac_cv_func_chsize"
-if test "x$ac_cv_func_chsize" = xyes
-then :
-  printf "%s\n" "#define HAVE_CHSIZE 1" >>confdefs.h
-
-fi
-ac_fn_c_check_func "$LINENO" "truncate" "ac_cv_func_truncate"
-if test "x$ac_cv_func_truncate" = xyes
-then :
-  printf "%s\n" "#define HAVE_TRUNCATE 1" >>confdefs.h
-
-fi
-ac_fn_c_check_func "$LINENO" "lseek" "ac_cv_func_lseek"
-if test "x$ac_cv_func_lseek" = xyes
-then :
-  printf "%s\n" "#define HAVE_LSEEK 1" >>confdefs.h
-
-fi
-ac_fn_c_check_func "$LINENO" "open" "ac_cv_func_open"
-if test "x$ac_cv_func_open" = xyes
-then :
-  printf "%s\n" "#define HAVE_OPEN 1" >>confdefs.h
-
-fi
-ac_fn_c_check_func "$LINENO" "pipe" "ac_cv_func_pipe"
-if test "x$ac_cv_func_pipe" = xyes
-then :
-  printf "%s\n" "#define HAVE_PIPE 1" >>confdefs.h
-
-fi
-ac_fn_c_check_func "$LINENO" "read" "ac_cv_func_read"
-if test "x$ac_cv_func_read" = xyes
-then :
-  printf "%s\n" "#define HAVE_READ 1" >>confdefs.h
-
-fi
-ac_fn_c_check_func "$LINENO" "write" "ac_cv_func_write"
-if test "x$ac_cv_func_write" = xyes
-then :
-  printf "%s\n" "#define HAVE_WRITE 1" >>confdefs.h
-
-fi
-
-	ac_fn_c_check_func "$LINENO" "isatty" "ac_cv_func_isatty"
-if test "x$ac_cv_func_isatty" = xyes
-then :
-  printf "%s\n" "#define HAVE_ISATTY 1" >>confdefs.h
-
-fi
-ac_fn_c_check_func "$LINENO" "getdtablesize" "ac_cv_func_getdtablesize"
-if test "x$ac_cv_func_getdtablesize" = xyes
-then :
-  printf "%s\n" "#define HAVE_GETDTABLESIZE 1" >>confdefs.h
-
-fi
-
-	{ printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking for working chown" >&5
-printf %s "checking for working chown... " >&6; }
-if test ${ac_cv_func_chown_works+y}
-then :
-  printf %s "(cached) " >&6
-else case e in #(
-  e) if test "$cross_compiling" = yes
-then :
-  case "$host_os" in # ((
-			  # Guess yes on glibc systems.
-		  *-gnu*) ac_cv_func_chown_works=yes ;;
-			  # If we don't know, assume the worst.
-		  *)      ac_cv_func_chown_works=no ;;
-		esac
-else case e in #(
-  e) cat confdefs.h - <<_ACEOF >conftest.$ac_ext
-/* end confdefs.h.  */
-$ac_includes_default
-#include <fcntl.h>
-
-int
-main (void)
-{
-  char *f = "conftest.chown";
-  struct stat before, after;
-
-  if (creat (f, 0600) < 0)
-    return 1;
-  if (stat (f, &before) < 0)
-    return 1;
-  if (chown (f, (uid_t) -1, (gid_t) -1) == -1)
-    return 1;
-  if (stat (f, &after) < 0)
-    return 1;
-  return ! (before.st_uid == after.st_uid && before.st_gid == after.st_gid);
-
-  ;
-  return 0;
-}
-_ACEOF
-if ac_fn_c_try_run "$LINENO"
-then :
-  ac_cv_func_chown_works=yes
-else case e in #(
-  e) ac_cv_func_chown_works=no ;;
-esac
-fi
-rm -f core *.core core.conftest.* gmon.out bb.out conftest$ac_exeext \
-  conftest.$ac_objext conftest.beam conftest.$ac_ext ;;
-esac
-fi
-
-rm -f conftest.chown
- ;;
-esac
-fi
-{ printf "%s\n" "$as_me:${as_lineno-$LINENO}: result: $ac_cv_func_chown_works" >&5
-printf "%s\n" "$ac_cv_func_chown_works" >&6; }
-if test $ac_cv_func_chown_works = yes; then
-
-printf "%s\n" "#define HAVE_CHOWN 1" >>confdefs.h
-
-fi
-
-
-
-	printf "%s\n"
-	printf "%s\n" "Check for file locking..."
-	printf "%s\n"
-	ac_fn_c_check_header_compile "$LINENO" "fcntl.h" "ac_cv_header_fcntl_h" "$ac_includes_default"
-if test "x$ac_cv_header_fcntl_h" = xyes
-then :
-  printf "%s\n" "#define HAVE_FCNTL_H 1" >>confdefs.h
-
-fi
-ac_fn_c_check_header_compile "$LINENO" "sys/file.h" "ac_cv_header_sys_file_h" "$ac_includes_default"
-if test "x$ac_cv_header_sys_file_h" = xyes
-then :
-  printf "%s\n" "#define HAVE_SYS_FILE_H 1" >>confdefs.h
-
-fi
-
-	ac_fn_c_check_func "$LINENO" "flock" "ac_cv_func_flock"
-if test "x$ac_cv_func_flock" = xyes
-then :
-  printf "%s\n" "#define HAVE_FLOCK 1" >>confdefs.h
-
-fi
-ac_fn_c_check_func "$LINENO" "fcntl" "ac_cv_func_fcntl"
-if test "x$ac_cv_func_fcntl" = xyes
-then :
-  printf "%s\n" "#define HAVE_FCNTL 1" >>confdefs.h
-
-fi
-ac_fn_c_check_func "$LINENO" "lockf" "ac_cv_func_lockf"
-if test "x$ac_cv_func_lockf" = xyes
-then :
-  printf "%s\n" "#define HAVE_LOCKF 1" >>confdefs.h
-
-fi
-ac_fn_c_check_func "$LINENO" "locking" "ac_cv_func_locking"
-if test "x$ac_cv_func_locking" = xyes
-then :
-  printf "%s\n" "#define HAVE_LOCKING 1" >>confdefs.h
-
-fi
-
-
-	ac_ext=c
-CC_E='-o '
-ac_cpp='$CPP $CPPFLAGS'
-ac_compile='$CC -c $CFLAGS $CPPFLAGS conftest.$ac_ext >&5'
-ac_link='$CC ${CC_E}conftest$ac_exeext $CFLAGS $CPPFLAGS $LDFLAGS conftest.$ac_ext $LIBS >&5'
-ac_compiler_gnu=$ac_cv_c_compiler_gnu
-
-	{ printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking for O_BINARY" >&5
-printf %s "checking for O_BINARY... " >&6; }
-if test ${ac_cv_define_O_BINARY+y}
-then :
-  printf %s "(cached) " >&6
-else case e in #(
-  e)
-		if test "$cross_compiling" = yes
-then :
-  { { printf "%s\n" "$as_me:${as_lineno-$LINENO}: error: in '$ac_pwd':" >&5
-printf "%s\n" "$as_me: error: in '$ac_pwd':" >&2;}
-as_fn_error $? "cannot run test program while cross compiling
-See 'config.log' for more details" "$LINENO" 5; }
-else case e in #(
-  e) cat confdefs.h - <<_ACEOF >conftest.$ac_ext
-/* end confdefs.h.  */
-
-
-#include <fcntl.h>
-int main()
-{
-#ifdef O_BINARY
-	return 0;
-#else
-	return 1;
-#endif
-}
-
-
-_ACEOF
-if ac_fn_c_try_run "$LINENO"
-then :
-  ac_cv_define_O_BINARY=yes
-else case e in #(
-  e) ac_cv_define_O_BINARY=no ;;
-esac
-fi
-rm -f core *.core core.conftest.* gmon.out bb.out conftest$ac_exeext \
-  conftest.$ac_objext conftest.beam conftest.$ac_ext ;;
-esac
-fi
-
-	 ;;
-esac
-fi
-{ printf "%s\n" "$as_me:${as_lineno-$LINENO}: result: $ac_cv_define_O_BINARY" >&5
-printf "%s\n" "$ac_cv_define_O_BINARY" >&6; }
-	ac_ext=c
-CC_E='-o '
-ac_cpp='$CPP $CPPFLAGS'
-ac_compile='$CC -c $CFLAGS $CPPFLAGS conftest.$ac_ext >&5'
-ac_link='$CC ${CC_E}conftest$ac_exeext $CFLAGS $CPPFLAGS $LDFLAGS conftest.$ac_ext $LIBS >&5'
-ac_compiler_gnu=$ac_cv_c_compiler_gnu
-
-	if test $ac_cv_define_O_BINARY = 'yes'
-then :
-
-		printf "%s\n" "#define HAVE_MACRO_O_BINARY 1" >>confdefs.h
-
-
-fi
-
-
-	ac_ext=c
-CC_E='-o '
-ac_cpp='$CPP $CPPFLAGS'
-ac_compile='$CC -c $CFLAGS $CPPFLAGS conftest.$ac_ext >&5'
-ac_link='$CC ${CC_E}conftest$ac_exeext $CFLAGS $CPPFLAGS $LDFLAGS conftest.$ac_ext $LIBS >&5'
-ac_compiler_gnu=$ac_cv_c_compiler_gnu
-
-	{ printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking for LOCK_SH" >&5
-printf %s "checking for LOCK_SH... " >&6; }
-if test ${ac_cv_define_LOCK_SH+y}
-then :
-  printf %s "(cached) " >&6
-else case e in #(
-  e)
-		if test "$cross_compiling" = yes
-then :
-  { { printf "%s\n" "$as_me:${as_lineno-$LINENO}: error: in '$ac_pwd':" >&5
-printf "%s\n" "$as_me: error: in '$ac_pwd':" >&2;}
-as_fn_error $? "cannot run test program while cross compiling
-See 'config.log' for more details" "$LINENO" 5; }
-else case e in #(
-  e) cat confdefs.h - <<_ACEOF >conftest.$ac_ext
-/* end confdefs.h.  */
-
-
-#include <fcntl.h>
-int main()
-{
-#ifdef LOCK_SH
-	return 0;
-#else
-	return 1;
-#endif
-}
-
-
-_ACEOF
-if ac_fn_c_try_run "$LINENO"
-then :
-  ac_cv_define_LOCK_SH=yes
-else case e in #(
-  e) ac_cv_define_LOCK_SH=no ;;
-esac
-fi
-rm -f core *.core core.conftest.* gmon.out bb.out conftest$ac_exeext \
-  conftest.$ac_objext conftest.beam conftest.$ac_ext ;;
-esac
-fi
-
-	 ;;
-esac
-fi
-{ printf "%s\n" "$as_me:${as_lineno-$LINENO}: result: $ac_cv_define_LOCK_SH" >&5
-printf "%s\n" "$ac_cv_define_LOCK_SH" >&6; }
-	ac_ext=c
-CC_E='-o '
-ac_cpp='$CPP $CPPFLAGS'
-ac_compile='$CC -c $CFLAGS $CPPFLAGS conftest.$ac_ext >&5'
-ac_link='$CC ${CC_E}conftest$ac_exeext $CFLAGS $CPPFLAGS $LDFLAGS conftest.$ac_ext $LIBS >&5'
-ac_compiler_gnu=$ac_cv_c_compiler_gnu
-
-	if test $ac_cv_define_LOCK_SH = 'yes'
-then :
-
-		printf "%s\n" "#define HAVE_MACRO_LOCK_SH 1" >>confdefs.h
 
 
 fi
@@ -8109,6 +6394,7 @@ fi
 fi
 
 done
+
 
 
 if test -d "${JAVA_HOME}/include"
@@ -8419,6 +6705,84 @@ printf "%s\n"
 printf "%s\n" "Checking assorted..."
 printf "%s\n"
 
+
+
+
+  # Make sure we can run config.sub.
+$SHELL "${ac_aux_dir}config.sub" sun4 >/dev/null 2>&1 ||
+  as_fn_error $? "cannot run $SHELL ${ac_aux_dir}config.sub" "$LINENO" 5
+
+{ printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking build system type" >&5
+printf %s "checking build system type... " >&6; }
+if test ${ac_cv_build+y}
+then :
+  printf %s "(cached) " >&6
+else case e in #(
+  e) ac_build_alias=$build_alias
+test "x$ac_build_alias" = x &&
+  ac_build_alias=`$SHELL "${ac_aux_dir}config.guess"`
+test "x$ac_build_alias" = x &&
+  as_fn_error $? "cannot guess build type; you must specify one" "$LINENO" 5
+ac_cv_build=`$SHELL "${ac_aux_dir}config.sub" $ac_build_alias` ||
+  as_fn_error $? "$SHELL ${ac_aux_dir}config.sub $ac_build_alias failed" "$LINENO" 5
+ ;;
+esac
+fi
+{ printf "%s\n" "$as_me:${as_lineno-$LINENO}: result: $ac_cv_build" >&5
+printf "%s\n" "$ac_cv_build" >&6; }
+case $ac_cv_build in
+*-*-*) ;;
+*) as_fn_error $? "invalid value of canonical build" "$LINENO" 5;;
+esac
+build=$ac_cv_build
+ac_save_IFS=$IFS; IFS='-'
+set x $ac_cv_build
+shift
+build_cpu=$1
+build_vendor=$2
+shift; shift
+# Remember, the first character of IFS is used to create $*,
+# except with old shells:
+build_os=$*
+IFS=$ac_save_IFS
+case $build_os in *\ *) build_os=`echo "$build_os" | sed 's/ /-/g'`;; esac
+
+
+{ printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking host system type" >&5
+printf %s "checking host system type... " >&6; }
+if test ${ac_cv_host+y}
+then :
+  printf %s "(cached) " >&6
+else case e in #(
+  e) if test "x$host_alias" = x; then
+  ac_cv_host=$ac_cv_build
+else
+  ac_cv_host=`$SHELL "${ac_aux_dir}config.sub" $host_alias` ||
+    as_fn_error $? "$SHELL ${ac_aux_dir}config.sub $host_alias failed" "$LINENO" 5
+fi
+ ;;
+esac
+fi
+{ printf "%s\n" "$as_me:${as_lineno-$LINENO}: result: $ac_cv_host" >&5
+printf "%s\n" "$ac_cv_host" >&6; }
+case $ac_cv_host in
+*-*-*) ;;
+*) as_fn_error $? "invalid value of canonical host" "$LINENO" 5;;
+esac
+host=$ac_cv_host
+ac_save_IFS=$IFS; IFS='-'
+set x $ac_cv_host
+shift
+host_cpu=$1
+host_vendor=$2
+shift; shift
+# Remember, the first character of IFS is used to create $*,
+# except with old shells:
+host_os=$*
+IFS=$ac_save_IFS
+case $host_os in *\ *) host_os=`echo "$host_os" | sed 's/ /-/g'`;; esac
+
+
 { printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking for GNU libc compatible malloc" >&5
 printf %s "checking for GNU libc compatible malloc... " >&6; }
 if test ${ac_cv_func_malloc_0_nonnull+y}
@@ -8580,18 +6944,6 @@ ac_fn_c_check_func "$LINENO" "putenv" "ac_cv_func_putenv"
 if test "x$ac_cv_func_putenv" = xyes
 then :
   printf "%s\n" "#define HAVE_PUTENV 1" >>confdefs.h
-
-fi
-ac_fn_c_check_func "$LINENO" "toupper" "ac_cv_func_toupper"
-if test "x$ac_cv_func_toupper" = xyes
-then :
-  printf "%s\n" "#define HAVE_TOUPPER 1" >>confdefs.h
-
-fi
-ac_fn_c_check_func "$LINENO" "tolower" "ac_cv_func_tolower"
-if test "x$ac_cv_func_tolower" = xyes
-then :
-  printf "%s\n" "#define HAVE_TOLOWER 1" >>confdefs.h
 
 fi
 
