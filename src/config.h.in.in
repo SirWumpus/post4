@@ -161,6 +161,9 @@ extern "C" {
 #undef HAVE_JMP_BUF
 #undef HAVE_SIGJMP_BUF
 
+#ifdef HAVE_SETJMP_H
+#include <setjmp.h>
+
 #ifdef HAVE_SIGJMP_BUF
 # define JMP_BUF		sigjmp_buf
 # define SETJMP(e)		sigsetjmp(e, 1)
@@ -177,6 +180,7 @@ extern "C" {
 
 #define SETJMP_PUSH(jb)		{ JMP_BUF jb_save; (void) memcpy(&jb_save, jb, sizeof (jb))
 #define SETJMP_POP(jb)		(void) memcpy(jb, &jb_save, sizeof (jb)); }
+#endif
 
 /*
  * Termios
