@@ -1085,8 +1085,15 @@ p4Repl(P4_Ctx *ctx, int thrown)
 		P4_WORD("_hook_call",	&&_hook_call,	0, 0x00),	// p4
 #endif
 #ifdef HAVE_MATH_H
-//		P4_WORD("min-float",	&&_min_float,	0, 0x01),	// p4
-		P4_WORD("max-float",	&&_max_float,	0, 0x01),	// p4
+# if defined(FLT_EVAL_METHOD) == 0
+#  define MAX_FLOAT	((float) FLT_MAX)
+#  define MIN_FLOAT	((float) FLT_MIN)
+# else
+#  define MAX_FLOAT	((double) DBL_MAX)
+#  define MIN_FLOAT	((double) DBL_MIN)
+# endif
+//		P4_FVAL("min-float",	MIN_FLOAT),			// p4
+		P4_FVAL("max-float",	MAX_FLOAT),			// p4
 		P4_WORD("_fs",		&&_fs,		0, 0x03),	// p4
 		P4_WORD("_fsp@",	&&_fsp_get,	0, 0x01),	// p4
 		P4_WORD("_fsp!",	&&_fsp_put,	0, 0x10),	// p4
@@ -1131,8 +1138,6 @@ p4Repl(P4_Ctx *ctx, int thrown)
 		P4_WORD("rs>fs",	&&_rs_to_fs,	0, 0x011000),	// p4
 #endif
 		P4_WORD("BIN",			&&_fa_bin,	0, 0x01),
-		P4_WORD("R/O",			&&_fa_ro,	0, 0x01),
-		P4_WORD("R/W",			&&_fa_rw,	0, 0x01),
 		P4_WORD("CLOSE-FILE",		&&_fa_close,	0, 0x11),
 		P4_WORD("CREATE-FILE",		&&_fa_create,	0, 0x22),
 		P4_WORD("DELETE-FILE",		&&_fa_delete,	0, 0x21),
@@ -1148,12 +1153,14 @@ p4Repl(P4_Ctx *ctx, int thrown)
 		P4_WORD("WRITE-FILE",		&&_fa_write,	0, 0x31),
 
 		/* Constants. */
-		P4_WORD("/pad",			&&_pad_size,	0, 0x01),	// p4
-		P4_WORD("address-unit-bits",	&&_char_bit,	0, 0x01),	// p4
-		P4_WORD("WORDLISTS",		&&_wordlists,	0, 0x01),
+		P4_VAL("R/O",			0),
+		P4_VAL("R/W",			1),
+		P4_VAL("/pad",			P4_PAD_SIZE),		// p4
+		P4_VAL("address-unit-bits",	P4_CHAR_BIT),		// p4
+		P4_VAL("WORDLISTS",		P4_WORDLISTS),
 
 		/* Internal support. */
-		P4_WORD("_bp",		&&_bp,		0, 0x00),		// p4
+		P4_WORD("_bp",		&&_bp,		0, 0x00),	// p4
 		P4_WORD("_branch",	&&_branch,	P4_BIT_COMPILE, 0x01000000),	// p4
 		P4_WORD("_branchz",	&&_branchz,	P4_BIT_COMPILE, 0x01000010),	// p4
 		P4_WORD("_call",	&&_call,	P4_BIT_COMPILE, 0x01000100),	// p4
@@ -1555,11 +1562,7 @@ _lit:		w = *ip++;
 		P4_PUSH(ctx->ds, w);
 		NEXT;
 
-		/*
-		 * Environment Constants.
-		 */
-		// ( -- u )
-_char_bit:	P4_PUSH(ctx->ds, (P4_Uint) P4_CHAR_BIT);
+_doconst:	P4_PUSH(ctx->ds, w.xt->ndata);
 		NEXT;
 
 		// ( n1 -- n2 )
@@ -1568,10 +1571,6 @@ _chars:		P4_TOP(ctx->ds).n *= sizeof (P4_Char);
 
 		// ( n1 -- n2 )
 _cells:		P4_TOP(ctx->ds).n *= P4_CELL;
-		NEXT;
-
-		// ( -- u )
-_wordlists:	P4_PUSH(ctx->ds, (P4_Uint) P4_WORDLISTS);
 		NEXT;
 
 		/*
@@ -1724,22 +1723,12 @@ _alias:		P4_DROP(ctx->ds, 1);
 		word->ndata = x.w->ndata;
 		NEXT;
 
-		/*
-		 * Context variables
-		 */
 		// ( key k -- value v )
 _env:		P4_DROP(ctx->ds, 1);		// Ignore k, S" NUL terminates.
 		w = P4_TOP(ctx->ds);
 		x.s = getenv((const char *)w.s);
 		P4_TOP(ctx->ds) = x;
 		P4_PUSH(ctx->ds, (P4_Int)(x.s == NULL ? 0 : strlen((const char *)x.s)));
-		NEXT;
-
-		/*
-		 * Numeric formatting
-		 */
-		// ( -- u )
-_pad_size:	P4_PUSH(ctx->ds, (P4_Uint) P4_PAD_SIZE);
 		NEXT;
 
 		// ( -- rows cols )
@@ -2016,7 +2005,7 @@ _source_id:	P4_PUSH(ctx->ds, (P4_Int)(ctx->input->fp == stdin ? NULL : ctx->inpu
 
 		// ( caddr +n1 -- +n2 )
 _accept:	w = P4_DROPTOP(ctx->ds);
-		x.u = p4Accept(ctx->input, w.s, x.u);
+		x.u = p4Accept(ctx->input, w.s, x.z);
 		P4_TOP(ctx->ds) = x;
 		NEXT;
 
@@ -2121,14 +2110,6 @@ _stack_dump:	P4_DROP(ctx->ds, 1);
 
 		FILE *fp;
 		struct stat sb;
-
-		// ( -- fam )
-_fa_ro:		P4_PUSH(ctx->ds, (P4_Uint) 0);
-		NEXT;
-
-		// ( -- fam )
-_fa_rw:		P4_PUSH(ctx->ds, (P4_Uint) 1);
-		NEXT;
 
 		// ( fam1 -- fam2 )
 _fa_bin:	P4_TOP(ctx->ds).u = x.u | 2;
@@ -2253,20 +2234,8 @@ _fa_tell:	errno = 0;
 		NEXT;
 
 #ifdef HAVE_MATH_H
-# if defined(FLT_EVAL_METHOD) == 0
-#  define MAX_FLOAT	((float) FLT_MAX)
-#  define MIN_FLOAT	((float) FLT_MIN)
-# else
-#  define MAX_FLOAT	((double) DBL_MAX)
-#  define MIN_FLOAT	((double) DBL_MIN)
-# endif
-		// (F: -- f )
-_max_float:	P4_PUSH(ctx->P4_FLOAT_STACK, (P4_Float) MAX_FLOAT);
+_dofloat:	P4_PUSH(ctx->P4_FLOAT_STACK, (P4_Float)w.xt->ndata);
 		NEXT;
-
-//		// (F: -- f )
-//_min_float:	P4_PUSH(ctx->P4_FLOAT_STACK, MIN_FLOAT);
-//		NEXT;
 
 		// ( -- aaddr n s )
 _fs:		w.n = P4_LENGTH(ctx->fs);
@@ -2350,7 +2319,7 @@ _f_represent:	P4_DROP(ctx->ds, 1);
 			num[1] = num[0];
 			E++;
 		}
-		(void) strncpy(w.s, fraction, x.z);
+		(void) memmove(w.s, fraction, x.z);
 		P4_PUSH(ctx->ds, (P4_Int) E);
 		P4_PUSH(ctx->ds, P4_BOOL(y.n < 0));
 		P4_PUSH(ctx->ds, P4_BOOL(isdigit(*num) != 0));

@@ -72,7 +72,7 @@ extern "C" {
 #endif
 
 #ifndef P4_WORDLISTS
-#define P4_WORDLISTS			8
+#define P4_WORDLISTS			12
 #endif
 
 #ifndef P4_SAFE_PATH
@@ -405,7 +405,9 @@ struct p4_word {
 	P4_Cell *	data;		/* Word grows by data cells. */
 };
 
-# define P4_WORD(name, code, bits, pp)	{ NULL, STRLEN(name), name, bits, pp, code, 0 }
+#define P4_WORD(name, code, bits, pp)	{ NULL, STRLEN(name), name, bits, pp, code, 0 }
+#define P4_FVAL(name, val)		{ NULL, STRLEN(name), name, 0, 0x01, &&_dofloat, (P4_Uint)(P4_Float)(val) }
+#define P4_VAL(name, val)		{ NULL, STRLEN(name), name, 0, 0x01, &&_doconst, val }
 
 typedef struct {
 	P4_Int		size;		/* Size of table in cells. */
