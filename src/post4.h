@@ -103,10 +103,6 @@ extern "C" {
 #define P4_TRACE			1
 #endif
 
-#ifndef ASSERT_LINE_BUFFERING
-#define ASSERT_LINE_BUFFERING		1
-#endif
-
 #ifdef WITH_JAVA
 #define HAVE_HOOKS			1
 #endif

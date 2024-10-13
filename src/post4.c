@@ -124,10 +124,6 @@ static const char crlf[] = "\r\n";
 void
 p4Init(void)
 {
-#ifdef ASSERT_LINE_BUFFERING
-	setvbuf(stdout, NULL, _IOLBF, 0);
-	setvbuf(stderr, NULL, _IOLBF, 0);
-#endif
 	alineInit();
 }
 
@@ -678,7 +674,7 @@ p4Divs(P4_Int dend0, P4_Int dend1, P4_Int dsor, P4_Int *rem)
 int
 p4Accept(P4_Input *input, char *buf, P4_Size size)
 {
-	if (input->fp == (FILE *) -1 || size-- <= 1) {
+	if (input->fp == (FILE *) -1) {
 		return EOF;
 	}
 	return alineInput(input->fp, "", buf, (size_t) size);

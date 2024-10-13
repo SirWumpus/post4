@@ -76,7 +76,7 @@ alineInit(void)
 	sig_winch(SIGWINCH);
 	signal(SIGWINCH, sig_winch);
 
-	setvbuf(stdin, NULL, _IONBF, 0);
+	setvbuf(stdin, NULL, _IOLBF, 0);
 	(void) tcgetattr(tty_fd, &tty_modes[ALINE_CANONICAL]);
 	(void) atexit(alineFini);
 
