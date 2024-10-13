@@ -27,11 +27,11 @@ t{  0 -1 = -> FALSE }t
 test_group_end
 
 .( FALSE ) test_group
-t{ FALSE 0= -> TRUE }t
+t{ FALSE -> 0 }t
 test_group_end
 
 .( TRUE ) test_group
-t{ TRUE -1 = -> TRUE }t
+t{ TRUE -> FALSE INVERT }t
 test_group_end
 
 .( INVERT ) test_group
@@ -837,10 +837,11 @@ t{ tw_buf_1 tw_buf_0 - ABS 127 CHARS < -> FALSE }t
 	OVER I C@ = AND
 	/CHAR +LOOP NIP
 ;
-t{ tw_buf_0 128 CHAR * FILL -> }t
-t{ tw_buf_0 128 CHAR * tw_buf_full? -> TRUE }t
-t{ tw_buf_0 128 0 FILL -> }t
-t{ tw_buf_0 128 0 tw_buf_full? -> TRUE }t
+see tw_buf_full?
+t{ tw_buf_0 127 CHAR * FILL -> }t
+t{ tw_buf_0 127 CHAR * .s tw_buf_full? -> TRUE }t
+t{ tw_buf_0 127 0 FILL -> }t
+t{ tw_buf_0 127 0 tw_buf_full? -> TRUE }t
 test_group_end
 
 .( CASE OF ENDOF ENDCASE ) test_group
