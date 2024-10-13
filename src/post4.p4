@@ -232,6 +232,42 @@ BEGIN-STRUCTURE p4_input
 	FIELD: in.buffer			\ pointer
 END-STRUCTURE
 
+\ Example
+\
+\	_ctx		 		\ Post4 machine context pointer
+\	ctx.active @ @		\ pointer to most recent word
+\	w.name @			\ pointer to word name
+\	puts				\ write name
+\
+BEGIN-STRUCTURE p4_ctx
+	FIELD: ctx.end				\ see UNUSED
+	FIELD: ctx.here				\ see HERE
+	FIELD: ctx.state			\ see STATE
+	FIELD: ctx.frame			\ see CATCH and THROW
+	FIELD: ctx.trace			\ see _trace
+	FIELD: ctx.level			\ see p4
+	FIELD: ctx.radix			\ see BASE
+	FIELD: ctx.argc				\ see args
+	FIELD: ctx.argv
+	p4_stack +FIELD ctx.ds		\ see _ds
+	p4_stack +FIELD ctx.rs		\ see _rs
+\ [DEFINED] _fs [IF]
+	p4_stack +FIELD ctx.fs		\ see _fs
+	FIELD: ctx.precision		\ see PRECISION and SET-PRECISION
+\ [THEN]
+	FIELD: ctx.input			\ pointer
+	FIELD: ctx.block			\ pointer
+	FIELD: ctx.block_fd
+	FIELD: ctx.active
+	WORDLISTS CELLS +FIELD ctx.lists
+	FIELD: ctx.norder
+	WORDLISTS CELLS +FIELD ctx.order
+\ [DEFINED] jcall [IF]
+	FIELD: ctx.jenv
+\ [THEN]
+\	0 +FIELD ctx.longjmp		\ size varies by host OS
+END-STRUCTURE
+
 \ ( u "<spaces>name" -- addr )
 : BUFFER: CREATE ALLOT ; $11 _pp!
 
@@ -1781,42 +1817,6 @@ VARIABLE _str_buf_curr
 	S\" \r\n" R> WRITE-FILE
 ;
 [THEN]
-
-\ Example
-\
-\	_ctx		 		\ Post4 machine context pointer
-\	ctx.active @ @		\ pointer to most recent word
-\	w.name @			\ pointer to word name
-\	puts				\ write name
-\
-BEGIN-STRUCTURE p4_ctx
-	FIELD: ctx.end				\ see UNUSED
-	FIELD: ctx.here				\ see HERE
-	FIELD: ctx.state			\ see STATE
-	FIELD: ctx.frame				\ see CATCH and THROW
-	FIELD: ctx.trace			\ see _trace
-	FIELD: ctx.level			\ see p4
-	FIELD: ctx.radix			\ see BASE
-	FIELD: ctx.argc				\ see args
-	FIELD: ctx.argv
-	p4_stack +FIELD ctx.ds		\ see _ds
-	p4_stack +FIELD ctx.rs		\ see _rs
-[DEFINED] _fs [IF]
-	p4_stack +FIELD ctx.fs		\ see _fs
-	FIELD: ctx.precision		\ see PRECISION and SET-PRECISION
-[THEN]
-	FIELD: ctx.input			\ pointer
-	FIELD: ctx.block			\ pointer
-	FIELD: ctx.block_fd
-	FIELD: ctx.active
-	WORDLISTS CELLS +FIELD ctx.lists
-	FIELD: ctx.norder
-	WORDLISTS CELLS +FIELD ctx.order
-[DEFINED] jcall [IF]
-	FIELD: ctx.jenv
-[THEN]
-\	0 +FIELD ctx.longjmp		\ size varies by host OS
-END-STRUCTURE
 
 \ (S: ctx -- aaddr )
 : ctx.words ctx.active @ ;

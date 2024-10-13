@@ -449,10 +449,10 @@ struct p4_ctx {
 	char **		argv;
 	P4_Stack	ds;		/* Data stack */
 	P4_Stack	rs;		/* Return stack */
-#ifdef HAVE_MATH_H
+/* #ifdef HAVE_MATH_H */
 	P4_Stack	fs;		/* Float stack */
 	P4_Int		precision;
-#endif
+/* #endif */
 	P4_Input *	input;
 	P4_Block *	block;
 	void *		block_fd;
@@ -460,9 +460,9 @@ struct p4_ctx {
 	P4_Word *	lists[P4_WORDLISTS];
 	P4_Uint		norder;		/* Order length, [0, P4_WORDLISTS) */
 	P4_Uint		order[P4_WORDLISTS];
-#ifdef WITH_JAVA
+/* #ifdef WITH_JAVA */
 	void *		jenv;
-#endif
+/* #endif */
 	JMP_BUF		longjmp;	/* Must be last in struct; size can
 					 * vary by CPU and implementation.
 					 */
