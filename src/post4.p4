@@ -45,7 +45,7 @@
 : args _ctx 8 _offset @ _ctx _offset @ ; $02 _pp!
 
 \ (S: u -- addr )
-: reserve DUP ALLOT HERE SWAP - ; $11 _pp!
+: reserve HERE SWAP ALLOT ; $11 _pp!
 
 \ (S: n1 -- n2 )
 : NEGATE INVERT 1 + ; $11 _pp!
