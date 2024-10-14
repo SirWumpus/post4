@@ -2349,6 +2349,12 @@ _fs CONSTANT floating-stack DROP DROP
 : fs>ds fs>rs R> ;
 : ds>fs >R rs>fs ;
 
+\ (F: f -- )(S: -- dl dh )
+: F>D F>S S>D ;
+
+\ (F: -- f )(S: dl dh -- )
+: D>F D>S S>F ;
+
 \ ( fu ... f1 f0 u -- fu ... f1 f0 fu )
 : fpick _fs drop floats + /float - swap floats - f@ ;
 
@@ -2435,6 +2441,12 @@ _fs CONSTANT floating-stack DROP DROP
 
 \ IEEE 754-2019 aka IEC 60559
 cell-bits 64 = [IF]
+' F@ alias DF@
+' F! alias DF!
+' ALIGN alias DFALIGN
+' ALIGNED alias DFALIGNED
+' FLOAT+ alias DFLOAT+
+' FLOATS alias DFLOATS
 $000FFFFFFFFFFFFF CONSTANT _significand_mask
 $7FF0000000000000 CONSTANT _exponent_mask
 1023 CONSTANT _exponent_bias
@@ -2444,6 +2456,12 @@ MIN-N CONSTANT _sign_mask
 [THEN]
 
 cell-bits 32 = [IF]
+' F@ alias SF@
+' F! alias SF!
+' ALIGN alias SFALIGN
+' ALIGNED alias SFALIGNED
+' FLOAT+ alias SFLOAT+
+' FLOATS alias SFLOATS
 $007FFFFF CONSTANT _significand_mask
 $7F800000 CONSTANT _exponent_mask
 127 CONSTANT _exponent_bias
