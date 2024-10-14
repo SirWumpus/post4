@@ -25,24 +25,8 @@
 : PARSE 0 _parse ;
 : parse-escape 1 _parse ; $12 _pp!
 
-\ (S: addr u -- addr' )
-: _offset CELLS + ;
-: _coffset CHARS + ;
-
 \ (S: -- addr )
-\ See p4_ctx below.
-: _end _ctx 0 _offset @ ; $01 _pp!
-: HERE _ctx 1 _offset @ ; $01 _pp!
-: STATE _ctx 2 _offset ; $01 _pp!
-: catch_frame _ctx 3 _offset ; $01 _pp!
-: trace _ctx 4 _offset ; $01 _pp!
-: BASE _ctx 6 _offset ; $01 _pp!
-
-\ ( -- u )
-: UNUSED _end HERE - ; $01 _pp!
-
-\ (S: -- argv argc )
-: args _ctx 8 _offset @ _ctx _offset @ ; $02 _pp!
+: HERE _ctx 1 CELLS +  @ ; $01 _pp!
 
 \ (S: u -- addr )
 : reserve HERE SWAP ALLOT ; $11 _pp!
@@ -267,6 +251,19 @@ BEGIN-STRUCTURE p4_ctx
 \ [THEN]
 \	0 +FIELD ctx.longjmp		\ size varies by host OS
 END-STRUCTURE
+
+\ (S: -- addr )
+: _end _ctx ctx.end @ ; $01 _pp!
+: STATE _ctx ctx.state ; $01 _pp!
+: catch_frame _ctx ctx.frame ; $01 _pp!
+: trace _ctx ctx.trace ; $01 _pp!
+: BASE _ctx ctx.radix ; $01 _pp!
+
+\ (S: -- argv argc )
+: args _ctx ctx.argv @ _ctx ctx.argc @ ; $02 _pp!
+
+\ ( -- u )
+: UNUSED _end HERE - ; $01 _pp!
 
 \ ( u "<spaces>name" -- addr )
 : BUFFER: CREATE ALLOT ; $11 _pp!
