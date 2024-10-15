@@ -304,6 +304,13 @@ test_group_end
 
 .( CONSTANT ) test_group
 t{ $CAFE CONSTANT java java -> $CAFE }t
+
+\ F.6.1.0950
+T{ 123 CONSTANT X123 -> }T
+T{ X123 -> 123 }T
+T{ : EQU CONSTANT ; -> }T
+T{ X123 EQU Y123 -> }T
+T{ Y123 -> 123 }T
 test_group_end
 
 .( VARIABLE ! @ +! ) test_group
@@ -370,6 +377,15 @@ t{ 0 CHAR+ -> 1 CHARS }t
 t{ PAD CHAR+ -> PAD 1 CHARS + }t
 test_group_end
 
+.( CELLS ) test_group
+t{ 1 CELLS				-> /CELL	}t
+
+\ F.6.1.0890 CELLS
+t{ 1 CELLS 1 <			-> FALSE	}t		\ 1 <= AU
+t{ 1 CELLS 1 CHARS MOD	-> 0		}t		\ multiple of CHAR size
+t{ 1S $FFFF U<			-> FALSE	}t		\ >= 16 bits
+test_group_end
+
 .( CELL+ /CELL CELLS ) test_group
 T{ 0 CELL+ -> /CELL }T
 T{ 0 CELL+ -> 1 CELLS }T
@@ -379,13 +395,6 @@ test_group_end
 t{ 1 CHARS 1 < -> FALSE }t
 t{ 1 CHARS 1 CELLS > -> FALSE }t
 t{ 1 CHARS -> /CHAR }t
-test_group_end
-
-.( CELLS ) test_group
-t{ 1 CELLS -> /CELL }t
-t{ 1 CELLS 1 < -> FALSE }t		\ 1 <= AU
-t{ 1 CELLS 1 CHARS MOD -> 0 }t		\ multiple of CHAR size
-t{ 1S $FFFF U< -> FALSE }t		\ >= 16 bits
 test_group_end
 
 .( ' EXECUTE ) test_group
@@ -434,6 +443,21 @@ t{ ' tw_create_empty >BODY -> HERE }t
 test_group_end
 
 .( CREATE C, C@ C! >BODY ) test_group
+\ F.6.1.0860 C,
+HERE 1 C,
+HERE 2 C,
+CONSTANT tv_ch2
+CONSTANT tv_ch1
+
+T{    tv_ch1 tv_ch2 U< ->  TRUE		}T	\ HERE must grow with allot
+T{        tv_ch1 CHAR+ ->  tv_ch2	}T	\ ... by one char
+T{    tv_ch1 1 CHARS + ->  tv_ch2	}T
+T{ tv_ch1 C@ tv_ch2 C@ ->   1 2		}T
+T{         3 tv_ch1 C! ->      		}T
+T{ tv_ch1 C@ tv_ch2 C@ ->   3 2		}T
+T{         4 tv_ch2 C! ->      		}T
+T{ tv_ch1 C@ tv_ch2 C@ ->   3 4		}T
+
 T{ CREATE tv_char CHAR * C, -> }T
 T{ ' tv_char >BODY -> tv_char }T
 T{ tv_char C@ -> '*' }T
@@ -837,9 +861,9 @@ t{ tw_buf_1 tw_buf_0 - ABS 127 CHARS < -> FALSE }t
 	OVER I C@ = AND
 	/CHAR +LOOP NIP
 ;
-see tw_buf_full?
+
 t{ tw_buf_0 127 CHAR * FILL -> }t
-t{ tw_buf_0 127 CHAR * .s tw_buf_full? -> TRUE }t
+t{ tw_buf_0 127 CHAR * tw_buf_full? -> TRUE }t
 t{ tw_buf_0 127 0 FILL -> }t
 t{ tw_buf_0 127 0 tw_buf_full? -> TRUE }t
 test_group_end
