@@ -30,6 +30,8 @@ extern "C" {
 # define ECHOCTL			0
 #endif
 
+#include "config.h"
+
 #ifndef P4_MEM_SIZE
 /* When selecting the default data space memory size, consider the number
  * of cells that will be available for defining the core and new words.
@@ -130,7 +132,6 @@ extern "C" {
 #include <signal.h>
 #include <time.h>
 
-#include "config.h"
 #include "ansiterm.h"
 
 #ifdef HAVE_ERR_H
