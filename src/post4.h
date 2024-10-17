@@ -301,7 +301,8 @@ typedef union p4_cell P4_Cell;
 typedef struct p4_word P4_Word;
 typedef struct p4_ctx P4_Ctx;
 
-typedef P4_Word *P4_Xt;
+typedef P4_Word *P4_Nt;
+typedef P4_Word *P4_Xt;			/* Currently same as an nt, but could change. */
 
 typedef struct {
 	P4_Size		length;		/* Length of string less NUL byte. */
@@ -344,7 +345,7 @@ union p4_cell {
 	P4_Cell	*	p;
 	char *		s;
 	void *		v;
-	P4_Word *	w;
+	P4_Nt		nt;
 	P4_Xt		xt;
 	const P4_Word *	cw;
 };
@@ -373,9 +374,6 @@ struct p4_word {
 #define P4_WORD_IS_IMM(w)		P4_WORD_IS(w, P4_BIT_IMM)
 #define P4_WORD_SET_IMM(w)		P4_WORD_SET(w, P4_BIT_IMM)
 #define P4_WORD_CLEAR_IMM(w)		P4_WORD_CLEAR(w, P4_BIT_IMM)
-
-#define P4_WORD_WAS_CREATED(w)		P4_WORD_IS(w, P4_BIT_CREATED)
-#define P4_WORD_SET_CREATED(w)		P4_WORD_SET(w, P4_BIT_CREATED)
 
 #define P4_WORD_IS_HIDDEN(w)		P4_WORD_IS(w, P4_BIT_HIDDEN)
 #define P4_WORD_SET_HIDDEN(w)		P4_WORD_SET(w, P4_BIT_HIDDEN)

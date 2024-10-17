@@ -2502,9 +2502,12 @@ MIN-N CONSTANT _sign_mask
 \ (S: x -- )
 : $#. DUP -65535 65536 WITHIN IF #. ELSE $. THEN ; $10 _pp!
 
+\ (S: addr u -- addr' addr )
+: bounds OVER + SWAP ;
+
 \ (S: addr u -- )
 : .cells
-	OVER + SWAP BEGIN 2DUP > WHILE
+	bounds BEGIN 2DUP > WHILE
 		DUP @ $#. CELL+
 	REPEAT 2DROP
 ; $20 _pp!
@@ -2544,7 +2547,7 @@ MIN-N CONSTANT _sign_mask
 
 \ (S: addr u -- )
 : DUMP
-	CHARS OVER + SWAP
+	CHARS bounds
 	BASE @ >R HEX
 	BEGIN 2DUP U> WHILE
 		2DUP _dump_row
@@ -2586,7 +2589,7 @@ MIN-N CONSTANT _sign_mask
 
 \ (S: caddr u -- )
 : \type
-	OVER + SWAP							\ S: b a
+	bounds								\ S: b a
 	BEGIN 2DUP > WHILE					\ S: b a
 		C@+ DUP _literal_backspace		\ S: b a' c e
 		?DUP IF							\ S: b a' c
@@ -2758,13 +2761,13 @@ CREATE _nada
 1 CONSTANT FORTH-WORDLIST
 
 \ (S: -- wid )
-: GET-CURRENT _ctx ctx.words _ctx ctx.lists - /CELL / 1+ ;
+: GET-CURRENT _ctx ctx.words _ctx ctx.lists - /CELL / 1+ ; $01 _pp!
 
 \ (S: wid -- )
 : SET-CURRENT
 	1- DUP 0 WORDLISTS WITHIN 0= -257 AND THROW
 	CELLS _ctx ctx.lists + _ctx ctx.active !
-;
+; $10 _pp!
 
 FORTH-WORDLIST SET-CURRENT
 
@@ -2779,7 +2782,7 @@ FORTH-WORDLIST SET-CURRENT
 		CELL+ 2DUP U>
 	WHILST
 	2DROP -257 THROW
-;
+; $01 _pp!
 
 \ (S: -- )
 : FORTH FORTH-WORDLIST _ctx ctx.order ! ;
@@ -2814,7 +2817,27 @@ FORTH-WORDLIST SET-CURRENT
 		R> DUP CELL+ >R !				\ S: wn.. 		R: p" p'
 	REPEAT
 	2R> 2DROP
-;
+; $10 _pp!
+
+\ (S: wid -- addr )
+: head_of_wordlist
+	1- DUP 0 WORDLISTS WITHIN 0= -257 AND THROW
+	CELLS _ctx ctx.lists +
+; $11 _pp!
+
+\ (S: i*x xt wid -- j*x )
+: TRAVERSE-WORDLIST
+	SWAP >R head_of_wordlist			\ S: w			R: xt
+	BEGIN @ DUP WHILE						\ S: w			R: xt
+		DUP w.length @ IF				\ S: w			R: xt
+			R@ OVER >R EXECUTE 0= IF	\ S: w xt		R: xt w
+				2R> 2DROP EXIT
+			THEN
+		THEN
+		R> w.prev						\ S: w'			R: xt
+	REPEAT
+	R> 2DROP
+; $20 _pp!
 
 \ (S: caddr u wid -- 0 | xt -1 | xt 1 )
 : SEARCH-WORDLIST
@@ -2825,7 +2848,7 @@ FORTH-WORDLIST SET-CURRENT
 			-1							\ S: xt -1
 		THEN
 	THEN
-;
+; $30 _pp!
 
 \ (S: -- )
 : ONLY -1 SET-ORDER ;
@@ -2833,7 +2856,7 @@ FORTH-WORDLIST SET-CURRENT
 : ALSO GET-ORDER OVER SWAP 1+ SET-ORDER ;
 : DEFINITIONS GET-ORDER OVER SET-CURRENT SET-ORDER ;
 
-: show_wid ( wid -- ) S\" \e[36m[ " TYPE #. S\" ]\e[0m\r\n" TYPE ;
+: show_wid ( wid -- ) S\" \e[36m[ " TYPE #. S\" ]\e[0m\r\n" TYPE ; $10 _pp!
 
 : ORDER ( -- )
 	GET-ORDER GET-ORDER

@@ -171,7 +171,22 @@ t{ ' ' CATCH tw_y -> -13 }t
 
 \ Last word remains.
 t{ ' ' CATCH tw_x NIP -> 0 }t
+test_group_end
 
+.( TRAVERSE-WORDLIST ) test_group
+WORDLIST CONSTANT tv_traverse_wid
+: tw_count_words ( u nt -- u' bool ) DROP 1+ TRUE ;
+: tw_show_name ( nt -- bool ) NAME>STRING TYPE SPACE TRUE ;
+
+t{ tv_traverse_wid SET-CURRENT -> }t
+: tw_whoopee 1234 ;
+: tw_lots_of 5678 ;
+
+CR .( tw_show_name 2 words: )
+t{ ' tw_show_name GET-CURRENT TRAVERSE-WORDLIST -> }t
+CR
+t{ 0 ' tw_count_words tv_traverse_wid TRAVERSE-WORDLIST -> 2 }t
+ONLY FORTH DEFINITIONS
 test_group_end
 
 [THEN]

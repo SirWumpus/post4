@@ -760,7 +760,7 @@ p4WordAppend(P4_Ctx *ctx, P4_Cell data)
 	*(P4_Cell *)p4Allot(ctx, sizeof (data)) = data;
 }
 
-P4_Word *
+P4_Nt
 p4FindNameIn(P4_Ctx *ctx, const char *caddr, P4_Size length, unsigned wid)
 {
 	if (wid < 1 || P4_WORDLISTS < wid) {
@@ -777,13 +777,13 @@ p4FindNameIn(P4_Ctx *ctx, const char *caddr, P4_Size length, unsigned wid)
 	return NULL;
 }
 
-P4_Word *
+P4_Nt
 p4FindName(P4_Ctx *ctx, const char *caddr, P4_Size length)
 {
 	for (unsigned i = 0; i < ctx->norder; i++) {
-		P4_Word *word = p4FindNameIn(ctx, caddr, length, ctx->order[i]);
-		if (word != NULL) {
-			return word;
+		P4_Nt nt = p4FindNameIn(ctx, caddr, length, ctx->order[i]);
+		if (nt != NULL) {
+			return nt;
 		}
 	}
 	return NULL;
@@ -1419,7 +1419,7 @@ _inter_loop:	while (ctx->input->offset < ctx->input->length) {
 			} else if (ctx->state == P4_STATE_COMPILE && !P4_WORD_IS_IMM(word)) {
 				p4WordAppend(ctx, (P4_Cell) word);
 			} else {
-_forth:				exec[0].w = word;
+_forth:				exec[0].xt = word;
 				ip = exec;
 				NEXT;
 			}
@@ -1511,7 +1511,7 @@ _branchnz:	w = *ip;
 
 #ifdef HAVE_HOOKS
 		// ( i*x -- j*y )
-_hook_call:	x = w.w->data[0];
+_hook_call:	x = w.xt->data[0];
 		(*(void (*)(P4_Ctx *)) x.p)(ctx);
 		NEXT;
 #endif
@@ -1658,12 +1658,12 @@ _create:	str = p4ParseName(ctx->input);
 		word = p4WordCreate(ctx, str.string, str.length, &&_data_field);
 		// Reserve the 1st data cell for possible DOES>; wasted otherwise.
 		p4WordAppend(ctx, (P4_Cell)(P4_Int) 0),
-		P4_WORD_SET_CREATED(word);
+		P4_WORD_SET(word, P4_BIT_CREATED);
 		NEXT;
 
 		// DOES>
 _does:		word = *ctx->active;
-		if (!P4_WORD_WAS_CREATED(word)) {
+		if (!P4_WORD_IS(word, P4_BIT_CREATED)) {
 			THROW(P4_THROW_NOT_CREATED);
 		}
 		word->code = &&_do_does;
@@ -1693,7 +1693,7 @@ _do_does:	P4_PUSH(ctx->ds, w.xt->data + 1);
 
 		// ( xt -- addr )
 _body:		w = P4_POP(ctx->ds);
-		if (!P4_WORD_WAS_CREATED(w.w)) {
+		if (!P4_WORD_IS(w.nt, P4_BIT_CREATED)) {
 			THROW(P4_THROW_NOT_CREATED);
 		}
 		/*@fallthrough@*/
@@ -1713,10 +1713,9 @@ _allot:		P4_DROP(ctx->ds, 1);
 		// ( xt -- <spaces>name )
 _alias:		P4_DROP(ctx->ds, 1);
 		str = p4ParseName(ctx->input);
-		word = p4WordCreate(ctx, str.string, str.length, x.w->code);
-		word->bits = x.w->bits;
-		word->data = x.w->data;
-		word->ndata = x.w->ndata;
+		word = p4WordCreate(ctx, str.string, str.length, x.xt->code);
+		word->ndata = x.xt->ndata;
+		word->data = x.xt->data;
 		NEXT;
 
 		// ( key k -- value v )
@@ -2044,16 +2043,16 @@ _parse_name:	str = p4ParseName(ctx->input);
 		P4_PUSH(ctx->ds, str.length);
 		NEXT;
 
-		// ( caddr u -- xt | 0 )
+		// ( caddr u -- nt | 0 )
 _find_name:	w = P4_DROPTOP(ctx->ds);
-		P4_TOP(ctx->ds).w = p4FindName(ctx, w.s, x.z);
+		P4_TOP(ctx->ds).nt = p4FindName(ctx, w.s, x.z);
 		NEXT;
 
-		// ( caddr u wid -- xt | 0 )
+		// ( caddr u wid -- nt | 0 )
 _find_name_in:	y = P4_POP(ctx->ds);
 		w = P4_POP(ctx->ds);
 		x = P4_TOP(ctx->ds);
-		P4_TOP(ctx->ds).w = p4FindNameIn(ctx, x.s, w.z, y.u);
+		P4_TOP(ctx->ds).nt = p4FindNameIn(ctx, x.s, w.z, y.u);
 		NEXT;
 
 		// ( ms -- )
