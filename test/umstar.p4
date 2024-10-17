@@ -307,4 +307,14 @@ T{ MIN-2INT LO-2INT NIP DUP NEGATE M*/ -> MIN-2INT }T
 T{ MIN-2INT LO-2INT NIP 1- MAX-INT M*/ -> MIN-INT 3 + HI-2INT NIP 2 + }T
 T{ MAX-2INT LO-2INT NIP DUP NEGATE M*/ -> MAX-2INT DNEGATE }T
 T{ MIN-2INT MAX-INT DUP M*/ -> MIN-2INT }T
+
+\ comp.lang.forth 2024-07-10 Overflow Test for M*/
+\ krishna.myneni@ccreweb.org
+cell-bits 64 = [IF]
+: ipow ( n u -- d ) 1 S>D ROT 0 ?DO 2 PICK 1 M*/ LOOP ROT DROP ;
+\ Result ok, output 117809547936177440979200839996337890625
+t{ 65 21 ipow CR 2DUP d. -> $ec883376b5d52541 $58a14b2a0eca886e }t
+\ Result overflow, output -1.
+t{ 65 22 ipow CR 2DUP d. -> -1 -1 }t
+[THEN]
 test_group_end
