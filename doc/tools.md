@@ -54,8 +54,13 @@ Display the contents of `u` consecutive addresses starting at `addr`.
 
 - - -
 #### FIND-NAME
-( `caddr` `u` -- `xt` | 0 )  
-Find the definition identified by the string `caddr` `u` in the current search order.  Return its execution token `xt` if found, otherwise zero (0).
+( `caddr` `u` -- `nt` | 0 )  
+Find the definition identified by the string `caddr` `u` in the current search order.  Return its name token `nt` if found, otherwise zero (0).
+
+- - -
+#### FIND-NAME-IN
+( `caddr` `u` `wid` -- `nt` | 0 )  
+Find the definition identified by the string `caddr` `u` in the wordlist `wid`.  Return its name token `nt` if found, otherwise zero (0).
 
 - - -
 #### N>R
