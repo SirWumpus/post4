@@ -52,6 +52,7 @@ extern struct winsize window;
 
 extern void alineInit(void);
 extern void alineFini(void);
+extern int alineReadByte(void);
 extern int alineSetMode(int mode);
 
 /* Simple tty line editor with last line history.

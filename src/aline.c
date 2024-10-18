@@ -76,7 +76,7 @@ alineInit(void)
 	sig_winch(SIGWINCH);
 	signal(SIGWINCH, sig_winch);
 
-	setvbuf(stdin, NULL, _IOLBF, 0);
+	(void) setvbuf(stdin, NULL, _IOLBF, 0);
 	(void) tcgetattr(tty_fd, &tty_modes[ALINE_CANONICAL]);
 	(void) atexit(alineFini);
 
@@ -107,6 +107,16 @@ alineGetRowCol(int pos[2])
 	report[n] = '\0';
 	pos[0] = (unsigned) strtoul(report+2, NULL, 10);
 	pos[1] = (unsigned) strtoul(strchr(report, ';')+1, NULL, 10);
+}
+
+int
+alineReadByte(void)
+{
+	unsigned char ch;
+	if (read(tty_fd, &ch, sizeof (ch)) != sizeof (ch)) {
+		return EOF;
+	}
+	return ch;
 }
 
 /* Simple tty line editor with last line history.

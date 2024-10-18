@@ -880,6 +880,7 @@ p4Create(P4_Options *opts)
 	ctx->here = (P4_Char*)(ctx+1);
 
 	ctx->radix = 10;
+	ctx->unkey = EOF;
 	ctx->argc = opts->argc;
 	ctx->argv = opts->argv;
 	ctx->state = P4_STATE_INTERPRET;
@@ -2011,17 +2012,23 @@ _refill:	w.n = p4Refill(ctx->input);
 
 		// ( -- n )
 _key:		(void) fflush(stdout);
-		alineSetMode(ALINE_RAW);
-		x.n = fgetc(stdin);
+		if (ctx->unkey == EOF) {
+			(void) alineSetMode(ALINE_RAW);
+			x.n = alineReadByte();
+		} else {
+			x.n = ctx->unkey;
+			ctx->unkey = EOF;
+		}
 		P4_PUSH(ctx->ds, x.n);
 		NEXT;
 
 		// ( -- flag )
 _key_ready:	(void) fflush(stdout);
-		alineSetMode(ALINE_RAW_NB);
-		w.n = fgetc(stdin);
-		(void) ungetc((int) w.n, stdin);
-		P4_PUSH(ctx->ds, (P4_Uint) P4_BOOL(w.n != EOF));
+		if (ctx->unkey == EOF) {
+			(void) alineSetMode(ALINE_RAW_NB);
+			ctx->unkey = alineReadByte();
+		}
+		P4_PUSH(ctx->ds, (P4_Uint) P4_BOOL(ctx->unkey != EOF));
 		NEXT;
 
 		// ( caddr u -- )
