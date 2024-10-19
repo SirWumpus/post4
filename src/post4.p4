@@ -2129,20 +2129,17 @@ VARIABLE SCR
 	-13 THROW
 ;
 
+\ (S: wid -- wid' )
+: check_wid 1- DUP 0 WORDLISTS WITHIN 0= -257 AND THROW ;
+
+\ (S: wid -- addr )
+: head_of_wordlist check_wid CELLS _ctx ctx.lists + ; $11 _pp!
+
 \ ( -- )
 : WORDS
 	0 >R								\ S: --					R: col
-[DEFINED] WORDLISTS [IF]
-	_ctx ctx.order @ 1-					\ S: wid				R: col
-	DUP 0 WORDLISTS WITHIN 0= -257 AND THROW
-	CELLS _ctx ctx.lists +				\ S: head				R: col
-[ELSE]
-	_ctx ctx.words						\ S: head				R: col
-[THEN]
-	@ 									\ S: w					R: col
-	BEGIN
-		DUP
-	WHILE
+	_ctx ctx.order @ head_of_wordlist	\ S: head				R: col
+	BEGIN @ DUP WHILE					\ S: w					R: col
 		w.bit_hidden OVER _word_bit? 0= IF
 			DUP NAME>STRING				\ S: w word				R: col
 			DUP R> + 1+					\ S: w name length col' R: --
@@ -2152,7 +2149,7 @@ VARIABLE SCR
 			THEN						\ S: w name length col	R: --
 			>R TYPE SPACE				\ S: w					R: col
 		THEN
-		w.prev @						\ S: w'					R: col
+		w.prev							\ S: w'					R: col
 	REPEAT
 	R> 2DROP CR							\ S: --					R: --
 ;
@@ -2557,14 +2554,22 @@ MIN-N CONSTANT _sign_mask
 	2DROP R> BASE !
 ; $20 _pp!
 
+\ (S: xt wid -- bool )
+: xt_in?
+	head_of_wordlist
+	BEGIN @ DUP WHILE
+		2DUP = IF 2DROP TRUE EXIT THEN
+		w.prev
+	REPEAT
+	2DROP FALSE
+; $21 _pp!
+
 \ (S: xt -- bool )
 : xt?
-	 _ctx ctx.words @
-	 BEGIN
-			2DUP = IF 2DROP TRUE EXIT THEN
-			w.prev @ DUP 0=
-	 UNTIL
-	 2DROP FALSE
+	WORDLISTS 1 DO
+		DUP I xt_in? IF DROP TRUE UNLOOP EXIT THEN
+	LOOP
+	DROP FALSE
 ; $11 _pp!
 
 \ ( c -- c' )
@@ -2590,7 +2595,7 @@ MIN-N CONSTANT _sign_mask
 
 \ (S: caddr u -- )
 : \type
-	bounds								\ S: b a
+	CHARS bounds								\ S: b a
 	BEGIN 2DUP > WHILE					\ S: b a
 		C@+ DUP _literal_backspace		\ S: b a' c e
 		?DUP IF							\ S: b a' c
@@ -2601,6 +2606,7 @@ MIN-N CONSTANT _sign_mask
 ; $20 _pp!
 
 \ (S: ip -- ip' )
+\ Test: SEE ['] SEE LIT, SEE AT-XY
 : _see_lit
 	CELL+ DUP @							\ S: ip' x
 	DUP xt? DUP IF 						\ S: ip' x b1
@@ -2631,6 +2637,7 @@ MIN-N CONSTANT _sign_mask
 ; $11 _pp!
 
 \ (S: ip -- ip' )
+\ Test: SEE PAGE SEE AT-XY
 : _see_slit
 	S\" S\\\" " TYPE					\ S: ip
 	CELL+ DUP @							\ S: ip1 u
@@ -2765,10 +2772,7 @@ CREATE _nada
 : GET-CURRENT _ctx ctx.words _ctx ctx.lists - /CELL / 1+ ; $01 _pp!
 
 \ (S: wid -- )
-: SET-CURRENT
-	1- DUP 0 WORDLISTS WITHIN 0= -257 AND THROW
-	CELLS _ctx ctx.lists + _ctx ctx.active !
-; $10 _pp!
+: SET-CURRENT head_of_wordlist _ctx ctx.active ! ; $10 _pp!
 
 FORTH-WORDLIST SET-CURRENT
 
@@ -2820,12 +2824,6 @@ FORTH-WORDLIST SET-CURRENT
 	2R> 2DROP
 ; $10 _pp!
 
-\ (S: wid -- addr )
-: head_of_wordlist
-	1- DUP 0 WORDLISTS WITHIN 0= -257 AND THROW
-	CELLS _ctx ctx.lists +
-; $11 _pp!
-
 \ (S: i*x xt wid -- j*x )
 : TRAVERSE-WORDLIST
 	SWAP >R head_of_wordlist			\ S: w			R: xt
@@ -2875,8 +2873,7 @@ FORTH-WORDLIST SET-CURRENT
 
 \ Free words from head of the word list down-to stop.
 : _free_words ( stop wid -- )
-	1- DUP 0 WORDLISTS WITHIN 0= -257 AND THROW	\ S: stop wid'
-	CELLS _ctx ctx.lists + 2DUP 		\ S: stop ptr stop ptr
+	head_of_wordlist 2DUP 				\ S: stop ptr stop ptr
 	\ Set new list head.
 	@ >R SWAP ! R>						\ S: stop word
 	\ Delete words from old list head to stop exclusive.
