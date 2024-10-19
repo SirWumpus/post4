@@ -187,22 +187,19 @@ alineInput(FILE *fp, const char *prompt, char *buf, size_t size)
 			(void) strncpy(buf, lastline, size-1);
 			i = strlen(lastline);
 		} else if (ch == tty_saved.c_cc[VERASE] || ch == '\b' || ch == 127) {
-			i -= 0 < i;
-			(void) memmove(buf+i, buf+i+1, strlen(buf+i)+1);
+			if (0 < i) {
+				i--;
+				(void) memmove(buf+i, buf+i+1, strlen(buf+i)+1);
+			}
 		} else if (ch == tty_saved.c_cc[VWERASE]) {
-			while (0 < i) {
-				if (isspace(buf[i-1])) {
-					buf[--i] = '\0';
-				} else {
-					break;
-				}
+			int j = i;
+			while (0 < i && isspace(buf[i-1])) {
+				i--;
 			}
-			while (0 < i) {
-				if (isspace(buf[i-1])) {
-					break;
-				}
-				buf[--i] = '\0';
+			while (0 < i && !isspace(buf[i-1])) {
+				i--;
 			}
+			(void) memmove(buf+i, buf+j, strlen(buf+j)+1);
 		} else if (ch == tty_saved.c_cc[VKILL]) {
 			buf[i = 0] = '\0';
 		} else if (i == 0 && ch == tty_saved.c_cc[VEOF]) {
