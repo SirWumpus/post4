@@ -429,34 +429,25 @@ MAX-U MAX-U 2CONSTANT MAX-UD
 MAX-U MAX-N 2CONSTANT MAX-D
 0 MIN-N 2CONSTANT MIN-D
 
-\ ... 2DROP ...
-\
 \ (S: x1 x2 -- )
-\
-: 2DROP DROP DROP ;
+: 2DROP DROP DROP ; $20 _pp!
 
-\ ... 2DUP ...
-\
 \ (S: x1 x2 -- x1 x2 x1 x2 )
-\
-: 2DUP OVER OVER ;
+: 2DUP OVER OVER ; $02 _pp!
 
-\ ... 2OVER ...
-\
 \ (S: x1 x2 x3 x4 -- x1 x2 x3 x4 x1 x2 )
-\
-: 2OVER 3 PICK 3 PICK ;
+: 2OVER 3 PICK 3 PICK ; $02 _pp!
 
-\ ... 2SWAP ...
-\
 \ (S: x1 x2 x3 x4 -- x3 x4 x1 x2 )
-\
 : 2SWAP 3 ROLL 3 ROLL ;
 
-\ ... 2>R ...
-\
+\ (S: -- ; R: x -- )
+: rdrop R> R> DROP >R ; compile-only $1000 _pp!
+
+\ (S: -- ; R: x y -- )
+: 2rdrop R> rdrop rdrop >R ; compile-only $2000 _pp!
+
 \ (S: x1 x2 -- )(R: -- x1 x2 )
-\
 : 2>R
 	R> ROT 					\ S: x2 ip x1	R: --
 	>R SWAP					\ S: ip x2	R: x1
@@ -707,7 +698,7 @@ MAX-U MAX-N 2CONSTANT MAX-D
 			1- SWAP R> + SWAP EXIT
 		THEN
 		\ mod == 0
-		R> DROP
+		rdrop
 		EXIT
 	THEN
 	\ No, same sign, SM/REM result same as FM/MOD.
@@ -1705,7 +1696,7 @@ VARIABLE _str_buf_curr
 		DUP C@ >R CHAR+ SWAP	\ S: s1' s2'		R: du u' c2 c1
 		R> R> - ?DUP IF			\ S: s1' s2' diff	R: du u'
 			\ Different stings at character.
-			2R> 2DROP 			\ S: s1' s2' diff
+			2rdrop 				\ S: s1' s2' diff
 			>R 2DROP R>			\ S: diff
 			0< IF -1 ELSE 1 THEN
 			EXIT
@@ -1881,7 +1872,7 @@ VARIABLE _str_buf_curr
 			\ Append a blank block.
 			R@ _blk_size _block_fd @ WRITE-FILE THROW
 		REPEAT
-		R> DROP							\ S: u' v'		R:
+		rdrop							\ S: u' v'		R:
 	THEN
 	2DROP								\ S:
 ;
@@ -1998,7 +1989,7 @@ VARIABLE _str_buf_curr
 		R@ LOAD					\ S: 		R: end start
 		R> 1+ DUP >R			\ S: start'	R: end start'
 		1 rpick >				\ S: bool	R: end start'
-	UNTIL 2R> 2DROP
+	UNTIL 2rdrop
 ;
 
 \ ... \ comment to end of line
@@ -2121,11 +2112,11 @@ VARIABLE SCR
 	BEGIN
 		DUP NAME>STRING 2R@		\ S: p c u d v	R: c u
 		COMPARE 0= IF
-			2R> 2DROP EXIT
+			2rdrop EXIT
 		THEN
 		w.prev @ DUP			\ S: p' p'		R: c u
 	whilst						\ S: p'
-	DROP 2R> 2DROP				\ S: 			R:
+	DROP 2rdrop					\ S: 			R:
 	-13 THROW
 ;
 
@@ -2252,7 +2243,7 @@ VARIABLE _do_sys_stk
 \ : X ... limit first DO ... test IF ... UNLOOP EXIT THEN ... LOOP ... ;
 \
 \ (S: --	) (R: limit index ip -- ip )
-: UNLOOP R> 2R> 2DROP >R ; compile-only
+: UNLOOP R> 2rdrop >R ; compile-only
 
 \ ... limit first DO ... IF ... LEAVE THEN ... LOOP ...
 \
@@ -2802,7 +2793,7 @@ FORTH-WORDLIST SET-CURRENT
 	WHILE
 		R> CELL- DUP >R @				\ S: ... w	R: p p"
 	REPEAT
-	2R> 2DROP _ctx ctx.norder @			\ S: wn..w1 n
+	2rdrop _ctx ctx.norder @			\ S: wn..w1 n
 ;
 
 \ (S: wid1 ... widn n -- )
@@ -2821,16 +2812,16 @@ FORTH-WORDLIST SET-CURRENT
 	WHILE
 		R> DUP CELL+ >R !				\ S: wn.. 		R: p" p'
 	REPEAT
-	2R> 2DROP
+	2rdrop
 ; $10 _pp!
 
 \ (S: i*x xt wid -- j*x )
 : TRAVERSE-WORDLIST
 	SWAP >R head_of_wordlist			\ S: w			R: xt
-	BEGIN @ DUP WHILE						\ S: w			R: xt
+	BEGIN @ DUP WHILE					\ S: w			R: xt
 		DUP w.length @ IF				\ S: w			R: xt
 			R@ OVER >R EXECUTE 0= IF	\ S: w xt		R: xt w
-				2R> 2DROP EXIT
+				2rdrop EXIT
 			THEN
 		THEN
 		R> w.prev						\ S: w'			R: xt
