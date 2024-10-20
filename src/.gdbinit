@@ -33,7 +33,7 @@ end
 define showwords
   set var $p = *ctx->active
   while $p != 0
-    printf "%#lx %s\n", $p, $p->name.string
+    printf "%#lx %s\n", $p, $p->name
     set var $p = $p->prev
   end
 end
