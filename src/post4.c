@@ -1188,7 +1188,6 @@ p4Repl(P4_Ctx *ctx, int thrown)
 
 		/* Data Space - Alignment */
 		P4_WORD("CELLS",	&&_cells,	0, 0x11),
-		P4_WORD("CHARS",	&&_chars,	0, 0x11),
 		P4_WORD("ALLOT",	&&_allot,	0, 0x10),
 		P4_WORD(">here",	&&_here_offset,	0, 0x01),	// p4
 
@@ -1560,10 +1559,6 @@ _lit:		w = *ip++;
 		NEXT;
 
 _doconst:	P4_PUSH(ctx->ds, w.xt->ndata);
-		NEXT;
-
-		// ( n1 -- n2 )
-_chars:		P4_TOP(ctx->ds).n *= sizeof (P4_Char);
 		NEXT;
 
 		// ( n1 -- n2 )

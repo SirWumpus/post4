@@ -39,6 +39,15 @@
 \ (S: addr -- aaddr )
 : ALIGNED 1 CELLS 1 - + 1 CELLS NEGATE AND ; $11 _pp!
 
+\ ( -- xt | 0 )
+\ xt is also an nt.
+: ' PARSE-NAME FIND-NAME ; $01 _pp!
+
+\ ( -- )
+' _nop alias ok
+' _nop alias post4
+' _nop alias CHARS
+
 \ ( -- )
 : ALIGN HERE ALIGNED HERE - CHARS ALLOT ;
 
@@ -47,17 +56,6 @@
 
 \ ( char -- )
 : C, 1 CHARS reserve C! ; $10 _pp!
-
-\ ( -- xt | 0 )
-\ xt is also an nt.
-: ' PARSE-NAME FIND-NAME ; $01 _pp!
-
-\ ( -- )
-' _nop alias ok
-' _nop alias post4
-
-\ ( -- )
-' _bp alias _bpnow immediate
 
 \ ( xt -- )
 ' , alias COMPILE, compile-only
