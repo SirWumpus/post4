@@ -163,27 +163,6 @@ error0:
 	return fp;
 }
 
-int
-p4LoadFile(P4_Ctx *ctx, const char *file)
-{
-	FILE *fp;
-	int rc = P4_THROW_ENOENT;
-	if (file == NULL || *file == '\0') {
-		goto error0;
-	}
-	if ((fp = p4OpenFilePath(getenv("POST4_PATH"), file)) != NULL) {
-		rc = p4EvalFp(ctx, fp);
-		(void) fclose(fp);
-	}
-	/* Find THROW to aid with throwing exceptions from C to Forth. */
-	p4_throw = p4FindName(ctx, "THROW", STRLEN("THROW"));
-	if (rc != P4_THROW_OK && ctx->frame == 0) {
-		warn("%s", file);
-	}
-error0:
-	return rc;
-}
-
 /***********************************************************************
  *** Conversion API
  ***********************************************************************/
@@ -908,7 +887,7 @@ p4Create(P4_Options *opts)
 	ctx->norder = 1;
 	ctx->order[0] = 1;
 	ctx->active = &ctx->lists[0];
-	if (p4LoadFile(ctx, opts->core_file)) {
+	if (p4EvalFile(ctx, opts->core_file)) {
 		goto error0;
 	}
 	return ctx;
@@ -2523,13 +2502,22 @@ int
 p4EvalFile(P4_Ctx *ctx, const char *file)
 {
 	FILE *fp;
-	int rc = P4_THROW_EIO;
-
-	if ((fp = fopen(file, "r")) != NULL) {
+	int rc = P4_THROW_ENOENT;
+	if (file == NULL || *file == '\0') {
+		goto error0;
+	}
+	if ((fp = p4OpenFilePath(getenv("POST4_PATH"), file)) != NULL) {
 		rc = p4EvalFp(ctx, fp);
 		(void) fclose(fp);
 	}
-
+	if (p4_throw == NULL) {
+		/* Find THROW to aid with throwing exceptions from C to Forth. */
+		p4_throw = p4FindName(ctx, "THROW", STRLEN("THROW"));
+	}
+	if (rc != P4_THROW_OK && ctx->frame == 0) {
+		warn("%s", file);
+	}
+error0:
 	return rc;
 }
 

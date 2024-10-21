@@ -740,6 +740,7 @@ extern P4_String p4ParseName(P4_Input *input);
 extern P4_Word *p4FindName(P4_Ctx *ctx, const char *caddr, P4_Size length);
 
 extern P4_Word *p4WordCreate(P4_Ctx *ctx, const char *name, size_t length, P4_Code code);
+
 extern void p4WordAppend(P4_Ctx *ctx, P4_Cell data);
 
 /***********************************************************************
