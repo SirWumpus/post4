@@ -86,7 +86,7 @@ title :
 	@echo '***************************************************************'
 	@echo
 
-install: build
+install: Post4.jar
 	install -p -o root -g 0 -d ${libdir}
 	install -p -o root -g 0 *.p4 ${libdir}
 	install -p -o root -g 0 Post4.jar ${libdir}

@@ -114,11 +114,10 @@ install: build
 	install -p -o root -g 0 -d ${libdir}
 	install -p -o root -g 0 -d ${datarootdir}
 	install -p -o root -g 0 -d ${datarootdir}/doc
-	install -p -o root -g 0 ./src/post4 ${bindir}
-	install -p -o root -g 0 ./src/post4.p4 ${libdir}
 	install -p -o root -g 0 ./examples/*.p4 ${libdir}
 	install -p -o root -g 0 ./README.md ${datarootdir}
 	install -p -o root -g 0 ./doc/* ${datarootdir}/doc
+	@cd src; $(MAKE) $@
 
 configure : configure.ac aclocal.m4
 	${AUTOCONF} -f
