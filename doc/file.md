@@ -76,6 +76,18 @@ Read the next line into a buffer `caddr` at most `u1` characters from the file `
 Reposition the file `fid` to byte offset `ud` and return `ior` with zero on success, otherwise a non-zero error code (see `errno(2)`).
 
 - - -
+#### REQUIRE
+( `i*x` `<spaces>filepath` -- `j*x` )  
+Skip leading white space and parse `filepath` delimited by a white space character.  Push the address and length of the `filepath` on the stack and perform the function of `REQUIRED`.  See also `REQUIRE-PATH` below.
+
+        ok REQUIRE ../examples/wumpus.p4
+
+- - -
+#### REQUIRED
+( `i*x` `caddr` `u` -- `j*x` )  
+If the file `caddr` `u` has been `INCLUDED` or `REQUIRED` already, discard `caddr` `u`; otherwise perform the function of `INCLUDED`.  See also `REQUIRED-PATH` below.
+
+- - -
 #### W/O
 ( -- `mode` )  
 Set file access write-only `mode`.

@@ -67,6 +67,22 @@ test_group_end
 T{ SOURCE-ID DUP -1 = SWAP 0= OR -> FALSE }T
 test_group_end
 
+[DEFINED] REQUIRED [IF]
+.( REQUIRE REQUIRED ) test_group
+T{ 0
+   S" ../test/data/required1.p4" REQUIRED	\ Increment TOS
+   REQUIRE ../test/data/required1.p4		\ Ignore - already loaded
+   INCLUDE ../test/data/required1.p4		\ Increment TOS
+-> 2 }T
+T{ 0
+   INCLUDE ../test/data/required2.p4		\ Increment TOS
+   S" ../test/data/required2.p4" REQUIRED 	\ Ignored - already loaded
+   REQUIRE ../test/data/required2.p4		\ Ignored - already loaded
+   S" ../test/data/required2.p4" INCLUDED	\ Increment TOS
+-> 2 }T
+test_group_end
+[THEN]
+
 rm_file_access
 
 [THEN]

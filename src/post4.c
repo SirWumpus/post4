@@ -1158,7 +1158,8 @@ p4Repl(P4_Ctx *ctx, int thrown)
 		P4_WORD(":",		&&_colon,	0, 0x00),
 		P4_WORD(";",		&&_semicolon,	P4_BIT_IMM|P4_BIT_COMPILE, 0x00),
 		P4_WORD(">BODY",	&&_body,	0, 0x01),
-		P4_WORD("CREATE",	&&_create,	0, 0x01),
+		P4_WORD("_created",	&&_created,	0, 0x20),
+		P4_WORD("CREATE",	&&_create,	0, 0x00),
 		P4_WORD("DOES>",	&&_does,	P4_BIT_COMPILE, 0x1000),
 		P4_WORD("_evaluate",	&&_evaluate,	0, 0x20),	// p4
 		P4_WORD("EXECUTE",	&&_execute,	0, 0x10),
@@ -1628,11 +1629,18 @@ _evaluate:	ctx->input->length = P4_POP(ctx->ds).z;
 		 *	CREATE PAD /PAD CHARS ALLOT
 		 *	CREATE stuff 1 , 2 , 3 , 4 ,
 		 */
-		// ( -- addr )
+		// ( <spaces>name -- )
 _create:	str = p4ParseName(ctx->input);
 		word = p4WordCreate(ctx, str.string, str.length, &&_data_field);
 		// Reserve the 1st data cell for possible DOES>; wasted otherwise.
 		p4WordAppend(ctx, (P4_Cell)(P4_Int) 0),
+		P4_WORD_SET(word, P4_BIT_CREATED);
+		NEXT;
+
+		// ( caddr u -- )
+_created:	P4_DROP(ctx->ds, 1);
+		w = P4_POP(ctx->ds);
+		word = p4WordCreate(ctx, w.s, x.z, &&_nop);
 		P4_WORD_SET(word, P4_BIT_CREATED);
 		NEXT;
 

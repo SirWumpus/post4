@@ -2058,9 +2058,6 @@ VARIABLE SCR
 \ (S: i*x caddr u -- j*x )
 : INCLUDED R/O OPEN-FILE THROW _include_and_close ; $20 _pp!
 
-\ (S: i*x <spaces>filename" -- j*x )
-: INCLUDE PARSE-NAME _string0_store INCLUDED ;
-
 \ (S: i*x caddr u -- j*x )
 : included-path S" POST4_PATH" env 2SWAP R/O open-file-path THROW _include_and_close ; $20 _pp!
 
@@ -2854,6 +2851,29 @@ FORTH-WORDLIST SET-CURRENT
 	BEGIN ?DUP WHILE 1- SWAP DUP show_wid words-in REPEAT
 	GET-CURRENT DUP show_wid words-in
 ;
+
+WORDLIST CONSTANT required-wordlist
+
+: INCLUDED
+	\ Avoid adding duplicate files to the word-list.
+	2DUP required-wordlist FIND-NAME-IN 0= IF
+		GET-CURRENT >R required-wordlist SET-CURRENT
+		2DUP _created R> SET-CURRENT
+	THEN
+	INCLUDED
+;
+
+\ (S: i*x <spaces>filename" -- j*x )
+: INCLUDE PARSE-NAME _string0_store INCLUDED ;
+
+\ (S: i*x caddr u -- j*x )
+: REQUIRED
+	2DUP required-wordlist FIND-NAME-IN IF 2DROP EXIT THEN
+	INCLUDED
+;
+
+\ (S: i*x <spaces>filename" -- j*x )
+: REQUIRE PARSE-NAME _string0_store REQUIRED ;
 
 : _free_word ( w -- )
 	?DUP IF
