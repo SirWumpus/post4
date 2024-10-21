@@ -46,7 +46,7 @@
 \ ( -- )
 ' _nop alias ok
 ' _nop alias post4
-' _nop alias CHARS
+' _nop alias CHARS IMMEDIATE	\ No-op and discard.
 
 \ ( -- )
 : ALIGN HERE ALIGNED HERE - CHARS ALLOT ;
