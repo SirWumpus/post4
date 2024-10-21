@@ -2124,10 +2124,10 @@ VARIABLE SCR
 \ (S: wid -- addr )
 : head_of_wordlist check_wid CELLS _ctx ctx.lists + ; $11 _pp!
 
-\ ( -- )
-: WORDS
+\ (S: wid -- )
+: words-in
 	0 >R								\ S: --					R: col
-	_ctx ctx.order @ head_of_wordlist	\ S: head				R: col
+	head_of_wordlist					\ S: head				R: col
 	BEGIN @ DUP WHILE					\ S: w					R: col
 		w.bit_hidden OVER _word_bit? 0= IF
 			DUP NAME>STRING				\ S: w word				R: col
@@ -2142,6 +2142,9 @@ VARIABLE SCR
 	REPEAT
 	R> 2DROP CR							\ S: --					R: --
 ;
+
+\ ( -- )
+: WORDS _ctx ctx.order @ words-in ;
 
 \ (S: -- word )
 : _pop_word
@@ -2847,10 +2850,9 @@ FORTH-WORDLIST SET-CURRENT
 : show_wid ( wid -- ) S\" \e[36m[ " TYPE #. S\" ]\e[0m\r\n" TYPE ; $10 _pp!
 
 : ORDER ( -- )
-	GET-ORDER GET-ORDER
-	BEGIN ?DUP WHILE 1- SWAP show_wid WORDS PREVIOUS REPEAT
-	GET-CURRENT DUP 1 SET-ORDER show_wid WORDS
-	SET-ORDER
+	GET-ORDER
+	BEGIN ?DUP WHILE 1- SWAP DUP show_wid words-in REPEAT
+	GET-CURRENT DUP show_wid words-in
 ;
 
 : _free_word ( w -- )

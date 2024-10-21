@@ -204,6 +204,11 @@ Allocate a stack of `u` cells returning `stk`.  Use `FREE` to discard.
 Return the address `aaddr` of the trace variable; set true for tracing, otherwise false to disable.  See also option `-T`.
 
 - - -
+#### words-in
+( `wid` -- )  
+List the words from word-list `wid`.
+
+- - -
 #### _bp
 ( -- )  
 Breakpoint.  Display current source buffer position.  Intended as convenient function, with no side effects, to set a breakpoint while debugging.
