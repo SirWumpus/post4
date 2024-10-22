@@ -2061,9 +2061,6 @@ VARIABLE SCR
 \ (S: i*x caddr u -- j*x )
 : included-path S" POST4_PATH" env 2SWAP R/O open-file-path THROW _include_and_close ; $20 _pp!
 
-\ (S: i*x <spaces>filename" -- j*x )
-: include-path PARSE-NAME _string0_store included-path ;
-
 \ ... ACTION-OF ...
 \
 \ (S: <spaces>name -- xt )
@@ -2854,26 +2851,36 @@ FORTH-WORDLIST SET-CURRENT
 
 WORDLIST CONSTANT required-wordlist
 
-: INCLUDED
+\ (S: <spaces>filename" -- )
+: _parse_string0 PARSE-NAME _string0_store ;
+
+\ (S: caddr u -- )
+: _save_included
 	\ Avoid adding duplicate files to the word-list.
 	2DUP required-wordlist FIND-NAME-IN 0= IF
 		GET-CURRENT >R required-wordlist SET-CURRENT
 		2DUP _created R> SET-CURRENT
 	THEN
-	INCLUDED
 ;
 
+\ (S: caddr u -- )
+: INCLUDED _save_included INCLUDED ;
+: included-path _save_included included-path ;
+
 \ (S: i*x <spaces>filename" -- j*x )
-: INCLUDE PARSE-NAME _string0_store INCLUDED ;
+: INCLUDE _parse_string0 INCLUDED ;
+: include-path _parse_string0 included-path ;
+
+\ (S: caddr u -- )
+: _already_included 2DUP required-wordlist FIND-NAME-IN ;
 
 \ (S: i*x caddr u -- j*x )
-: REQUIRED
-	2DUP required-wordlist FIND-NAME-IN IF 2DROP EXIT THEN
-	INCLUDED
-;
+: REQUIRED _already_included IF 2DROP EXIT THEN INCLUDED ;
+: required-path _already_included IF 2DROP EXIT THEN included-path ;
 
 \ (S: i*x <spaces>filename" -- j*x )
-: REQUIRE PARSE-NAME _string0_store REQUIRED ;
+: REQUIRE _parse_string0 REQUIRED ;
+: require-path _parse_string0 required-path ;
 
 : _free_word ( w -- )
 	?DUP IF

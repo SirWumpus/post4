@@ -111,3 +111,18 @@ Write `u` characters from address `caddr` to the file `fid` followed by an imple
 Search the colon (:) separated path list, `path` `p`, and open the first file, `file` `f`, found using the file access `mode`.  On success return the file id `fid` and `ior` equal to zero; otherwise on error `fid` is zero and `ior` is a non-zero error code (see `errno(2)`).
 
 - - -
+#### require-path
+( `i*x` `<spaces>filepath` -- `j*x` )  
+If `filepath` has been previous loaded by `INCLUDE-PATH` or `REQURIE-PATH`, then skip the file; otherwise push the
+address and length of the `filepath` on the stack and perform the function of `required-path`.
+
+        ok REQUIRE-PATH ed.p4
+
+- - -
+#### required-path
+( `caddr` `u` -- )  
+If the file `caddr` `u` has been `INCLUDED` or `REQUIRED` already, discard `caddr` `u`; otherwise perform the function of `INCLUDED-PATH`, which searches the colon (:) separated path list given by the environment variable `POST4_PATH` for the first file `caddr` `f`.
+
+        ok S" ed.p4" REQUIRED-PATH
+
+- - -
