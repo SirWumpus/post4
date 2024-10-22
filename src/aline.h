@@ -31,6 +31,7 @@ extern "C" {
 #include "ansiterm.h"
 
 #include <stdio.h>
+#include <limits.h>
 
 #ifdef HAVE_TERMIOS_H
 # include <termios.h>
@@ -49,6 +50,8 @@ extern struct winsize window;
 #define ALINE_CANONICAL		0
 #define ALINE_RAW		1
 #define ALINE_RAW_NB		2
+
+#define ALINE_HISTORY		4
 
 extern void alineInit(void);
 extern void alineFini(void);

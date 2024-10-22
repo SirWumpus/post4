@@ -19,8 +19,9 @@ int is_tty;
 static int tty_fd = -1;
 static int tty_mode = 0;
 static struct termios tty_modes[3];
-static char lastline[256];
+static char history[ALINE_HISTORY][MAX_INPUT];
 static const char *ps2;
+static int lastline;
 
 #define tty_saved	tty_modes[ALINE_CANONICAL]
 #define tty_raw		tty_modes[ALINE_RAW]
@@ -136,7 +137,7 @@ int
 alineInput(FILE *fp, const char *prompt, char *buf, size_t size)
 {
 	unsigned i;
-	int ch, pcol, pos[2];
+	int ch, pcol, pos[2], prevline = lastline;
 
 	if (buf == NULL || size < 1) {
 		return EOF;
@@ -153,8 +154,8 @@ alineInput(FILE *fp, const char *prompt, char *buf, size_t size)
 		prompt = ps2;
 	}
 	pcol = strlen(prompt);
-	if (sizeof (lastline) < size) {
-		size = sizeof (lastline);
+	if (sizeof (*history) < size) {
+		size = sizeof (*history);
 	}
 	alineGetRowCol(pos);
 	(void) printf(ANSI_SAVE_CURSOR);
@@ -171,8 +172,10 @@ alineInput(FILE *fp, const char *prompt, char *buf, size_t size)
 		if (ch == '\e') {
 			if ((ch = fgetc(stdin)) == '[') {
 				ch = fgetc(stdin);
-				if (ch == 'A' || ch == 'B') {
+				if (ch == 'A') {
 					ch = '\v';
+				} else if (ch == 'B') {
+					ch = '\f';
 				} else if (ch == 'C') {
 					i += i < size && buf[i] != '\0';
 					continue;
@@ -182,10 +185,11 @@ alineInput(FILE *fp, const char *prompt, char *buf, size_t size)
 				}
 			}
 		}
-		if (ch == '\v') {
+		if (ch == '\v' || ch == '\f') {
 			/* Restore intput to last input line. */
-			(void) strncpy(buf, lastline, size-1);
-			i = strlen(lastline);
+			prevline = (prevline+(ch == '\v' ? -1 : 1)) & (ALINE_HISTORY-1);
+			(void) strncpy(buf, history[prevline], size-1);
+			i = strlen(history[prevline]);
 		} else if (ch == tty_saved.c_cc[VERASE] || ch == '\b' || ch == 127) {
 			if (0 < i) {
 				i--;
@@ -210,7 +214,8 @@ alineInput(FILE *fp, const char *prompt, char *buf, size_t size)
 		}
 	}
 	if (0 < i) {
-		(void) strncpy(lastline, buf, size-1);
+		(void) strncpy(history[lastline], buf, size-1);
+		lastline = (lastline+1) & (ALINE_HISTORY-1);
 	}
 	return (int) strlen(buf);
 }
