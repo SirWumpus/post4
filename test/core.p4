@@ -373,6 +373,9 @@ t{ tw_char_2 -> $61 }t
 test_group_end
 
 .( CHAR+ CHARS ) test_group
+\ We're working with C, so the sizeof(char) is always 1, though CHAR_BIT >= 8 bits.
+\ See proposal http://www.forth200x.org/char-is-1.html
+T{ 1 CHARS -> 1 }T
 t{ 0 CHAR+ -> 1 CHARS }t
 t{ PAD CHAR+ -> PAD 1 CHARS + }t
 test_group_end

@@ -11,42 +11,43 @@
 \ ( -- )
 : .S 'd' EMIT 's' EMIT '\r' EMIT '\n' EMIT _ds DROP _stack_dump ;
 
-\ ... .RS ...
-\
 \ ( -- )
-\
 : .RS 'r' EMIT 's' EMIT '\r' EMIT '\n' EMIT _rs DROP 1 - _stack_dump ;
 
-\ ... PARSE ...
-\ ... parse-escape ...
-\
 \ ( char -- caddr u )
-\
 : PARSE 0 _parse ;
 : parse-escape 1 _parse ; $12 _pp!
 
 \ (S: -- addr )
-: HERE _ctx 1 CELLS +  @ ; $01 _pp!
+: HERE _ctx 1 CELLS + @ ; $01 _pp!
 
 \ (S: u -- addr )
 : reserve HERE SWAP ALLOT ; $11 _pp!
 
+\ (S: nu1 -- nu2 )
+: 1+ 1 + ; $11 _pp!
+: 1- 1 - ; $11 _pp!
+
 \ (S: n1 -- n2 )
-: NEGATE INVERT 1 + ; $11 _pp!
+: NEGATE INVERT 1+ ; $11 _pp!
 
 \ (addr + (pow2-1)) & -pow2
 \
 \ (S: addr -- aaddr )
-: ALIGNED 1 CELLS 1 - + 1 CELLS NEGATE AND ; $11 _pp!
+: ALIGNED 1 CELLS 1- + 1 CELLS NEGATE AND ; $11 _pp!
 
 \ ( -- xt | 0 )
 \ xt is also an nt.
 : ' PARSE-NAME FIND-NAME ; $01 _pp!
 
 \ ( -- )
-' _nop alias ok
-' _nop alias post4
-' _nop alias CHARS IMMEDIATE	\ No-op and discard.
+' _nop alias ok					\ Ignore copy/paste lines.
+' _nop alias post4				\ Implementation name.
+' _nop alias CHARS IMMEDIATE	\ Discard no-op; CHARS still used for portability.
+
+\ (S: caddr -- caddr' )
+' 1+ alias CHAR+
+' 1- alias CHAR-
 
 \ ( -- )
 : ALIGN HERE ALIGNED HERE - CHARS ALLOT ;
@@ -72,17 +73,10 @@
 \ Just because I keep mistyping .s when other stacks are .rs and .fs
 ' .s alias .ds
 
-\ value CONSTANT name
-\
 \ (C: x <spaces>name -- ) (S: -- x )
-\
 : CONSTANT CREATE , DOES> @ ; $01 _pp!
 
-\ ... FALSE ...
-\ ... TRUE ...
-\
 \ (S: -- flag )
-\
 0 CONSTANT FALSE $01 _pp!
 FALSE INVERT CONSTANT TRUE $01 _pp!
 
@@ -194,10 +188,12 @@ END-STRUCTURE
 20 CONSTANT w.pp_fs_pop
 24 CONSTANT w.pp_lit
 
+1024 CONSTANT _blk_size
+
 BEGIN-STRUCTURE p4_block
 	FIELD: blk.state			\ 0 free, 1 clean, 2 dirty, 3 lock
 	FIELD: blk.number			\ 0 < number
-	1024 +FIELD blk.buffer
+	_blk_size +FIELD blk.buffer
 END-STRUCTURE
 
 BEGIN-STRUCTURE p4_stack
@@ -267,24 +263,16 @@ END-STRUCTURE
 \ ( u "<spaces>name" -- addr )
 : BUFFER: CREATE ALLOT ; $11 _pp!
 
-\ ... PAD ...
-\
 \ ( -- )
-\
 /PAD CHARS BUFFER: PAD
 
-\ VARIABLE name
-\
 \ (C: <spaces>name -- ) \ (S: -- aaddr )
-\
 : VARIABLE CREATE 0 , ; $01 _pp!
 
-\ 2VARIABLE name
-\
 \ (C: <spaces>name -- ) \ (S: -- aaddr )
-\
 : 2VARIABLE CREATE 0 , 0 , ; $01 _pp!
 
+\ (S: -- )
 : [ FALSE STATE ! ; IMMEDIATE \ allow interpret
 : ] TRUE STATE ! ; \ allow interpret
 
@@ -304,35 +292,10 @@ END-STRUCTURE
 \ ( i*x -- )
 : dropall DEPTH dropn ;
 
-\ ... CHAR+ ...
-\
-\ (S: caddr1 -- caddr2 )
-\
-: CHAR+ /CHAR + ; $11 _pp!
-: CHAR- /CHAR - ; $11 _pp!
-
-\ ... DECIMAL ...
-\
 \ (S: -- )
-\
 : DECIMAL #10 BASE ! ;
-
-\ ... HEX ...
-\
-\ (S: -- )
-\
 : HEX #16 BASE ! ;
-
-\ ... OCTAL ...
-\
-\ (S: -- )
-\
 : octal #8 BASE ! ;
-
-\ ... BINARY ...
-\
-\ (S: -- )
-\
 : binary #2 BASE ! ;
 
 \ (S: x1 x2 x3 x4 x5 x6 -- x3 x4 x5 x6 x1 x2 )
@@ -386,12 +349,6 @@ END-STRUCTURE
 
 \ (S: caddr u n -- caddr' u' )
 : /STRING >R R@ - SWAP R> CHARS + SWAP ;
-
-\ (S: nu1 -- nu2 )
-: 1+ 1 + ;
-
-\ (S: nu1 -- nu2 )
-: 1- 1 - ;
 
 \ (S: lo hi aaddr -- )
 : 2! TUCK ! CELL+ ! ;
@@ -1831,8 +1788,6 @@ VARIABLE _str_buf_curr
 
 \ (S: -- aaddr )
 : _block_fd _ctx ctx.block_fd ;
-
-1024 CONSTANT _blk_size
 
 \ (S: -- )
 : _block_flush _block_fd @ FLUSH-FILE DROP ;
