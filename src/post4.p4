@@ -1123,6 +1123,30 @@ DEFER fsp!
 \
 : ERASE 0 FILL ;
 
+\ (S: ch -- ch' )
+: tolower DUP 'A' [ 'Z' 1+ ] LITERAL WITHIN IF $20 OR THEN ; $11 _pp!
+: toupper DUP 'a' [ 'z' 1+ ] LITERAL WITHIN IF [ $20 INVERT ] LITERAL AND THEN ; $11 _pp!
+
+\ (S: char -- bool )
+: isblank DUP '\s' = SWAP '\t' = OR ; $11 _pp!
+: iscntrl DUP 0 '\s' WITHIN SWAP $7F = OR ; $11 _pp!
+: isdigit '0' [ '9' 1+ ] LITERAL WITHIN ; $11 _pp!
+: isprint $20 $7F WITHIN ; $11 _pp!
+: isgraph $21 $7F WITHIN ; $11 _pp!
+: isspace
+	FALSE
+	OVER '\f' = OR
+	OVER '\n' = OR
+	OVER '\r' = OR
+	OVER '\s' = OR
+	OVER '\t' = OR
+	OVER '\v' = OR
+	SWAP DROP
+; $11 _pp!
+: isxdigit DUP isdigit toupper 'A' [ 'F' 1+ ] LITERAL WITHIN OR ; $11 _pp!
+: isalpha toupper 'A' [ 'Z' 1+ ] LITERAL WITHIN ; $11 _pp!
+: isalnum DUP isalpha isdigit OR ; $11 _pp!
+
 \ ... strrev ...
 \
 \ ( caddr u -- )
@@ -1159,14 +1183,10 @@ DEFER fsp!
 \ ( S: char -- value | 127 )
 \
 : _digit_value
-	\ Is upper case?
-	DUP 'A' 'Z' 1+ WITHIN				\ S: char bool
-	\ Convert to lower case.
-	IF $20 OR THEN						\ S: char'
-	DUP '0' '9' 1+ WITHIN IF			\ S: char
+	DUP isdigit IF						\ S: char
 		'0' - EXIT						\ S: value
-	ELSE DUP 'a' 'z' 1+ WITHIN IF		\ S: char
-		'a' - #10 + EXIT				\ S: value
+	ELSE DUP isalpha IF					\ S: char
+		tolower 'a' - #10 + EXIT		\ S: value
 	THEN THEN							\ S: char
 	\ Not found.
 	DROP #127							\ S: 127
@@ -1373,7 +1393,7 @@ VARIABLE _>pic
 	DUP DECIMAL [CHAR] # EMIT . SPACE
 	DUP OCTAL [CHAR] 0 EMIT . SPACE
 	DUP BINARY [CHAR] % EMIT . SPACE
-	DUP $20 $7F WITHIN IF [CHAR] ' EMIT EMIT [CHAR] ' EMIT ELSE DROP THEN
+	DUP isprint IF [CHAR] ' EMIT EMIT [CHAR] ' EMIT ELSE DROP THEN
 	CR R> BASE !
 ;
 
@@ -2143,21 +2163,6 @@ VARIABLE SCR
 	R> POSTPONE LITERAL	\ C:
 ; IMMEDIATE compile-only
 
-\ (S: char -- bool )
-: isblank DUP '\s' = SWAP '\t' = OR ; $11 _pp!
-: iscntrl DUP 0 '\s' WITHIN SWAP $7F = OR ; $11 _pp!
-: isprint 32 127 WITHIN ; $11 _pp!
-: isspace
-	FALSE
-	OVER '\f' = OR
-	OVER '\n' = OR
-	OVER '\r' = OR
-	OVER '\s' = OR
-	OVER '\t' = OR
-	OVER '\v' = OR
-	SWAP DROP
-; $11 _pp!
-
 : stack_new ( u <spaces>name -- ) CREATE 1+ CELLS reserve DUP CELL+ SWAP ! ;
 : stack_tmp ( u -- stack ) 1+ CELLS ALLOCATE THROW DUP DUP CELL+ SWAP ! ;
 : stack_push ( n stack -- ) TUCK @ ! /CELL SWAP +! ;
@@ -2557,10 +2562,10 @@ MIN-N CONSTANT _sign_mask
 	THEN IF								\ S: ip' x
 		S" [ ' " TYPE NAME>STRING TYPE S\" \s] LITERAL " TYPE
 	ELSE
-		DUP 32 = IF
+		DUP BL = IF
 			#. S" ( '\s' ) " TYPE
 		ELSE
-			DUP 33 128 WITHIN IF
+			DUP isgraph IF
 				DUP #. S" ( '" TYPE EMIT S" ' ) " TYPE
 			ELSE
 				$#.
