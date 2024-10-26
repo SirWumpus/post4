@@ -740,9 +740,9 @@ p4WordAppend(P4_Ctx *ctx, P4_Cell data)
 }
 
 P4_Nt
-p4FindNameIn(P4_Ctx *ctx, const char *caddr, P4_Size length, unsigned wid)
+p4FindNameIn(P4_Ctx *ctx, const char *caddr, P4_Size length, int wid)
 {
-	if (wid < 1 || P4_WORDLISTS < wid) {
+	if (wid < 0 || P4_WORDLISTS < wid) {
 		LONGJMP(ctx->longjmp, P4_THROW_EINVAL);
 	}
 	for (P4_Word *word = ctx->lists[wid-1]; word != NULL; word = word->prev) {
@@ -759,6 +759,7 @@ p4FindNameIn(P4_Ctx *ctx, const char *caddr, P4_Size length, unsigned wid)
 P4_Nt
 p4FindName(P4_Ctx *ctx, const char *caddr, P4_Size length)
 {
+	/* Start from zero, LOCALS always included first. */
 	for (unsigned i = 0; i < ctx->norder; i++) {
 		P4_Nt nt = p4FindNameIn(ctx, caddr, length, ctx->order[i]);
 		if (nt != NULL) {

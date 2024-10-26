@@ -238,6 +238,7 @@ BEGIN-STRUCTURE p4_ctx
 	FIELD: ctx.block			\ pointer
 	FIELD: ctx.block_fd
 	FIELD: ctx.active
+	FIELD: ctx.locals			\ must immediate before ctx.lists
 	WORDLISTS CELLS +FIELD ctx.lists
 	FIELD: ctx.norder
 	WORDLISTS CELLS +FIELD ctx.order
@@ -2068,7 +2069,8 @@ VARIABLE SCR
 ;
 
 \ (S: wid -- wid' )
-: check_wid 1- DUP 0 WORDLISTS WITHIN 0= -257 AND THROW ;
+\ wid = 0 reserved for locals word list.
+: check_wid 1- DUP -1 WORDLISTS WITHIN 0= -257 AND THROW ;
 
 \ (S: wid -- addr )
 : head_of_wordlist check_wid CELLS _ctx ctx.lists + ; $11 _pp!

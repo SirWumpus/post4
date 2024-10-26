@@ -453,6 +453,7 @@ struct p4_ctx {
 	P4_Block *	block;
 	void *		block_fd;
 	P4_Word **	active;		/* Active compiliation word list. */
+	P4_Word *	locals;		/* locals = lists[-1] */
 	P4_Word *	lists[P4_WORDLISTS];
 	P4_Uint		norder;		/* Order length, [0, P4_WORDLISTS) */
 	P4_Uint		order[P4_WORDLISTS];
