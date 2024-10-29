@@ -943,29 +943,35 @@ DEFER fsp!
 \
 : 2LITERAL SWAP POSTPONE LITERAL POSTPONE LITERAL ; IMMEDIATE compile-only
 
+\ (S: addr -- addr' x )
+: @+ DUP CELL+ SWAP @ ;
+: @- DUP cell- SWAP @ ;
+
+\ (S: caddr -- caddr' x )
+: C@+ DUP CHAR+ SWAP C@ ;
+
+\ (S: x addr -- addr' )
+: !+ DUP CELL+ -rot ! ;
+
 \ (S: x*i i -- )
 : n, DUP , BEGIN SWAP , 1- DUP whilst DROP ; $10 _pp!
 
 \ (S: aaddr -- x*i )
 : n@
-	DUP @ SWAP					\ S: i addr
-	OVER CELLS + SWAP			\ S: addr' i
-	BEGIN ?DUP WHILE			\ S: ... addr' i
-		1- >R					\ S: addr'				R: i'
-		DUP @ SWAP CELL-		\ S: xi ... addr" 		R: i'
-		R>						\ S: xi ... addr" i'
-	REPEAT DROP					\ S: x*i
+	DUP >R DUP @ CELLS +
+	BEGIN DUP R@ > WHILE @- SWAP REPEAT
+	R> 2DROP
 ; $10 _pp!
 
 \ (S: x*i aaddr -- )
 : n!
-	DUP @						\ S: x1 .. xi addr i
-	BEGIN ?DUP WHILE			\ S: x1 .. xi addr i
-		1- >R					\ S: x1 .. xi addr 		R: i'
-		CELL+ TUCK !			\ S: x1 .. xi' addr' 	R: i'
-		R>						\ S: x1 .. xi' i'
-	REPEAT DROP					\ S: --
+	@+ CELLS OVER + >R
+	BEGIN DUP R@ < WHILE !+ REPEAT
+	R> 2DROP
 ; $10 _pp!
+
+\ (S: i*x i <spaces>name -- )
+: _value CREATE n, DOES> n@ ; $20 _pp!
 
 \	value VALUE name
 \
@@ -983,7 +989,7 @@ DEFER fsp!
 \ @see
 \	TO
 \
-: VALUE CREATE 1 n, DOES> n@ ; $10 _pp!
+: VALUE 1 _value ; $10 _pp!
 
 \	lo hi 2VALUE name
 \
@@ -992,27 +998,17 @@ DEFER fsp!
 \ @see
 \	TO
 \
-: 2VALUE CREATE 2 n, DOES> n@ ; $20 _pp!
+: 2VALUE 2 _value ; $20 _pp!
 
-\ ... x TO name ...
-\
 \ (S: i*x <spaces>name -- )
-\
-\ @note
-\
-\	x name !
-\
-\ @see
-\	VALUE
-\
 : TO
 	' >BODY
 	STATE @ IF
 		POSTPONE LITERAL
 		POSTPONE n!
-		EXIT
+	ELSE
+		n!
 	THEN
-	n!
 ; IMMEDIATE $10 _pp!
 
 \ ( -- caddr u )
@@ -2153,9 +2149,7 @@ VARIABLE SCR
 : ;]
 	\ End current nested definition.
 	POSTPONE ;					\ C: forw state curr xt
-[DEFINED] _seext [IF]
-	POSTPONE _nop
-[THEN]
+	POSTPONE _nop				\ Used by _see_enter
 	>R							\ C: forw state curr	R: xt
 	_push_word					\ C: forw state
 	STATE !						\ C: forw
@@ -2341,7 +2335,7 @@ _fs CONSTANT floating-stack DROP DROP
 \ (C: <spaces>name -- ) (S: -- aaddr )
 : FVARIABLE VARIABLE ;
 
-: FVALUE CREATE 0 , F, DOES> FLOAT+ F@ ;
+: FVALUE CREATE 0 , F, DOES> CELL+ F@ ;
 
 \ ( F: f -- ) ( <spaces>name -- )
 : fto
@@ -2446,7 +2440,7 @@ MIN-N CONSTANT _sign_mask
 : $. BASE @ >R HEX '$' EMIT U. R> BASE ! ; $10 _pp!
 
 \ (S: x -- )
-: $#. DUP -65535 65536 WITHIN IF #. ELSE $. THEN ; $10 _pp!
+: $#. DUP -65536 65536 WITHIN IF #. ELSE $. THEN ; $10 _pp!
 
 \ (S: addr u -- addr' addr )
 : bounds OVER + SWAP ;
@@ -2538,9 +2532,6 @@ MIN-N CONSTANT _sign_mask
 	ENDCASE								\ S: ascii
 ; $11 _pp!
 
-: @+ ( addr -- addr' x ) DUP CELL+ SWAP @ ;
-: C@+ ( addr -- addr' x ) DUP CHAR+ SWAP C@ ;
-
 \ (S: caddr u -- )
 : \type
 	CHARS bounds								\ S: b a
@@ -2624,7 +2615,7 @@ MIN-N CONSTANT _sign_mask
 		DROP S" :NONAME " TYPE
 	THEN
 	DUP w.data @ BEGIN					\ S: xt ip
-		DUP	@ ['] _; <>		\ S: xt ip b1
+		DUP @ ['] _; <>					\ S: xt ip b1
 		OVER CELL+ @ ['] _nop =			\ S: xt ip b2
 	OR WHILE							\ S: xt ip
 		DUP @ CASE						\ S: xt ip wp
