@@ -208,6 +208,7 @@ BEGIN-STRUCTURE p4_input
 	FIELD: in.length
 	FIELD: in.offset
 	FIELD: in.buffer			\ pointer
+	/pad +FIELD in.data
 END-STRUCTURE
 
 \ Example
@@ -1092,32 +1093,23 @@ DEFER fsp!
 	REPEAT 2DROP
 ;
 
-\ ... FILL ...
-\
+\ (S: addr u -- addr' addr )
+: bounds OVER + SWAP ;
+
 \ (S: caddr u char -- )
-\
 : FILL
-	>R							\ S: caddr u		R: ch
-	BEGIN ?DUP WHILE
-		1- SWAP					\ S: u' caddr		R: ch
-		R@ OVER >R				\ S: u' caddr ch	R: ch caddr
-		SWAP C! R> CHAR+		\ S: u'	caddr'		R: ch
-		SWAP					\ S: caddr' u'		R: ch
+	>R CHARS bounds				\ S: caddr" caddr		R: ch
+	BEGIN 2DUP > WHILE			\ S: caddr" caddr		R: ch
+		R@ OVER C! CHAR+		\ S: caddr" caddr'		R: ch
 	REPEAT
-	R> 2DROP
-;
+	rdrop 2drop
+; $30 _pp!
 
-\ ... BLANK ...
-\
 \ (S: caddr u -- )
-\
-: BLANK BL FILL ;
+: BLANK BL FILL ; $20 _pp!
 
-\ ... ERASE ...
-\
 \ (S: addr u -- )
-\
-: ERASE 0 FILL ;
+: ERASE 0 FILL ; $20 _pp!
 
 \ (S: ch -- ch' )
 : tolower DUP 'A' [ 'Z' 1+ ] LITERAL WITHIN IF $20 OR THEN ; $11 _pp!
@@ -1786,15 +1778,15 @@ VARIABLE _str_buf_curr
 : _input_ptr _ctx ctx.input ;
 
 \ (S: -- aaddr )
-: BLK _input_ptr @ in.blk ;
+: BLK _input_ptr @ in.blk ; $01 _pp!
 
 \ (S: -- aaddr )
-: _block_ptr _ctx ctx.block ;
-: _blk_state _block_ptr @ blk.state ;
-: _blk_number _block_ptr @ blk.number ;
+: _block_ptr _ctx ctx.block ; $01 _pp!
+: _blk_state _block_ptr @ blk.state ; $01 _pp!
+: _blk_number _block_ptr @ blk.number ; $01 _pp!
 
 \ (S: -- caddr )
-: _blk_buffer _block_ptr @ blk.buffer ;
+: _blk_buffer _block_ptr @ blk.buffer ; $01 _pp!
 
 \ (S: -- )
 : _blk_free 0 _blk_state ! 0 _blk_number ! ;
@@ -1804,13 +1796,13 @@ VARIABLE _str_buf_curr
 ' _blk_dirty alias UPDATE
 
 \ (S: -- aaddr )
-: _block_fd _ctx ctx.block_fd ;
+: _block_fd _ctx ctx.block_fd ; $01 _pp!
 
 \ (S: -- )
 : _block_flush _block_fd @ FLUSH-FILE DROP ;
 
 \ (S: u -- ior )
-: _block_seek _block_flush 1- _blk_size * S>D _block_fd @ REPOSITION-FILE ;
+: _block_seek _block_flush 1- _blk_size * S>D _block_fd @ REPOSITION-FILE ; $11 _pp!
 
 \ (S: u -- | ⊥ )
 : _block_read
@@ -1818,7 +1810,7 @@ VARIABLE _str_buf_curr
 	_blk_buffer _blk_size _block_fd @ READ-FILE
 	0<> SWAP _blk_size <> AND -33 AND THROW
 	_blk_number ! _blk_clean
-;
+; $10 _pp!
 
 \ (S: u -- | ⊥ )
 : _block_grow
@@ -1845,14 +1837,14 @@ VARIABLE _str_buf_curr
 		rdrop							\ S: u' v'		R:
 	THEN
 	2DROP								\ S:
-;
+; $10 _pp!
 
 \ (S: u -- | ⊥ )
 : _block_write
 	DUP
 	_block_grow _block_seek THROW
 	_blk_buffer _blk_size _block_fd @ WRITE-FILE THROW
-;
+; $10 _pp!
 
 \ (S: -- )
 : SAVE-BUFFERS _blk_number @ _block_write _blk_clean _block_fd @ FLUSH-FILE DROP ;
@@ -1874,13 +1866,13 @@ VARIABLE _str_buf_curr
 		DROP
 	THEN
  	_blk_number ! _blk_clean _blk_buffer
-;
+; $21 _pp!
 
 \ (S: u -- aaddr )
-: BLOCK ['] _block_read _block_or_buffer ;
+: BLOCK ['] _block_read _block_or_buffer ; $11 _pp!
 
 \ (S: u -- aaddr )
-: BUFFER ['] DROP _block_or_buffer ;
+: BUFFER ['] DROP _block_or_buffer ; $11 _pp!
 
 \ (S: -- )
 : BLOCK-CLOSE
@@ -1900,27 +1892,22 @@ VARIABLE _str_buf_curr
 		>R 2DROP R>
 	THEN
 	_block_fd ! 0
-;
+; $21 _pp!
 
 \ (S: -- u )
-: BLOCKS _block_fd @ FILE-SIZE DROP D>S _blk_size / ;
+: BLOCKS _block_fd @ FILE-SIZE DROP D>S _blk_size / ; $01 _pp!
 
-\ \ (S: -- )
-\ : FLUSH SAVE-BUFFERS EMPTY-BUFFERS ;
+\ (S: -- addr )
+: _input_new
+	p4_input ALLOCATE THROW
+	DUP p4_input ERASE DUP in.data OVER in.buffer ! -1 OVER in.fp !
+; $01 _pp!
 
-\ (S: -- )
-: _input_push
-	R> _input_ptr @ >R >R
-	p4_input ALLOCATE DROP _input_ptr !
-	\ Note that the in.buffer is undefined.
-	_input_ptr @ -1 OVER in.fp ! 0 OVER in.length ! 0 SWAP in.offset !
-;
+\ (S: -- ; R: -- addr )
+: _input_push R> _input_ptr @ >R >R _input_new _input_ptr ! ; $0100 _pp!
 
-\ (S: -- )
-: _input_pop
-	_input_ptr @ FREE DROP
-	R> R> _input_ptr ! >R
-;
+\ (S: -- ; R: addr -- )
+: _input_pop _input_ptr @ FREE THROW R> R> _input_ptr ! >R ; $1000 _pp!
 
 \ (S: -- )
 : _block_push
@@ -1941,7 +1928,7 @@ VARIABLE _str_buf_curr
 	_input_push _block_push
 	DUP BLK ! BLOCK _blk_size ['] _evaluate CATCH
 	_block_pop _input_pop THROW
-;
+; $10 _pp!
 
 \ ... EVALUATE ...
 \
@@ -1950,7 +1937,7 @@ VARIABLE _str_buf_curr
 \ @see
 \	https://forth-standard.org/standard/block/EVALUATE
 \
-: EVALUATE _input_push 0 BLK ! ['] _evaluate CATCH _input_pop THROW ;
+: EVALUATE _input_push 0 BLK ! ['] _evaluate CATCH _input_pop THROW ; $20 _pp!
 
 \ (S: start end -- )
 : THRU
@@ -2441,9 +2428,6 @@ MIN-N CONSTANT _sign_mask
 
 \ (S: x -- )
 : $#. DUP -65536 65536 WITHIN IF #. ELSE $. THEN ; $10 _pp!
-
-\ (S: addr u -- addr' addr )
-: bounds OVER + SWAP ;
 
 \ (S: addr u -- )
 : .cells

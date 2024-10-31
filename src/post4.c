@@ -770,17 +770,6 @@ p4FindName(P4_Ctx *ctx, const char *caddr, P4_Size length)
 }
 
 static void
-p4FreeInput(P4_Input *input)
-{
-	if (input != NULL) {
-		if (input->fp != (FILE *) -1) {
-			free(input->buffer);
-		}
-		free(input);
-	}
-}
-
-static void
 p4FreeWords(P4_Word *words)
 {
 	P4_Word *word, *prev;
@@ -800,7 +789,7 @@ p4Free(P4_Ctx *ctx)
 		if (ctx->block_fd != NULL) {
 			(void) fclose(ctx->block_fd);
 		}
-		p4FreeInput(ctx->input);
+		free(ctx->input);
 		free(ctx->block);
 		free(ctx);
 	}
@@ -835,11 +824,12 @@ p4CreateInput(void)
 	if ((input = calloc(1, sizeof (*input))) == NULL) {
 		return NULL;
 	}
-	/* Extra byte for NUL termination, see p4System(). */
-	if ((input->buffer = calloc(1, P4_INPUT_SIZE+1)) == NULL) {
-		free(input);
-		return NULL;
-	}
+	MEMSET(input->data, BYTE_ME, sizeof (input->data));
+	/* A separate pointer to the buffer data allows the pointer
+	 * to be temporarily replaced and then easily restored, ie.
+	 * input strings.
+	 */
+	input->buffer = input->data;
 	return input;
 }
 
@@ -1602,8 +1592,6 @@ _pp_put:	P4_DROP(ctx->ds, 1);
 		// ( i*x caddr u -- j*x )
 _evaluate:	ctx->input->length = P4_POP(ctx->ds).z;
 		ctx->input->buffer = P4_POP(ctx->ds).s;
-		ctx->input->fp = (FILE *) -1;
-		ctx->input->offset = 0;
 		goto _interpret;
 
 		/* CREATE DOES> is bit of a mind fuck.  Their purpose is to define
@@ -2534,21 +2522,17 @@ int
 p4EvalString(P4_Ctx *ctx, const char *str, size_t len)
 {
 	int rc;
-	char *buffer;
 	P4_Input *input;
 
 	/* Do not save STATE, see A.6.1.2250 STATE. */
 	P4_INPUT_PUSH(ctx->input);
 	input = ctx->input;
-	/* buffer is allocated, don't loose the pointer */
-	buffer = input->buffer;
 	input->fp = (FILE *) -1;
 	input->buffer = (char *)str;
 	input->length = len;
 	input->offset = 0;
 	input->blk = 0;
 	rc = p4Repl(ctx, P4_THROW_OK);
-	input->buffer = buffer;
 	P4_INPUT_POP(ctx->input);
 	return rc;
 }
