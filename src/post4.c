@@ -1111,7 +1111,7 @@ p4Repl(P4_Ctx *ctx, int thrown)
 		P4_WORD("FILE-POSITION",	&&_fa_tell,	0, 0x12),
 		P4_WORD("FILE-SIZE",		&&_fa_fsize,	0, 0x12),
 		P4_WORD("FLUSH-FILE",		&&_fa_flush,	0, 0x11),
-		P4_WORD("INCLUDE-FILE",		&&_fa_include,	0, 0x10),
+		P4_WORD("_eval_file",		&&_eval_file,	0, 0x10),	// p4
 		P4_WORD("open-file-path",	&&_fa_open_path,0, 0x52),	// p4
 		P4_WORD("OPEN-FILE",		&&_fa_open,	0, 0x32),
 		P4_WORD("READ-FILE",		&&_fa_read,	0, 0x32),
@@ -1313,12 +1313,14 @@ _thrown:
 		/*@fallthrough@*/
 	case P4_THROW_ABORT:
 		/* Historically no message, simply return to REPL. */
-_abort:		(void) fflush(stdout);
-		P4_RESET(ctx->ds);
+_abort:		P4_RESET(ctx->ds);
 #ifdef HAVE_MATH_H
 		P4_RESET(ctx->fs);
 #endif
+		/*@fallthrough@*/
+	case P4_THROW_QUIT:
 _quit:		P4_RESET(ctx->rs);
+		(void) fflush(stdout);
 		/* Normally at this point one would reset input
 		 * to the console, but that has problems.  Wait
 		 * for the caller to resolve this by closing
@@ -1344,7 +1346,7 @@ _quit:		P4_RESET(ctx->rs);
 	case P4_THROW_OK:
 		;
 	}
-	ip = (P4_Cell *)(repl+1);
+_repl:	ip = (P4_Cell *)(repl+1);
 
 //	do {
 		/* The input buffer might have been primed (EVALUATE, LOAD),
@@ -1593,6 +1595,13 @@ _pp_put:	P4_DROP(ctx->ds, 1);
 _evaluate:	ctx->input->length = P4_POP(ctx->ds).z;
 		ctx->input->buffer = P4_POP(ctx->ds).s;
 		goto _interpret;
+
+		// ( i*x fd -- j*y ex )
+_eval_file:	P4_DROP(ctx->ds, 1);
+		p4ResetInput(ctx, x.v);
+		w.n = p4Repl(ctx, P4_THROW_OK);
+		P4_PUSH(ctx->ds, w.n);
+		NEXT;
 
 		/* CREATE DOES> is bit of a mind fuck.  Their purpose is to define
 		 * words that in turn define new words.  Best to look at a simple
@@ -2181,14 +2190,6 @@ _fa_write:	errno = 0;
 		P4_TOP(ctx->ds).n = errno;
 		NEXT;
 
-		// ( i*x fd -- j*y ior )
-_fa_include:	P4_DROP(ctx->ds, 1);
-		P4_PUSH(ctx->rs, ip);
-		w.n = p4EvalFp(ctx, x.v);
-		ip = P4_POP(ctx->rs).p;
-		P4_PUSH(ctx->ds, w);
-		NEXT;
-
 		// ( ud fd -- ior )
 _fa_seek:	errno = 0;
 		fp = P4_POP(ctx->ds).v;
@@ -2482,20 +2483,6 @@ _f_pow:		w = P4_POP(ctx->P4_FLOAT_STACK);
 }
 
 int
-p4EvalFp(P4_Ctx *ctx, FILE *fp)
-{
-	int rc;
-
-	/* Do not save STATE, see A.6.1.2250 STATE. */
-	P4_INPUT_PUSH(ctx->input);
-	p4ResetInput(ctx, fp);
-	rc = p4Repl(ctx, P4_THROW_OK);
-	P4_INPUT_POP(ctx->input);
-
-	return rc;
-}
-
-int
 p4EvalFile(P4_Ctx *ctx, const char *file)
 {
 	FILE *fp;
@@ -2504,7 +2491,8 @@ p4EvalFile(P4_Ctx *ctx, const char *file)
 		goto error0;
 	}
 	if ((fp = p4OpenFilePath(getenv("POST4_PATH"), file)) != NULL) {
-		rc = p4EvalFp(ctx, fp);
+		p4ResetInput(ctx, fp);
+		rc = p4Repl(ctx, P4_THROW_OK);
 		(void) fclose(fp);
 	}
 	if (p4_throw == NULL) {
@@ -2547,7 +2535,7 @@ static sig_map signalmap[] = {
 	{ SIGBUS, P4_THROW_SIGBUS, NULL },
 	{ SIGINT, P4_THROW_SIGINT, NULL },
 	{ SIGFPE, P4_THROW_SIGFPE, NULL },
-	{ SIGQUIT, P4_THROW_QUIT, NULL },
+//	{ SIGQUIT, P4_THROW_QUIT, NULL },
 	{ SIGSEGV, P4_THROW_SIGSEGV, NULL },
 	{ SIGTERM, P4_THROW_SIGTERM, NULL },
 	{ 0, P4_THROW_OK, NULL }

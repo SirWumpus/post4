@@ -160,7 +160,7 @@ alineInput(FILE *fp, const char *prompt, char *buf, size_t size)
 	alineGetRowCol(pos);
 	(void) printf(ANSI_SAVE_CURSOR);
 	(void) alineSetMode(ALINE_RAW);
-	for (buf[i = 0] = '\0';	; ) {
+	for (size--, buf[i = 0] = '\0';	; ) {
 		(void) printf(ANSI_RESTORE_CURSOR"%s%s"ANSI_ERASE_TAIL""ANSI_GOTO, prompt, buf, pos[0], pos[1]+pcol+i);
 		(void) fflush(stdout);
 		clearerr(stdin);

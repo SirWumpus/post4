@@ -2009,16 +2009,13 @@ VARIABLE SCR
 : PAGE 0 0 AT-XY S\" \e[0J" TYPE ;
 
 \ (S: i*x fd -- j*x )
-: _include_and_close
-	DUP >R INCLUDE-FILE DROP
-	R> CLOSE-FILE DROP
-; $10 _pp!
+: INCLUDE-FILE _input_push DUP >R _eval_file DROP R> CLOSE-FILE DROP _input_pop ; $10 _pp!
 
 \ (S: i*x caddr u -- j*x )
-: INCLUDED R/O OPEN-FILE THROW _include_and_close ; $20 _pp!
+: INCLUDED R/O OPEN-FILE THROW INCLUDE-FILE ; $20 _pp!
 
 \ (S: i*x caddr u -- j*x )
-: included-path S" POST4_PATH" env 2SWAP R/O open-file-path THROW _include_and_close ; $20 _pp!
+: included-path S" POST4_PATH" env 2SWAP R/O open-file-path THROW INCLUDE-FILE ; $20 _pp!
 
 \ ... ACTION-OF ...
 \

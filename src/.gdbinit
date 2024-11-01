@@ -53,5 +53,7 @@ b p4Repl:_halt
 disable 4
 b p4Repl:_evaluate
 disable 5
+b p4Repl:_eval_file
+disable 6
 
 show user
