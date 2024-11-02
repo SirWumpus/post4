@@ -873,7 +873,7 @@ p4Create(P4_Options *opts)
 	if (opts->block_file != NULL					/* Block file name? */
 	&& (ctx->block_fd = fopen(opts->block_file, "rb+")) == NULL	/* File exists? */
 	&& (ctx->block_fd = fopen(opts->block_file, "wb+")) == NULL) {	/* Else create file. */
-		warn("%s", opts->block_file);
+		(void) fprintf(STDERR, "post4: %s: %s\r\n", opts->block_file, strerror(errno));
 	}
 	ctx->norder = 1;
 	ctx->order[0] = 1;
@@ -1040,7 +1040,7 @@ p4Repl(P4_Ctx *ctx, int thrown)
 #define w_semi		words[2]
 		P4_WORD("_abort",	&&_abort,	0, 0x00),
 #define w_abort		words[3]
-		P4_WORD("QUIT",		&&_quit,	0, 0x00),
+		P4_WORD("_quit",	&&_quit,	0, 0x00),	// p4
 #define w_quit		words[4]
 		P4_WORD("_interpret",	&&_interpret,	0, 0x00),
 #define w_interpret	words[5]
@@ -1243,6 +1243,7 @@ p4Repl(P4_Ctx *ctx, int thrown)
 	}
 
 #define NEXT		goto _next
+#define THROWQUIT(e)	{ rc = (e); goto _quit; }
 #define THROWHARD(e)	{ rc = (e); goto _thrown; }
 #define THROW(e)	{ if (p4_throw != NULL) { word = p4_throw; \
 				P4_PUSH(ctx->ds, (P4_Int)(e)); goto _forth; } THROWHARD(e); }
@@ -1321,23 +1322,7 @@ _abort:		P4_RESET(ctx->ds);
 	case P4_THROW_QUIT:
 _quit:		P4_RESET(ctx->rs);
 		(void) fflush(stdout);
-		/* Normally at this point one would reset input
-		 * to the console, but that has problems.  Wait
-		 * for the caller to resolve this by closing
-		 * their files and popping the previous input
-		 * context and/or re-asserting stdin.
-		 *
-		 * ctx->input->fp = stdin;
-		 */
-
-		/* See 3.4.4 Possible actions on an ambiguous condition
-		 *
-		 * - display a message;
-		 * - set interpretation state and begin text interpretation;
-		 */
-
-		/* Discard the current input buffer. */
-		ctx->input->offset = ctx->input->length = 0;
+		p4ResetInput(ctx, stdin);
 		ctx->state = P4_STATE_INTERPRET;
 		ctx->frame = 0;
 		/* Reset level, else next trace the indentation might be skewed. */
@@ -1346,7 +1331,7 @@ _quit:		P4_RESET(ctx->rs);
 	case P4_THROW_OK:
 		;
 	}
-_repl:	ip = (P4_Cell *)(repl+1);
+	ip = (P4_Cell *)(repl+1);
 
 //	do {
 		/* The input buffer might have been primed (EVALUATE, LOAD),
@@ -1409,10 +1394,7 @@ _ok:		if (P4_INTERACTIVE(ctx)) {
 
 //	} while (p4Refill(ctx->input));
 
-_halt:	if (P4_INTERACTIVE(ctx)) {
-		(void) printf(crlf);
-	}
-	SETJMP_POP(ctx->longjmp);
+_halt:	SETJMP_POP(ctx->longjmp);
 	return rc;
 
 		// ( -- )
@@ -2498,9 +2480,6 @@ p4EvalFile(P4_Ctx *ctx, const char *file)
 	if (p4_throw == NULL) {
 		/* Find THROW to aid with throwing exceptions from C to Forth. */
 		p4_throw = p4FindName(ctx, "THROW", STRLEN("THROW"));
-	}
-	if (rc != P4_THROW_OK && ctx->frame == 0) {
-		warn("%s", file);
 	}
 error0:
 	return rc;

@@ -3,6 +3,9 @@
 \ Post4 Copyright 2007, 2024 by Anthony Howe.	All rights reserved.
 
 \ ( -- ⊥ )
+: QUIT -56 _longjmp ;
+
+\ ( -- ⊥ )
 : BYE 0 bye-code ;
 
 \ (S: char u -- )
@@ -2009,7 +2012,12 @@ VARIABLE SCR
 : PAGE 0 0 AT-XY S\" \e[0J" TYPE ;
 
 \ (S: i*x fd -- j*x )
-: INCLUDE-FILE _input_push DUP >R _eval_file DROP R> CLOSE-FILE DROP _input_pop ; $10 _pp!
+\ *** An exception within the include file will leak the file handle and some memory.
+\ Cannot CATCH _eval_file, because a QUIT will have cleared the catch frames.
+: INCLUDE-FILE
+	_input_push DUP >R _eval_file DUP -56 = IF QUIT THEN
+	 R> CLOSE-FILE DROP _input_pop THROW
+; $10 _pp!
 
 \ (S: i*x caddr u -- j*x )
 : INCLUDED R/O OPEN-FILE THROW INCLUDE-FILE ; $20 _pp!

@@ -134,12 +134,6 @@ extern "C" {
 
 #include "ansiterm.h"
 
-#ifdef HAVE_ERR_H
-# include <err.h>
-#else
-# include "err.h"
-#endif
-
 #ifdef HAVE_SYS_TYPES_H
 # include <sys/types.h>
 #endif

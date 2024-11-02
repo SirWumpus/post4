@@ -105,9 +105,7 @@ void
 p4HookInit(P4_Ctx *ctx, P4_Hook *hooks)
 {
 	for (P4_Hook *h = hooks; h->name != NULL; h++) {
-		if (p4HookAdd(ctx, h) == NULL) {
-			errx(EXIT_FAILURE, "hook %s fail %d", h->name, P4_THROW_GENERIC);
-		}
+		(void) p4HookAdd(ctx, h);
 	}
 }
 

@@ -207,6 +207,7 @@ alineInput(FILE *fp, const char *prompt, char *buf, size_t size)
 		} else if (ch == tty_saved.c_cc[VKILL]) {
 			buf[i = 0] = '\0';
 		} else if (i == 0 && ch == tty_saved.c_cc[VEOF]) {
+			(void) fputs("\r\n", stdout);
 			return EOF;
 		} else if (i < size) {
 			(void) memmove(buf+i+1, buf+i, strlen(buf+i)+1);

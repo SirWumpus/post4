@@ -131,7 +131,8 @@ main(int argc, char **argv)
 	optind = 1;
 	while ((ch = getopt(argc, argv, flags)) != -1) {
 		if (ch == 'i' && (rc = p4EvalFile(ctx_main, optarg)) != P4_THROW_OK) {
-			err(EXIT_FAILURE, "%s", optarg);
+			(void) fprintf(STDERR, "post4: %s: %d thrown\r\n", optarg, rc);
+			return EXIT_FAILURE;
 		}
 	}
 
@@ -139,8 +140,8 @@ main(int argc, char **argv)
 		rc = SETJMP(sig_break_glass);
 		p4ResetInput(ctx_main, stdin);
 		rc = p4Repl(ctx_main, rc);
-	} else if (optind < argc && (rc = p4EvalFile(ctx_main, argv[optind]))) {
-		err(EXIT_FAILURE, "%s", argv[optind]);
+	} else if (optind < argc) {
+		rc = p4EvalFile(ctx_main, argv[optind]);
 	}
 
 	return rc;
