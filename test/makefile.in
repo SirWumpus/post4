@@ -61,12 +61,12 @@ title :
 	@echo '***************************************************************'
 	@echo
 
-tests: test test_quit see_all
+tests: test test_quit_catch test_include_quit test_include_abort test_include_throw see_all
 
 test : ${PROG}
 	${POST4_PATH} ${PROG} ./units.p4
 
-test_quit : ${PROG}
+test_quit_catch : ${PROG}
 	@echo Testing QUIT...
 	! printf "' QUIT CATCH \n ABORT" | ${PROG} -c ${WORDS}
 	! printf "' QUIT CATCH \n -1 THROW" | ${PROG} -c ${WORDS}
@@ -74,6 +74,35 @@ test_quit : ${PROG}
 	printf 'S" 0 THROW" '\'' EVALUATE CATCH' | ${PROG} -c ${WORDS}
 	printf 'S" -1 THROW" '\'' EVALUATE CATCH' | ${PROG} -c ${WORDS}
 	printf ": tw_keep_ds [: 123 QUIT ;] CATCH 456 . THROW ;\n tw_keep_ds \n . CR" | ${PROG} -c ${WORDS}
+
+# GH-54
+test_include_quit: ${PROG}
+	@echo Testing INCLUDE with QUIT
+	! ${PROG} -c ${WORDS} <${top_srcdir}/test/data/quit0.p4
+	! echo | ${PROG} -c ${WORDS} ${top_srcdir}/test/data/quit0.p4
+	! echo | ${PROG} -c ${WORDS} -i ${top_srcdir}/test/data/quit0.p4
+
+# GH-54
+test_include_abort: ${PROG}
+	@echo Testing INCLUDE with ABORT
+	! ${PROG} -c ${WORDS} <${top_srcdir}/test/data/abort0.p4
+	! echo | ${PROG} -c ${WORDS} ${top_srcdir}/test/data/abort0.p4
+	! echo | ${PROG} -c ${WORDS} -i ${top_srcdir}/test/data/abort0.p4
+
+# GH-54
+test_include_throw: ${PROG}
+	@echo Testing INCLUDE with THROW
+	! ${PROG} -c ${WORDS} <${top_srcdir}/test/data/throw0.p4
+	! echo | ${PROG} -c ${WORDS} ${top_srcdir}/test/data/throw0.p4
+	! echo | ${PROG} -c ${WORDS} -i ${top_srcdir}/test/data/throw0.p4
+
+# GH-54 These tests have to be done manually, because the behaviour when
+# input is redirected is slighty different and should pass, whereas manually
+# we may see different result.
+test_manual: ${PROG}
+	! printf "INCLUDE ${top_srcdir}/test/data/quit0.p4 \n BYE" | ${PROG} -c ${WORDS}
+	! printf "INCLUDE ${top_srcdir}/test/data/abort0.p4 \n BYE" | ${PROG} -c ${WORDS}
+	! printf "INCLUDE ${top_srcdir}/test/data/throw0.p4 \n BYE" | ${PROG} -c ${WORDS}
 
 # Test SEE against all words to check if any result in some failure like SEGFAULT.
 see_all: ${PROG}

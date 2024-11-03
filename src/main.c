@@ -131,7 +131,12 @@ main(int argc, char **argv)
 	optind = 1;
 	while ((ch = getopt(argc, argv, flags)) != -1) {
 		if (ch == 'i' && (rc = p4EvalFile(ctx_main, optarg)) != P4_THROW_OK) {
-			(void) fprintf(STDERR, "post4: %s: %d thrown\r\n", optarg, rc);
+			/* If an exception, other than ABORT or QUIT, occurs
+			 * they will generate an execption message.  Do not
+			 * really need to repeat it here, though including
+			 * the file name would help debugging.
+			 */
+//			(void) fprintf(STDERR, "post4: include %s: %d thrown\r\n", optarg, rc);
 			return EXIT_FAILURE;
 		}
 	}
@@ -144,5 +149,5 @@ main(int argc, char **argv)
 		rc = p4EvalFile(ctx_main, argv[optind]);
 	}
 
-	return rc;
+	return rc != 0;
 }

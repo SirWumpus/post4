@@ -1038,15 +1038,15 @@ p4Repl(P4_Ctx *ctx, int thrown)
 #define w_lit		words[1]
 		P4_WORD("_;",		&&_exit,	0, 0x0100),	// _seext
 #define w_semi		words[2]
-		P4_WORD("_abort",	&&_abort,	0, 0x00),
+		P4_WORD("_abort",	&&_abort,	0, 0x00),	// p4
 #define w_abort		words[3]
 		P4_WORD("_quit",	&&_quit,	0, 0x00),	// p4
 #define w_quit		words[4]
-		P4_WORD("_interpret",	&&_interpret,	0, 0x00),
+		P4_WORD("_interpret",	&&_interpret,	0, 0x00),	// p4
 #define w_interpret	words[5]
 		P4_WORD("REFILL",	&&_refill,	0, 0x01),
 #define w_refill	words[6]
-		P4_WORD("_branchnz",	&&_branchnz,	0, 0x01000010),
+		P4_WORD("_branchnz",	&&_branchnz,	0, 0x01000010),	// p4
 #define w_branchnz	words[7]
 #ifdef HAVE_HOOKS
 		P4_WORD("_hook_call",	&&_hook_call,	0, 0x00),	// p4

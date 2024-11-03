@@ -2012,11 +2012,14 @@ VARIABLE SCR
 : PAGE 0 0 AT-XY S\" \e[0J" TYPE ;
 
 \ (S: i*x fd -- j*x )
-\ *** An exception within the include file will leak the file handle and some memory.
-\ Cannot CATCH _eval_file, because a QUIT will have cleared the catch frames.
+\ *** An uncaught exception within the include file will leak the file
+\ *** handle and some memory.  Cannot CATCH _eval_file, because a QUIT
+\ *** will have cleared the catch frames, likewise ABORT and THROW.
 : INCLUDE-FILE
-	_input_push DUP >R _eval_file DUP -56 = IF QUIT THEN
-	 R> CLOSE-FILE DROP _input_pop THROW
+	_input_push DUP >R _eval_file
+	\ Propagate QUIT or exception to top most REPL.
+	DUP -56 = IF DROP QUIT THEN THROW
+	R> CLOSE-FILE DROP _input_pop
 ; $10 _pp!
 
 \ (S: i*x caddr u -- j*x )
