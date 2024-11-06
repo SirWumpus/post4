@@ -2016,10 +2016,8 @@ VARIABLE SCR
 \ *** handle and some memory.  Cannot CATCH _eval_file, because a QUIT
 \ *** will have cleared the catch frames, likewise ABORT and THROW.
 : INCLUDE-FILE
-	_input_push DUP >R _eval_file
-	\ Propagate QUIT or exception to top most REPL.
-	DUP -56 = IF DROP QUIT THEN THROW
-	R> CLOSE-FILE DROP _input_pop
+	_input_push DUP >R ['] _eval_file CATCH
+	R> CLOSE-FILE DROP _input_pop THROW
 ; $10 _pp!
 
 \ (S: i*x caddr u -- j*x )

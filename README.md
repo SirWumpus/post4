@@ -46,6 +46,16 @@ Post4 reads input from standard input and writes to standard output, which can b
 Post4 cell size is equivalent to C's `intptr_t`, which for most current systems are 64 bits.
 
 
+Exit Status
+-----------
+
+- 0     Post4 and application exited successfully.
+- 1     The application returned a negative result.
+- 2     Command line usage error.
+- 3     One or more uncaught exceptions occurred.
+- \>3    Some application error occurred.
+
+
 Glossary of Words
 -----------------
 

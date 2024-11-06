@@ -149,5 +149,5 @@ main(int argc, char **argv)
 		rc = p4EvalFile(ctx_main, argv[optind]);
 	}
 
-	return rc != 0;
+	return (rc != 0) * 3;
 }

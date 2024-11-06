@@ -49,11 +49,15 @@ b p4Repl:_interpret
 disable 2
 b p4Repl:_inter_loop
 disable 3
-b p4Repl:_halt
+b p4Repl:_abort
 disable 4
-b p4Repl:_evaluate
+b p4Repl:_quit
 disable 5
-b p4Repl:_eval_file
+b p4Repl:_halt
 disable 6
+b p4Repl:_evaluate
+disable 7
+b p4Repl:_eval_file
+disable 8
 
 show user

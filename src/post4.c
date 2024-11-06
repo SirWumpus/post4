@@ -1243,7 +1243,6 @@ p4Repl(P4_Ctx *ctx, int thrown)
 	}
 
 #define NEXT		goto _next
-#define THROWQUIT(e)	{ rc = (e); goto _quit; }
 #define THROWHARD(e)	{ rc = (e); goto _thrown; }
 #define THROW(e)	{ if (p4_throw != NULL) { word = p4_throw; \
 				P4_PUSH(ctx->ds, (P4_Int)(e)); goto _forth; } THROWHARD(e); }
@@ -1253,12 +1252,8 @@ p4Repl(P4_Ctx *ctx, int thrown)
 #pragma GCC diagnostic ignored "-Wpedantic"
 	static const P4_Word w_inter_loop = P4_WORD("_inter_loop", &&_inter_loop, P4_BIT_HIDDEN, 0x00);
 	static const P4_Word w_halt = P4_WORD("_halt", &&_halt, P4_BIT_HIDDEN, 0x00);
-	static const P4_Word w_ok = P4_WORD("_ok", &&_ok, P4_BIT_HIDDEN, 0x00);
-	static const P4_Cell repl[] = {
-		{.cw = &w_interpret}, {.cw = &w_ok},  {.cw = &w_refill},
-		{.cw = &w_branchnz}, {.n = -4 * sizeof (P4_Cell)},
-		{.cw = &w_halt}
-	};
+	static const P4_Cell repl[] = { {.cw = &w_interpret}, {.cw = &w_halt} };
+
 	/* When the REPL executes a word, it puts the XT of the word here
 	 * and executes the word with the IP pointed to exec[].  When the
 	 * word completes the next XT transitions from threaded code back
@@ -1333,12 +1328,14 @@ _quit:		P4_RESET(ctx->rs);
 	}
 	ip = (P4_Cell *)(repl+1);
 
-//	do {
+	// (S: -- )
+_interpret:
+	P4_PUSH(ctx->rs, ip);
+	do {
+		p4StackGuards(ctx);
 		/* The input buffer might have been primed (EVALUATE, LOAD),
 		 * so try to parse it first before reading more input.
 		 */
-_interpret:	p4StackGuards(ctx);
-		P4_PUSH(ctx->rs, ip);
 _inter_loop:	while (ctx->input->offset < ctx->input->length) {
 			str = p4ParseName(ctx->input);
 			if (str.length == 0) {
@@ -1382,18 +1379,16 @@ _forth:				exec[0].xt = word;
 				NEXT;
 			}
 		}
-		p4StackIsEmpty(ctx, &ctx->rs, P4_THROW_RS_UNDER);
-		ip = P4_POP(ctx->rs).p;
-		NEXT;
-
-_ok:		if (P4_INTERACTIVE(ctx)) {
+		if (P4_INTERACTIVE(ctx)) {
 			(void) printf(ANSI_CYAN"ok "ANSI_NORMAL);
 			(void) fflush(stdout);
 		}
-		NEXT;
+		p4StackIsEmpty(ctx, &ctx->rs, P4_THROW_RS_UNDER);
+	} while (p4Refill(ctx->input));
+	ip = P4_POP(ctx->rs).p;
+	NEXT;
 
-//	} while (p4Refill(ctx->input));
-
+	// (  -- )
 _halt:	SETJMP_POP(ctx->longjmp);
 	return rc;
 
@@ -1578,12 +1573,10 @@ _evaluate:	ctx->input->length = P4_POP(ctx->ds).z;
 		ctx->input->buffer = P4_POP(ctx->ds).s;
 		goto _interpret;
 
-		// ( i*x fd -- j*y ex )
+		// ( i*x fd -- j*y )
 _eval_file:	P4_DROP(ctx->ds, 1);
 		p4ResetInput(ctx, x.v);
-		w.n = p4Repl(ctx, P4_THROW_OK);
-		P4_PUSH(ctx->ds, w.n);
-		NEXT;
+		goto _interpret;
 
 		/* CREATE DOES> is bit of a mind fuck.  Their purpose is to define
 		 * words that in turn define new words.  Best to look at a simple
@@ -2514,6 +2507,8 @@ static sig_map signalmap[] = {
 	{ SIGBUS, P4_THROW_SIGBUS, NULL },
 	{ SIGINT, P4_THROW_SIGINT, NULL },
 	{ SIGFPE, P4_THROW_SIGFPE, NULL },
+// We already have SIGINT (^C) for user interrupt behaving like ABORT.
+// Catching SIGQUIT (^\) seems unncessary without an explicit use case.
 //	{ SIGQUIT, P4_THROW_QUIT, NULL },
 	{ SIGSEGV, P4_THROW_SIGSEGV, NULL },
 	{ SIGTERM, P4_THROW_SIGTERM, NULL },
