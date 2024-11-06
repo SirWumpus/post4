@@ -107,10 +107,10 @@ ${LIBNAME}: Post4$O ../src/libpost4$A
 ../src/libpost4$A : ../src/*.h ../src/*.c
 	cd ../src; ${MAKE} libpost4$A
 
-run: build
+run: build Post4.jar
 	POST4_PATH="${POST4_PATH}" java -Djava.library.path="$${POST4_PATH}" -cp ../.. ${MAIN}
 
-test: build
+test: build Post4.jar
 	POST4_PATH="${POST4_PATH}" java -Djava.library.path="$${POST4_PATH}" -cp ../.. ${MAIN} ../test/units.p4
 
 testjar: Post4.jar
