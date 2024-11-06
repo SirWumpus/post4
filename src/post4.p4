@@ -2797,7 +2797,7 @@ WORDLIST CONSTANT required-wordlist
 \ (S: <spaces>filename" -- )
 : _parse_string0 PARSE-NAME _string0_store ;
 
-\ (S: caddr u -- )
+\ (S: caddr u -- caddr u )
 : _save_included
 	\ Avoid adding duplicate files to the word-list.
 	2DUP required-wordlist FIND-NAME-IN 0= IF

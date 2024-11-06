@@ -128,7 +128,7 @@ p4Init(void)
 }
 
 FILE *
-p4OpenFilePath(const char *path_list, const char *file)
+p4OpenFilePath(const char *path_list, size_t plen, const char *file, size_t flen)
 {
 	FILE *fp = NULL;
 	char *paths, *path, *next, filepath[PATH_MAX];
@@ -137,16 +137,19 @@ p4OpenFilePath(const char *path_list, const char *file)
 		errno = EINVAL;
 		goto error0;
 	}
-	/* Absolute file path? */
-	if (*file == '/' && (fp = fopen(file, "r")) != NULL) {
-		return fp;
+	/* Absolute file path?  Ass*/
+	if (*file == '/') {
+		(void) snprintf(filepath, sizeof (filepath), "%.*s", (int)flen, file);
+		if ((fp = fopen(filepath, "r")) != NULL) {
+			return fp;
+		}
 	}
 	/* Path list supplied or use the default? */
 	if (path_list == NULL || *path_list == '\0') {
 		path_list = P4_CORE_PATH;
 	}
 	/* Need a duplicate because strtok modifies the string with NUL. */
-	if ((paths = strdup(path_list)) == NULL) {
+	if ((paths = strndup(path_list, plen)) == NULL) {
 		goto error1;
 	}
 	/* Search "dir0:dir1:...:dirN" string. */
@@ -2097,18 +2100,23 @@ _fa_create:	P4_TOP(ctx->ds).u = x.u | 4;
 
 _fa_open:	errno = 0;
 		x = P4_POP(ctx->ds);
-		P4_DROP(ctx->ds, 1);
+		y = P4_POP(ctx->ds);
 		w = P4_TOP(ctx->ds);
+		w.s = strndup(w.s, y.u);
 		fp = fopen(w.s, fmodes[x.u]);
+		free(w.s);
 		P4_TOP(ctx->ds).v = fp;
 		P4_PUSH(ctx->ds, (P4_Int) errno);
 		NEXT;
 
 		// ( paths p file f fam -- fd ior )
-_fa_open_path:	P4_DROP(ctx->ds, 2);
+		P4_Cell z;
+_fa_open_path:	P4_DROP(ctx->ds, 1);
+		x = P4_POP(ctx->ds);
+		y = P4_POP(ctx->ds);
+		z = P4_POP(ctx->ds);
 		w = P4_POP(ctx->ds);
-		y = P4_DROPTOP(ctx->ds);
-		fp = p4OpenFilePath(y.s, w.s);
+		fp = p4OpenFilePath(w.s, z.u, y.s, x.u);
 		P4_TOP(ctx->ds).v = fp;
 		P4_PUSH(ctx->ds, (P4_Int) errno);
 		NEXT;
@@ -2461,11 +2469,15 @@ int
 p4EvalFile(P4_Ctx *ctx, const char *file)
 {
 	FILE *fp;
+	char *p4_path;
 	int rc = P4_THROW_ENOENT;
 	if (file == NULL || *file == '\0') {
 		goto error0;
 	}
-	if ((fp = p4OpenFilePath(getenv("POST4_PATH"), file)) != NULL) {
+	if ((p4_path = getenv("POST4_PATH")) == NULL) {
+		p4_path = P4_CORE_PATH;
+	}
+	if ((fp = p4OpenFilePath(p4_path, strlen(p4_path), file, strlen(file))) != NULL) {
 		p4ResetInput(ctx, fp);
 		rc = p4Repl(ctx, P4_THROW_OK);
 		(void) fclose(fp);
