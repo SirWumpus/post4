@@ -2013,8 +2013,7 @@ VARIABLE SCR
 
 \ (S: i*x fd -- j*x )
 \ *** An uncaught exception within the include file will leak the file
-\ *** handle and some memory.  Cannot CATCH _eval_file, because a QUIT
-\ *** will have cleared the catch frames, likewise ABORT and THROW.
+\ *** handle and some memory.
 : INCLUDE-FILE
 	_input_push DUP >R ['] _eval_file CATCH
 	R> CLOSE-FILE DROP _input_pop THROW
