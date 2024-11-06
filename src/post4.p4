@@ -6,7 +6,7 @@
 : QUIT -56 _longjmp ;
 
 \ ( -- ⊥ )
-: BYE 0 bye-code ;
+: BYE 0 bye-status ;
 
 \ (S: char u -- )
 : EMIT dsp@ 1 TYPE DROP ; $10 _pp!

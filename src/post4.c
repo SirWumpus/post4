@@ -1210,7 +1210,7 @@ p4Repl(P4_Ctx *ctx, int thrown)
 
 		/* Tools*/
 		P4_WORD("alias",	&&_alias,	0, 0x10),	// p4
-		P4_WORD("bye-code",	&&_bye_code,	0, 0x10),	// p4
+		P4_WORD("bye-status",	&&_bye_code,	0, 0x10),	// p4
 		P4_WORD("env",		&&_env,		0, 0x22),	// p4
 
 		/* I/O */

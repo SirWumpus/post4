@@ -107,7 +107,7 @@ VARIABLE tc_fs_expect
 	." Total Pass " tests_passed @ ansi_green U. ansi_normal
 	." Fail " tests_failed @ ansi_red U. ansi_normal
 	." Skip " tests_skipped @ ansi_magenta U. ansi_normal CR
-	tests_failed @ 0<> IF 1 bye-code THEN
+	tests_failed @ 0<> IF 1 bye-status THEN
 ;
 
 : test_group ( -- )

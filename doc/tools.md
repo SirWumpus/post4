@@ -164,7 +164,7 @@ Dump the return stack.
 Create an alias word for `xt`.
 
 - - -
-#### bye-code
+#### bye-status
 ( `exit_code` -- )  
 Terminate and return to the host OS an exit code; zero (0) for normal/success, non-zero an error occurred.
 
