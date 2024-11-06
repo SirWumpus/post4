@@ -12,6 +12,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <signal.h>
+#include <fcntl.h>
 #include <unistd.h>
 
 int is_tty;
@@ -19,9 +20,12 @@ int is_tty;
 static int tty_fd = -1;
 static int tty_mode = 0;
 static struct termios tty_modes[3];
-static char history[ALINE_HISTORY][MAX_INPUT];
 static const char *ps2;
+
+#ifndef ALINE_BASIC_INPUT
 static int lastline;
+static char history[ALINE_HISTORY][MAX_INPUT];
+#endif
 
 #define tty_saved	tty_modes[ALINE_CANONICAL]
 #define tty_raw		tty_modes[ALINE_RAW]
@@ -72,8 +76,12 @@ alineInit(void)
 	if (tty_fd != -1  || !(is_tty = isatty(fileno(stdin)))) {
 		return;
 	}
+// Not sure this is needed (yet).  Keeping this as a reminder.
+// #ifdef HAVE_CTERMID
+// 	tty_fd = open(ctermid(NULL), O_RDWR, S_IRWXU|S_IRWXG|S_IRWXO);
+// #else
 	tty_fd = fileno(stdin);
-
+// #endif
 	sig_winch(SIGWINCH);
 	signal(SIGWINCH, sig_winch);
 
@@ -97,6 +105,7 @@ alineInit(void)
 	}
 }
 
+#ifndef ALINE_BASIC_INPUT
 static void
 alineGetRowCol(int pos[2])
 {
@@ -109,6 +118,7 @@ alineGetRowCol(int pos[2])
 	pos[0] = (unsigned) strtoul(report+2, NULL, 10);
 	pos[1] = (unsigned) strtoul(strchr(report, ';')+1, NULL, 10);
 }
+#endif
 
 int
 alineReadByte(void)
@@ -136,12 +146,20 @@ alineReadByte(void)
 int
 alineInput(FILE *fp, const char *prompt, char *buf, size_t size)
 {
-	unsigned i;
-	int ch, pcol, pos[2], prevline = lastline;
-
 	if (buf == NULL || size < 1) {
 		return EOF;
 	}
+#ifdef ALINE_BASIC_INPUT
+	clearerr(fp); errno = 0;
+	(void) alineSetMode(ALINE_CANONICAL);
+	if (fgets(buf, size, fp) != NULL) {
+		return strlen(buf);
+	}
+	return EOF;
+#else
+	unsigned i;
+	int ch, pcol, pos[2], prevline = lastline;
+
 	if (!isatty(fileno(fp))) {
 		*buf = '\0';
 		clearerr(fp); errno = 0;
@@ -219,6 +237,7 @@ alineInput(FILE *fp, const char *prompt, char *buf, size_t size)
 		lastline = (lastline+1) & (ALINE_HISTORY-1);
 	}
 	return (int) strlen(buf);
+#endif
 }
 
 #ifdef ALINE_TEST
