@@ -106,10 +106,10 @@ main(int argc, char **argv)
 				sizeof (void *), sizeof (long long), sizeof (long double),
 				sizeof (JMP_BUF)
 			);
-			return EXIT_SUCCESS;
+			return P4_EXIT_OK;
 		default:
 			(void)fprintf(stderr, usage);
-			return 2;
+			return P4_EXIT_USAGE;
 		}
 	}
 
@@ -120,11 +120,11 @@ main(int argc, char **argv)
 	if ((rc = SETJMP(sig_break_glass)) != 0) {
 		THROW_MSG(rc);
 		(void) fprintf(STDERR, "\r\n");
-		return EXIT_FAILURE;
+		return P4_EXIT_STATUS(rc);
 	}
 	sig_init();
 	if ((ctx_main = p4Create(&options)) == NULL) {
-		return EXIT_FAILURE;
+		return P4_EXIT_FAIL;
 	}
 	(void) atexit(cleanup);
 
@@ -137,7 +137,7 @@ main(int argc, char **argv)
 			 * the file name would help debugging.
 			 */
 //			(void) fprintf(STDERR, "post4: include %s: %d thrown\r\n", optarg, rc);
-			return EXIT_FAILURE;
+			return P4_EXIT_STATUS(rc);
 		}
 	}
 
@@ -149,5 +149,5 @@ main(int argc, char **argv)
 		rc = p4EvalFile(ctx_main, argv[optind]);
 	}
 
-	return (rc != 0) * 3;
+	return P4_EXIT_STATUS(rc);
 }

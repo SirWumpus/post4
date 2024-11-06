@@ -469,6 +469,17 @@ typedef struct {
 #define P4_FLOAT_STACK	fs
 
 /***********************************************************************
+ *** Exit Status
+ ***********************************************************************/
+
+#define P4_EXIT_OK		(0)
+#define P4_EXIT_FAIL		(1)
+#define P4_EXIT_USAGE		(2)
+#define P4_EXIT_EXCEPTION	(3)
+#define P4_EXIT_STATUS(ex)	((ex != P4_EXIT_OK) * P4_EXIT_EXCEPTION)
+#define P4_EXIT_SIGNAL(sig)	(128+(sig))
+
+/***********************************************************************
  *** Exceptions
  ***********************************************************************/
 

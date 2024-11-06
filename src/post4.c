@@ -1277,7 +1277,7 @@ _thrown:
 	case P4_THROW_SIGTERM:
 		/* Return shell equivalent exit status. */
 		(void) printf(crlf);
-		exit(128+SIGTERM);
+		exit(P4_EXIT_SIGNAL(SIGTERM));
 	case P4_THROW_UNDEFINED:
 	case P4_THROW_COMPILE_ONLY:
 	case P4_THROW_BAD_CONTROL:
