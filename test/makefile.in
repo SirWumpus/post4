@@ -64,12 +64,12 @@ title :
 tests: test_include_quit test_include_abort test_include_throw test_quit_catch see_all test_unit
 
 test test_unit : ${PROG}
-	@printf "---- Unit Testing\n"
+	@printf "==== Unit Testing\n"
 	${POST4_PATH} ${PROG} ./units.p4
 	@echo
 
 test_quit_catch : ${PROG}
-	@printf "---- Testing QUIT with CATCH\n"
+	@printf "==== Testing QUIT with CATCH\n"
 	! printf "' QUIT CATCH \n ABORT" | ${PROG} -c ${WORDS}
 	! printf "' QUIT CATCH \n -1 THROW" | ${PROG} -c ${WORDS}
 	! printf "' QUIT CATCH \n -123 THROW" | ${PROG} -c ${WORDS}
@@ -80,7 +80,7 @@ test_quit_catch : ${PROG}
 
 # GH-54
 test_include_quit: ${PROG}
-	@printf "----  Testing INCLUDE with QUIT\n"
+	@printf "====  Testing INCLUDE with QUIT\n"
 	! ${PROG} -c ${WORDS} <${top_srcdir}/test/data/quit0.p4
 	! echo | ${PROG} -c ${WORDS} ${top_srcdir}/test/data/quit0.p4
 	! echo | ${PROG} -c ${WORDS} -i ${top_srcdir}/test/data/quit0.p4
@@ -89,7 +89,7 @@ test_include_quit: ${PROG}
 
 # GH-54
 test_include_abort: ${PROG}
-	@printf "----  Testing INCLUDE with ABORT\n"
+	@printf "====  Testing INCLUDE with ABORT\n"
 	! ${PROG} -c ${WORDS} <${top_srcdir}/test/data/abort0.p4
 	! echo | ${PROG} -c ${WORDS} ${top_srcdir}/test/data/abort0.p4
 	! echo | ${PROG} -c ${WORDS} -i ${top_srcdir}/test/data/abort0.p4
@@ -98,7 +98,7 @@ test_include_abort: ${PROG}
 
 # GH-54
 test_include_throw: ${PROG}
-	@printf "----  Testing INCLUDE with THROW\n"
+	@printf "====  Testing INCLUDE with THROW\n"
 	! ${PROG} -c ${WORDS} <${top_srcdir}/test/data/throw0.p4
 	! echo | ${PROG} -c ${WORDS} ${top_srcdir}/test/data/throw0.p4
 	! echo | ${PROG} -c ${WORDS} -i ${top_srcdir}/test/data/throw0.p4
