@@ -378,11 +378,18 @@ p4Nap(P4_Uint seconds, P4_Uint nanoseconds)
 }
 
 void
-p4StackDump(FILE *fp, P4_Cell *base, P4_Uint length)
+p4StackDump(FILE *fp, P4_Cell *base, unsigned length)
 {
 	P4_Cell *cell;
 	unsigned count;
 
+	/* Place an upper bounds on the length of the stack
+	 * to handle a converted signed value or impossibly
+	 * large value being given.
+	 */
+	if (1024 <= length) {
+		length = 1024;
+	}
 	for (count = 0, cell = base; 0 < length--; cell++) {
 		if ((count & 3) == 0) {
 			(void) fprintf(fp, "top-%.2u ", (unsigned) length);

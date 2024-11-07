@@ -547,7 +547,7 @@ MAX-U MAX-N 2CONSTANT MAX-D
 \ (C: <spaces>name -- ) (S: -- xt )
 : ['] LIT LIT COMPILE, ' COMPILE, ; IMMEDIATE compile-only
 
-\ (C: x -- ) (S: x -- )
+\ (C: x -- ; S:  -- x )
 : LIT, ['] LIT COMPILE, , ;
 
 \ ... : name ... [ x ] LITERAL ... ;
