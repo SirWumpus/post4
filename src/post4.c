@@ -1026,7 +1026,6 @@ int
 p4Repl(P4_Ctx *ctx, int thrown)
 {
 	int rc;
-	char *stop;
 	P4_Word *word;
 	P4_String str;
 	P4_Cell w, x, y, *ip;
@@ -2229,6 +2228,7 @@ _rs_to_fs:	P4STACKISEMPTY(ctx, &ctx->rs, P4_THROW_RS_UNDER);
 		NEXT;
 
 		// (F: -- f )( caddr u -- bool )
+		char *stop;
 _to_float:	errno = 0;
 		w = P4_DROPTOP(ctx->ds);
 		y.f = strtod((const char *)w.s, &stop);

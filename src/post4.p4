@@ -2410,6 +2410,7 @@ MIN-N CONSTANT _sign_mask
 10 CONSTANT _significand
  5 CONSTANT _exponent
 [THEN]
+[THEN]
 
 [DEFINED] _significand_mask [IF]
 : _exp_sig
