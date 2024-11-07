@@ -29,6 +29,7 @@ This is a list of `THROW` codes used internally by Post4.
 * -33 block read exception
 * -34 block write exception
 * -35 invalid block number, such as zero (0)
+* -39 unexpected end of file
 * -40 invalid BASE for floating point conversion
 * -44 floating-point stack overflow
 * -45 floating-point stack underflow
@@ -37,3 +38,6 @@ This is a list of `THROW` codes used internally by Post4.
 * -59 `ALLOCATE`
 * -61 `ALLOT` or `RESIZE`
 
+* -256 `SIGTERM`
+* -257 invalid word-list ID.
+* -4095 generic; unclassified

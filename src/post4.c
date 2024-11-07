@@ -1965,7 +1965,9 @@ _source_id:	P4_PUSH(ctx->ds, (P4_Int)(ctx->input->fp == stdin ? NULL : ctx->inpu
 
 		// ( caddr +n1 -- +n2 )
 _accept:	w = P4_DROPTOP(ctx->ds);
-		x.u = p4Accept(ctx->input, w.s, x.z);
+		if ((x.n = p4Accept(ctx->input, w.s, x.z)) < 0) {
+			THROW(P4_THROW_BAD_EOF);
+		}
 		P4_TOP(ctx->ds) = x;
 		NEXT;
 

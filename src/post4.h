@@ -525,7 +525,7 @@ typedef struct {
 #define P4_THROW__36		(-36)	/* invalid file position */
 #define P4_THROW_EIO		(-37)	/* file I/O exception */
 #define P4_THROW_ENOENT		(-38)	/* non-existent file */
-#define P4_THROW__39		(-39)	/* unexpected end of file */
+#define P4_THROW_BAD_EOF	(-39)	/* unexpected end of file */
 #define P4_THROW_BAD_BASE	(-40)	/* invalid BASE for floating point conversion */
 #define P4_THROW__41		(-41)	/* loss of precision */
 #define P4_THROW__42		(-42)	/* floating-point divide by zero */
