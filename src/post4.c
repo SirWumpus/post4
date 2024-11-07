@@ -378,17 +378,14 @@ p4Nap(P4_Uint seconds, P4_Uint nanoseconds)
 }
 
 void
-p4StackDump(FILE *fp, P4_Cell *base, unsigned length)
+p4StackDump(FILE *fp, P4_Cell *base, int length)
 {
 	P4_Cell *cell;
 	unsigned count;
 
-	/* Place an upper bounds on the length of the stack
-	 * to handle a converted signed value or impossibly
-	 * large value being given.
-	 */
-	if (1024 <= length) {
-		length = 1024;
+	if (length < 0 || 1024 <= length) {
+		(void) fprintf(fp, "stack under or over flow, depth=%d\r\n", length);
+		return;
 	}
 	for (count = 0, cell = base; 0 < length--; cell++) {
 		if ((count & 3) == 0) {
@@ -2073,7 +2070,7 @@ _stack_check:	p4StackGuards(ctx);
 		// ( addr u -- )
 _stack_dump:	P4_DROP(ctx->ds, 1);
 		w = P4_POP(ctx->ds);
-		p4StackDump(stdout, w.p, x.u);
+		p4StackDump(stdout, w.p, x.n);
 		NEXT;
 
 		FILE *fp;
