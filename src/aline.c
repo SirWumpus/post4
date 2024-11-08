@@ -123,14 +123,14 @@ alineInit(int hist_size)
 static void
 alineGetRowCol(int pos[2])
 {
-	char report[12];
+	char *stop, report[12];
 	int n, fd = fileno(stdout);
 	(void) tcsetattr(fd, TCSANOW, &tty_modes[ALINE_RAW]);
 	(void) write(fd, ANSI_REPORT, sizeof (ANSI_REPORT)-1);
 	n = read(fd, report, sizeof (report));
 	report[n] = '\0';
-	pos[0] = (unsigned) strtoul(report+2, NULL, 10);
-	pos[1] = (unsigned) strtoul(strchr(report, ';')+1, NULL, 10);
+	pos[0] = (unsigned) strtoul(report+2, &stop, 10);
+	pos[1] = (unsigned) strtoul(stop+1, NULL, 10);
 }
 #endif
 
@@ -178,6 +178,7 @@ alineInput(FILE *fp, const char *prompt, char *buf, size_t size)
 	if (!isatty(fileno(fp))) {
 		*buf = '\0';
 		clearerr(fp); errno = 0;
+		(void) alineSetMode(ALINE_CANONICAL);
 		if (fgets(buf, size, fp) != NULL) {
 			return strlen(buf);
 		}
