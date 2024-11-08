@@ -199,8 +199,8 @@ alineInput(FILE *fp, const char *prompt, char *buf, size_t size)
 #ifdef HAVE_CTERMID
 		ch = alineReadByte();
 #else
-		clearerr(stdin);
-		ch = fgetc(stdin);
+		clearerr(fp);
+		ch = fgetc(fp);
 #endif
 		if (ch == EOF || ch == tty_saved.c_cc[VEOL] || ch == '\r' || ch == '\n') {
 			(void) fputs("\r\n", stdout);
@@ -211,8 +211,8 @@ alineInput(FILE *fp, const char *prompt, char *buf, size_t size)
 			if ((ch = alineReadByte()) == '[') {
 				ch = alineReadByte();
 #else
-			if ((ch = fgetc(stdin)) == '[') {
-				ch = fgetc(stdin);
+			if ((ch = fgetc(fp)) == '[') {
+				ch = fgetc(fp);
 #endif
 				if (ch == 'A') {
 					ch = '\v';
