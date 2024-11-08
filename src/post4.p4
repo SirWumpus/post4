@@ -1805,7 +1805,11 @@ VARIABLE _str_buf_curr
 : _block_flush _block_fd @ FLUSH-FILE DROP ;
 
 \ (S: u -- ior )
-: _block_seek _block_flush 1- _blk_size * S>D _block_fd @ REPOSITION-FILE ; $11 _pp!
+: _block_seek
+	_block_flush DUP IF
+		1- _blk_size * S>D _block_fd @ REPOSITION-FILE
+	THEN
+; $11 _pp!
 
 \ (S: u -- | ⊥ )
 : _block_read
@@ -1879,14 +1883,13 @@ VARIABLE _str_buf_curr
 
 \ (S: -- )
 : BLOCK-CLOSE
-	_block_fd @ 0<> _blk_number @ 0<> AND IF
-		_blk_number @ _block_write _block_fd @ CLOSE-FILE DROP
-		0 _block_fd ! _blk_free
-				THEN
+	_blk_number @ _block_write _block_fd @ CLOSE-FILE DROP
+	0 _block_fd ! _blk_free
 ;
 
 \ (S: caddr u -- ior )
 : BLOCK-OPEN
+	0 _blk_number !
 	2DUP R/W BIN OPEN-FILE IF
 		DROP R/W BIN CREATE-FILE ?DUP IF
 			NIP EXIT
