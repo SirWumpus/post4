@@ -837,11 +837,11 @@ p4Create(P4_Options *opts)
 		goto error0;
 	}
 	ctx->end = (P4_Char *)ctx + opts->mem_size * 1024;
+	ctx->here = (P4_Char*)(ctx+1);
 	/* GH-5 Setting memory to something other than zero can
 	 * help debug possible memory use before initialising.
 	 */
-	MEMSET(ctx+1, BYTE_ME, opts->mem_size * 1024);
-	ctx->here = (P4_Char*)(ctx+1);
+	MEMSET(ctx->here, BYTE_ME, ctx->end - ctx->here);
 
 	ctx->radix = 10;
 	ctx->unkey = EOF;
