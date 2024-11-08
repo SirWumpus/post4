@@ -1759,13 +1759,13 @@ _resize_null:	if (x.n < 0 && -1024 <= x.n) {
 		 * Stack manipulation.
 		 */
 		// ( x -- )
-_drop:		P4STACKISEMPTY(ctx, &ctx->ds, P4_THROW_DS_UNDER);
+_drop:		p4StackIsEmpty(ctx, &ctx->ds, P4_THROW_DS_UNDER);
 		P4_DROP(ctx->ds, 1);
 		NEXT;
 
 		// ( x -- x x )
-_dup:		P4STACKISEMPTY(ctx, &ctx->ds, P4_THROW_DS_UNDER);
-		P4STACKISFULL(ctx, &ctx->ds, P4_THROW_DS_OVER);
+_dup:		p4StackIsEmpty(ctx, &ctx->ds, P4_THROW_DS_UNDER);
+		p4StackIsFull(ctx, &ctx->ds, P4_THROW_DS_OVER);
 		P4_PUSH(ctx->ds, x);
 		NEXT;
 
@@ -1796,17 +1796,17 @@ _roll:		P4_DROP(ctx->ds, 1);
 		NEXT;
 
 		// (x -- )(R: -- x )
-_to_rs:		P4STACKISEMPTY(ctx, &ctx->ds, P4_THROW_DS_UNDER);
+_to_rs:		p4StackIsEmpty(ctx, &ctx->ds, P4_THROW_DS_UNDER);
 		P4_DROP(ctx->ds, 1);
-		P4STACKISFULL(ctx, &ctx->rs, P4_THROW_RS_OVER);
+		p4StackIsFull(ctx, &ctx->rs, P4_THROW_RS_OVER);
 		P4_PUSH(ctx->rs, x);
 		P4STACKGUARDS(ctx);
 		NEXT;
 
 		// (R: x -- )
-_from_rs:	P4STACKISEMPTY(ctx, &ctx->rs, P4_THROW_RS_UNDER);
+_from_rs:	p4StackIsEmpty(ctx, &ctx->rs, P4_THROW_RS_UNDER);
 		w = P4_POP(ctx->rs);
-		P4STACKISFULL(ctx, &ctx->ds, P4_THROW_DS_OVER);
+		p4StackIsFull(ctx, &ctx->ds, P4_THROW_DS_OVER);
 		P4_PUSH(ctx->ds, w);
 		P4STACKGUARDS(ctx);
 		NEXT;
@@ -2215,17 +2215,17 @@ _f_store:	P4_DROP(ctx->ds, 1);
 		NEXT;
 
 		// (x -- )(R: -- x )
-_fs_to_rs:	P4STACKISEMPTY(ctx, &ctx->fs,P4_THROW_FS_UNDER);
+_fs_to_rs:	p4StackIsEmpty(ctx, &ctx->fs,P4_THROW_FS_UNDER);
 		w = P4_POP(ctx->P4_FLOAT_STACK);
-		P4STACKISFULL(ctx, &ctx->rs, P4_THROW_RS_OVER);
+		p4StackIsFull(ctx, &ctx->rs, P4_THROW_RS_OVER);
 		P4_PUSH(ctx->rs, w);
 		P4STACKGUARDS(ctx);
 		NEXT;
 
 		// (R: x -- )
-_rs_to_fs:	P4STACKISEMPTY(ctx, &ctx->rs, P4_THROW_RS_UNDER);
+_rs_to_fs:	p4StackIsEmpty(ctx, &ctx->rs, P4_THROW_RS_UNDER);
 		w = P4_POP(ctx->rs);
-		P4STACKISFULL(ctx, &ctx->fs, P4_THROW_FS_OVER);
+		p4StackIsFull(ctx, &ctx->fs, P4_THROW_FS_OVER);
 		P4_PUSH(ctx->P4_FLOAT_STACK, w);
 		P4STACKGUARDS(ctx);
 		NEXT;
@@ -2242,13 +2242,13 @@ _to_float:	errno = 0;
 		NEXT;
 
 		// (F: f -- )
-_f_dot:		P4STACKISEMPTY(ctx, &ctx->fs, P4_THROW_FS_UNDER);
+_f_dot:		p4StackIsEmpty(ctx, &ctx->fs, P4_THROW_FS_UNDER);
 		w = P4_POP(ctx->P4_FLOAT_STACK);
 		(void) printf(P4_FLT_PRE_FMT" ", (int) ctx->precision, w.f);
 		NEXT;
 
 		// (F: f -- )
-_f_sdot:	P4STACKISEMPTY(ctx, &ctx->fs, P4_THROW_FS_UNDER);
+_f_sdot:	p4StackIsEmpty(ctx, &ctx->fs, P4_THROW_FS_UNDER);
 		w = P4_POP(ctx->P4_FLOAT_STACK);
 		(void) printf(P4_SCI_PRE_FMT" ", (int) ctx->precision, w.f);
 		NEXT;
