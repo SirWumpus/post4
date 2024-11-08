@@ -61,6 +61,7 @@ cleanup(void)
 	p4Free(ctx_main);
 	/* This is redundant too, but I like it for symmetry. */
 	sig_fini();
+	p4Fini();
 }
 
 int
@@ -87,7 +88,7 @@ main(int argc, char **argv)
 #ifdef HAVE_MATH_H
 			options.fs_size = val;
 #else
-			(void) warnx("float support disabled");
+			(void) fprintf(stderr, "float support disabled\r\n");
 #endif
 			break;
 		case 'i':
@@ -129,7 +130,7 @@ main(int argc, char **argv)
 	p4Init(&options);
 	if ((rc = SETJMP(sig_break_glass)) != 0) {
 		THROW_MSG(rc);
-		(void) fprintf(STDERR, "\r\n");
+		(void) fprintf(stderr, "\r\n");
 		return P4_EXIT_STATUS(rc);
 	}
 	sig_init();
@@ -142,11 +143,10 @@ main(int argc, char **argv)
 	while ((ch = getopt(argc, argv, flags)) != -1) {
 		if (ch == 'i' && (rc = p4EvalFile(ctx_main, optarg)) != P4_THROW_OK) {
 			/* If an exception, other than ABORT or QUIT, occurs
-			 * they will generate an execption message.  Do not
+			 * they will generate an exception message.  Do not
 			 * really need to repeat it here, though including
 			 * the file name would help debugging.
 			 */
-//			(void) fprintf(STDERR, "post4: include %s: %d thrown\r\n", optarg, rc);
 			return P4_EXIT_STATUS(rc);
 		}
 	}
