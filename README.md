@@ -9,19 +9,20 @@ Overview
 
 Post4 is a hosted indirect threaded Forth dialect written in C, based on the ["Forth 200x Draft 19.1, 2019-09-30"](http://www.forth200x.org/documents/forth19-1.pdf).  Post4 aims to implement the fewest possible built-in words in C, those that are needed to interact with memory and I/O, leaving the remaining standard words to be implemented in Forth.
 
-        usage: post4 [-TV][-b file][-c file][-d size][-f size][-i file][-m size]
-                     [-r size][script [args ...]]
-
+        usage: post4 [-TV][-b file][-c file][-d size][-f size][-h size][-i file]
+                     [-m size][-r size][script [args ...]]
+        
         -b file         open a block file
         -c file         word definition file; default post4.p4 from $POST4_PATH
         -d size         data stack size in cells; default 64
         -f size         float stack size; default 6
+        -h size         history size in lines; default 16
         -i file         include file; can be repeated; searches $POST4_PATH
         -m size         data space memory in KB; default 128
         -r size         return stack size in cells; default 64
         -T              enable tracing; see TRACE
         -V              build and version information
-
+        
         If script is "-", read it from standard input.
 
 

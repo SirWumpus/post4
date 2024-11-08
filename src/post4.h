@@ -229,6 +229,7 @@ typedef struct {
 	unsigned rs_size;
 	unsigned fs_size;
 	unsigned mem_size;
+	unsigned hist_size;
 	const char *core_file;
 	const char *block_file;
 } P4_Options;
@@ -582,7 +583,7 @@ typedef struct {
 /**
  * Initialise the global environment.
  */
-extern void p4Init(void);
+extern void p4Init(P4_Options *opts);
 
 /**
  * Create a new interpreter context.

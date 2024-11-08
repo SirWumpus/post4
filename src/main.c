@@ -5,19 +5,21 @@
  */
 
 #include "post4.h"
+#include "aline.h"
 
 /***********************************************************************
  *** Main
  ***********************************************************************/
 
 static const char usage[] =
-"usage: post4 [-TV][-b file][-c file][-d size][-f size][-i file][-m size]\r\n"
-"             [-r size][script [args ...]]\r\n"
+"usage: post4 [-TV][-b file][-c file][-d size][-f size][-h size][-i file]\r\n"
+"             [-m size][-r size][script [args ...]]\r\n"
 "\r\n"
 "-b file\t\topen a block file\r\n"
 "-c file\t\tword definition file; default " P4_CORE_FILE " from $POST4_PATH\r\n"
 "-d size\t\tdata stack size in cells; default " QUOTE(P4_DATA_STACK_SIZE) "\r\n"
 "-f size\t\tfloat stack size; default " QUOTE(P4_FLOAT_STACK_SIZE) "\r\n"
+"-h size\t\thistory size in lines; default " QUOTE(ALINE_HISTORY) "\r\n"
 "-i file\t\tinclude file; can be repeated; searches $POST4_PATH\r\n"
 "-m size\t\tdata space memory in KB; default " QUOTE(P4_MEM_SIZE) "\r\n"
 "-r size\t\treturn stack size in cells; default " QUOTE(P4_RETURN_STACK_SIZE) "\r\n"
@@ -26,7 +28,7 @@ static const char usage[] =
 "If script is \"-\", read it from standard input.\r\n"
 ;
 
-static char *flags = "b:c:d:f:i:m:r:TV";
+static char *flags = "b:c:d:f:h:i:m:r:TV";
 
 static P4_Ctx *ctx_main;
 
@@ -35,6 +37,7 @@ static P4_Options options = {
 	.rs_size = P4_RETURN_STACK_SIZE,
 	.fs_size = P4_FLOAT_STACK_SIZE,
 	.mem_size = P4_MEM_SIZE,
+	.hist_size = ALINE_HISTORY,
 	.core_file = P4_CORE_FILE,
 	.block_file = NULL,
 };
@@ -66,6 +69,10 @@ main(int argc, char **argv)
 	int ch, rc;
 
 	while ((ch = getopt(argc, argv, flags)) != -1) {
+		unsigned val;
+		if (optarg != NULL) {
+			val = (unsigned) strtol(optarg, NULL, 10);
+		}
 		switch (ch) {
 		case 'b':
 			options.block_file = optarg;
@@ -74,11 +81,11 @@ main(int argc, char **argv)
 			options.core_file = optarg;
 			break;
 		case 'd':
-			options.ds_size = strtol(optarg, NULL, 10);
+			options.ds_size = val;
 			break;
 		case 'f':
 #ifdef HAVE_MATH_H
-			options.fs_size = strtol(optarg, NULL, 10);
+			options.fs_size = val;
 #else
 			(void) warnx("float support disabled");
 #endif
@@ -86,11 +93,14 @@ main(int argc, char **argv)
 		case 'i':
 			// Ignore for now.
 			break;
+		case 'h':
+			options.hist_size = val;
+			break;
 		case 'm':
-			options.mem_size = strtol(optarg, NULL, 10);
+			options.mem_size = val;
 			break;
 		case 'r':
-			options.rs_size = strtol(optarg, NULL, 10);
+			options.rs_size = val;
 			break;
 		case 'T':
 			options.trace++;
@@ -116,7 +126,7 @@ main(int argc, char **argv)
 	options.argc = argc - optind;
 	options.argv = argv + optind;
 
-	p4Init();
+	p4Init(&options);
 	if ((rc = SETJMP(sig_break_glass)) != 0) {
 		THROW_MSG(rc);
 		(void) fprintf(STDERR, "\r\n");

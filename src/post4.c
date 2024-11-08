@@ -122,9 +122,9 @@ static const char crlf[] = "\r\n";
 /**
  */
 void
-p4Init(void)
+p4Init(P4_Options *opts)
 {
-	alineInit(ALINE_HISTORY);
+	alineInit(opts->hist_size);
 }
 
 FILE *
