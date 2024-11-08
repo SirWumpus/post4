@@ -53,7 +53,6 @@ extern struct winsize window;
 
 #define ALINE_HISTORY		16
 
-extern void alineFini(void);
 extern int alineInit(int hist_size);
 extern int alineReadByte(void);
 extern int alineSetMode(int mode);

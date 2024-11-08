@@ -61,7 +61,6 @@ cleanup(void)
 	p4Free(ctx_main);
 	/* This is redundant too, but I like it for symmetry. */
 	sig_fini();
-	p4Fini();
 }
 
 int

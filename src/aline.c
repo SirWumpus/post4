@@ -67,7 +67,7 @@ sig_winch(int signum)
 }
 #pragma GCC diagnostic pop
 
-void
+static void
 alineFini(void)
 {
 	alineSetMode(ALINE_CANONICAL);

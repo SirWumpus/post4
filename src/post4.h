@@ -585,8 +585,6 @@ typedef struct {
  */
 extern void p4Init(P4_Options *opts);
 
-#define p4Fini()	alineFini()
-
 /**
  * Create a new interpreter context.
  *
