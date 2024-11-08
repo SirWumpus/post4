@@ -26,7 +26,8 @@ static const char *ps2;
 
 #ifndef ALINE_BASIC_INPUT
 static int lastline;
-static char history[ALINE_HISTORY][MAX_INPUT];
+static unsigned short histsize;
+static char (*history)[MAX_INPUT];
 #endif
 
 #define tty_saved	tty_modes[ALINE_CANONICAL]
@@ -73,13 +74,14 @@ alineFini(void)
 #ifdef HAVE_CTERMID
 	(void) close(tty_fd);
 #endif
+	free(history);
 }
 
-void
-alineInit(void)
+int
+alineInit(int hist_size)
 {
 	if (tty_fd != -1  || !(is_tty = isatty(fileno(stdin)))) {
-		return;
+		return -1;
 	}
 #ifdef HAVE_CTERMID
 	tty_fd = open(ctermid(NULL), O_RDWR, S_IRWXU|S_IRWXG|S_IRWXO);
@@ -107,6 +109,14 @@ alineInit(void)
 	if ((ps2 = getenv("PS2")) == NULL || *ps2 == '\0') {
 		ps2 = "* ";
 	}
+
+	/* Size as next highest power of 2. */
+	for (histsize = 2, hist_size--; hist_size >>= 1; ) {
+		histsize = histsize << 1;
+	}
+
+	history = (char (*)[]) calloc(histsize, sizeof (*history));
+	return -(history == NULL);
 }
 
 #ifndef ALINE_BASIC_INPUT
@@ -136,7 +146,8 @@ alineReadByte(void)
 
 /* Simple tty line editor with last line history.
  *
- *      up      ^K      Edit the previous input line.
+ *      up      ^K      Cycle to the previous input line to edit.
+ *      down    ^L      Cycle to the next input line to edit.
  *      left    right   Cursor left or right within line.
  *      ERASE   ^H  ^?  Erase character before the cursor.
  *      WERASE          Erase the previous white space delimited word.
@@ -218,7 +229,7 @@ alineInput(FILE *fp, const char *prompt, char *buf, size_t size)
 		}
 		if (ch == '\v' || ch == '\f') {
 			/* Restore intput to last input line. */
-			prevline = (prevline+(ch == '\v' ? -1 : 1)) & (ALINE_HISTORY-1);
+			prevline = (prevline+(ch == '\v' ? -1 : 1)) & (histsize-1);
 			(void) strncpy(buf, history[prevline], size-1);
 			i = strlen(history[prevline]);
 		} else if (ch == tty_saved.c_cc[VERASE] || ch == '\b' || ch == 127) {
@@ -247,7 +258,7 @@ alineInput(FILE *fp, const char *prompt, char *buf, size_t size)
 	}
 	if (0 < i) {
 		(void) strncpy(history[lastline], buf, size-1);
-		lastline = (lastline+1) & (ALINE_HISTORY-1);
+		lastline = (lastline+1) & (histsize-1);
 	}
 	return (int) strlen(buf);
 #endif

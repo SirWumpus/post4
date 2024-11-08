@@ -124,7 +124,7 @@ static const char crlf[] = "\r\n";
 void
 p4Init(void)
 {
-	alineInit();
+	alineInit(ALINE_HISTORY);
 }
 
 FILE *

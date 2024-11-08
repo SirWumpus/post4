@@ -51,16 +51,17 @@ extern struct winsize window;
 #define ALINE_RAW		1
 #define ALINE_RAW_NB		2
 
-#define ALINE_HISTORY		4
+#define ALINE_HISTORY		16
 
-extern void alineInit(void);
 extern void alineFini(void);
+extern int alineInit(int hist_size);
 extern int alineReadByte(void);
 extern int alineSetMode(int mode);
 
 /* Simple tty line editor with last line history.
  *
- *      up      ^K      Edit the previous input line.
+ *      up      ^K      Cycle to the previous input line to edit.
+ *      down    ^L      Cycle to the next input line to edit.
  *      left    right   Cursor left or right within line.
  *      ERASE   ^H  ^?  Erase character before the cursor.
  *      WERASE          Erase the previous white space delimited word.
