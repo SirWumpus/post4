@@ -12,6 +12,7 @@ public class Post4Options
 	public int fs_size = 6;
 	public int rs_size = 64;
 	public int mem_size = 128;
+	public int hist_size = 16;
 	public String core_file = "post4.p4";
 	public String block_file = "";
 	public String[] argv = {};

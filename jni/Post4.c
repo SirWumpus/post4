@@ -81,7 +81,8 @@ post4Exception(JNIEnv *env, int code)
 JNIEXPORT void JNICALL
 Java_post4_jni_Post4_p4Init(JNIEnv *env, jobject self)
 {
-	p4Init();
+	P4_Options p4_opts = { .hist_size = 16 };
+	p4Init(&p4_opts);
 }
 
 JNIEXPORT void JNICALL
