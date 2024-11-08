@@ -1266,10 +1266,6 @@ p4Repl(P4_Ctx *ctx, int thrown)
 	}
 _thrown:
 	switch (rc) {
-	case P4_THROW_SIGTERM:
-		/* Return shell equivalent exit status. */
-		(void) printf(crlf);
-		exit(P4_EXIT_SIGNAL(SIGTERM));
 	case P4_THROW_UNDEFINED:
 	case P4_THROW_COMPILE_ONLY:
 	case P4_THROW_BAD_CONTROL:
@@ -2512,25 +2508,28 @@ p4EvalString(P4_Ctx *ctx, const char *str, size_t len)
 	return rc;
 }
 
+JMP_BUF sig_break_glass;
+static void sig_int(int);
+static void sig_exit(int);
+
 typedef struct {
 	int signal;
 	int exception;
-	void (*handler)(int);
+	void (*new_handler)(int);
+	void (*old_handler)(int);
 } sig_map;
 
 static sig_map signalmap[] = {
-	{ SIGBUS, P4_THROW_SIGBUS, NULL },
-	{ SIGINT, P4_THROW_SIGINT, NULL },
-	{ SIGFPE, P4_THROW_SIGFPE, NULL },
-// We already have SIGINT (^C) for user interrupt behaving like ABORT.
-// Catching SIGQUIT (^\) seems unncessary without an explicit use case.
-//	{ SIGQUIT, P4_THROW_QUIT, NULL },
-	{ SIGSEGV, P4_THROW_SIGSEGV, NULL },
-	{ SIGTERM, P4_THROW_SIGTERM, NULL },
-	{ 0, P4_THROW_OK, NULL }
+	{ SIGBUS, P4_THROW_SIGBUS, sig_int, NULL },
+	{ SIGINT, P4_THROW_SIGINT, sig_int, NULL },
+	{ SIGFPE, P4_THROW_SIGFPE, sig_int, NULL },
+	{ SIGSEGV, P4_THROW_SIGSEGV, sig_int, NULL },
+	{ SIGTERM, P4_THROW_SIGTERM, sig_exit, NULL },
+#ifdef NDEBUG
+	{ SIGQUIT, P4_THROW_QUIT, sig_exit, NULL },
+#endif
+	{ 0, P4_THROW_OK, NULL, NULL }
 };
-
-JMP_BUF sig_break_glass;
 
 static void
 sig_int(int signum)
@@ -2544,11 +2543,18 @@ sig_int(int signum)
 	LONGJMP(sig_break_glass, signum);
 }
 
+static void
+sig_exit(int signum)
+{
+	(void) fputs(crlf, stdout);
+	exit(P4_EXIT_SIGNAL(signum));
+}
+
 void
 sig_init(void)
 {
 	for (sig_map *map = signalmap; map->signal != 0; map++) {
-		map->handler = signal(map->signal, sig_int);
+		map->old_handler = signal(map->signal, map->new_handler);
 	}
 }
 
@@ -2556,9 +2562,9 @@ void
 sig_fini(void)
 {
 	for (sig_map *map = signalmap; map->signal != 0; map++) {
-		if (map->handler != NULL) {
-			(void) signal(map->signal, map->handler);
-			map->handler = NULL;
+		if (map->old_handler != NULL) {
+			(void) signal(map->signal, map->old_handler);
+			map->old_handler = NULL;
 		}
 	}
 }
