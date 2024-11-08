@@ -126,3 +126,13 @@ If the file `caddr` `u` has been `INCLUDED` or `REQUIRED` already, discard `cadd
         ok S" ed.p4" REQUIRED-PATH
 
 - - -
+#### stdin
+( -- `fid` )  
+Push the standard input file handle.  For use with `READ-FILE` or `READ-LINE`.  Closing the file handle will have undefined behaviour.
+
+- - -
+#### stdout
+( -- `fid` )  
+Push the standard output file handle.  For use with `WRITE-FILE` or `WRITE-LINE`.  Closing the file handle will have undefined behaviour.
+
+- - -

@@ -654,34 +654,21 @@ p4Divs(P4_Int dend0, P4_Int dend1, P4_Int dsor, P4_Int *rem)
 }
 
 /***********************************************************************
- *** Input / Ouput
+ *** Core
  ***********************************************************************/
-
-int
-p4Accept(P4_Input *input, char *buf, P4_Size size)
-{
-	if (input->fp == (FILE *) -1) {
-		return EOF;
-	}
-	return alineInput(input->fp, "", buf, (size_t) size);
-}
 
 P4_Int
 p4Refill(P4_Input *input)
 {
 	int n;
-	if (P4_INPUT_IS_STR(input)
-	|| (n = p4Accept(input, input->buffer, P4_INPUT_SIZE)) < 0) {
+	if (P4_INPUT_IS_EVAL(input)
+	|| (n = alineInput(input->fp, "", input->buffer, P4_INPUT_SIZE)) < 0) {
 		return P4_FALSE;
 	}
 	input->length = n;
 	input->offset = 0;
 	return P4_TRUE;
 }
-
-/***********************************************************************
- *** Core
- ***********************************************************************/
 
 void
 p4WordFree(P4_Word *word)
@@ -1110,6 +1097,8 @@ p4Repl(P4_Ctx *ctx, int thrown)
 		P4_WORD("fs>rs",	&&_fs_to_rs,	0, 0x100100),	// p4
 		P4_WORD("rs>fs",	&&_rs_to_fs,	0, 0x011000),	// p4
 #endif
+		P4_WORD("stdin",		&&_fa_stdin,	0, 0x01),	// p4
+		P4_WORD("stdout",		&&_fa_stdout,	0, 0x01),	// p4
 		P4_WORD("BIN",			&&_fa_bin,	0, 0x01),
 		P4_WORD("CLOSE-FILE",		&&_fa_close,	0, 0x11),
 		P4_WORD("CREATE-FILE",		&&_fa_create,	0, 0x22),
@@ -1962,7 +1951,7 @@ _source_id:	P4_PUSH(ctx->ds, (P4_Int)(ctx->input->fp == stdin ? NULL : ctx->inpu
 
 		// ( caddr +n1 -- +n2 )
 _accept:	w = P4_DROPTOP(ctx->ds);
-		if ((x.n = p4Accept(ctx->input, w.s, x.z)) < 0) {
+		if ((x.n = alineInput(stdin, "", w.s, x.z)) < 0) {
 			THROW(P4_THROW_BAD_EOF);
 		}
 		P4_TOP(ctx->ds) = x;
@@ -2075,6 +2064,14 @@ _stack_dump:	P4_DROP(ctx->ds, 1);
 
 		FILE *fp;
 		struct stat sb;
+
+		// ( -- fd )
+_fa_stdin:	P4_PUSH(ctx->ds, (void *) stdin);
+		NEXT;
+
+		// ( -- fd )
+_fa_stdout:	P4_PUSH(ctx->ds, (void *) stdout);
+		NEXT;
 
 		// ( fam1 -- fam2 )
 _fa_bin:	P4_TOP(ctx->ds).u = x.u | 2;

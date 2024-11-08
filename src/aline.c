@@ -15,6 +15,8 @@
 #include <fcntl.h>
 #include <unistd.h>
 
+#undef HAVE_CTERMID
+
 int is_tty;
 
 static int tty_fd = -1;
@@ -68,6 +70,9 @@ void
 alineFini(void)
 {
 	alineSetMode(ALINE_CANONICAL);
+#ifdef HAVE_CTERMID
+	(void) close(tty_fd);
+#endif
 }
 
 void
@@ -76,12 +81,11 @@ alineInit(void)
 	if (tty_fd != -1  || !(is_tty = isatty(fileno(stdin)))) {
 		return;
 	}
-// Not sure this is needed (yet).  Keeping this as a reminder.
-// #ifdef HAVE_CTERMID
-// 	tty_fd = open(ctermid(NULL), O_RDWR, S_IRWXU|S_IRWXG|S_IRWXO);
-// #else
+#ifdef HAVE_CTERMID
+	tty_fd = open(ctermid(NULL), O_RDWR, S_IRWXU|S_IRWXG|S_IRWXO);
+#else
 	tty_fd = fileno(stdin);
-// #endif
+#endif
 	sig_winch(SIGWINCH);
 	signal(SIGWINCH, sig_winch);
 
@@ -181,15 +185,24 @@ alineInput(FILE *fp, const char *prompt, char *buf, size_t size)
 	for (size--, buf[i = 0] = '\0';	; ) {
 		(void) printf(ANSI_RESTORE_CURSOR"%s%s"ANSI_ERASE_TAIL""ANSI_GOTO, prompt, buf, pos[0], pos[1]+pcol+i);
 		(void) fflush(stdout);
+#ifdef HAVE_CTERMID
+		ch = alineReadByte();
+#else
 		clearerr(stdin);
 		ch = fgetc(stdin);
+#endif
 		if (ch == EOF || ch == tty_saved.c_cc[VEOL] || ch == '\r' || ch == '\n') {
 			(void) fputs("\r\n", stdout);
 			break;
 		}
 		if (ch == '\e') {
+#ifdef HAVE_CTERMID
+			if ((ch = alineReadByte()) == '[') {
+				ch = alineReadByte();
+#else
 			if ((ch = fgetc(stdin)) == '[') {
 				ch = fgetc(stdin);
+#endif
 				if (ch == 'A') {
 					ch = '\v';
 				} else if (ch == 'B') {

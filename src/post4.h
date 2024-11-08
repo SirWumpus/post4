@@ -312,10 +312,11 @@ typedef struct {
 	char		data[P4_INPUT_SIZE];
 } P4_Input;
 
-#define P4_INPUT_IS_BLK(input)	((input)->fp == (FILE *) -1 && (input)->blk > 0)
-#define P4_INPUT_IS_STR(input)	((input)->fp == (FILE *) -1 && (input)->blk == 0)
-#define P4_INPUT_IS_FILE(input) ((input)->fp != (FILE *) -1 && !P4_INPUT_IS_TERM(input))
 #define P4_INPUT_IS_TERM(input)	((input)->fp == stdin)
+#define P4_INPUT_IS_EVAL(input)	((input)->fp == (FILE *) -1)
+#define P4_INPUT_IS_BLK(input)	(P4_INPUT_IS_EVAL(input) && (input)->blk > 0)
+#define P4_INPUT_IS_STR(input)	(P4_INPUT_IS_EVAL(input) && (input)->blk == 0)
+#define P4_INPUT_IS_FILE(input) (!P4_INPUT_IS_EVAL(input) && !P4_INPUT_IS_TERM(input))
 #define P4_INPUT_PUSH(input)	{ P4_Input *input_save = (input); input = p4CreateInput()
 #define P4_INPUT_POP(input)	free(input); (input) = input_save; }
 
