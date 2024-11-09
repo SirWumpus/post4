@@ -3,9 +3,6 @@
 \ Post4 Copyright 2007, 2024 by Anthony Howe.	All rights reserved.
 
 \ ( -- ⊥ )
-: QUIT -56 _longjmp ;
-
-\ ( -- ⊥ )
 : BYE 0 bye-status ;
 
 \ (S: char u -- )

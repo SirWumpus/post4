@@ -75,17 +75,17 @@ test_quit_catch : ${PROG}
 	! printf "' QUIT CATCH \n -123 THROW" | ${PROG} -c ${WORDS}
 	printf 'S" 0 THROW" '\'' EVALUATE CATCH' | ${PROG} -c ${WORDS}
 	printf 'S" -1 THROW" '\'' EVALUATE CATCH' | ${PROG} -c ${WORDS}
-	! printf ": tw_keep_ds [: 123 QUIT ;] CATCH 456 . THROW ;\n tw_keep_ds \n . CR" | ${PROG} -c ${WORDS}
+	printf ": tw_keep_ds [: 123 QUIT ;] CATCH 456 . THROW ;\n tw_keep_ds \n . CR" | ${PROG} -c ${WORDS}
 	@echo "-OK-"
 
 # GH-54
 test_include_quit: ${PROG}
 	@printf "====  Testing INCLUDE with QUIT\n"
-	! ${PROG} -c ${WORDS} <${top_srcdir}/test/data/quit0.p4
-	! echo | ${PROG} -c ${WORDS} ${top_srcdir}/test/data/quit0.p4
-	! echo | ${PROG} -c ${WORDS} -i ${top_srcdir}/test/data/quit0.p4
-	! printf "INCLUDE ${top_srcdir}/test/data/quit0.p4" | ${PROG} -c ${WORDS}
-	! printf "INCLUDE ${top_srcdir}/test/data/quit0.p4 \n BYE" | ${PROG} -c ${WORDS}
+	${PROG} -c ${WORDS} <${top_srcdir}/test/data/quit0.p4
+	echo | ${PROG} -c ${WORDS} ${top_srcdir}/test/data/quit0.p4
+	echo | ${PROG} -c ${WORDS} -i ${top_srcdir}/test/data/quit0.p4
+	printf "INCLUDE ${top_srcdir}/test/data/quit0.p4" | ${PROG} -c ${WORDS}
+	printf "INCLUDE ${top_srcdir}/test/data/quit0.p4 \n BYE" | ${PROG} -c ${WORDS}
 	@echo "-OK-"
 
 # GH-54

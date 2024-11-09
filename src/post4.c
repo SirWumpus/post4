@@ -1043,7 +1043,7 @@ p4Repl(P4_Ctx *ctx, int thrown)
 #define w_semi		words[2]
 		P4_WORD("_abort",	&&_abort,	0, 0x00),	// p4
 #define w_abort		words[3]
-		P4_WORD("_quit",	&&_quit,	0, 0x00),	// p4
+		P4_WORD("QUIT",		&&_quit,	0, 0x00),
 #define w_quit		words[4]
 		P4_WORD("_interpret",	&&_interpret,	0, 0x00),	// p4
 #define w_interpret	words[5]
@@ -1314,6 +1314,9 @@ _abort:		P4_RESET(ctx->ds);
 #ifdef HAVE_MATH_H
 		P4_RESET(ctx->fs);
 #endif
+		if (!is_tty) {
+			exit(P4_EXIT_EXCEPTION);
+		}
 		/*@fallthrough@*/
 	case P4_THROW_QUIT:
 _quit:		P4_RESET(ctx->rs);
@@ -1323,9 +1326,6 @@ _quit:		P4_RESET(ctx->rs);
 		ctx->frame = 0;
 		/* Reset level, else next trace the indentation might be skewed. */
 		ctx->level = 0;
-		if (!is_tty) {
-			exit(P4_EXIT_EXCEPTION);
-		}
 		/*@fallthrough@*/
 	case P4_THROW_OK:
 		;
