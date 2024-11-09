@@ -84,7 +84,8 @@ test_include_quit: ${PROG}
 	! ${PROG} -c ${WORDS} <${top_srcdir}/test/data/quit0.p4
 	! echo | ${PROG} -c ${WORDS} ${top_srcdir}/test/data/quit0.p4
 	! echo | ${PROG} -c ${WORDS} -i ${top_srcdir}/test/data/quit0.p4
-	printf "INCLUDE ${top_srcdir}/test/data/quit0.p4 \n BYE" | ${PROG} -c ${WORDS}
+	! printf "INCLUDE ${top_srcdir}/test/data/quit0.p4" | ${PROG} -c ${WORDS}
+	! printf "INCLUDE ${top_srcdir}/test/data/quit0.p4 \n BYE" | ${PROG} -c ${WORDS}
 	@echo "-OK-"
 
 # GH-54
@@ -93,7 +94,8 @@ test_include_abort: ${PROG}
 	! ${PROG} -c ${WORDS} <${top_srcdir}/test/data/abort0.p4
 	! echo | ${PROG} -c ${WORDS} ${top_srcdir}/test/data/abort0.p4
 	! echo | ${PROG} -c ${WORDS} -i ${top_srcdir}/test/data/abort0.p4
-	printf "INCLUDE ${top_srcdir}/test/data/abort0.p4 \n BYE" | ${PROG} -c ${WORDS}
+	! printf "INCLUDE ${top_srcdir}/test/data/abort0.p4" | ${PROG} -c ${WORDS}
+	! printf "INCLUDE ${top_srcdir}/test/data/abort0.p4 \n BYE" | ${PROG} -c ${WORDS}
 	@echo "-OK-"
 
 # GH-54
@@ -102,16 +104,17 @@ test_include_throw: ${PROG}
 	! ${PROG} -c ${WORDS} <${top_srcdir}/test/data/throw0.p4
 	! echo | ${PROG} -c ${WORDS} ${top_srcdir}/test/data/throw0.p4
 	! echo | ${PROG} -c ${WORDS} -i ${top_srcdir}/test/data/throw0.p4
-	printf "INCLUDE ${top_srcdir}/test/data/throw0.p4 \n BYE" | ${PROG} -c ${WORDS}
+	! printf "INCLUDE ${top_srcdir}/test/data/throw0.p4" | ${PROG} -c ${WORDS}
+	! printf "INCLUDE ${top_srcdir}/test/data/throw0.p4 \n BYE" | ${PROG} -c ${WORDS}
 	@echo "-OK-"
 
 # GH-54 These tests have to be done manually, because the behaviour when
 # input is redirected is slighty different and should pass, whereas manually
 # we may see different result.
 test_manual: ${PROG}
-	printf "INCLUDE ${top_srcdir}/test/data/quit0.p4 \n BYE" | ${PROG} -c ${WORDS}
-	printf "INCLUDE ${top_srcdir}/test/data/abort0.p4 \n BYE" | ${PROG} -c ${WORDS}
-	printf "INCLUDE ${top_srcdir}/test/data/throw0.p4 \n BYE" | ${PROG} -c ${WORDS}
+	! printf "INCLUDE ${top_srcdir}/test/data/quit0.p4 \n BYE" | ${PROG} -c ${WORDS}
+	! printf "INCLUDE ${top_srcdir}/test/data/abort0.p4 \n BYE" | ${PROG} -c ${WORDS}
+	! printf "INCLUDE ${top_srcdir}/test/data/throw0.p4 \n BYE" | ${PROG} -c ${WORDS}
 
 # Test SEE against all words to check if any result in some failure like SEGFAULT.
 see_all: ${PROG}

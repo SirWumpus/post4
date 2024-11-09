@@ -1313,6 +1313,9 @@ _quit:		P4_RESET(ctx->rs);
 		ctx->frame = 0;
 		/* Reset level, else next trace the indentation might be skewed. */
 		ctx->level = 0;
+		if (!is_tty) {
+			exit(P4_EXIT_EXCEPTION);
+		}
 		/*@fallthrough@*/
 	case P4_THROW_OK:
 		;
