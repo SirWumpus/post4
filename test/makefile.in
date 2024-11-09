@@ -61,15 +61,16 @@ title :
 	@echo '***************************************************************'
 	@echo
 
-tests: test_include_quit test_include_abort test_include_throw test_quit_catch see_all test_unit
+tests: test_include_quit test_include_abort test_include_throw \
+	test_stdin_accept test_quit_catch see_all test_unit
 
 test test_unit : ${PROG}
-	@printf "==== Unit Testing\n"
+	@printf "== %s == Unit Testing\n" $@
 	${POST4_PATH} ${PROG} ./units.p4
 	@echo
 
 test_quit_catch : ${PROG}
-	@printf "==== Testing QUIT with CATCH\n"
+	@printf "== %s == Testing QUIT with CATCH\n" $@
 	! printf "' QUIT CATCH \n ABORT" | ${PROG} -c ${WORDS}
 	! printf "' QUIT CATCH \n -1 THROW" | ${PROG} -c ${WORDS}
 	! printf "' QUIT CATCH \n -123 THROW" | ${PROG} -c ${WORDS}
@@ -80,7 +81,7 @@ test_quit_catch : ${PROG}
 
 # GH-54
 test_include_quit: ${PROG}
-	@printf "====  Testing INCLUDE with QUIT\n"
+	@printf "== %s ==  Testing INCLUDE with QUIT\n" $@
 	${PROG} -c ${WORDS} <${top_srcdir}/test/data/quit0.p4
 	echo | ${PROG} -c ${WORDS} ${top_srcdir}/test/data/quit0.p4
 	echo | ${PROG} -c ${WORDS} -i ${top_srcdir}/test/data/quit0.p4
@@ -90,7 +91,7 @@ test_include_quit: ${PROG}
 
 # GH-54
 test_include_abort: ${PROG}
-	@printf "====  Testing INCLUDE with ABORT\n"
+	@printf "== %s ==  Testing INCLUDE with ABORT\n" $@
 	! ${PROG} -c ${WORDS} <${top_srcdir}/test/data/abort0.p4
 	! echo | ${PROG} -c ${WORDS} ${top_srcdir}/test/data/abort0.p4
 	! echo | ${PROG} -c ${WORDS} -i ${top_srcdir}/test/data/abort0.p4
@@ -100,7 +101,7 @@ test_include_abort: ${PROG}
 
 # GH-54
 test_include_throw: ${PROG}
-	@printf "====  Testing INCLUDE with THROW\n"
+	@printf "== %s ==  Testing INCLUDE with THROW\n" $@
 	! ${PROG} -c ${WORDS} <${top_srcdir}/test/data/throw0.p4
 	! echo | ${PROG} -c ${WORDS} ${top_srcdir}/test/data/throw0.p4
 	! echo | ${PROG} -c ${WORDS} -i ${top_srcdir}/test/data/throw0.p4
@@ -112,9 +113,16 @@ test_include_throw: ${PROG}
 # input is redirected is slighty different and should pass, whereas manually
 # we may see different result.
 test_manual: ${PROG}
-	! printf "INCLUDE ${top_srcdir}/test/data/quit0.p4 \n BYE" | ${PROG} -c ${WORDS}
+	printf "INCLUDE ${top_srcdir}/test/data/quit0.p4 \n BYE" | ${PROG} -c ${WORDS}
 	! printf "INCLUDE ${top_srcdir}/test/data/abort0.p4 \n BYE" | ${PROG} -c ${WORDS}
 	! printf "INCLUDE ${top_srcdir}/test/data/throw0.p4 \n BYE" | ${PROG} -c ${WORDS}
+
+# GH-59
+test_stdin_accept: ${PROG}
+	@printf "== %s ==  Testing ACCEPT, STDIN, and QUIT\n" $@
+	${PROG} -c ${WORDS} <${top_srcdir}/test/data/accept0.p4
+	${PROG} -c ${WORDS} <${top_srcdir}/test/data/accept1.p4
+	@echo "-OK-"
 
 # Test SEE against all words to check if any result in some failure like SEGFAULT.
 see_all: ${PROG}

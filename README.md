@@ -118,7 +118,7 @@ To leave Post4 either type the `EOF` terminal character, `BYE`, or `code BYE-COD
 
 ### TTY Line Editing
 
-Post4 implements simple TTY style line editing for the last interactive input line.  GNU `readline` or BSD `libedit` are not supported.  Essentially the `stty(1)` keys are supported, in addition to being able to edit the last input line.
+Post4 implements simple TTY style line editing and history for interactive input.  GNU `readline`, BSD `libedit`, and `rlwrap` are not supported.  See also `stty(1)`.
 
         up      ^K      Cycle to the previous input line to edit.
         down    ^L      Cycle to the next input line to edit.
