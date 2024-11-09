@@ -50,7 +50,6 @@ public class Post4
 
 	public static void main(String[] args)
 	{
-		int rc;
 		Post4 p4 = new Post4(args);
 
 		if (0 < args.length) {
@@ -76,9 +75,7 @@ $cafebabe HEX U. DECIMAL
 """
 			);
 
-			while ((rc = p4.repl()) != Post4Exception.THROW_OK) {
-				; // Remain in the REPL until EOF or BYE.
-			}
+			p4.repl();
 		} catch (Exception e) {
 			// Something else happened on this day, lost in time.
 			System.err.println(e);

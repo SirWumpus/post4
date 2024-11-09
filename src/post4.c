@@ -1331,7 +1331,6 @@ _quit:		P4_RESET(ctx->rs);
 		;
 	}
 	ip = (P4_Cell *)(repl+1);
-
 	// (S: -- )
 _interpret:
 	P4_PUSH(ctx->rs, ip);
@@ -1387,8 +1386,8 @@ _forth:				exec[0].xt = word;
 			(void) printf(ANSI_CYAN"ok "ANSI_NORMAL);
 			(void) fflush(stdout);
 		}
-		p4StackIsEmpty(ctx, &ctx->rs, P4_THROW_RS_UNDER);
 	} while (p4Refill(ctx->input));
+	p4StackIsEmpty(ctx, &ctx->rs, P4_THROW_RS_UNDER);
 	ip = P4_POP(ctx->rs).p;
 	NEXT;
 

@@ -136,6 +136,7 @@ Java_post4_jni_Post4_repl(JNIEnv *env, jobject self)
 	ctx->jenv = env;
 	sig_init();
 	rc = SETJMP(sig_break_glass);
+	p4ResetInput(ctx, stdin);
 	rc = p4Repl(ctx, P4_THROW_OK);
 	sig_fini();
 	return rc;
