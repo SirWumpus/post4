@@ -864,7 +864,7 @@ p4Create(P4_Options *opts)
 	if ((ctx->block = calloc(1, sizeof (*ctx->block))) == NULL) {
 		goto error0;
 	}
-	if (opts->block_file != NULL					/* Block file name? */
+	if (opts->block_file != NULL && *opts->block_file != '\0'	/* Block file name? */
 	&& (ctx->block_fd = fopen(opts->block_file, "rb+")) == NULL	/* File exists? */
 	&& (ctx->block_fd = fopen(opts->block_file, "wb+")) == NULL) {	/* Else create file. */
 		(void) fprintf(STDERR, "post4: %s: %s\r\n", opts->block_file, strerror(errno));
