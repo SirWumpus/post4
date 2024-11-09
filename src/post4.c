@@ -783,6 +783,8 @@ p4Free(P4_Ctx *ctx)
 		if (ctx->block_fd != NULL) {
 			(void) fclose(ctx->block_fd);
 		}
+		/* Data stack in allocated, because Java can grow it. */
+		free(ctx->ds.base - P4_GUARD_CELLS/2);
 		free(ctx->input);
 		free(ctx->block);
 		free(ctx);
@@ -799,10 +801,14 @@ p4ResetInput(P4_Ctx *ctx, FILE *fp)
 }
 
 static void
-p4AllocStack(P4_Ctx *ctx, P4_Stack *stk, int size)
+p4AllocStack(P4_Ctx *ctx, P4_Stack *stk, int size, int allot)
 {
-	stk->base = (P4_Cell *) ctx->here;
-	ctx->here += (size + P4_GUARD_CELLS) * sizeof (*stk->base);
+	if (allot) {
+		stk->base = (P4_Cell *) ctx->here;
+		ctx->here += (size + P4_GUARD_CELLS) * sizeof (*stk->base);
+	} else if ((stk->base = calloc(size + P4_GUARD_CELLS, sizeof (*stk->base))) == NULL) {
+		LONGJMP(ctx->longjmp, P4_THROW_ALLOCATE);
+	}
 	/* Adjust base for underflow guard. */
 	stk->base += P4_GUARD_CELLS/2;
 	stk->base[size].u = P4_SENTINEL;
@@ -850,10 +856,14 @@ p4Create(P4_Options *opts)
 	ctx->state = P4_STATE_INTERPRET;
 	ctx->trace = opts->trace;
 
-	p4AllocStack(ctx, &ctx->ds, opts->ds_size);
-	p4AllocStack(ctx, &ctx->rs, opts->rs_size);
+	/* Do not ALLOT the data stack, malloc it so JNI code
+	 * can enlarge it as necessary to unpack arrays.
+	 */
+	p4AllocStack(ctx, &ctx->ds, opts->ds_size, 0);
+	/* Allot these fixed size stacks. */
+	p4AllocStack(ctx, &ctx->rs, opts->rs_size, 1);
 #ifdef HAVE_MATH_H
-	p4AllocStack(ctx, &ctx->fs, opts->fs_size);
+	p4AllocStack(ctx, &ctx->fs, opts->fs_size, 1);
 	ctx->precision = 6;
 #endif
 	if ((ctx->input = p4CreateInput()) == NULL) {
