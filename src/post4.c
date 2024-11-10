@@ -686,14 +686,16 @@ p4Allot(P4_Ctx *ctx, P4_Int n)
 		/* Attempt to reserve more data space than available. */
 		return NULL;
 	}
-	if (ctx->here + n < (P4_Char *)(*ctx->active)->data) {
-		/* Attempt to release data space below the most recently
-		 * created word.
-		 */
-		return NULL;
+	if (*ctx->active != NULL) {
+		if (ctx->here + n < (P4_Char *)(*ctx->active)->data) {
+			/* Attempt to release data space below the most recently
+			 * created word.
+			 */
+			return NULL;
+		}
+		(*ctx->active)->ndata += n;
 	}
 	void *start = ctx->here;
-	(*ctx->active)->ndata += n;
 	ctx->here += n;
 	return start;
 }
