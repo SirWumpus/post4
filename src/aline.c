@@ -175,6 +175,7 @@ alineInput(FILE *fp, const char *prompt, char *buf, size_t size)
 	unsigned i;
 	int ch, pcol, pos[2], prevline = lastline;
 
+	(void) fflush(stdout);
 	if (!isatty(fileno(fp))) {
 		*buf = '\0';
 		clearerr(fp); errno = 0;
