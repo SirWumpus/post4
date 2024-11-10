@@ -33,7 +33,11 @@ Find `name` and place its execution token on the stack.  Throw undefined word (-
 - - -
 #### ( ccc)
 ( `ccc<paren>` -- ) immediate  
-Parse and ignore characters up to the closing right parenthesis, which an empty string or span multiple lines.  Note as an extension a literal right parenthesis, `)`, can be expressed as a backslash literal `\)`, likewise backslash as `\\`.
+Parse and ignore characters up to the closing right parenthesis, which an empty string or span multiple lines.
+- - -
+#### \\( ccc)
+( `ccc<paren>` -- ) immediate  
+Parse and ignore characters up to the closing right parenthesis, which an empty string or span multiple lines.  Note a backslash followed by any other character escapes that character, ie. `\\` is a literal backslash, `\)` is a literal closing parenthesis.
 
 - - -
 #### \*
@@ -115,7 +119,12 @@ Display `ccc`.
 - - -
 #### .( ccc)
 ( `ccc<paren>` -- ) immediate  
-Parse and display text until an unescaped closing parenthesis.  Backslash followed by any other character escapes that character, ie. `\\` is a literal backslash, `\)` is a literal closing parenthesis.
+Parse and display text until an unescaped closing parenthesis.
+
+- - -
+#### .\\( ccc)
+( `ccc<paren>` -- ) immediate  
+Parse and display text until an unescaped closing parenthesis.  Note a backslash followed by any other character escapes that character, ie. `\\` is a literal backslash, `\)` is a literal closing parenthesis.
 
 - - -
 #### /

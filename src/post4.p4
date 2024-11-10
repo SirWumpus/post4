@@ -1012,25 +1012,43 @@ DEFER fsp!
 	THEN
 ; IMMEDIATE $10 _pp!
 
+\ (S: -- )
+: >in+ 1 >IN +! ;
+
 \ ( -- caddr u )
 : source-remaining SOURCE >IN @ /STRING ; $02 _pp!
 
-\ ( delim -- bool )
+\ ( delim escape -- delim escape bool )
 \
 \ Scan the input buffer character at a time until either the input
 \ is exhusted, returning true; or an input character matches delim,
 \ returning false.
 \
 : parse-more
+	>R
 	BEGIN								\ S: delim
 		source-remaining 0= IF			\ S: delim caddr
-			2DROP TRUE EXIT				\ empty input buffer
+			DROP R> TRUE EXIT			\ empty input buffer
 		THEN
 		1 >IN +!						\ S: delim caddr
-		C@ OVER = IF					\ S: delim
-			DROP FALSE EXIT				\ input char matches delim
+		DUP C@ R@ = IF					\ escape next char?
+			DROP 1 >IN +! 				\ S: delim ch
+		ELSE
+			C@ OVER = IF				\ S: delim
+				R> FALSE EXIT			\ input char matches delim
+			THEN
 		THEN
 	AGAIN
+;
+
+\ (S: delim escape xt -- )
+: parse-multiline
+	>R BEGIN
+		R@ EXECUTE						\ find delim in input buffer
+	WHILE								\ found delim yet?
+		REFILL 							\ read more input
+	whilst THEN							\ EOF yet?
+	rdrop 2DROP
 ;
 
 \ ... ( comment) ...
@@ -1045,15 +1063,9 @@ DEFER fsp!
 \	def 456
 \	)
 \
-: (
-	[CHAR] )
-	BEGIN
-		DUP parse-more			\ find delim in input buffer
-	WHILE						\ found delim yet?
-		REFILL 0=				\ read more input; EOF yet?
-	UNTIL THEN
-	DROP
-; IMMEDIATE
+: ( [CHAR] ) -1 ['] parse-more parse-multiline ; IMMEDIATE
+
+: \( [CHAR] ) [CHAR] \ ['] parse-more parse-multiline ; IMMEDIATE
 
 \ ... SPACES ...
 \
@@ -1324,23 +1336,24 @@ VARIABLE _>pic
 \ (S: d# w -- )
 : D.R >R TUCK DABS <# #S ROT SIGN #> R> OVER - SPACES TYPE ;
 
-\ ( delim -- bool )
+\ ( delim escape -- delim escape bool )
 \
 \ Scan the input buffer character at a time until either the input
 \ is exhusted, returning true; or an input character matches delim,
 \ returning false.
 \
 : emit-more
+	>R
 	BEGIN								\ S: delim
 		source-remaining 0= IF			\ S: delim caddr
-			2DROP TRUE EXIT				\ empty input buffer
+			DROP R> TRUE EXIT			\ empty input buffer
 		THEN
 		1 >IN +!						\ S: delim caddr
-		DUP C@ [CHAR] \ = IF			\ escape next char?
+		DUP C@ R@ = IF					\ escape next char?
 			1 >IN +! CHAR+ C@			\ S: delim ch
 		ELSE
 			C@ 2DUP = IF				\ S: delim ch
-				2DROP FALSE EXIT		\ input char matches delim
+				DROP R> FALSE EXIT		\ input char matches delim
 			THEN
 		THEN
 		EMIT							\ S: delim
@@ -1351,15 +1364,9 @@ VARIABLE _>pic
 \ .( ccc)
 \
 \ (S: ccc<paren> -- )
-: .(
-	[CHAR] )
-	BEGIN
-		DUP emit-more					\ find delim in input buffer
-	WHILE								\ found delim yet?
-		REFILL 0=						\ read more input; EOF yet?
-	UNTIL THEN
-	DROP
-; IMMEDIATE
+: .( [CHAR] ) -1 ['] emit-more parse-multiline ; IMMEDIATE
+
+: .\( [CHAR] ) [CHAR] \ ['] emit-more parse-multiline ; IMMEDIATE
 
 \ ... ? ...
 \
