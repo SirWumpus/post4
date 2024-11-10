@@ -2787,9 +2787,8 @@ FORTH-WORDLIST SET-CURRENT
 : show_wid ( wid -- ) S\" \e[36m[ " TYPE #. S\" ]\e[0m\r\n" TYPE ; $10 _pp!
 
 : ORDER ( -- )
-	GET-ORDER
-	BEGIN ?DUP WHILE 1- SWAP DUP show_wid words-in REPEAT
-	GET-CURRENT DUP show_wid words-in
+	." Search: " GET-ORDER 0 DO . SPACE LOOP CR
+	." Define: " GET-CURRENT . CR
 ;
 
 WORDLIST CONSTANT required-wordlist
