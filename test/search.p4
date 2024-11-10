@@ -189,4 +189,8 @@ t{ 0 ' tw_count_words tv_traverse_wid TRAVERSE-WORDLIST -> 2 }t
 ONLY FORTH DEFINITIONS
 test_group_end
 
+.( GH-65 empty wordlist ALLOT ) test_group
+t{ WORDLIST SET-CURRENT HERE 0 ' ALLOT CATCH SWAP HERE - -> 0 0 }t
+test_group_end
+
 [THEN]
