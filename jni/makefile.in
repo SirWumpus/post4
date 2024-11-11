@@ -77,7 +77,7 @@ clean: title
 clobber distclean: clean
 	-rm makefile
 
-build: title ${LIBNAME} Post4Exception$C Post4Options$C Post4Stacks$C Post4$C
+build: title Post4.jar
 
 title :
 	@echo
@@ -90,11 +90,10 @@ install: Post4.jar
 	install -p -o root -g 0 -d ${libdir}
 	install -p -o root -g 0 *.p4 ${libdir}
 	install -p -o root -g 0 Post4.jar ${libdir}
-	install -p -o root -g 0 ${LIBNAME} ${libdir}
 
 # See also
 # https://stackoverflow.com/questions/2937406/how-to-bundle-a-native-library-and-a-jni-library-inside-a-jar
-Post4.jar: build
+Post4.jar: ${LIBNAME} Post4Exception$C Post4Options$C Post4Stacks$C Post4$C
 	mkdir -p ./post4/jni/${OS}/${CPU}
 	cp -p *.class ./post4/jni
 	cp -p ${LIBNAME} ./post4/jni/${OS}/${CPU}
