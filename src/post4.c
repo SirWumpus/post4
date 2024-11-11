@@ -218,10 +218,11 @@ p4Base36(int digit)
 }
 
 int
-p4StrNum(P4_String str, int base, P4_Cell *out, int *is_float)
+p4StrNum(P4_String str, int base, P4_Cell *out, int *is_float, int *is_double)
 {
 	size_t offset = 0;
 	*is_float = 0;
+	*is_double = 0;
 	if (str.length == 0) {
 		return -1;
 	}
@@ -254,6 +255,11 @@ p4StrNum(P4_String str, int base, P4_Cell *out, int *is_float)
 	for (num.n = 0; offset < str.length; offset++) {
 		int digit = p4Base36(str.string[offset]);
 		if (base <= digit) {
+			/* Support small integer double notation 123. => 123 0 */
+			if (offset + 1 == str.length && str.string[offset] == '.') {
+				*is_double = 1;
+				break;
+			}
 #ifdef HAVE_MATH_H
 			char *stop;
 			/* We don't accept the double-cell notation 123. 0.
@@ -1345,8 +1351,8 @@ _inter_loop:	while (ctx->input->offset < ctx->input->length) {
 			}
 			word = p4FindName(ctx, str.string, str.length);
 			if (word == NULL) {
-				int is_float;
-				if (p4StrNum(str, ctx->radix, &x, &is_float)) {
+				int is_float, is_double;
+				if (p4StrNum(str, ctx->radix, &x, &is_float, &is_double)) {
 					/* Not a word, not a number. */
 					THROW(P4_THROW_UNDEFINED);
 				}
@@ -1367,9 +1373,16 @@ _inter_loop:	while (ctx->input->offset < ctx->input->length) {
 				if (ctx->state == P4_STATE_COMPILE) {
 					p4WordAppend(ctx, (P4_Cell) &w_lit);
 					p4WordAppend(ctx, x);
+					if (is_double) {
+						p4WordAppend(ctx, (P4_Cell) &w_lit);
+						p4WordAppend(ctx, (P4_Cell) 0L);
+					}
 				} else {
 					p4StackIsFull(ctx, &ctx->ds, P4_THROW_DS_OVER);
 					P4_PUSH(ctx->ds, x);
+					if (is_double) {
+						P4_PUSH(ctx->ds, (P4_Cell) 0L);
+					}
 				}
 			} else if (ctx->state == P4_STATE_INTERPRET && P4_WORD_IS(word, P4_BIT_COMPILE)) {
 				THROW(P4_THROW_COMPILE_ONLY);

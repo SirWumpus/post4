@@ -705,7 +705,7 @@ extern int p4CharLiteral(int ch);
  */
 extern void p4StrRev(P4_Char *s, P4_Size length);
 
-extern int p4StrNum(P4_String str, int base, P4_Cell *out, int *is_float);
+extern int p4StrNum(P4_String str, int base, P4_Cell *out, int *is_float, int *is_double);
 
 extern int p4Accept(P4_Input *source, char *buffer, size_t size);
 
