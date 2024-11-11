@@ -3,6 +3,13 @@ INCLUDE ../test/assert.p4
 
 MARKER rm_d0equal_words
 
+.( Double word notation for single word integers. ) test_group
+t{  1.		->    1  0 }t
+t{  123.	->  123  0 }t
+t{   -1.	->   -1 -1 }t
+t{ -123.	-> -123 -1 }t
+test_group_end
+
 .( S>D ) test_group
 t{  0 S>D ->  0  0 }t
 t{  1 S>D ->  1  0 }t
