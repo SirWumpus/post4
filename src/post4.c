@@ -13,7 +13,9 @@
 
 static P4_Word *p4_builtin_words;
 P4_Word *p4_hook_call;
-P4_Word *p4_throw;
+
+/* Expected Forth defined words. */
+P4_Word *p4_throw, *p4_flit, *p4_2lit;
 
 #define P4_INTERACTIVE(ctx)	(ctx->state == P4_STATE_INTERPRET && is_tty && P4_INPUT_IS_TERM(ctx->input))
 
@@ -890,6 +892,19 @@ p4Create(P4_Options *opts)
 	if (p4EvalFile(ctx, opts->core_file)) {
 		goto error0;
 	}
+	if (p4_throw == NULL) {
+		/* Find THROW to aid with throwing exceptions from C to Forth. */
+		p4_throw = p4FindName(ctx, "THROW", STRLEN("THROW"));
+	}
+	if (p4_2lit == NULL) {
+		p4_2lit = p4FindName(ctx, "2lit", STRLEN("2lit"));
+	}
+#ifdef HAVE_MATH_H
+	if (p4_flit == NULL) {
+		p4_flit = p4FindName(ctx, "flit", STRLEN("flit"));
+	}
+#endif
+
 	return ctx;
 error0:
 	p4Free(ctx);
@@ -1359,10 +1374,10 @@ _inter_loop:	while (ctx->input->offset < ctx->input->length) {
 #ifdef HAVE_MATH_H
 				if (is_float) {
 					if (ctx->state == P4_STATE_COMPILE) {
-						if ((word = p4FindName(ctx, "flit", STRLEN("flit"))) == NULL) {
+						if (p4_flit == NULL) {
 							THROW(P4_THROW_UNDEFINED);
 						}
-						p4WordAppend(ctx, (P4_Cell) word);
+						p4WordAppend(ctx, (P4_Cell) p4_flit);
 						p4WordAppend(ctx, x);
 					} else {
 						p4StackIsFull(ctx, &ctx->P4_FLOAT_STACK, P4_THROW_FS_OVER);
@@ -1371,17 +1386,23 @@ _inter_loop:	while (ctx->input->offset < ctx->input->length) {
 				} else
 #endif
 				if (ctx->state == P4_STATE_COMPILE) {
-					p4WordAppend(ctx, (P4_Cell) &w_lit);
-					p4WordAppend(ctx, x);
-					if (is_double) {
+					if (is_double && p4_2lit != NULL) {
+						p4WordAppend(ctx, (P4_Cell) p4_2lit);
+						p4WordAppend(ctx, x);
+						p4WordAppend(ctx, (P4_Cell)(x.n < 0L ? -1L : 0L));
+					} else {
 						p4WordAppend(ctx, (P4_Cell) &w_lit);
-						p4WordAppend(ctx, (P4_Cell) 0L);
+						p4WordAppend(ctx, x);
+						if (is_double) {
+							p4WordAppend(ctx, (P4_Cell) &w_lit);
+							p4WordAppend(ctx, (P4_Cell)(x.n < 0L ? -1L : 0L));
+						}
 					}
 				} else {
 					p4StackIsFull(ctx, &ctx->ds, P4_THROW_DS_OVER);
 					P4_PUSH(ctx->ds, x);
 					if (is_double) {
-						P4_PUSH(ctx->ds, (P4_Cell) 0L);
+						P4_PUSH(ctx->ds, (P4_Cell)(x.n < 0L ? -1L : 0L));
 					}
 				}
 			} else if (ctx->state == P4_STATE_INTERPRET && P4_WORD_IS(word, P4_BIT_COMPILE)) {
@@ -2504,10 +2525,6 @@ p4EvalFile(P4_Ctx *ctx, const char *file)
 		p4ResetInput(ctx, fp);
 		rc = p4Repl(ctx, P4_THROW_OK);
 		(void) fclose(fp);
-	}
-	if (p4_throw == NULL) {
-		/* Find THROW to aid with throwing exceptions from C to Forth. */
-		p4_throw = p4FindName(ctx, "THROW", STRLEN("THROW"));
 	}
 error0:
 	return rc;
