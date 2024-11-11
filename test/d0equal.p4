@@ -127,6 +127,13 @@ T{ LO-2INT 2DUP D+ -> MIN-2INT }T
 T{ HI-2INT MIN-2INT D+ 1 S>D D+ -> LO-2INT }T
 test_group_end
 
+.( GH-70 double-cell input and >NUMBER ) test_group
+cell-bits 64 = [IF]
+ts{ 18446744073709551616. -> 0 1 }t
+[THEN]
+t{  -1 0  1. d+ 2dup <# #s #> 0. 2swap >number 2drop d= -> true }t
+test_group_end
+
 .( DNEGATE ) test_group
 T{ 0 S>D DNEGATE -> 0 S>D }T
 T{ 1 S>D DNEGATE -> -1 S>D }T
