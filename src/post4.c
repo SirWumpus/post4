@@ -258,7 +258,8 @@ p4StrNum(P4_String str, int base, P4_Cell *out, int *is_float)
 			/* We don't accept the double-cell notation 123. 0.
 			 * as this is confusing with floating point input.
 			 */
-			if (str.string[offset] == '.' || toupper(str.string[offset]) == 'E') {
+			if (str.string[offset] == '.'
+			|| (0 < offset && isdigit(str.string[offset-1]) && toupper(str.string[offset]) == 'E')) {
 				if (base != 10) {
 					return -1;
 				}

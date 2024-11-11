@@ -6,6 +6,10 @@ INCLUDE ../test/assert.p4
 
 [ELSE]
 
+.( GH-68 e is not a float ) test_group
+t{ s" 0 0 efoobar-undefined-word" ' evaluate catch nip nip -> -13 }t
+test_group_end
+
 .( F0= ) test_group
 t{  0.0 F0= -> TRUE }t
 t{  1.0 F0= -> FALSE }t
