@@ -255,21 +255,17 @@ p4StrNum(P4_String str, int base, P4_Cell *out, int *is_float)
 		int digit = p4Base36(str.string[offset]);
 		if (base <= digit) {
 #ifdef HAVE_MATH_H
+			char *stop;
 			/* We don't accept the double-cell notation 123. 0.
 			 * as this is confusing with floating point input.
 			 */
-			if (str.string[offset] == '.'
-			|| (0 < offset && isdigit(str.string[offset-1]) && toupper(str.string[offset]) == 'E')) {
-				if (base != 10) {
-					return -1;
-				}
-				/* Note that 1E 0E 123E may not accepted depending
-				 * on the version of strtod().  0.0, .0, 0E0, 123.,
-				 * 123.456 work fine.
-				 */
-				char *stop;
+			/* Note that 1E 0E 123E may not accepted depending
+			 * on the version of strtod().  0.0, .0, 0E0, 123.,
+			 * 123.456 work fine.
+			 */
+			out->f = strtod(str.string, &stop);
+			if (str.string + str.length == stop) {
 				*is_float = 1;
-				out->f = strtod(str.string, &stop);
 				return 0;
 			}
 #endif
