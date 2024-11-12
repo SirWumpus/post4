@@ -6,6 +6,7 @@
 *.dll
 *.obj
 *.exe
+*.jar
 *.lib
 *.tds
 *.stackdump

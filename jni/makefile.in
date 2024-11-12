@@ -93,12 +93,14 @@ install: Post4.jar
 
 # See also
 # https://stackoverflow.com/questions/2937406/how-to-bundle-a-native-library-and-a-jni-library-inside-a-jar
-Post4.jar: ${LIBNAME} Post4Exception$C Post4Options$C Post4Stacks$C Post4$C
-	mkdir -p ./post4/jni/${OS}/${CPU}
+Post4.jar: ${LIBNAME} Post4Exception$C Post4Options$C Post4Stacks$C Post4$C Post4.mf ${top_srcdir}/src/post4.p4
+	mkdir -p ./post4/jni ./lib
+	cp -p *.p4 ${LIBNAME} ./lib
+	cp -p ${top_srcdir}/src/post4.p4 ./lib
+	cd ${top_srcdir}/examples && cp -p ansiterm.p4 ed.p4 rand.p4 fizzbuzz.p4 life.p4 life1d.p4 wumpus.p4 ${top_srcdir}/jni/lib
 	cp -p *.class ./post4/jni
-	cp -p ${LIBNAME} ./post4/jni/${OS}/${CPU}
-	jar -v -c -f $@ -e ${MAIN} post4/ -C ../src/ post4.p4 -C ./ *.p4
-	rm -rf post4
+	jar -v -c -m Post4.mf -f $@ post4/ lib/
+	rm -rf post4 lib
 
 ${LIBNAME}: Post4$O ../src/libpost4$A
 	${CC} ${CFLAGS} -shared -o $@ Post4$O ../src/libpost4$A ${LIBS}

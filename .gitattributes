@@ -2,6 +2,7 @@
 *.blk binary
 *.docx binary
 *.gif binary
+*.jar binary
 *.jbf binary
 *.jpg binary
 *.mng binary

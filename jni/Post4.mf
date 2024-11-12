@@ -1,0 +1,12 @@
+Manifest-Version: 1.0
+Main-Class: post4.jni.Post4
+Class-Path: post4.jni
+Name: post4/jni/
+Sealed: true
+Specification-Title: "Forth 200x"
+Specification-Version: "Draft 19-1"
+Specification-Vendor: "https://forth-standard.org/"
+Implementation-Title: "Post4"
+Implementation-Version: "0.12.0"
+Implementation-Vendor: "https://github.com/SirWumpus/post4"
+
