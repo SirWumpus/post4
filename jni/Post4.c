@@ -923,7 +923,9 @@ Java_post4_jni_Post4_p4Create(JNIEnv *env, jobject self, jobject opts)
 	(*env)->DeleteLocalRef(env, clazz);
 
 	if (ctx == NULL) {
-		(*env)->FatalError(env, "cannot create Post4 context");
+		/* GH-71 Use Throw instead of FatalError to avoid core dump. */
+		(*env)->Throw(env, post4Exception(env, P4_THROW_GENERIC));
+		return 0L;
 	}
 
 	p4HookInit(ctx, jHooks);

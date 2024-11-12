@@ -100,6 +100,8 @@ public class Post4Exception extends Exception
 
 	/* -4095..-256 reserved for the system (that's us). */
 
+	public final static int THROW_SIGTERM		= (-256);
+	public final static int THROW_WORDLIST		= (-257);	/* Out of word list space; invalid wid. */
 	public final static int THROW_GENERIC		= (-4095);	/* Unknown, generic, WTF. */
 
 	private final static String[] messages = {
@@ -192,7 +194,7 @@ public class Post4Exception extends Exception
 
 	public Post4Exception(int code)
 	{
-		super(code+" thrown: "+(code <= 0 ? messages[-code] : "(unknown)"));
+		super(code+" thrown: "+(THROW_future < code && code <= 0 ? messages[-code] : "(unknown)"));
 		this.code = code;
 	}
 

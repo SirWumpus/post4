@@ -123,3 +123,10 @@ testbye: build
 cygtest: build
 	cp ${LIBNAME} post4jni.dll
 	POST4_PATH="${POST4_PATH}"; java -Djava.library.path=".;..\\src" -cp ../.. ${MAIN} ../test/units.p4
+
+# GH-71 Should cleanly terminate with an error.
+test_badpath: ${PROG}
+	@printf "== %s ==  Bad POST4_PATH\n" $@
+	! POST4_PATH="/invalid" java -Djava.library.path="$${POST4_PATH}" -cp ../.. ${MAIN}
+	@echo "-OK-"
+
