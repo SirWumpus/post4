@@ -923,7 +923,7 @@ Java_post4_jni_Post4_p4Create(JNIEnv *env, jobject self, jobject opts)
 	(*env)->DeleteLocalRef(env, clazz);
 
 	if (ctx == NULL) {
-		(*env)->Throw(env, (*env)->FindClass(env, "java/lang/OutOfMemory"));
+		(*env)->FatalError(env, "cannot create Post4 context");
 	}
 
 	p4HookInit(ctx, jHooks);
