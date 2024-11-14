@@ -313,8 +313,8 @@ T{ MIN-2INT MAX-INT DUP M*/ -> MIN-2INT }T
 cell-bits 64 = [IF]
 : ipow ( n u -- d ) 1 S>D ROT 0 ?DO 2 PICK 1 M*/ LOOP ROT DROP ;
 \ Result ok, output 117809547936177440979200839996337890625
-t{ 65 21 ipow CR 2DUP d. -> $ec883376b5d52541 $58a14b2a0eca886e }t
+t{ 65 21 ipow -> $ec883376b5d52541 $58a14b2a0eca886e }t
 \ Result overflow, output -1.
-t{ 65 22 ipow CR 2DUP d. -> -1 -1 }t
+t{ 65 22 ipow -> -1 -1 }t
 [THEN]
 test_group_end

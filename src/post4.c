@@ -219,75 +219,6 @@ p4Base36(int digit)
 	return 127;
 }
 
-int
-p4StrNum(P4_String str, int base, P4_Cell *out, int *is_float, int *is_double)
-{
-	size_t offset = 0;
-	*is_float = 0;
-	*is_double = 0;
-	if (str.length == 0) {
-		return -1;
-	}
-	if (str.string[0] == '\'') {
-		if (str.length == 3 && str.string[2] == '\'') {
-			out->u = str.string[1];
-			return 0;
-		}
-		if (str.length == 4 && str.string[1] == '\\' && str.string[3] == '\'') {
-			out->u = p4CharLiteral(str.string[2]);
-			return 0;
-		}
-	}
-	static char prefix[] = { '$', 16, '#', 10, '%', 2, 0 };
-	for (char *p = prefix; *p != 0; p += 2) {
-		if (*p == str.string[0]) {
-			base = p[1];
-			offset++;
-			break;
-		}
-	}
-	P4_Cell num;
-	int negate = 0;
-	if (str.string[offset] == '-') {
-		negate = 1;
-		offset++;
-	} else 	if (str.string[offset] == '+') {
-		offset++;
-	}
-	for (num.n = 0; offset < str.length; offset++) {
-		int digit = p4Base36(str.string[offset]);
-		if (base <= digit) {
-			/* Support small integer double notation 123. => 123 0 */
-			if (offset + 1 == str.length && str.string[offset] == '.') {
-				*is_double = 1;
-				break;
-			}
-#ifdef HAVE_MATH_H
-			char *stop;
-			/* We don't accept the double-cell notation 123. 0.
-			 * as this is confusing with floating point input.
-			 */
-			/* Note that 1E 0E 123E may not accepted depending
-			 * on the version of strtod().  0.0, .0, 0E0, 123.,
-			 * 123.456 work fine.
-			 */
-			out->f = strtod(str.string, &stop);
-			if (str.string + str.length == stop) {
-				*is_float = 1;
-				return 0;
-			}
-#endif
-			return -1;
-		}
-		num.n = num.n * base + digit;
-	}
-	if (negate) {
-		num.n = -num.n;
-	}
-	out->n = num.n;
-	return 0;
-}
-
 /***********************************************************************
  *** Utility
  ***********************************************************************/
@@ -445,18 +376,11 @@ p4Mulu(P4_Uint a, P4_Uint b, P4_Uint *c0, P4_Uint *c1)
 	P4_Uint ah_bh = ah * bh;
 
 	/* Sum partial products. */
-#define CARRY_V2
-#ifdef CARRY_V2
 	*c0 = (al_bh << P4_HALF_SHIFT) + al_bl;
 	P4_Uint carry = *c0 < al_bl;
 	*c0 += (ah_bl << P4_HALF_SHIFT);
 	carry += *c0 < (ah_bl << P4_HALF_SHIFT);
 	*c1 = ah_bh + (ah_bl >> P4_HALF_SHIFT) + (al_bh >> P4_HALF_SHIFT) + carry;
-#else
-	P4_Uint carry = ((al_bl >> P4_HALF_SHIFT) + (P4_Uint_Half) al_bh + (P4_Uint_Half) ah_bl) >> P4_HALF_SHIFT;
-	*c1 = ah_bh + (ah_bl >> P4_HALF_SHIFT) + (al_bh >> P4_HALF_SHIFT) + carry;
-	*c0 = (ah_bl << P4_HALF_SHIFT) + (al_bh << P4_HALF_SHIFT) + al_bl;
-#endif
 }
 
 /*
@@ -658,9 +582,112 @@ p4Divs(P4_Int dend0, P4_Int dend1, P4_Int dsor, P4_Int *rem)
 	return quot;
 }
 
+void
+p4Dadd(P4_Uint a[2], P4_Uint b[2], P4_Uint c[2])
+{
+	c[0] = a[0] + b[0];
+	c[1] = a[1] + b[1] + (c[0] < b[0]);
+}
+
+void
+p4Dsub(P4_Uint a[2], P4_Uint b[2], P4_Uint c[2])
+{
+	c[0] = a[0] - b[0];
+	c[1] = a[1] - b[1] - (a[0] < b[0]);
+}
+
+void
+p4Dneg(P4_Uint b[2], P4_Uint c[2])
+{
+	P4_Uint a[2] = { 0, 0 };
+	p4Dsub(a, b, c);
+}
+
+#ifdef NOT_USED
+p4UTstar(P4_Uint a[2], P4_Uint b, P4_Uint c[3])
+{
+	P4_Uint d[4];
+	p4Mulu(a[0], b, c,   d)
+	p4Mulu(a[1], b, d+1, d+2);
+	d[3] = 0; p4Dadd(d, d+2, c+1);
+}
+#endif
+
 /***********************************************************************
  *** Core
  ***********************************************************************/
+
+int
+p4StrNum(P4_String str, unsigned base, P4_Cell out[2], int *is_float, int *is_double)
+{
+	size_t offset = 0;
+	*is_float = 0;
+	*is_double = 0;
+	if (str.length == 0) {
+		return -1;
+	}
+	if (str.string[0] == '\'') {
+		if (str.length == 3 && str.string[2] == '\'') {
+			out[0].u = str.string[1];
+			return 0;
+		}
+		if (str.length == 4 && str.string[1] == '\\' && str.string[3] == '\'') {
+			out[0].u = p4CharLiteral(str.string[2]);
+			return 0;
+		}
+	}
+	static char prefix[] = { '$', 16, '#', 10, '%', 2, 0 };
+	for (char *p = prefix; *p != 0; p += 2) {
+		if (*p == str.string[0]) {
+			base = p[1];
+			offset++;
+			break;
+		}
+	}
+	int negate = 0;
+	if (str.string[offset] == '-') {
+		negate = 1;
+		offset++;
+	} else 	if (str.string[offset] == '+') {
+		offset++;
+	}
+	P4_Uint a[2], b[2];
+	for (out[0] = out[1] = (P4_Cell) 0L; offset < str.length; offset++) {
+		b[0] = p4Base36(str.string[offset]);
+		if (base <= b[0]) {
+			/* Support small integer double notation 123. => 123 0 */
+			if (offset + 1 == str.length && str.string[offset] == '.') {
+				*is_double = 1;
+				break;
+			}
+#ifdef HAVE_MATH_H
+			char *stop;
+			/* We don't accept the double-cell notation 123. 0.
+			 * as this is confusing with floating point input.
+			 */
+			/* Note that 1E 0E 123E may not accepted depending
+			 * on the version of strtod().  0.0, .0, 0E0, 123.,
+			 * 123.456 work fine.
+			 */
+			out[0].f = strtod(str.string, &stop);
+			if (str.string + str.length == stop) {
+				*is_float = 1;
+				return 0;
+			}
+#endif
+			return -1;
+		}
+		p4Mulu(out[1].u, base, a, a+1);
+		b[1] = a[0];
+		p4Mulu(out[0].u, base, a, a+1);
+		p4Dadd(a, b, (P4_Uint *)out);
+	}
+	if (negate) {
+		p4Dneg((P4_Uint *)out, a);
+		out[0].u = a[0]; out[1].u = a[1];
+	}
+	return 0;
+}
 
 P4_Int
 p4Refill(P4_Input *input)
@@ -768,6 +795,31 @@ p4FindName(P4_Ctx *ctx, const char *caddr, P4_Size length)
 		}
 	}
 	return NULL;
+}
+
+int
+p4IsNtIn(P4_Ctx *ctx, P4_Nt nt, int wid)
+{
+	if (wid < 0 || P4_WORDLISTS < wid) {
+		LONGJMP(ctx->longjmp, P4_THROW_EINVAL);
+	}
+	for (P4_Word *word = ctx->lists[wid-1]; word != NULL; word = word->prev) {
+		if (nt == word) {
+			return 1;
+		}
+	}
+	return 0;
+}
+
+int
+p4IsNt(P4_Ctx *ctx, P4_Nt nt)
+{
+	for (unsigned i = 0; i < ctx->norder; i++) {
+		if (p4IsNtIn(ctx, nt, ctx->order[i])) {
+			return 1;
+		}
+	}
+	return 0;
 }
 
 static void
@@ -1314,19 +1366,29 @@ _thrown:
 			 * definition in an incomplete state; discard it.
 			 */
 			word = *ctx->active;
-			(void) fprintf(STDERR,
-				" while compiling %s",
+			(void) fprintf(STDERR, " while compiling %s",
 				word->length == 0 ? ":NONAME" : (char *)word->name
 			);
 			*ctx->active = word->prev;
 			/* Rewind HERE, does not free ALLOCATE data. */
 			ctx->here = (P4_Char *) word->data;
 			p4WordFree(word);
+		} else {
+			word = ip[-1].nt;
+			(void) fprintf(STDERR, " executing %s\r\ninput: %s",
+				word->length == 0 ? ":NONAME" : (char *)word->name,
+				ctx->input->buffer
+			);
+			for (x.p = ctx->rs.top; ctx->rs.base <= x.p; x.p--) {
+				w = (*x.p).p[-1];
+				y.s = p4IsNt(ctx, w.nt) ? w.nt->name : "";
+				(void) fprintf(STDERR, "\r\n"P4_HEX_FMT" %s", (long) w.nt, y.s);
+			}
 		}
 		/*@fallthrough@*/
 	case P4_THROW_ABORT_MSG:
 		/* Ensure ABORT" and other messages print newline.*/
-		(void) printf(crlf);
+		(void) fprintf(STDERR, crlf);
 		/*@fallthrough@*/
 	case P4_THROW_ABORT:
 		/* Historically no message, simply return to REPL. */
@@ -1340,7 +1402,7 @@ _abort:		P4_RESET(ctx->ds);
 		/*@fallthrough@*/
 	case P4_THROW_QUIT:
 _quit:		P4_RESET(ctx->rs);
-		(void) fflush(stdout);
+		(void) fflush(STDERR);
 		p4ResetInput(ctx, stdin);
 		ctx->state = P4_STATE_INTERPRET;
 		ctx->frame = 0;
@@ -1366,8 +1428,9 @@ _inter_loop:	while (ctx->input->offset < ctx->input->length) {
 			}
 			word = p4FindName(ctx, str.string, str.length);
 			if (word == NULL) {
+				P4_Cell num[2];
 				int is_float, is_double;
-				if (p4StrNum(str, ctx->radix, &x, &is_float, &is_double)) {
+				if (p4StrNum(str, ctx->radix, num, &is_float, &is_double)) {
 					/* Not a word, not a number. */
 					THROW(P4_THROW_UNDEFINED);
 				}
@@ -1378,31 +1441,31 @@ _inter_loop:	while (ctx->input->offset < ctx->input->length) {
 							THROW(P4_THROW_UNDEFINED);
 						}
 						p4WordAppend(ctx, (P4_Cell) p4_flit);
-						p4WordAppend(ctx, x);
+						p4WordAppend(ctx, num[0]);
 					} else {
 						p4StackIsFull(ctx, &ctx->P4_FLOAT_STACK, P4_THROW_FS_OVER);
-						P4_PUSH(ctx->P4_FLOAT_STACK, x);
+						P4_PUSH(ctx->P4_FLOAT_STACK, num[0]);
 					}
 				} else
 #endif
 				if (ctx->state == P4_STATE_COMPILE) {
 					if (is_double && p4_2lit != NULL) {
 						p4WordAppend(ctx, (P4_Cell) p4_2lit);
-						p4WordAppend(ctx, x);
-						p4WordAppend(ctx, (P4_Cell)(x.n < 0L ? -1L : 0L));
+						p4WordAppend(ctx, num[0]);
+						p4WordAppend(ctx, num[1]);
 					} else {
 						p4WordAppend(ctx, (P4_Cell) &w_lit);
-						p4WordAppend(ctx, x);
+						p4WordAppend(ctx, num[0]);
 						if (is_double) {
 							p4WordAppend(ctx, (P4_Cell) &w_lit);
-							p4WordAppend(ctx, (P4_Cell)(x.n < 0L ? -1L : 0L));
+							p4WordAppend(ctx, num[1]);
 						}
 					}
 				} else {
 					p4StackIsFull(ctx, &ctx->ds, P4_THROW_DS_OVER);
-					P4_PUSH(ctx->ds, x);
+					P4_PUSH(ctx->ds, num[0]);
 					if (is_double) {
-						P4_PUSH(ctx->ds, (P4_Cell)(x.n < 0L ? -1L : 0L));
+						P4_PUSH(ctx->ds, num[1]);
 					}
 				}
 			} else if (ctx->state == P4_STATE_INTERPRET && P4_WORD_IS(word, P4_BIT_COMPILE)) {

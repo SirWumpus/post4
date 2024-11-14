@@ -130,6 +130,8 @@ test_group_end
 .( GH-70 double-cell input and >NUMBER ) test_group
 cell-bits 64 = [IF]
 ts{ 18446744073709551616. -> 0 1 }t
+ts{ 170141183460469231731687303715884105727. -> MAX-D }t
+ts{ -170141183460469231731687303715884105728. -> MIN-D }t
 [THEN]
 t{  -1 0  1. d+ 2dup <# #s #> 0. 2swap >number 2drop d= -> true }t
 test_group_end
