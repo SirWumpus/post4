@@ -877,13 +877,12 @@ DEFER fsp!
 : DMIN 2OVER 2OVER D< INVERT IF 2SWAP THEN 2DROP ;
 
 \ (S: dl dh -- dl' dh' )
-: DNEGATE
-	>R DUP
-	IF
-		NEGATE R> INVERT
-	ELSE
-		R> NEGATE
-	THEN
+\ *c1 = ~*c1 + ((*c0 = -*c0) == 0);
+: DNEGATE 						\ S: dl dh
+	INVERT SWAP					\ S: dh' dl
+	NEGATE SWAP					\ S: dl' dh"
+	OVER 0= 1 AND				\ S: dl' dh" c
+	+							\ S: dl' dh'
 ;
 
 \ (S: dl dh -- ul uh )
@@ -1206,11 +1205,13 @@ DEFER fsp!
 			DROP EXIT			\ S: ud' caddr' len'
 		THEN					\ S: udl udh caddr len digit
 		ROT CHAR+ ROT 1-		\ S: ud1 udh digit caddr' len'
-		2>R >R BASE @			\ S: udl udh base			R: caddr' len' digit
-		UM* ROT BASE @			\ S: hl hh udl base			R: caddr' len' digit
-		UM*						\ S: hl hh ll lh			R: caddr' len' digit
-		R> M+					\ S: hl hh ll' lh'			R: caddr' len'
-		D+ 2R>					\ S: udl' udh' caddr' len'
+		2>R						\ S: udl udh digit			R: caddr' len'
+		SWAP BASE @				\ S: udl digit udh base		R: caddr' len'
+		UM* 					\ S: ud1 digit vl vh		R: caddr' len'
+		DROP ROT BASE @			\ S: digit vl udl base		R: caddr' len'
+		UM*						\ S: digit vl wl wh			R: caddr' len'
+		D+						\ s: udl' udh'				R: caddr' len'
+		2R>						\ s: udl' udh'
 	REPEAT
 ;
 
