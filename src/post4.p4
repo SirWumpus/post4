@@ -1646,43 +1646,36 @@ VARIABLE _str_buf_curr
 
 : .\" POSTPONE S\" POSTPONE TYPE ; IMMEDIATE compile-only
 
-\ Same behaviour as C's strcmp().
-\
-\ (S: caddr1 u1 caddr2 u2 --	)
-: strcmp
-	ROT SWAP 2DUP -				\ S: s1 s2 u1 u2 du
-	DUP >R						\ S: s1 s2 u1 u2 du	R: du
-	DUP 0= IF					\ S: s1 s2 u1 u2 du	R: du
-		\ Equal string lengths.
-		2DROP					\ S: s1 s2 u1		R: du
-	ELSE 0< IF					\ S: s1 s2 u1 u2	R: du
-		\ s1 shorter than s2.
-		DROP					\ S: s1 s2 u1		R: du
-	ELSE
-		\ s1 longer than s2.
-		NIP						\ S: s1 s2 u2		R: du
-	THEN THEN
-	BEGIN ?DUP WHILE			\ S: s1 s2 u		R: du
-		1- >R					\ S: s1 s2			R: du u'
-		DUP C@ >R CHAR+ SWAP	\ S: s2' s1			R: du u' c2
-		DUP C@ >R CHAR+ SWAP	\ S: s1' s2'		R: du u' c2 c1
-		R> R> - ?DUP IF			\ S: s1' s2' diff	R: du u'
+\ (S: caddr1 u1 caddr2 u2 xt -- 1 | 0 | -1 )
+: _strcmp
+	>R RISE 2DUP - >R				\ S: s1 s2 u1 u2		R: xt du
+	DROP OVER CHARS + >R			\ S: s1 s2				R: xt du s2"
+	BEGIN DUP R@ < WHILE
+		C@+ >R SWAP					\ S: s2' s1				R: xt du s2" c2
+		C@+ >R SWAP					\ S: s1' s2'			R: xt du s2" c2 c1
+		R> 3 rpick EXECUTE			\ S: s1' s2' c1'		R: xt du s2" c2
+		R> 2 rpick EXECUTE			\ S: s1' s2' c1' c2'	R: xt du s2"
+		- ?DUP IF					\ S: s1' s2' diff		R: xt du s2"
 			\ Different stings at character.
-			2rdrop 				\ S: s1' s2' diff
-			>R 2DROP R>			\ S: diff
+			NIP NIP	2rdrop rdrop	\ S: diff
 			0< IF -1 ELSE 1 THEN
-			EXIT
+			EXIT					\ S: -1 | 1
 		THEN
-		R>						\ S: s1' s2' u'		R: du
 	REPEAT
+	2drop rdrop						\ S:					R: xt du
 	\ Matching leading strings.
-	2DROP R>					\ S: du
-	?DUP IF
+	R> rdrop DUP IF					\ S: du					R:
 		0< IF -1 ELSE 1 THEN
-	ELSE
-		0						\ Equal strings.
 	THEN
-;
+; $51 _pp!
+
+\ Same behaviour as C's strcmp().
+\ (S: caddr1 u1 caddr2 u2 -- 1 | 0 | -1 )
+: strcmp ['] _nop _strcmp ; $41 _pp!
+
+\ Same behaviour as C's strcasecmp().
+\ (S: caddr1 u1 caddr2 u2 -- 1 | 0 | -1 )
+: strcasecmp ['] tolower _strcmp ; $41 _pp!
 
 \ ... COMPARE ...
 \
@@ -1746,15 +1739,15 @@ VARIABLE _str_buf_curr
 			2DUP S" \" COMPARE 0= IF
 				\ Ignore remainder of comment line.
 				2DROP POSTPONE \
-			ELSE 2DUP S" [IF]" COMPARE 0= IF	\ level adr len
+			ELSE 2DUP S" [IF]" strcasecmp 0= IF	\ level adr len
 				2DROP 1+						\ level'
 			ELSE								\ level adr len
-				2DUP S" [ELSE]" COMPARE 0= IF	\ level adr len
+				2DUP S" [ELSE]" strcasecmp 0= IF	\ level adr len
 					2DROP 1-					\ level'
 					\ Not yet zero, then restore previous level while nested.
 					DUP IF 1+ THEN				\ level'
 				ELSE 							\ level adr len
-					S" [THEN]" COMPARE 0= IF	\ level
+					S" [THEN]" strcasecmp 0= IF	\ level
 						1-						\ level'
 					THEN
 				THEN

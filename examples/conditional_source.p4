@@ -6,14 +6,14 @@
 
 [DEFINED] WORDS [IF]
 	.( has WORDS ) CR
-	FALSE [IF]
+	FALSE [if]
 		.( this should not appear ) CR
-	[ELSE]
+	[else]
 		.( Boo! ) CR
 	[THEN]
 [ELSE]
 	.( 1 this should not appear ) CR
-[THEN]
+[then]
 
 .( check for BOGUS... ) CR
 
