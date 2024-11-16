@@ -1375,14 +1375,14 @@ _thrown:
 			p4WordFree(word);
 		} else {
 			word = ip[-1].nt;
-			(void) fprintf(STDERR, " executing %s\r\ninput: %s",
+			(void) fprintf(STDERR, " executing %s\r\ninput: "ANSI_UNDERLINE"%*s"ANSI_NORMAL,
 				word->length == 0 ? ":NONAME" : (char *)word->name,
-				ctx->input->buffer
+				(int)ctx->input->length, ctx->input->buffer
 			);
 			for (x.p = ctx->rs.top; ctx->rs.base <= x.p; x.p--) {
 				w = (*x.p).p[-1];
 				y.s = p4IsNt(ctx, w.nt) ? w.nt->name : "";
-				(void) fprintf(STDERR, "\r\n"P4_HEX_FMT" %s", (long) w.nt, y.s);
+				(void) fprintf(STDERR, "\r\n"P4_H0X_FMT"  %s", (long) w.nt, y.s);
 			}
 		}
 		/*@fallthrough@*/
@@ -1396,8 +1396,8 @@ _abort:		P4_RESET(ctx->ds);
 #ifdef HAVE_MATH_H
 		P4_RESET(ctx->fs);
 #endif
-		if (!is_tty) {
-			exit(P4_EXIT_EXCEPTION);
+		if (!P4_INPUT_IS_TERM(ctx->input)) {
+			return rc;
 		}
 		/*@fallthrough@*/
 	case P4_THROW_QUIT:

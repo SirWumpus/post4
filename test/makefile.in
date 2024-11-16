@@ -96,7 +96,7 @@ test_include_abort: ${PROG}
 	! echo | ${PROG} -c ${WORDS} ${top_srcdir}/test/data/abort0.p4
 	! echo | ${PROG} -c ${WORDS} -i ${top_srcdir}/test/data/abort0.p4
 	! printf "INCLUDE ${top_srcdir}/test/data/abort0.p4" | ${PROG} -c ${WORDS}
-	! printf "INCLUDE ${top_srcdir}/test/data/abort0.p4 \n BYE" | ${PROG} -c ${WORDS}
+	printf "INCLUDE ${top_srcdir}/test/data/abort0.p4 \n BYE" | ${PROG} -c ${WORDS}
 	@echo "-OK-"
 
 # GH-54
@@ -106,7 +106,7 @@ test_include_throw: ${PROG}
 	! echo | ${PROG} -c ${WORDS} ${top_srcdir}/test/data/throw0.p4
 	! echo | ${PROG} -c ${WORDS} -i ${top_srcdir}/test/data/throw0.p4
 	! printf "INCLUDE ${top_srcdir}/test/data/throw0.p4" | ${PROG} -c ${WORDS}
-	! printf "INCLUDE ${top_srcdir}/test/data/throw0.p4 \n BYE" | ${PROG} -c ${WORDS}
+	printf "INCLUDE ${top_srcdir}/test/data/throw0.p4 \n BYE" | ${PROG} -c ${WORDS}
 	@echo "-OK-"
 
 # GH-54 These tests have to be done manually, because the behaviour when
@@ -114,8 +114,8 @@ test_include_throw: ${PROG}
 # we may see different result.
 test_manual: ${PROG}
 	printf "INCLUDE ${top_srcdir}/test/data/quit0.p4 \n BYE" | ${PROG} -c ${WORDS}
-	! printf "INCLUDE ${top_srcdir}/test/data/abort0.p4 \n BYE" | ${PROG} -c ${WORDS}
-	! printf "INCLUDE ${top_srcdir}/test/data/throw0.p4 \n BYE" | ${PROG} -c ${WORDS}
+	printf "INCLUDE ${top_srcdir}/test/data/abort0.p4 \n BYE" | ${PROG} -c ${WORDS}
+	printf "INCLUDE ${top_srcdir}/test/data/throw0.p4 \n BYE" | ${PROG} -c ${WORDS}
 
 # GH-59
 test_stdin_accept: ${PROG}
