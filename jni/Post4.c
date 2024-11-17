@@ -89,11 +89,11 @@ JNIEXPORT void JNICALL
 Java_post4_jni_Post4_p4Free(JNIEnv *env, jobject self, jlong xtc)
 {
 	P4_Ctx *ctx = (P4_Ctx *) xtc;
-	if (ctx->argv != (char **) empty_argv) {
-		for (int argi = 0; argi < ctx->argc; argi++) {
-			free(ctx->argv[argi]);
+	if (ctx->options->argv != (char **) empty_argv) {
+		for (int argi = 0; argi < ctx->options->argc; argi++) {
+			free(ctx->options->argv[argi]);
 		}
-		free(ctx->argv);
+		free(ctx->options->argv);
 	}
 	p4Free(ctx);
 }
@@ -928,7 +928,11 @@ Java_post4_jni_Post4_p4Create(JNIEnv *env, jobject self, jobject opts)
 		return 0L;
 	}
 
-	p4HookInit(ctx, jHooks);
+	if (p4_hook_call == NULL) {
+		/* Evaluate nothing just to init p4_built_in. */
+		(void) p4EvalString(ctx, "", 0);
+		p4HookInit(ctx, jHooks);
+	}
 
 	// https://stackoverflow.com/questions/1632367/passing-pointers-between-c-and-java-through-jni
 	return (jlong) ctx;
