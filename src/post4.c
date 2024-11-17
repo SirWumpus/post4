@@ -148,6 +148,7 @@ p4OpenFilePath(const char *path_list, size_t plen, const char *file, size_t flen
 	}
 	/* Path list supplied or use the default? */
 	if (path_list == NULL || *path_list == '\0') {
+		plen = STRLEN(P4_CORE_PATH);
 		path_list = P4_CORE_PATH;
 	}
 	/* Need a duplicate because strtok modifies the string with NUL. */
@@ -2223,7 +2224,7 @@ _fa_open_path:	P4_DROP(ctx->ds, 1);
 		z = P4_POP(ctx->ds);
 		w = P4_POP(ctx->ds);
 		fp = p4OpenFilePath(w.s, z.u, y.s, x.u);
-		P4_TOP(ctx->ds).v = fp;
+		P4_PUSH(ctx->ds, (void *) fp);
 		P4_PUSH(ctx->ds, (P4_Int) errno);
 		NEXT;
 
