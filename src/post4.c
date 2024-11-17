@@ -911,8 +911,7 @@ p4Create(P4_Options *opts)
 
 	ctx->radix = 10;
 	ctx->unkey = EOF;
-	ctx->argc = opts->argc;
-	ctx->argv = opts->argv;
+	ctx->options = opts;
 	ctx->state = P4_STATE_INTERPRET;
 	ctx->trace = opts->trace;
 
@@ -942,22 +941,6 @@ p4Create(P4_Options *opts)
 	ctx->norder = 1;
 	ctx->order[0] = 1;
 	ctx->active = &ctx->lists[0];
-	if (p4EvalFile(ctx, opts->core_file)) {
-		goto error0;
-	}
-	if (p4_throw == NULL) {
-		/* Find THROW to aid with throwing exceptions from C to Forth. */
-		p4_throw = p4FindName(ctx, "THROW", STRLEN("THROW"));
-	}
-	if (p4_2lit == NULL) {
-		p4_2lit = p4FindName(ctx, "2lit", STRLEN("2lit"));
-	}
-#ifdef HAVE_MATH_H
-	if (p4_flit == NULL) {
-		p4_flit = p4FindName(ctx, "flit", STRLEN("flit"));
-	}
-#endif
-
 	return ctx;
 error0:
 	p4Free(ctx);
@@ -1315,9 +1298,19 @@ p4Repl(P4_Ctx *ctx, int thrown)
 		}
 		p4_builtin_words = word->prev;
 		*ctx->active = p4_builtin_words;
+#ifdef HAVE_HOOKS
 		/* Find _hook_call and install any hooked words, eg. SH SHELL. */
 		p4_hook_call = p4FindName(ctx, "_hook_call", STRLEN("_hook_call"));
 		p4HookInit(ctx, p4_hooks);
+#endif
+		if ((rc = p4EvalFile(ctx, ctx->options->core_file)) == P4_THROW_OK) {
+			/* Find THROW to aid with throwing exceptions from C to Forth. */
+			p4_throw = p4FindName(ctx, "THROW", STRLEN("THROW"));
+			p4_2lit = p4FindName(ctx, "2lit", STRLEN("2lit"));
+#ifdef HAVE_MATH_H
+			p4_flit = p4FindName(ctx, "flit", STRLEN("flit"));
+#endif
+		}
 	}
 
 #define NEXT		goto _next
@@ -1342,9 +1335,11 @@ p4Repl(P4_Ctx *ctx, int thrown)
 
 	SETJMP_PUSH(ctx->longjmp);
 	rc = SETJMP(ctx->longjmp);
+
 	if (thrown) {
 		/* Signal thrown overrides context. */
 		rc = thrown;
+		/* Throw might be caught, can't fall through. */
 		THROW(rc);
 	}
 _thrown:
@@ -1367,7 +1362,7 @@ _thrown:
 			 * definition in an incomplete state; discard it.
 			 */
 			word = *ctx->active;
-			(void) fprintf(STDERR, " while compiling %s",
+			(void) fprintf(STDERR, " compiling %s",
 				word->length == 0 ? ":NONAME" : (char *)word->name
 			);
 			*ctx->active = word->prev;
@@ -2585,11 +2580,13 @@ p4EvalFile(P4_Ctx *ctx, const char *file)
 	if ((p4_path = getenv("POST4_PATH")) == NULL) {
 		p4_path = P4_CORE_PATH;
 	}
+	P4_INPUT_PUSH(ctx->input);
 	if ((fp = p4OpenFilePath(p4_path, strlen(p4_path), file, strlen(file))) != NULL) {
 		p4ResetInput(ctx, fp);
 		rc = p4Repl(ctx, P4_THROW_OK);
 		(void) fclose(fp);
 	}
+	P4_INPUT_POP(ctx->input);
 error0:
 	return rc;
 }

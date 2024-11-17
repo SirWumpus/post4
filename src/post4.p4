@@ -211,6 +211,19 @@ BEGIN-STRUCTURE p4_input
 	/pad +FIELD in.data
 END-STRUCTURE
 
+BEGIN-STRUCTURE p4_options
+	FIELD: opt.argc
+	FIELD: opt.argv
+	FIELD: opt.trace
+	FIELD: opt.ds_size;
+	FIELD: opt.rs_size;
+	FIELD: opt.fs_size;
+	FIELD: opt.mem_size;
+	FIELD: opt.hist_size;
+	FIELD: opt.core_file;
+	FIELD: opt.block_file;
+END-STRUCTURE
+
 \ Example
 \
 \	_ctx		 		\ Post4 machine context pointer
@@ -226,8 +239,6 @@ BEGIN-STRUCTURE p4_ctx
 	FIELD: ctx.trace			\ see _trace
 	FIELD: ctx.level			\ see p4
 	FIELD: ctx.radix			\ see BASE
-	FIELD: ctx.argc				\ see args
-	FIELD: ctx.argv
 	p4_stack +FIELD ctx.ds		\ see _ds
 	p4_stack +FIELD ctx.rs		\ see _rs
 \ [DEFINED] _fs [IF]
@@ -243,6 +254,7 @@ BEGIN-STRUCTURE p4_ctx
 	WORDLISTS CELLS +FIELD ctx.lists
 	FIELD: ctx.norder
 	WORDLISTS CELLS +FIELD ctx.order
+	p4_options +FIELD ctx.options
 \ [DEFINED] jcall [IF]
 	FIELD: ctx.jenv
 \ [THEN]
@@ -257,7 +269,7 @@ END-STRUCTURE
 : BASE _ctx ctx.radix ; $01 _pp!
 
 \ (S: -- argv argc )
-: args _ctx ctx.argv @ _ctx ctx.argc @ ; $02 _pp!
+: args _ctx ctx.options @ DUP opt.argv @ SWAP opt.argc @ ; $02 _pp!
 
 \ ( -- u )
 : UNUSED _end HERE - ; $01 _pp!

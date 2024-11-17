@@ -126,20 +126,19 @@ main(int argc, char **argv)
 	options.argc = argc - optind;
 	options.argv = argv + optind;
 
+	sig_init();
 	p4Init(&options);
+	(void) atexit(cleanup);
 	if ((rc = SETJMP(sig_break_glass)) != 0) {
 		THROW_MSG(rc);
 		(void) fprintf(stderr, "\r\n");
 		return P4_EXIT_STATUS(rc);
 	}
-	sig_init();
 	if ((ctx_main = p4Create(&options)) == NULL) {
 		return P4_EXIT_FAIL;
 	}
-	(void) atexit(cleanup);
 
-	optind = 1;
-	while ((ch = getopt(argc, argv, flags)) != -1) {
+	for (optind = 1; (ch = getopt(argc, argv, flags)) != -1; ) {
 		if (ch == 'i' && (rc = p4EvalFile(ctx_main, optarg)) != P4_THROW_OK) {
 			/* If an exception, other than ABORT or QUIT, occurs
 			 * they will generate an exception message.  Do not
