@@ -89,11 +89,16 @@ JNIEXPORT void JNICALL
 Java_post4_jni_Post4_p4Free(JNIEnv *env, jobject self, jlong xtc)
 {
 	P4_Ctx *ctx = (P4_Ctx *) xtc;
-	if (ctx->options->argv != (char **) empty_argv) {
-		for (int argi = 0; argi < ctx->options->argc; argi++) {
-			free(ctx->options->argv[argi]);
+	if (ctx->options != NULL) {
+		if (ctx->options->argv != (char **) empty_argv) {
+			for (int argi = 0; argi < ctx->options->argc; argi++) {
+				free(ctx->options->argv[argi]);
+			}
+			free(ctx->options->argv);
 		}
-		free(ctx->options->argv);
+		free((void *) ctx->options->block_file);
+		free((void *) ctx->options->core_file);
+		free(ctx->options);
 	}
 	p4Free(ctx);
 }
@@ -154,7 +159,9 @@ Java_post4_jni_Post4_evalFile(JNIEnv *env, jobject self, jstring fpath)
 	P4_Ctx *ctx = getCtx(env, self);
 	ctx->jenv = env;
 	const char *path = (*env)->GetStringUTFChars(env, fpath, NULL);
+	sig_init();
 	int rc = p4EvalFile(ctx, path);
+	sig_fini();
 	(*env)->ReleaseStringUTFChars(env, fpath, path);
 	if (rc != P4_THROW_OK) {
 		(*env)->Throw(env, post4Exception(env, rc));
@@ -168,7 +175,9 @@ Java_post4_jni_Post4_evalString(JNIEnv *env, jobject self, jstring string)
 	ctx->jenv = env;
 	size_t len = (*env)->GetStringLength(env, string);
 	const char *str = (*env)->GetStringUTFChars(env, string, NULL);
+	sig_init();
 	int rc = p4EvalString(ctx, str, len);
+	sig_fini();
 	(*env)->ReleaseStringUTFChars(env, string, str);
 	if (rc != P4_THROW_OK) {
 		(*env)->Throw(env, post4Exception(env, rc));
@@ -870,56 +879,73 @@ Java_post4_jni_Post4_p4Create(JNIEnv *env, jobject self, jobject opts)
 {
 	P4_Ctx *ctx;
 	jfieldID fid;
-	P4_Options p4_opts;
+	jboolean is_copy;
+	const char *cstr;
+	P4_Options *p4_opts;
+
+	/* The context returned by p4Create() holds the pointer to p4_opts
+	 * until Post4.p4Free(), so we need to allocate p4_opts and string
+	 * memebers.
+	 */
+	if ((p4_opts = calloc(1, sizeof (*p4_opts))) == NULL) {
+		(*env)->Throw(env, (*env)->FindClass(env, "java/lang/OutOfMemory"));
+		return 0L;
+	}
 
 	/* Map from object to struct. */
 	jclass clazz = (*env)->GetObjectClass(env, opts);
 
 	fid = (*env)->GetFieldID(env, clazz, "trace", "I");
-	p4_opts.trace = (int)(*env)->GetIntField(env, opts, fid);
+	p4_opts->trace = (int)(*env)->GetIntField(env, opts, fid);
 	fid = (*env)->GetFieldID(env, clazz, "ds_size", "I");
-	p4_opts.ds_size = (unsigned)(*env)->GetIntField(env, opts, fid);
+	p4_opts->ds_size = (unsigned)(*env)->GetIntField(env, opts, fid);
 	fid = (*env)->GetFieldID(env, clazz, "fs_size", "I");
-	p4_opts.fs_size = (unsigned)(*env)->GetIntField(env, opts, fid);
+	p4_opts->fs_size = (unsigned)(*env)->GetIntField(env, opts, fid);
 	fid = (*env)->GetFieldID(env, clazz, "rs_size", "I");
-	p4_opts.rs_size = (unsigned)(*env)->GetIntField(env, opts, fid);
+	p4_opts->rs_size = (unsigned)(*env)->GetIntField(env, opts, fid);
 	fid = (*env)->GetFieldID(env, clazz, "mem_size", "I");
-	p4_opts.mem_size = (unsigned)(*env)->GetIntField(env, opts, fid);
+	p4_opts->mem_size = (unsigned)(*env)->GetIntField(env, opts, fid);
+	fid = (*env)->GetFieldID(env, clazz, "hist_size", "I");
+	p4_opts->hist_size = (unsigned)(*env)->GetIntField(env, opts, fid);
 
+	is_copy = JNI_FALSE; /* Unclear if this is checked before to stop coping. */
 	fid = (*env)->GetFieldID(env, clazz, "core_file", "Ljava/lang/String;");
 	jstring jcore_file = (*env)->GetObjectField(env, opts, fid);
-	p4_opts.core_file = (*env)->GetStringUTFChars(env, jcore_file, NULL);
-	if (p4_opts.core_file == NULL) {
-		p4_opts.core_file = P4_CORE_FILE;
-	}
+	/* Get a short term (copy) C string that belongs to the JVM. */
+	cstr = (*env)->GetStringUTFChars(env, jcore_file, &is_copy);
+	/* Make a long term copy under our JNI control.  */
+	p4_opts->core_file = strdup(cstr == NULL ? P4_CORE_FILE : cstr);
+	(*env)->ReleaseStringUTFChars(env, jcore_file, cstr);
 
+	is_copy = JNI_FALSE; /* Unclear if this is checked before to stop coping. */
 	fid = (*env)->GetFieldID(env, clazz, "block_file", "Ljava/lang/String;");
 	jstring jblock_file = (*env)->GetObjectField(env, opts, fid);
-	p4_opts.block_file = (*env)->GetStringUTFChars(env, jblock_file, NULL);
+	cstr = (*env)->GetStringUTFChars(env, jblock_file, &is_copy);
+	p4_opts->block_file = strdup(cstr == NULL ? "" : cstr);
+	(*env)->ReleaseStringUTFChars(env, jblock_file, cstr);
 
 	fid = (*env)->GetFieldID(env, clazz, "argv", "[Ljava/lang/String;");
 	jobjectArray jargv = (*env)->GetObjectField(env, opts, fid);
-	p4_opts.argc = (int) (*env)->GetArrayLength(env, jargv);
-	if ((p4_opts.argv = malloc((p4_opts.argc + 1) * sizeof (*p4_opts.argv))) == NULL) {
-		p4_opts.argv = (char **) empty_argv;
-		p4_opts.argc = 0;
+	p4_opts->argc = (int) (*env)->GetArrayLength(env, jargv);
+	if ((p4_opts->argv = malloc((p4_opts->argc + 1) * sizeof (*p4_opts->argv))) == NULL) {
+		p4_opts->argv = (char **) empty_argv;
+		p4_opts->argc = 0;
 	} else {
-		p4_opts.argv[p4_opts.argc] = NULL;
-		for (int argi = 0; argi < p4_opts.argc; argi++) {
+		p4_opts->argv[p4_opts->argc] = NULL;
+		for (int argi = 0; argi < p4_opts->argc; argi++) {
+			is_copy = JNI_FALSE; /* Unclear if this is checked before to stop coping. */
 			jstring jstr = (*env)->GetObjectArrayElement(env, jargv, argi);
-			const char *str = (*env)->GetStringUTFChars(env, jstr, NULL);
-			p4_opts.argv[argi] = strdup(str);
-			(*env)->ReleaseStringUTFChars(env, jstr, str);
+			cstr = (*env)->GetStringUTFChars(env, jstr, &is_copy);
+			p4_opts->argv[argi] = strdup(cstr);
+			(*env)->ReleaseStringUTFChars(env, jstr, cstr);
 			(*env)->DeleteLocalRef(env, jstr);
 		}
 	}
 	(*env)->DeleteLocalRef(env, jargv);
 
 	/* Create Post4 context. */
-	ctx = p4Create(&p4_opts);
+	ctx = p4Create(p4_opts);
 
-	(*env)->ReleaseStringUTFChars(env, jcore_file, p4_opts.core_file);
-	(*env)->ReleaseStringUTFChars(env, jblock_file, p4_opts.block_file);
 	(*env)->DeleteLocalRef(env, clazz);
 
 	if (ctx == NULL) {

@@ -107,19 +107,22 @@ ${LIBNAME}: Post4$O ../src/libpost4$A
 ../src/libpost4$A : ../src/*.h ../src/*.c
 	cd ../src; ${MAKE} libpost4$A
 
-run: build Post4.jar
+run: Post4.jar
 	POST4_PATH="${POST4_PATH}" java -Djava.library.path="$${POST4_PATH}" -cp ../.. ${MAIN}
 
-test: build Post4.jar
+debug: Post4.jar
+	POST4_PATH="${POST4_PATH}" gdb --args java -Djava.library.path="$${POST4_PATH}" -cp ../.. ${MAIN}
+
+test: Post4.jar
 	POST4_PATH="${POST4_PATH}" java -Djava.library.path="$${POST4_PATH}" -cp ../.. ${MAIN} ../test/units.p4
 
 testjar: Post4.jar
 	POST4_PATH="${POST4_PATH}" java -Djava.library.path="$${POST4_PATH}" -jar Post4.jar
 
-testbye: build
+testbye: Post4.jar
 	echo bye | POST4_PATH="${POST4_PATH}" java -Djava.library.path="$${POST4_PATH}" -cp ../.. ${MAIN}
 
-cygtest: build
+cygtest: Post4.jar
 	cp ${LIBNAME} post4jni.dll
 	POST4_PATH="${POST4_PATH}"; java -Djava.library.path=".;..\\src" -cp ../.. ${MAIN} ../test/units.p4
 
