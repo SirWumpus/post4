@@ -663,9 +663,6 @@ p4StrNum(P4_String str, unsigned base, P4_Cell out[2], int *is_float, int *is_do
 			}
 #ifdef HAVE_MATH_H
 			char *stop;
-			/* We don't accept the double-cell notation 123. 0.
-			 * as this is confusing with floating point input.
-			 */
 			/* Note that 1E 0E 123E may not accepted depending
 			 * on the version of strtod().  0.0, .0, 0E0, 123.,
 			 * 123.456 work fine.
