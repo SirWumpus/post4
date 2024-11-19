@@ -2,7 +2,7 @@
 #	Thus it begins...
 #######################################################################
 
-AC_INIT(post4, 0.12.0, [Anthony Howe <achowe@snert.com>])
+AC_INIT(post4, 0.13.0, [Anthony Howe <achowe@snert.com>])
 
 dnl The autoconf version I learned to deal with.
 AC_PREREQ(2.59)
