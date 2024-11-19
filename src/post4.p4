@@ -2864,4 +2864,8 @@ WORDLIST CONSTANT required-wordlist
 	DUP @ CELLS OVER + DO I @ /CELL NEGATE +LOOP SET-ORDER
 ;
 
+\ GH-76
+: set-source ( sd -- ) _ctx ctx.input @ TUCK in.length ! in.buffer ! ;
+: execute-parsing ( any sd xt -- any ) _input_push -rot set-source CATCH _input_pop THROW ;
+
 MARKER rm_user_words

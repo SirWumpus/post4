@@ -200,3 +200,9 @@ T{ S" tw_syn-n>s1" 2DUP FIND-NAME NAME>STRING strcasecmp -> 0 }T
 
 \ Can't test DOES> on a synonym as there is no portable way to test ambiguous conditions`
 test_group_end
+
+[defined] execute-parsing [if]
+.( GH-76 execute-parsing ) test_group
+t{ 123  s" tw_123" ' constant execute-parsing tw_123 -> 123 }t
+[then]
+test_group_end
