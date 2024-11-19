@@ -1367,9 +1367,8 @@ _thrown:
 			ctx->here = (P4_Char *) word->data;
 			p4WordFree(word);
 		} else {
-			word = ip[-1].nt;
-			(void) fprintf(STDERR, " executing %s\r\ninput: "ANSI_UNDERLINE"%*s"ANSI_NORMAL,
-				word->length == 0 ? ":NONAME" : (char *)word->name,
+			/* Cannot rely on ip pointint to the xt after the error. */
+			(void) fprintf(STDERR, "\r\ninput: "ANSI_UNDERLINE"%*s"ANSI_NORMAL,
 				(int)ctx->input->length, ctx->input->buffer
 			);
 			for (x.p = ctx->rs.top; ctx->rs.base <= x.p; x.p--) {
@@ -1761,9 +1760,10 @@ _allot:		P4_DROP(ctx->ds, 1);
 		// ( xt -- <spaces>name )
 _alias:		P4_DROP(ctx->ds, 1);
 		str = p4ParseName(ctx->input);
-		word = p4WordCreate(ctx, str.string, str.length, x.xt->code);
-		word->ndata = x.xt->ndata;
-		word->data = x.xt->data;
+		word = p4WordCreate(ctx, str.string, str.length, x.nt->code);
+		word->ndata = x.nt->ndata;
+		word->data = x.nt->data;
+		word->bits = x.nt->bits;
 		NEXT;
 
 		// ( key k -- value v )

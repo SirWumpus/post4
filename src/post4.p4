@@ -528,28 +528,19 @@ MAX-U MAX-N 2CONSTANT MAX-D
 	D0=							\ S: bool
 ;
 
-\ ... CR ...
-\
+\ (S: <spaces>name.new <spaces>name.old -- )
+: SYNONYM >IN @ PARSE-NAME 2DROP ' >IN @ SPIN >IN ! alias >IN ! ;
+
 \ (S: -- )
-\
 : CR '\r' EMIT '\n' EMIT ;
 
-\ ... SPACE ...
-\
 \ (S: -- )
-\
 : SPACE BL EMIT ;
 
-\ ... COUNT ...
-\
 \ (S: caddr1 -- caddr2 u )
-\
 : COUNT DUP CHAR+ SWAP C@ ;
 
-\ ...	CHAR	...
-\
 \ (S: <spaces>name -- char )
-\
 : CHAR PARSE-NAME DROP C@ ;
 
 \ Compile LIT xt into the current word, which pushes xt when run.

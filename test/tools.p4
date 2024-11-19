@@ -157,3 +157,46 @@ T{ FALSE [IF]
     [THEN] -> 3 4 }T
 
 test_group_end
+
+.( SYNONYM ) test_group
+1 VALUE tv_val
+T{ SYNONYM tv_synval tv_val -> }T
+T{ tv_val tv_synval -> 1 1 }T
+
+2 TO tv_val
+T{ tv_synval -> 2 }T
+T{ 3 TO tv_synval -> }T
+T{ tv_val tv_synval -> 3 3 }T
+
+\ Similarly for 2VALUE and FVALUE
+DEFER tw_def :NONAME 4 ; IS tw_def
+T{ SYNONYM tw_syndef tw_def -> }T
+T{ tw_def tw_syndef -> 4 4 }T
+
+:NONAME 5 ; IS tw_syndef
+T{ tw_def tw_syndef -> 5 5 }T
+
+:NONAME 6 ; CONSTANT tv_defxt
+T{ tv_defxt ' tw_syndef DEFER! -> }T
+T{ tw_def tw_syndef -> 6 6 }T
+T{ ' tw_syndef DEFER@ ' tw_def DEFER@ -> tv_defxt DUP }T
+T{ ACTION-OF tw_syndef -> tv_defxt }T
+
+CREATE tw_cre
+T{ SYNONYM tw_syncre tw_cre -> }T
+T{ ' tw_cre >BODY ' tw_syncre >BODY = -> TRUE }T
+
+\ In Post4 xt of aliases and synonyms not the same.
+\ CREATE tw_foo
+\ SYNONYM tw_bar tw_foo
+\ t{ ' tw_bar -> ' tw_foo }t
+\ SYNONYM tw_baz tw_bar
+\ t{ ' tw_baz -> ' tw_foo }t
+
+CREATE tw_n>s1
+SYNONYM tw_syn-n>s1 tw_n>s1
+T{ S" tw_n>s1" 2DUP FIND-NAME NAME>STRING strcasecmp -> 0 }T
+T{ S" tw_syn-n>s1" 2DUP FIND-NAME NAME>STRING strcasecmp -> 0 }T
+
+\ Can't test DOES> on a synonym as there is no portable way to test ambiguous conditions`
+test_group_end

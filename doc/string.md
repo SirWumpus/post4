@@ -56,8 +56,13 @@ Return true if string `caddr1` `u1` starts with string `caddr2` `u2`; otherwise 
 
 - - -
 #### strcmp
-( `caddr1` `u1` `caddr2` `u2` -- `n` )  
-Compare the two strings lexicographically.  Return `n` greater than, equal to, or less than zero (0), according to whether the string `caddr1` `u1` is greater than, equal to, or less than the string `caddr2` `u2`.
+( `caddr1` `u1` `caddr2` `u2` -- `-1` | `0` | `1` )  
+Case sensitive string comparison.  Return a value greater than, equal to, or less than zero (0), according to whether the string `caddr1` `u1` is greater than (1), equal to (0), or less than (-1) the string `caddr2` `u2`.
+
+- - -
+#### strcasecmp
+( `caddr1` `u1` `caddr2` `u2` -- `-1` | `0` | `1` )  
+Caseless string comparison.  Return a value greater than, equal to, or less than zero (0), according to whether the string `caddr1` `u1` is greater than (1), equal to (0), or less than (-1) the string `caddr2` `u2`.
 
 - - -
 #### strlen
