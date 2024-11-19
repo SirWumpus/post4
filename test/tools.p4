@@ -204,5 +204,5 @@ test_group_end
 [defined] execute-parsing [if]
 .( GH-76 execute-parsing ) test_group
 t{ 123  s" tw_123" ' constant execute-parsing tw_123 -> 123 }t
-[then]
 test_group_end
+[then]
