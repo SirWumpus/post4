@@ -1210,7 +1210,6 @@ p4Repl(P4_Ctx *ctx, int thrown)
 		P4_WORD("_created",	&&_created,	0, 0x20),
 		P4_WORD("CREATE",	&&_create,	0, 0x00),
 		P4_WORD("DOES>",	&&_does,	P4_BIT_COMPILE, 0x1000),
-		P4_WORD("_evaluate",	&&_evaluate,	0, 0x20),	// p4
 		P4_WORD("EXECUTE",	&&_execute,	0, 0x10),
 		P4_WORD("EXIT",		&&_exit,	P4_BIT_COMPILE, 0x1000),
 		P4_WORD("IMMEDIATE",	&&_immediate,	0, 0x00),
@@ -1658,11 +1657,6 @@ _immediate:	P4_WORD_SET_IMM(*ctx->active);
 _pp_put:	P4_DROP(ctx->ds, 1);
 		(*ctx->active)->poppush = x.u;
 		NEXT;
-
-		// ( i*x caddr u -- j*x )
-_evaluate:	ctx->input->length = P4_POP(ctx->ds).z;
-		ctx->input->buffer = P4_POP(ctx->ds).s;
-		goto _interpret;
 
 		// ( i*x fd -- j*y )
 _eval_file:	P4_DROP(ctx->ds, 1);

@@ -1778,7 +1778,7 @@ VARIABLE _str_buf_curr
 \ (S: ctx -- aaddr )
 : ctx.words ctx.active @ ;
 
-\ (S: -- )
+\ (S: -- aaddr )
 : _input_ptr _ctx ctx.input ;
 
 \ (S: -- aaddr )
@@ -1930,10 +1930,14 @@ VARIABLE _str_buf_curr
 	R> R> _block_ptr ! >R
 ;
 
+\ GH-76
+: set-source ( sd -- ) _input_ptr @ TUCK in.length ! in.buffer ! ; $20 _pp!
+: execute-parsing ( any sd xt -- any ) _input_push -rot set-source CATCH _input_pop THROW ;
+
 \ (S: i*x u -- j*x )
 : LOAD
 	_input_push _block_push
-	DUP BLK ! BLOCK _blk_size ['] _evaluate CATCH
+	DUP BLK ! BLOCK _blk_size set-source ['] _interpret CATCH
 	_block_pop _input_pop THROW
 ; $10 _pp!
 
@@ -1944,7 +1948,7 @@ VARIABLE _str_buf_curr
 \ @see
 \	https://forth-standard.org/standard/block/EVALUATE
 \
-: EVALUATE _input_push 0 BLK ! ['] _evaluate CATCH _input_pop THROW ; $20 _pp!
+: EVALUATE ['] _interpret execute-parsing ; $20 _pp!
 
 \ (S: start end -- )
 : THRU
@@ -2863,9 +2867,5 @@ WORDLIST CONSTANT required-wordlist
 	\ Restore search order.
 	DUP @ CELLS OVER + DO I @ /CELL NEGATE +LOOP SET-ORDER
 ;
-
-\ GH-76
-: set-source ( sd -- ) _ctx ctx.input @ TUCK in.length ! in.buffer ! ;
-: execute-parsing ( any sd xt -- any ) _input_push -rot set-source CATCH _input_pop THROW ;
 
 MARKER rm_user_words
