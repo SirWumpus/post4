@@ -499,7 +499,7 @@ p4Divu(P4_Uint dend0, P4_Uint dend1, P4_Uint dsor, P4_Uint *rem)
 	P4_Uint_Half q0, q1;		// Quotient digits.
 
 	if (dsor == 0) {
-		(void) raise(SIGFPE);
+		(void) LONGJMP(sig_break_glass, P4_THROW_SIGFPE);
 	}
 	if (dend1 >= dsor) {		// If overflow, set rem.
 		if (rem != NULL) {	// to an impossible value,
@@ -2613,12 +2613,12 @@ typedef struct {
 } sig_map;
 
 static sig_map signalmap[] = {
-	{ SIGBUS, P4_THROW_SIGBUS, sig_int, NULL },
+	/* User interrupt remain within the process. */
 	{ SIGINT, P4_THROW_SIGINT, sig_int, NULL },
-	{ SIGFPE, P4_THROW_SIGFPE, sig_int, NULL },
 	{ SIGSEGV, P4_THROW_SIGSEGV, sig_int, NULL },
 	{ SIGTERM, P4_THROW_SIGTERM, sig_exit, NULL },
 #ifdef NDEBUG
+	/* User clean exit without generating a core file. */
 	{ SIGQUIT, P4_THROW_QUIT, sig_exit, NULL },
 #endif
 	{ 0, P4_THROW_OK, NULL, NULL }
@@ -2633,6 +2633,7 @@ sig_int(int signum)
 			break;
 		}
 	}
+	/*** Typically longjmp() from a signal handler is unsafe. ***/
 	LONGJMP(sig_break_glass, signum);
 }
 
