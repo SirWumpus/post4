@@ -82,13 +82,11 @@ t{ 1.0     FDEPTH -> 1 1.0 }t
 t{ 2.1 3.2 FDEPTH -> 2.1 2 3.2 }t
 test_group_end
 
-FALSE [IF]
 .( >FLOAT ) test_group
 t{ S" 2.718281" >FLOAT -> 2.718281 TRUE }t 	\ e = 2.718281828459 ...
 t{ S" 3.141592" >FLOAT -> 3.141592 TRUE }t	\ PI = 3.141592653589 ...
 t{ S" 6.62607015e-34" >FLOAT -> 6.62607015e-34 TRUE }t	\ Planck's
 test_group_end
-[THEN]
 
 .( FVALUE TO ) test_group
 T{ 123e0 FVALUE tv_fval -> }T

@@ -69,7 +69,7 @@ main(int argc, char **argv)
 	int ch, rc;
 
 	while ((ch = getopt(argc, argv, flags)) != -1) {
-		unsigned val;
+		unsigned val = 0;
 		if (optarg != NULL) {
 			val = (unsigned) strtol(optarg, NULL, 10);
 		}
