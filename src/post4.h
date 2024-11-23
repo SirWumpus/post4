@@ -221,19 +221,6 @@ extern "C" {
 #define P4_TRUE		(~0)
 #define P4_BOOL(x)	((P4_Int) -(x))		/* negate 2's complement C boolean */
 
-typedef struct {
-	int argc;
-	char **argv;
-	int trace;
-	unsigned ds_size;
-	unsigned rs_size;
-	unsigned fs_size;
-	unsigned mem_size;
-	unsigned hist_size;
-	const char *core_file;
-	const char *block_file;
-} P4_Options;
-
 typedef void *P4_Code;			/* Address of labels, eg. ptr = &&label; */
 typedef void *P4_Ptr;
 #define P4_PTR_FMT "%p"
@@ -298,6 +285,19 @@ typedef struct p4_ctx P4_Ctx;
 
 typedef P4_Word *P4_Nt;
 typedef P4_Word *P4_Xt;			/* Currently same as an nt, but could change. */
+
+typedef struct {
+	P4_Int argc;
+	char **argv;
+	P4_Int trace;
+	P4_Uint ds_size;
+	P4_Uint rs_size;
+	P4_Uint fs_size;
+	P4_Uint mem_size;
+	P4_Uint hist_size;
+	const char *core_file;
+	const char *block_file;
+} P4_Options;
 
 typedef struct {
 	P4_Size		length;		/* Length of string less NUL byte. */
@@ -649,6 +649,9 @@ extern int p4EvalFile(P4_Ctx *ctx, const char *filepath);
  *	Zero on success, otherwise an exception code other than BYE.
  */
 extern int p4EvalString(P4_Ctx *ctx, const char *string, size_t length);
+
+extern void p4AllocStack(P4_Ctx *ctx, P4_Stack *stk, int size);
+
 
 extern const char *p4_exceptions[];
 extern JMP_BUF sig_break_glass;

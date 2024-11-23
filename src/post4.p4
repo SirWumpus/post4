@@ -5,15 +5,6 @@
 \ ( -- ⊥ )
 : BYE 0 bye-status ;
 
-\ (S: char u -- )
-: EMIT dsp@ 1 TYPE DROP ; $10 _pp!
-
-\ ( -- )
-: .S 'd' EMIT 's' EMIT '\r' EMIT '\n' EMIT _ds DROP _stack_dump ;
-
-\ ( -- )
-: .RS 'r' EMIT 's' EMIT '\r' EMIT '\n' EMIT _rs DROP 1 - _stack_dump ;
-
 \ ( char -- caddr u )
 : PARSE 0 _parse ;
 : parse-escape 1 _parse ; $12 _pp!
@@ -70,9 +61,6 @@
 \ (S: x -- x' )
 ' INVERT alias NOT $11 _pp!
 
-\ Just because I keep mistyping .s when other stacks are .rs and .fs
-' .s alias .ds
-
 \ (C: x <spaces>name -- ) (S: -- x )
 : CONSTANT CREATE , DOES> @ ; $01 _pp!
 
@@ -96,8 +84,12 @@ FALSE INVERT CONSTANT TRUE $01 _pp!
 MAX-N INVERT CONSTANT MIN-N $01 _pp!		\ 0x8000...0000
 0 INVERT CONSTANT MAX-U	$01 _pp!		\ 0xffff...ffff
 
-_rs CONSTANT return-stack-cells $01 _pp! DROP DROP
-_ds CONSTANT stack-cells $01 _pp! DROP DROP
+\ Compile LIT xt into the current word, which pushes xt when run.
+\ (C: <spaces>name -- ) (S: -- xt )
+: ['] LIT LIT COMPILE, ' COMPILE, ; IMMEDIATE compile-only
+
+\ (C: x -- ; S:  -- x )
+: LIT, ['] LIT COMPILE, , ;
 
 \ (S: nu -- flag )
 : 0<> 0= 0= ;
@@ -241,10 +233,8 @@ BEGIN-STRUCTURE p4_ctx
 	FIELD: ctx.radix			\ see BASE
 	p4_stack +FIELD ctx.ds		\ see _ds
 	p4_stack +FIELD ctx.rs		\ see _rs
-\ [DEFINED] _fs [IF]
 	p4_stack +FIELD ctx.fs		\ see _fs
 	FIELD: ctx.precision		\ see PRECISION and SET-PRECISION
-\ [THEN]
 	FIELD: ctx.unkey			\ KEY and KEY?
 	FIELD: ctx.input			\ pointer
 	FIELD: ctx.block			\ pointer
@@ -274,6 +264,52 @@ END-STRUCTURE
 \ ( -- u )
 : UNUSED _end HERE - ; $01 _pp!
 
+\ (S: -- aaddr )
+: _dstk _ctx ctx.ds ;
+: _fstk _ctx ctx.fs ;
+: _rstk _ctx ctx.rs ;
+
+\ (S: aaddr1 -- aaddr2 )
+: CELL+ /CELL + ; $11 _pp!
+: CELL- /CELL - ; $11 _pp!
+
+\ (S: -- aaddr )
+: dsp@ _dstk stk.top @ CELL- ; $01 _pp!
+: fsp@ _fstk stk.top @       ; $01 _pp!
+: rsp@ _rstk stk.top @ CELL- ; $01 _pp!
+
+\ (S: aaddr -- )
+: dsp! _dstk stk.top ! ; $10 _pp!
+: fsp! _fstk stk.top ! ; $10 _pp!
+: rsp! R> SWAP _rstk stk.top ! >R ; $10 _pp!
+
+\ (S: stk -- u )
+: _get-stack-depth DUP stk.top @ SWAP stk.base @ - /CELL / ; $11 _pp!
+
+\ (S: -- u )
+: DEPTH  _dstk _get-stack-depth 1- ; $01 _pp!
+: FDEPTH _fstk _get-stack-depth 1+ ; $01 _pp!
+: rdepth _rstk _get-stack-depth 1- ; $01 _pp!
+
+\ (S: u -- )
+: set-depth  1- CELLS _dstk stk.base @ + dsp! ; $10 _pp!
+: set-fdepth 1- CELLS _fstk stk.base @ + fsp! ; $10 _pp!
+: set-rdepth R> SWAP 1- CELLS _rstk stk.base @ + rsp! >R ; $10 _pp!
+
+\ (S: -- u )
+: stack-cells _dstk stk.size @ ; $01 _pp!
+: return-stack-cells _rstk stk.size @ ; $01 _pp!
+
+\ (S: char -- )
+\ Assumes little-endian.
+: EMIT dsp@ 1 TYPE DROP ; $10 _pp!
+
+\ ( -- )
+: .S 'd' EMIT 's' EMIT '\r' EMIT '\n' EMIT _ds DROP _stack_dump ;
+
+\ ( -- )
+: .RS 'r' EMIT 's' EMIT '\r' EMIT '\n' EMIT _rs DROP 1 - _stack_dump ;
+
 \ ( u "<spaces>name" -- addr )
 : BUFFER: CREATE ALLOT ; $11 _pp!
 
@@ -290,15 +326,8 @@ END-STRUCTURE
 : [ FALSE STATE ! ; IMMEDIATE \ allow interpret
 : ] TRUE STATE ! ; \ allow interpret
 
-\ (S: aaddr1 -- aaddr2 )
-: CELL+ /CELL + ; $11 _pp!
-: CELL- /CELL - ; $11 _pp!
-
 \ ( -- x )(R: x -- x)
 : R@ R> R> DUP >R SWAP >R ; $1101 _pp!
-
-\ (S" -- u )
-: DEPTH _ds DROP NIP ;
 
 \ (S: xn ... x1 n -- )
 : dropn CELLS dsp@ SWAP - CELL- dsp! ;
@@ -543,13 +572,6 @@ MAX-U MAX-N 2CONSTANT MAX-D
 \ (S: <spaces>name -- char )
 : CHAR PARSE-NAME DROP C@ ;
 
-\ Compile LIT xt into the current word, which pushes xt when run.
-\ (C: <spaces>name -- ) (S: -- xt )
-: ['] LIT LIT COMPILE, ' COMPILE, ; IMMEDIATE compile-only
-
-\ (C: x -- ; S:  -- x )
-: LIT, ['] LIT COMPILE, , ;
-
 \ ... : name ... [ x ] LITERAL ... ;
 \
 \	(C: x -- ) (S: -- x )
@@ -683,46 +705,41 @@ MAX-U MAX-N 2CONSTANT MAX-D
 \
 : DEFER@ >BODY @ ;
 
-DEFER fsp@
-DEFER fsp!
-
-' TRUE ' fsp@ DEFER!
-' DROP ' fsp! DEFER!
-
 \ ... CATCH ...
 \
 \ ( i*x xt -- j*x 0 | i*x n )
 \
-: CATCH							\ S: xt		R: ip
-	dsp@ >R						\ S: xt		R: ip ds
-	fsp@ >R						\ S: xt		R: ip ds fs
-	catch_frame @ >R			\ S: xt		R: ip ds fs cf
-	rsp@ catch_frame !			\ S: xt		R: ip ds fs cf
-	EXECUTE						\ S: --		R: ip ds fs cf
-	R> catch_frame !			\ S: --		R: ip ds fs
-	R> R> 2DROP 				\ S: --		R: ip
-	0							\ S: 0		R: ip
+
+: CATCH									\ S: xt
+	DEPTH >R							\ S: xt		R: ds
+	FDEPTH >R							\ S: xt		R: ds fs
+	catch_frame @ >R					\ S: xt		R: ds fs cf
+	rdepth catch_frame !				\ S: xt		R: ds fs cf
+	EXECUTE								\ S: --		R: ds fs cf
+	R> catch_frame !					\ S: --		R: ds fs
+	2rdrop		 						\ S: --		R:
+	0									\ S: 0
 ; $11 _pp!
 
 \ ... THROW ...
 \
 \ ( k*x n -- k*x | i*x n )
 \
-: THROW							\ S: n		R:
+: THROW									\ S: n
 	\ 0 THROW is a no-op.
-	?DUP IF						\ S: n		R:
+	?DUP IF								\ S: n
 		\ When no catch frame, throw to C.
-		catch_frame @ 0= IF		\ S: n		R:
-			_longjmp			\ S: --		R: --
+		catch_frame @ 0= IF				\ S: n
+			_longjmp					\ S: n
 		THEN
 		\ Restore return stack of CATCH at EXECUTE.
-		catch_frame @ rsp!		\ S: n		R: ip ds fs cf
-		R> catch_frame !		\ S: n		R: ip ds fs
-		R> fsp!					\ S: n		R: ip ds fs
-		R> SWAP >R				\ S: ds		R: ip n
+		catch_frame @ set-rdepth		\ S: n		R: ip ds fs cf
+		R> catch_frame !				\ S: n		R: ip ds fs
+		R> set-fdepth					\ S: n		R: ip ds fs
+		R> SWAP >R						\ S: ds		R: ip n
 		\ Restore data stack at start of CATCH
-		dsp!					\ S: xt		R: ip n
-		DROP R>					\ S: n		R: ip
+		set-depth						\ S: xt		R: ip n
+		DROP R>		 					\ S: n		R: ip
 	THEN
 ; $10 _pp!
 
@@ -2269,10 +2286,8 @@ VARIABLE _do_sys_stk
 	_loop_control
 ; IMMEDIATE compile-only
 
-[DEFINED] _fs [IF]
-_fs CONSTANT floating-stack DROP DROP
-' _fsp@ IS fsp@
-' _fsp! IS fsp!
+[DEFINED] F@ [IF]
+: floating-stack _fstk stk.size @ ; $01 _pp!
 
 ' CELLS alias FLOATS
 1 FLOATS CONSTANT /FLOAT
@@ -2365,9 +2380,6 @@ _fs CONSTANT floating-stack DROP DROP
 
 \ (F: f1 f2 -- ) (S: -- bool)
 : F= F- F0= ;
-
-\ (S: -- u )
-: FDEPTH _fs DROP NIP ;
 
 \ ( F: f1 -- f2 )
 : FNEGATE [ 0.0 ] FLITERAL FSWAP F- ;
@@ -2584,7 +2596,7 @@ MIN-N CONSTANT _sign_mask
 	CHAR+ CHARS + ALIGNED CELL-			\ S: ip3
 ; $11 _pp!
 
-[DEFINED] _fs [IF]
+[DEFINED] flit [IF]
 \ (S: ip -- ip' )
 : _see_flit
 	FLOAT+ DUP F@ F.

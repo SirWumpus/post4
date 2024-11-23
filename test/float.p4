@@ -1,13 +1,13 @@
 INCLUDE ../test/assert.p4
 
-[UNDEFINED] _fs [IF]
+[UNDEFINED] F@ [IF]
 
 .( Float support disabled. ) CR
 
 [ELSE]
 
 .( GH-68 e is not a float ) test_group
-t{ s" 0 0 efoobar-undefined-word" ' evaluate catch nip nip -> -13 }t
+t{ s" 0 1 efoobar-undefined-word" ' evaluate catch nip nip -> -13 }t
 test_group_end
 
 .( F0= ) test_group

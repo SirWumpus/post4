@@ -857,21 +857,30 @@ p4ResetInput(P4_Ctx *ctx, FILE *fp)
 	ctx->input->blk = 0;
 }
 
-static void
-p4AllocStack(P4_Ctx *ctx, P4_Stack *stk, int size, int allot)
+void
+p4AllocStack(P4_Ctx *ctx, P4_Stack *stk, int size)
 {
-	if (allot) {
-		stk->base = (P4_Cell *) ctx->here;
-		ctx->here += (size + P4_GUARD_CELLS) * sizeof (*stk->base);
-	} else if ((stk->base = calloc(size + P4_GUARD_CELLS, sizeof (*stk->base))) == NULL) {
+	int depth = 0;
+	P4_Cell *base = NULL;
+	if (size < stk->size) {
+		return;
+	}
+	if (stk->base != NULL) {
+		base = stk->base - P4_GUARD_CELLS/2;
+		depth = P4_PLENGTH(stk);
+		size += P4_STACK_EXTRA;
+	}
+	if ((base = realloc(base, (size + P4_GUARD_CELLS) * sizeof (*stk->base))) == NULL) {
 		LONGJMP(ctx->longjmp, P4_THROW_ALLOCATE);
 	}
 	/* Adjust base for underflow guard. */
-	stk->base += P4_GUARD_CELLS/2;
+	stk->base = base + P4_GUARD_CELLS/2;
 	stk->base[size].u = P4_SENTINEL;
 	stk->base[-1].u = P4_SENTINEL;
+	stk->base[size+1].u = 0;
+	stk->base[-2].u = 0;
 	stk->size = size;
-	P4_PRESET(stk);
+	P4_PSET(stk, depth);
 }
 
 static P4_Input *
@@ -915,11 +924,11 @@ p4Create(P4_Options *opts)
 	/* Do not ALLOT the data stack, malloc it so JNI code
 	 * can enlarge it as necessary to unpack arrays.
 	 */
-	p4AllocStack(ctx, &ctx->ds, opts->ds_size, 0);
+	p4AllocStack(ctx, &ctx->ds, opts->ds_size);
 	/* Allot these fixed size stacks. */
-	p4AllocStack(ctx, &ctx->rs, opts->rs_size, 1);
+	p4AllocStack(ctx, &ctx->rs, opts->rs_size);
 #ifdef HAVE_MATH_H
-	p4AllocStack(ctx, &ctx->fs, opts->fs_size, 1);
+	p4AllocStack(ctx, &ctx->fs, opts->fs_size);
 	ctx->precision = 6;
 #endif
 	if ((ctx->input = p4CreateInput()) == NULL) {
@@ -1107,6 +1116,8 @@ p4Repl(P4_Ctx *ctx, int thrown)
 #ifdef HAVE_HOOKS
 		P4_WORD("_hook_call",	&&_hook_call,	0, 0x00),	// p4
 #endif
+		/* Exposed even when no float support; see CATCH THROW. */
+		P4_WORD("_fs",		&&_fs,		0, 0x03),	// p4
 #ifdef HAVE_MATH_H
 # if defined(FLT_EVAL_METHOD) == 0
 #  define MAX_FLOAT	((float) FLT_MAX)
@@ -1117,9 +1128,6 @@ p4Repl(P4_Ctx *ctx, int thrown)
 # endif
 //		P4_FVAL("min-float",	MIN_FLOAT),			// p4
 		P4_FVAL("max-float",	MAX_FLOAT),			// p4
-		P4_WORD("_fs",		&&_fs,		0, 0x03),	// p4
-		P4_WORD("_fsp@",	&&_fsp_get,	0, 0x01),	// p4
-		P4_WORD("_fsp!",	&&_fsp_put,	0, 0x10),	// p4
 		P4_WORD(">FLOAT",	&&_to_float,	0, 0x010021),
 		P4_WORD("FROUND",	&&_f_round,	0, 0x110000),
 		P4_WORD("FTRUNC",	&&_f_trunc,	0, 0x110000),
@@ -1190,12 +1198,8 @@ p4Repl(P4_Ctx *ctx, int thrown)
 		P4_WORD("_branchz",	&&_branchz,	P4_BIT_COMPILE, 0x01000010),	// p4
 		P4_WORD("_call",	&&_call,	P4_BIT_COMPILE, 0x01000100),	// p4
 		P4_WORD("_ds",		&&_ds,		0, 0x03),	// p4
-		P4_WORD("dsp@",		&&_dsp_get,	0, 0x01),	// p4
-		P4_WORD("dsp!",		&&_dsp_put,	0, 0x10),	// p4
 		P4_WORD("_longjmp",	&&_longjmp,	0, 0x10),	// p4
 		P4_WORD("_rs",		&&_rs,		0, 0x03),	// p4
-		P4_WORD("rsp@",		&&_rsp_get,	0, 0x01),	// p4
-		P4_WORD("rsp!",		&&_rsp_put,	0, 0x10),	// p4
 		P4_WORD("_pp!",		&&_pp_put,	P4_BIT_IMM, 0x10), // p4
 		P4_WORD("_stack_check", &&_stack_check, 0, 0x00),	// p4
 		P4_WORD("_stack_dump",	&&_stack_dump,	0, 0x20),	// p4
@@ -1406,6 +1410,7 @@ _quit:		P4_RESET(ctx->rs);
 	ip = (P4_Cell *)(repl+1);
 	// (S: -- )
 _interpret:
+	p4AllocStack(ctx, &ctx->rs, P4_LENGTH(ctx->rs)+1);
 	P4_PUSH(ctx->rs, ip);
 	do {
 		p4StackGuards(ctx);
@@ -1501,7 +1506,8 @@ _execute:	w = P4_POP(ctx->ds);
 		goto *w.xt->code;
 
 		// ( i*x -- j*y )(R: -- ip)
-_enter:		P4_PUSH(ctx->rs, ip);
+_enter:		p4AllocStack(ctx, &ctx->rs, P4_LENGTH(ctx->rs)+1);
+		P4_PUSH(ctx->rs, ip);
 		// w contains xt loaded by _next or _execute.
 		ip = w.xt->data;
 		ctx->level++;
@@ -1522,6 +1528,7 @@ _ctx:		P4_PUSH(ctx->ds, (P4_Cell *) ctx);
 
 		// ( -- )
 _call:		w = *ip;
+		p4StackIsFull(ctx, &ctx->rs, P4_THROW_RS_OVER);
 		P4_PUSH(ctx->rs, ip + 1);
 		ip = (P4_Cell *)((P4_Char *) ip + w.n);
 		NEXT;
@@ -1555,39 +1562,6 @@ _hook_call:	x = w.xt->data[0];
 		(*(void (*)(P4_Ctx *)) x.p)(ctx);
 		NEXT;
 #endif
-
-		// ( -- aaddr )
-_dsp_get:	w.p = ctx->ds.top;
-		P4_PUSH(ctx->ds, w);
-		NEXT;
-
-		// ( aaddr -- )
-_dsp_put:	P4_DROP(ctx->ds, 1);
-		ctx->ds.top = x.p;
-		NEXT;
-
-		// ( -- aaddr )
-_rsp_get:	w.p = ctx->rs.top;
-		P4_PUSH(ctx->ds, w);
-		NEXT;
-
-		// ( aaddr -- )
-_rsp_put:	P4_DROP(ctx->ds, 1);
-		ctx->rs.top = x.p;
-		NEXT;
-
-#if defined(HAVE_MATH_H)
-		// ( -- aaddr )
-_fsp_get:	w.p = ctx->fs.top;
-		P4_PUSH(ctx->ds, w);
-		NEXT;
-
-		// ( aaddr -- )
-_fsp_put:	P4_DROP(ctx->ds, 1);
-		ctx->fs.top = x.p;
-		NEXT;
-#endif
-
 		// ( n -- )
 _longjmp:	P4_DROP(ctx->ds, 1);
 		THROWHARD((int) x.n);
@@ -1726,6 +1700,7 @@ _does:		word = *ctx->active;
 		// ( -- aaddr)
 _do_does:	P4_PUSH(ctx->ds, w.xt->data + 1);
 		// Remember who called us.
+		p4AllocStack(ctx, &ctx->rs, P4_LENGTH(ctx->rs)+1);
 		P4_PUSH(ctx->rs, ip);
 		// Continue execution just after DOES> of the defining word.
 		ip = w.xt->data[0].p;
@@ -1889,7 +1864,7 @@ _roll:		P4_DROP(ctx->ds, 1);
 		// (x -- )(R: -- x )
 _to_rs:		p4StackIsEmpty(ctx, &ctx->ds, P4_THROW_DS_UNDER);
 		P4_DROP(ctx->ds, 1);
-		p4StackIsFull(ctx, &ctx->rs, P4_THROW_RS_OVER);
+		p4AllocStack(ctx, &ctx->rs, P4_LENGTH(ctx->rs)+1);
 		P4_PUSH(ctx->rs, x);
 		P4STACKGUARDS(ctx);
 		NEXT;
@@ -2283,15 +2258,15 @@ _fa_tell:	errno = 0;
 		P4_PUSH(ctx->ds, (P4_Int) errno);
 		NEXT;
 
-#ifdef HAVE_MATH_H
-_dofloat:	P4_PUSH(ctx->P4_FLOAT_STACK, (P4_Float)w.xt->ndata);
-		NEXT;
-
 		// ( -- aaddr n s )
 _fs:		w.n = P4_LENGTH(ctx->fs);
 		P4_PUSH(ctx->ds, ctx->fs.base);
 		P4_PUSH(ctx->ds, w);
 		P4_PUSH(ctx->ds, ctx->fs.size);
+		NEXT;
+
+#ifdef HAVE_MATH_H
+_dofloat:	P4_PUSH(ctx->P4_FLOAT_STACK, (P4_Float)w.xt->ndata);
 		NEXT;
 
 		// ( aaddr -- ) (F: -- f )
@@ -2308,7 +2283,7 @@ _f_store:	P4_DROP(ctx->ds, 1);
 		// (x -- )(R: -- x )
 _fs_to_rs:	p4StackIsEmpty(ctx, &ctx->fs,P4_THROW_FS_UNDER);
 		w = P4_POP(ctx->P4_FLOAT_STACK);
-		p4StackIsFull(ctx, &ctx->rs, P4_THROW_RS_OVER);
+		p4AllocStack(ctx, &ctx->rs, P4_LENGTH(ctx->rs)+1);
 		P4_PUSH(ctx->rs, w);
 		P4STACKGUARDS(ctx);
 		NEXT;
@@ -2326,7 +2301,7 @@ _rs_to_fs:	p4StackIsEmpty(ctx, &ctx->rs, P4_THROW_RS_UNDER);
 _to_float:	errno = 0;
 		w = P4_DROPTOP(ctx->ds);
 		y.f = strtod((const char *)w.s, &stop);
-		P4_PUSH(ctx->ds, (P4_Uint) P4_BOOL(errno == 0 && stop - (char *)w.s == x.n));
+		P4_TOP(ctx->ds).u = P4_BOOL(errno == 0 && stop - (char *)w.s == x.n);
 		if (P4_TOP(ctx->ds).n == P4_TRUE) {
 			P4_PUSH(ctx->P4_FLOAT_STACK, y);
 		}

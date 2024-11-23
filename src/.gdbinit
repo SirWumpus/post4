@@ -1,6 +1,6 @@
 set listsize 30
-#handle SIGINT nostop pass noprint
-handle SIGSEGV stop pass
+handle SIGINT nostop pass print
+#handle SIGSEGV stop pass
 
 define showinput
 p ctx->input.buffer+ctx->input.offset
@@ -57,9 +57,7 @@ b p4Repl:_quit
 disable 6
 b p4Repl:_halt
 disable 7
-b p4Repl:_evaluate
-disable 8
 b p4Repl:_eval_file
-disable 9
+disable 8
 
 show user
