@@ -2299,10 +2299,10 @@ VARIABLE _do_sys_stk
 
 : .fs S\" fs\r\n" TYPE _fs DROP _stack_dump ;
 
-\ (S: -- f )(F: f -- )
+\ (S: -- f ; F: f -- )
 \ Move f between stacks _without_ conversion; F>S and S>F convert formats.
-: fs>ds fs>rs R> ;
-: ds>fs >R rs>fs ;
+: f> f>r R> ;
+: >f >R fr> ;
 
 \ (F: f -- )(S: -- dl dh )
 : F>D F>S S>D ;
@@ -2317,19 +2317,19 @@ VARIABLE _do_sys_stk
 : F, FALIGN 1 FLOATS reserve F! ;
 
 \ (F: f -- f f )
-: FDUP fs>rs R@ ds>fs rs>fs ;
+: FDUP f>r R@ >f fr> ;
 
 \ (F: f -- )
-: FDROP fs>ds DROP ;
+: FDROP f> DROP ;
 
 \ ( F: f1 f2 -- f2 f1 )
-: FSWAP fs>ds fs>ds SWAP ds>fs ds>fs ;
+: FSWAP f> f> SWAP >f >f ;
 
 \ (F: f1 f2 -- f1 f2 f1 )
-: FOVER FSWAP FDUP fs>rs FSWAP rs>fs ;
+: FOVER FSWAP FDUP f>r FSWAP fr> ;
 
 \ (F: f1 f2 f3 -- f2 f3 f1 )
-: FROT fs>rs FSWAP rs>fs FSWAP ;
+: FROT f>r FSWAP fr> FSWAP ;
 
 \ (F: -- f ) (R: ip -- ip' )
 : flit R> DUP FLOAT+ >R F@ ; $01000001 _pp!
@@ -2434,7 +2434,7 @@ MIN-N CONSTANT _sign_mask
 
 [DEFINED] _significand_mask [IF]
 : _exp_sig
-	fs>ds DUP 							\ S: r r
+	f> DUP 							\ S: r r
 	_exponent_mask TUCK AND =			\ S: r b1
 	SWAP _significand_mask AND			\ S: b1 b2
  ; $100002 _pp!

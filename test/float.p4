@@ -70,7 +70,7 @@ t{  2.0 FNEGATE -> -2.0 }t
 t{ -2.0 FNEGATE ->  2.0 }t
 test_group_end
 
-.( FNEGATE ) test_group
+.( FABS ) test_group
 t{  0.0 FABS -> 0.0 }t
 t{  1.0 FABS -> 1.0 }t
 t{ -1.0 FABS -> 1.0 }t
@@ -164,9 +164,9 @@ t{  1e0 -0e0 FATAN2 ->   pi/2 }t
 \ Any operation on a NaN results in a NaN.  Cannot use F= to compare a
 \ result against NaN, need to test exact bit pattern match, so compare
 \ as integers instead.
- NaN  1e0 FATAN2 -> fs>ds NaN fs>ds = assert
- 1e0  NaN FATAN2 -> fs>ds NaN fs>ds = assert
- NaN  NaN FATAN2 -> fs>ds NaN fs>ds = assert
+ NaN  1e0 FATAN2 f> NaN f> = assert
+ 1e0  NaN FATAN2 f> NaN f> = assert
+ NaN  NaN FATAN2 f> NaN f> = assert
 
 \ If y is +/-0 and x is -0, +/-pi shall be0 returned.
 t{  0e0 -0e0 FATAN2 ->  pi }t
@@ -214,10 +214,10 @@ t{ tv_struct_2 0 tv_field_d 0 tv_field_e 0 tv_field_f -> 2 FLOATS CELL+ 0 1 FLOA
 test_group_end
 
 \ Construct some floating point numbers based on IEEE 754.
-_exponent_mask	                  ds>fs FCONSTANT +inf
-_exponent_mask _sign_mask OR      ds>fs FCONSTANT -inf
-_exponent_mask	             1 OR ds>fs FCONSTANT +nan
-_exponent_mask _sign_mask OR 1 OR ds>fs FCONSTANT -nan
+_exponent_mask	                  >f FCONSTANT +inf
+_exponent_mask _sign_mask OR      >f FCONSTANT -inf
+_exponent_mask	             1 OR >f FCONSTANT +nan
+_exponent_mask _sign_mask OR 1 OR >f FCONSTANT -nan
 
 2.718281828459 FCONSTANT e
 3.141592653589 FCONSTANT pi

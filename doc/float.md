@@ -258,7 +258,7 @@ Set the number of significant digits currently used by `F.`, `FE.`, or `FS.` to 
 
 ### Post4 Specific Words
 
-#### ds>fs
+#### >f
 (F: -- `f` ) (S: `f` -- )  
 Move top of the data stack to the float stack *without* format conversion.  `S>F` will convert formats.
 
@@ -283,17 +283,17 @@ Return `bool` as true if `f1` and `f2` are exactly equal (same internal represen
 Size of the float stack.  Zero (0) if the float stack is combined with the data stack.  This is a deviation from `ENVIRONMENT?` queries.
 
 - - -
-#### fs>ds
+#### f>
 (F: `f` -- ) (S: -- `f` )  
 Move top of the float stack to the data stack *without* format conversion.  `F>S` will  convert formats.
 
 - - -
-#### fs>rs
+#### f>r
 (F: `f` -- ) (R: -- `f` )  
 Move top of the float stack to the return stack.
 
 - - -
-#### rs>fs
+#### fr>
 (R: `f` -- ) (F: -- `f` )  
 Move top of the return stack to the float stack.
 

@@ -86,7 +86,7 @@ VARIABLE tc_fs_expect
 		1-
 		\ Float stack is typically small (6) size, so need
 		\ to juggle and compare using the data stck.
-		fs>ds R@ FPICK fs>ds
+		f> R@ FPICK f>
 		<> IF R> 2DROP TRUE EXIT THEN
 	REPEAT
 	R> DROP FALSE
