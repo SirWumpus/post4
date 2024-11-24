@@ -97,6 +97,11 @@ VARIABLE tc_fs_expect
 	THEN
 	tc_drop_all test_pass
 ;
+
+: test_show_stack_sizes
+	." Size Ds " stack-cells . ." Fs " floating-stack . ." Rs " return-stack-cells . CR
+;
+
 : test_suite ( -- )
 	0 tests_passed ! 0 tests_failed ! 0 tests_skipped !
 	tc_drop_all
@@ -104,6 +109,7 @@ VARIABLE tc_fs_expect
 ;
 
 : test_suite_end ( -- )
+	test_show_stack_sizes
 	." Total Pass " tests_passed @ ansi_green U. ansi_normal
 	." Fail " tests_failed @ ansi_red U. ansi_normal
 	." Skip " tests_skipped @ ansi_magenta U. ansi_normal CR
