@@ -842,6 +842,8 @@ p4Free(P4_Ctx *ctx)
 		}
 		/* Data stack in allocated, because Java can grow it. */
 		free(ctx->ds.base - P4_GUARD_CELLS/2);
+		free(ctx->fs.base - P4_GUARD_CELLS/2);
+		free(ctx->rs.base - P4_GUARD_CELLS/2);
 		free(ctx->input);
 		free(ctx->block);
 		free(ctx);
