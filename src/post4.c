@@ -1172,6 +1172,8 @@ p4Repl(P4_Ctx *ctx, int thrown)
 		P4_WORD("f>r",		&&_fs_to_rs,	0, 0x100100),	// p4
 		P4_WORD("fr>",		&&_rs_to_fs,	0, 0x011000),	// p4
 #endif
+		P4_WORD("stdin",                &&_fa_stdin,    0, 0x01),       // p4
+		P4_WORD("stdout",               &&_fa_stdout,   0, 0x01),       // p4
 		P4_WORD("BIN",			&&_fa_bin,	0, 0x01),
 		P4_WORD("CLOSE-FILE",		&&_fa_close,	0, 0x11),
 		P4_WORD("CREATE-FILE",		&&_fa_create,	0, 0x22),
@@ -1190,8 +1192,6 @@ p4Repl(P4_Ctx *ctx, int thrown)
 		/* Constants. */
 		P4_VAL("R/O",			0),
 		P4_VAL("R/W",			1),
-		P4_VAL("stdin",			(P4_Size) stdin),	// p4
-		P4_VAL("stdout",		(P4_Size) stdout),	// p4
 		P4_VAL("/pad",			P4_PAD_SIZE),		// p4
 		P4_VAL("address-unit-bits",	P4_CHAR_BIT),		// p4
 		P4_VAL("WORDLISTS",		P4_WORDLISTS),
@@ -2152,6 +2152,14 @@ _stack_dump:	P4_DROP(ctx->ds, 1);
 
 		FILE *fp;
 		struct stat sb;
+
+		// ( -- fd )
+_fa_stdin:	P4_PUSH(ctx->ds, (void *) stdin);
+		NEXT;
+
+		// ( -- fd )
+_fa_stdout:	P4_PUSH(ctx->ds, (void *) stdout);
+		NEXT;
 
 		// ( fam1 -- fam2 )
 _fa_bin:	P4_TOP(ctx->ds).u = x.u | 2;
