@@ -69,7 +69,7 @@ p4TimeDate(P4_Ctx *ctx)
 	struct tm *now;
 	(void) time(&tick);
 	now = localtime(&tick);
-	p4StackCanPopPush(ctx, &ctx->ds, 0, 6);
+	p4AllocStack(ctx, &ctx->P4_FLOAT_STACK, P4_LENGTH(ctx->P4_FLOAT_STACK)+6);
 	P4_PUSH(ctx->ds, (P4_Int) now->tm_sec);
 	P4_PUSH(ctx->ds, (P4_Int) now->tm_min);
 	P4_PUSH(ctx->ds, (P4_Int) now->tm_hour);

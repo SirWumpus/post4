@@ -650,7 +650,7 @@ extern int p4EvalFile(P4_Ctx *ctx, const char *filepath);
  */
 extern int p4EvalString(P4_Ctx *ctx, const char *string, size_t length);
 
-extern void p4AllocStack(P4_Ctx *ctx, P4_Stack *stk, int size);
+extern void p4AllocStack(P4_Ctx *ctx, P4_Stack *stk, unsigned size);
 
 
 extern const char *p4_exceptions[];

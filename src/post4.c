@@ -860,11 +860,11 @@ p4ResetInput(P4_Ctx *ctx, FILE *fp)
 }
 
 void
-p4AllocStack(P4_Ctx *ctx, P4_Stack *stk, int size)
+p4AllocStack(P4_Ctx *ctx, P4_Stack *stk, unsigned size)
 {
 	int depth = 0;
 	P4_Cell *base = NULL;
-	if (size < stk->size) {
+	if (0 < size && size <= stk->size) {
 		return;
 	}
 	if (stk->base != NULL) {
@@ -1049,6 +1049,7 @@ p4StackIsEmpty(P4_Ctx *ctx, P4_Stack *stack, int under)
 	}
 }
 
+#ifdef DEAD
 static void
 p4StackIsFull(P4_Ctx *ctx, P4_Stack *stack, int over)
 {
@@ -1057,6 +1058,7 @@ p4StackIsFull(P4_Ctx *ctx, P4_Stack *stack, int over)
 		LONGJMP(ctx->longjmp, over);
 	}
 }
+#endif
 
 /*
  * Stack checks after operation.
@@ -1441,7 +1443,7 @@ _inter_loop:	while (ctx->input->offset < ctx->input->length) {
 						p4WordAppend(ctx, (P4_Cell) p4_flit);
 						p4WordAppend(ctx, num[0]);
 					} else {
-						p4StackIsFull(ctx, &ctx->P4_FLOAT_STACK, P4_THROW_FS_OVER);
+						p4AllocStack(ctx, &ctx->P4_FLOAT_STACK, P4_LENGTH(ctx->P4_FLOAT_STACK)+1);
 						P4_PUSH(ctx->P4_FLOAT_STACK, num[0]);
 					}
 				} else
@@ -1460,7 +1462,7 @@ _inter_loop:	while (ctx->input->offset < ctx->input->length) {
 						}
 					}
 				} else {
-					p4StackIsFull(ctx, &ctx->ds, P4_THROW_DS_OVER);
+					p4AllocStack(ctx, &ctx->ds, P4_LENGTH(ctx->ds)+1+is_double);
 					P4_PUSH(ctx->ds, num[0]);
 					if (is_double) {
 						P4_PUSH(ctx->ds, num[1]);
@@ -1525,12 +1527,13 @@ _exit:		P4STACKGUARDS(ctx);
 _bye_code:	exit((int) x.n);
 
 		// ( -- aaddr )
-_ctx:		P4_PUSH(ctx->ds, (P4_Cell *) ctx);
+_ctx:		p4AllocStack(ctx, &ctx->ds, P4_LENGTH(ctx->ds)+1);
+		P4_PUSH(ctx->ds, (P4_Cell *) ctx);
 		NEXT;
 
 		// ( -- )
 _call:		w = *ip;
-		p4StackIsFull(ctx, &ctx->rs, P4_THROW_RS_OVER);
+		p4AllocStack(ctx, &ctx->rs, P4_LENGTH(ctx->rs)+1);
 		P4_PUSH(ctx->rs, ip + 1);
 		ip = (P4_Cell *)((P4_Char *) ip + w.n);
 		NEXT;
@@ -1570,11 +1573,14 @@ _longjmp:	P4_DROP(ctx->ds, 1);
 
 		// ( -- x )
 		// : lit r> dup cell+ >r @ ;
-_lit:		w = *ip++;
+_lit:		p4AllocStack(ctx, &ctx->ds, P4_LENGTH(ctx->ds)+1);
+		w = *ip++;
 		P4_PUSH(ctx->ds, w);
 		NEXT;
 
-_doconst:	P4_PUSH(ctx->ds, w.xt->ndata);
+		// ( -- x )
+_doconst:	p4AllocStack(ctx, &ctx->ds, P4_LENGTH(ctx->ds)+1);
+		P4_PUSH(ctx->ds, w.xt->ndata);
 		NEXT;
 
 		// ( n1 -- n2 )
@@ -1598,6 +1604,7 @@ _do_colon:	ctx->state = P4_STATE_COMPILE;
 		if (ctx->trace) {
 			(void) printf("%*s%.*s\r\n", 19+2*(int)ctx->level, "", (int)str.length, str.string);
 		}
+		p4AllocStack(ctx, &ctx->ds, P4_LENGTH(ctx->ds)+1+(word->length == 0));
 		word = p4WordCreate(ctx, str.string, str.length, &&_enter);
 		if (word->length == 0) {
 			/* :NONAME leaves xt on stack. */
@@ -1700,7 +1707,8 @@ _does:		word = *ctx->active;
 		goto _exit;
 
 		// ( -- aaddr)
-_do_does:	P4_PUSH(ctx->ds, w.xt->data + 1);
+_do_does:	p4AllocStack(ctx, &ctx->ds, P4_LENGTH(ctx->ds)+1);
+		P4_PUSH(ctx->ds, w.xt->data + 1);
 		// Remember who called us.
 		p4AllocStack(ctx, &ctx->rs, P4_LENGTH(ctx->rs)+1);
 		P4_PUSH(ctx->rs, ip);
@@ -1718,7 +1726,8 @@ _body:		w = P4_POP(ctx->ds);
 
 		// ( -- addr )
 		// w contains xt loaded by _next or _execute.;
-_data_field:	P4_PUSH(ctx->ds, w.xt->data + 1);
+_data_field:	p4AllocStack(ctx, &ctx->ds, P4_LENGTH(ctx->ds)+1);
+		P4_PUSH(ctx->ds, w.xt->data + 1);
 		NEXT;
 
 		// ( n -- )
@@ -1746,7 +1755,8 @@ _env:		P4_DROP(ctx->ds, 1);		// Ignore k, S" NUL terminates.
 		NEXT;
 
 		// ( -- rows cols )
-_window:	P4_PUSH(ctx->ds, (P4_Uint) window.ws_row);
+_window:	p4AllocStack(ctx, &ctx->ds, P4_LENGTH(ctx->ds)+2);
+		P4_PUSH(ctx->ds, (P4_Uint) window.ws_row);
 		P4_PUSH(ctx->ds, (P4_Uint) window.ws_col);
 		NEXT;
 
@@ -1799,6 +1809,7 @@ _free:		free(x.s);
 
 		// ( u -- aaddr ior )
 _allocate:	w.s = NULL;
+		p4AllocStack(ctx, &ctx->ds, P4_LENGTH(ctx->ds)+1);
 		goto _resize_null;
 
 		// ( aaddr1 u -- aaddr2 ior )
@@ -1833,7 +1844,7 @@ _drop:		p4StackIsEmpty(ctx, &ctx->ds, P4_THROW_DS_UNDER);
 
 		// ( x -- x x )
 _dup:		p4StackIsEmpty(ctx, &ctx->ds, P4_THROW_DS_UNDER);
-		p4StackIsFull(ctx, &ctx->ds, P4_THROW_DS_OVER);
+		p4AllocStack(ctx, &ctx->ds, P4_LENGTH(ctx->ds)+1);
 		P4_PUSH(ctx->ds, x);
 		NEXT;
 
@@ -1874,7 +1885,7 @@ _to_rs:		p4StackIsEmpty(ctx, &ctx->ds, P4_THROW_DS_UNDER);
 		// (R: x -- )
 _from_rs:	p4StackIsEmpty(ctx, &ctx->rs, P4_THROW_RS_UNDER);
 		w = P4_POP(ctx->rs);
-		p4StackIsFull(ctx, &ctx->ds, P4_THROW_DS_OVER);
+		p4AllocStack(ctx, &ctx->ds, P4_LENGTH(ctx->ds)+1);
 		P4_PUSH(ctx->ds, w);
 		P4STACKGUARDS(ctx);
 		NEXT;
@@ -2004,17 +2015,20 @@ _lt:		w = P4_DROPTOP(ctx->ds);
 		 * I/O
 		 */
 		// ( -- u )
-_input_offset:	P4_PUSH(ctx->ds, (P4_Cell *) &ctx->input->offset);
+_input_offset:	p4AllocStack(ctx, &ctx->ds, P4_LENGTH(ctx->ds)+1);
+		P4_PUSH(ctx->ds, (P4_Cell *) &ctx->input->offset);
 		NEXT;
 
 		// ( -- caddr u )
-_source:	P4_PUSH(ctx->ds, ctx->input->buffer);
+_source:	p4AllocStack(ctx, &ctx->ds, P4_LENGTH(ctx->ds)+2);
+		P4_PUSH(ctx->ds, ctx->input->buffer);
 		P4_PUSH(ctx->ds, ctx->input->length);
 		NEXT;
 
 		// ( -- -1 | 0 | fp )
 		// Alias FILE *stdin to NULL.
-_source_id:	P4_PUSH(ctx->ds, (P4_Int)(ctx->input->fp == stdin ? NULL : ctx->input->fp));
+_source_id:	p4AllocStack(ctx, &ctx->ds, P4_LENGTH(ctx->ds)+1);
+		P4_PUSH(ctx->ds, (P4_Int)(ctx->input->fp == stdin ? NULL : ctx->input->fp));
 		NEXT;
 
 		// ( caddr +n1 -- +n2 )
@@ -2027,6 +2041,7 @@ _accept:	w = P4_DROPTOP(ctx->ds);
 
 		// ( -- flag)
 _refill:	w.n = p4Refill(ctx->input);
+		p4AllocStack(ctx, &ctx->ds, P4_LENGTH(ctx->ds)+1);
 		P4_PUSH(ctx->ds, w);
 		NEXT;
 
@@ -2039,6 +2054,7 @@ _key:		(void) fflush(stdout);
 			x.n = ctx->unkey;
 			ctx->unkey = EOF;
 		}
+		p4AllocStack(ctx, &ctx->ds, P4_LENGTH(ctx->ds)+1);
 		P4_PUSH(ctx->ds, x.n);
 		NEXT;
 
@@ -2048,6 +2064,7 @@ _key_ready:	(void) fflush(stdout);
 			(void) alineSetMode(ALINE_RAW_NB);
 			ctx->unkey = alineReadByte();
 		}
+		p4AllocStack(ctx, &ctx->ds, P4_LENGTH(ctx->ds)+1);
 		P4_PUSH(ctx->ds, (P4_Uint) P4_BOOL(ctx->unkey != EOF));
 		NEXT;
 
@@ -2066,6 +2083,7 @@ _parse:		w = P4_DROPTOP(ctx->ds);
 
 		// ( -- c-addr u )
 _parse_name:	str = p4ParseName(ctx->input);
+		p4AllocStack(ctx, &ctx->ds, P4_LENGTH(ctx->ds)+2);
 		P4_PUSH(ctx->ds, str.string);
 		P4_PUSH(ctx->ds, str.length);
 		NEXT;
@@ -2091,6 +2109,7 @@ _ms:		P4_DROP(ctx->ds, 1);
 		struct tm *now;
 _time_date:	(void) time(&w.t);
 		now = localtime(&w.t);
+		p4AllocStack(ctx, &ctx->ds, P4_LENGTH(ctx->ds)+6);
 		P4_PUSH(ctx->ds, (P4_Int) now->tm_sec);
 		P4_PUSH(ctx->ds, (P4_Int) now->tm_min);
 		P4_PUSH(ctx->ds, (P4_Int) now->tm_hour);
@@ -2100,6 +2119,7 @@ _time_date:	(void) time(&w.t);
 		NEXT;
 
 _epoch_seconds:	(void) time(&w.t);
+		p4AllocStack(ctx, &ctx->ds, P4_LENGTH(ctx->ds)+1);
 		P4_PUSH(ctx->ds, w);
 		NEXT;
 
@@ -2168,6 +2188,7 @@ _fa_delete:	errno = 0;
 _fa_create:	P4_TOP(ctx->ds).u = x.u | 4;
 		/*@fallthrough@*/
 
+		// ( caddr u fam -- fd ior )
 _fa_open:	errno = 0;
 		x = P4_POP(ctx->ds);
 		y = P4_POP(ctx->ds);
@@ -2230,6 +2251,7 @@ _fa_flush:	errno = 0;
 _fa_fsize:	errno = 0;
 		(void) fstat(fileno(x.v), &sb);
 		P4_TOP(ctx->ds).n = sb.st_size;
+		p4AllocStack(ctx, &ctx->ds, P4_LENGTH(ctx->ds)+2);
 		P4_PUSH(ctx->ds, (P4_Uint) 0);
 		P4_PUSH(ctx->ds, (P4_Int) errno);
 		NEXT;
@@ -2256,6 +2278,7 @@ _fa_seek:	errno = 0;
 _fa_tell:	errno = 0;
 		w.u = ftell(x.v);
 		P4_TOP(ctx->ds) = w;
+		p4AllocStack(ctx, &ctx->ds, P4_LENGTH(ctx->ds)+2);
 		P4_PUSH(ctx->ds, (P4_Uint) 0);
 		P4_PUSH(ctx->ds, (P4_Int) errno);
 		NEXT;
@@ -2268,11 +2291,13 @@ _fs:		w.n = P4_LENGTH(ctx->fs);
 		NEXT;
 
 #ifdef HAVE_MATH_H
-_dofloat:	P4_PUSH(ctx->P4_FLOAT_STACK, (P4_Float)w.xt->ndata);
+_dofloat:	p4AllocStack(ctx, &ctx->P4_FLOAT_STACK, P4_LENGTH(ctx->P4_FLOAT_STACK)+1);
+		P4_PUSH(ctx->P4_FLOAT_STACK, (P4_Float)w.xt->ndata);
 		NEXT;
 
 		// ( aaddr -- ) (F: -- f )
 _f_fetch:	P4_DROP(ctx->ds, 1);
+		p4AllocStack(ctx, &ctx->P4_FLOAT_STACK, P4_LENGTH(ctx->P4_FLOAT_STACK)+1);
 		P4_PUSH(ctx->P4_FLOAT_STACK, *x.p);
 		NEXT;
 
@@ -2290,10 +2315,10 @@ _fs_to_rs:	p4StackIsEmpty(ctx, &ctx->fs,P4_THROW_FS_UNDER);
 		P4STACKGUARDS(ctx);
 		NEXT;
 
-		// (R: x -- )
+		// (F: -- f ; R: f -- )
 _rs_to_fs:	p4StackIsEmpty(ctx, &ctx->rs, P4_THROW_RS_UNDER);
 		w = P4_POP(ctx->rs);
-		p4StackIsFull(ctx, &ctx->fs, P4_THROW_FS_OVER);
+		p4AllocStack(ctx, &ctx->P4_FLOAT_STACK, P4_LENGTH(ctx->P4_FLOAT_STACK)+1);
 		P4_PUSH(ctx->P4_FLOAT_STACK, w);
 		P4STACKGUARDS(ctx);
 		NEXT;
@@ -2305,6 +2330,7 @@ _to_float:	errno = 0;
 		y.f = strtod((const char *)w.s, &stop);
 		P4_TOP(ctx->ds).u = P4_BOOL(errno == 0 && stop - (char *)w.s == x.n);
 		if (P4_TOP(ctx->ds).n == P4_TRUE) {
+			p4AllocStack(ctx, &ctx->P4_FLOAT_STACK, P4_LENGTH(ctx->P4_FLOAT_STACK)+1);
 			P4_PUSH(ctx->P4_FLOAT_STACK, y);
 		}
 		NEXT;
@@ -2348,6 +2374,7 @@ _f_represent:	P4_DROP(ctx->ds, 1);
 			E++;
 		}
 		(void) memmove(w.s, fraction, x.z);
+		p4AllocStack(ctx, &ctx->ds, P4_LENGTH(ctx->ds)+1);
 		P4_PUSH(ctx->ds, (P4_Int) E);
 		P4_PUSH(ctx->ds, P4_BOOL(y.n < 0));
 		P4_PUSH(ctx->ds, P4_BOOL(isdigit(*num) != 0));
@@ -2377,13 +2404,15 @@ _f_div:		w = P4_POP(ctx->P4_FLOAT_STACK);
 		P4_TOP(ctx->P4_FLOAT_STACK).f /= w.f;
 		NEXT;
 
-		// (F: f -- )( -- bool_)
+		// (F: f -- )( -- bool )
 _f_eq0:		w = P4_POP(ctx->P4_FLOAT_STACK);
+		p4AllocStack(ctx, &ctx->ds, P4_LENGTH(ctx->ds)+1);
 		P4_PUSH(ctx->ds, P4_BOOL(w.f == 0.0));
 		NEXT;
 
-		// (F: f -- )( -- bool_)
+		// (F: f -- )( -- bool )
 _f_lt0:		w = P4_POP(ctx->P4_FLOAT_STACK);
+		p4AllocStack(ctx, &ctx->ds, P4_LENGTH(ctx->ds)+1);
 		P4_PUSH(ctx->ds, P4_BOOL(w.f < 0.0));
 		NEXT;
 
@@ -2413,12 +2442,12 @@ _f_cosh:	w = P4_TOP(ctx->P4_FLOAT_STACK);
 		NEXT;
 
 		// (F: f1 -- f2 )
-_f_sinh:		w = P4_TOP(ctx->P4_FLOAT_STACK);
+_f_sinh:	w = P4_TOP(ctx->P4_FLOAT_STACK);
 		P4_TOP(ctx->P4_FLOAT_STACK).f = sinh(w.f);
 		NEXT;
 
 		// (F: f1 -- f2 )
-_f_tanh:		w = P4_TOP(ctx->P4_FLOAT_STACK);
+_f_tanh:	w = P4_TOP(ctx->P4_FLOAT_STACK);
 		P4_TOP(ctx->P4_FLOAT_STACK).f = tanh(w.f);
 		NEXT;
 
@@ -2504,15 +2533,17 @@ _f_floor:	w = P4_TOP(ctx->P4_FLOAT_STACK);
  *
  * Implementing D>F and F>D is another problem.
  */
-		// (S: n -- )(F: -- f )
+		// (S: n -- ; F: -- f )
 		// : S>F S>D D>F ;
 _s_to_f:	P4_DROP(ctx->ds, 1);
+		p4AllocStack(ctx, &ctx->P4_FLOAT_STACK, P4_LENGTH(ctx->P4_FLOAT_STACK)+1);
 		P4_PUSH(ctx->P4_FLOAT_STACK, (P4_Float) x.n);
 		NEXT;
 
-		// (S: -- n)(F: f -- )
+		// (S: -- n ; F: f -- )
 		// : F>S F>D D>S ;
 _f_to_s:	w = P4_POP(ctx->P4_FLOAT_STACK);
+		p4AllocStack(ctx, &ctx->ds, P4_LENGTH(ctx->ds)+1);
 		P4_PUSH(ctx->ds, (P4_Int) w.f);
 		NEXT;
 
