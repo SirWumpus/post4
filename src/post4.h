@@ -62,7 +62,7 @@ extern "C" {
 #endif
 
 #ifndef P4_STACK_EXTRA
-#define P4_STACK_EXTRA			16		/* in CELLS */
+#define P4_STACK_EXTRA			16		/* in CELLS, power of 2 */
 #endif
 
 #ifndef P4_STRING_SIZE
