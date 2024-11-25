@@ -2174,11 +2174,13 @@ VARIABLE SCR
 	R> POSTPONE LITERAL	\ C:
 ; IMMEDIATE compile-only
 
-: stack_new ( u <spaces>name -- ) CREATE 1+ CELLS reserve DUP CELL+ SWAP ! ;
-: stack_tmp ( u -- stack ) 1+ CELLS ALLOCATE THROW DUP DUP CELL+ SWAP ! ;
-: stack_push ( n stack -- ) TUCK @ ! /CELL SWAP +! ;
-: stack_pop ( stack -- n ) /CELL NEGATE OVER +! DUP @ TUCK	>= ABORT" tmp. stack underflow" @ ;
-: stack_length ( stack -- n ) DUP @ SWAP - /CELL / 1- ;
+\ Stack: ptr x0 x1 x2 ... xn
+: stack_new ( u <spaces>name -- ) CREATE 1+ CELLS reserve DUP ! ;
+: stack_tmp ( u -- stack ) 1+ CELLS ALLOCATE THROW DUP DUP ! ;
+: stack_push ( x stack -- ) DUP @ CELL+ OVER ! @ ! ;
+: stack_top ( stack -- x ) DUP @ OVER = ABORT" stack underflow" @ @ ;
+: stack_pop ( stack -- x ) DUP stack_top /CELL NEGATE ROT +! ;
+: stack_depth ( stack -- u ) DUP @ SWAP - /CELL / ;
 
 VARIABLE _do_sys_stk
 : _do_sys_new ( -- ) _do_sys_stk @ 8 stack_tmp DUP _do_sys_stk ! stack_push ;
@@ -2262,7 +2264,7 @@ VARIABLE _do_sys_stk
 	POSTPONE UNTIL
 
 	BEGIN
-		_do_sys_stk @ stack_length 1 >
+		_do_sys_stk @ stack_depth 1 >
 	WHILE
 		_do_sys_stk @ stack_pop
 		POSTPONE THEN
