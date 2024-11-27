@@ -1339,10 +1339,11 @@ p4Repl(P4_Ctx *ctx, int thrown)
 
 	SETJMP_PUSH(ctx->longjmp);
 	rc = SETJMP(ctx->longjmp);
-
-	if (thrown) {
+	if (thrown != P4_THROW_OK) {
 		/* Signal thrown overrides context. */
 		rc = thrown;
+	}
+	if (ctx->frame != NULL) {
 		/* Throw might be caught, can't fall through. */
 		THROW(rc);
 	}

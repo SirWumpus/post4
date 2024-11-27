@@ -433,16 +433,16 @@ struct p4_ctx {
 	P4_Char *	end;		/* End of data space memory. */
 	P4_Char *	here;		/* Next unused data space. */
 	P4_Int		state;
-	P4_Int		frame;		/* See CATCH and THROW. */
+	P4_Cell *	frame;		/* See CATCH and THROW. */
 	P4_Int          trace;          /* Word trace for debugging. */
 	P4_Int		level;		/* Tracing depth. */
 	P4_Uint		radix;		/* Input/Output radix */
 	P4_Stack	ds;		/* Data stack */
 	P4_Stack	rs;		/* Return stack */
-/* #ifdef HAVE_MATH_H */
+	/* Leave these in place even if float support is disabled. */
 	P4_Stack	fs;		/* Float stack */
 	P4_Int		precision;
-/* #endif */
+	/* ... */
 	P4_Int		unkey;		/* KEY and KEY? */
 	P4_Input *	input;
 	P4_Block *	block;
@@ -453,9 +453,9 @@ struct p4_ctx {
 	P4_Uint		norder;		/* Order length, [0, P4_WORDLISTS) */
 	P4_Uint		order[P4_WORDLISTS];
 	P4_Options *	options;
-/* #ifdef WITH_JAVA */
+	/* Leave this in place even if JNI support is disabled. */
 	void *		jenv;
-/* #endif */
+	/* ... */
 	JMP_BUF		longjmp;	/* Must be last in struct; size can
 					 * vary by CPU and implementation.
 					 */
