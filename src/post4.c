@@ -11,11 +11,12 @@
  *** Globals
  ***********************************************************************/
 
-static P4_Word *p4_builtin_words;
-P4_Word *p4_hook_call;
+const char p4_commit[] = P4_COMMIT;
 
 /* Expected Forth defined words. */
-P4_Word *p4_throw, *p4_flit, *p4_2lit;
+P4_Word *p4_hook_call, *p4_throw, *p4_flit, *p4_2lit;
+
+static P4_Word *p4_builtin_words;
 
 #define P4_INTERACTIVE(ctx)	(ctx->state == P4_STATE_INTERPRET && is_tty && P4_INPUT_IS_TERM(ctx->input))
 

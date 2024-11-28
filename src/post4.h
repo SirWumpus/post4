@@ -31,6 +31,7 @@ extern "C" {
 #endif
 
 #include "config.h"
+#include "build.h"
 
 #ifndef P4_MEM_SIZE
 /* When selecting the default data space memory size, consider the number
@@ -578,6 +579,8 @@ typedef struct {
 /***********************************************************************
  *** API
  ***********************************************************************/
+
+extern const char p4_commit[];
 
 /**
  * Initialise the global environment.

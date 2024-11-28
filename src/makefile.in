@@ -44,6 +44,7 @@ LDFLAGS		= @LDFLAGS@
 LIBS		= @LIBS@
 
 BUILT		:= `date +'%a, %d %b %Y %H:%M:%S %z'`
+COMMIT		:= $$(git describe --tags)
 
 #######################################################################
 
@@ -66,7 +67,7 @@ $O$E :
 
 .MAIN : build
 
-CHDR	:= config.h aline.h ansiterm.h post4.h
+CHDR	:= config.h aline.h ansiterm.h build.h post4.h
 CSRC	:= post4.c hooks.c aline.c
 OBJS	:= post4$O hooks$O aline$O
 
@@ -76,7 +77,7 @@ build: title post4$E
 
 clean : title
 	-rm -f *.o *.obj *.i *.gch *.map *.tds *.TR2 *.stackdump *.core *.log
-	-rm -f a.out$E aline$E post4$E libpost4$A
+	-rm -f a.out$E aline$E build.h post4$E libpost4$A
 
 clobber distclean: clean
 	-rm -f config.h config.h.in makefile
@@ -99,16 +100,19 @@ aline$E : ansiterm.h aline.h aline.c
 
 aline$O : config.h ansiterm.h aline.h aline.c
 
+build.h :
+	printf '#define P4_BUILT "%s"\n#define P4_COMMIT "%s"\n' "${BUILT}" "${COMMIT}" >build.h
+
 hooks$O : config.h post4.h hooks.c
 
 post4$O : ${CHDR} post4.c
-	${CC} ${CFLAGS} -fPIC -DP4_BUILT="\"${BUILT}\"" -c post4.c
+	${CC} ${CFLAGS} -fPIC -c post4.c
 
 libpost4$A : ${OBJS}
 	ar rcs $@ ${OBJS}
 
 post4$E : ${CHDR} ${CSRC} main.c
-	${CC} ${CFLAGS} ${LDFLAGS} -DP4_BUILT="\"${BUILT}\"" -o $@ main.c ${CSRC} ${LIBS}
+	${CC} ${CFLAGS} ${LDFLAGS} -o $@ main.c ${CSRC} ${LIBS}
 
 test tests: post4$E
 	cd ../test && ${MAKE} $@

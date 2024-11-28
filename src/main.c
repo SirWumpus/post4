@@ -45,6 +45,7 @@ static P4_Options options = {
 static const char p4_build_info[] =
 	P4_NAME "/" P4_VERSION "  " P4_COPYRIGHT "\r\n\r\n"
 	"BUILT=\"" P4_BUILT "\"\r\n"
+	"COMMIT=\"" P4_COMMIT "\"\r\n"
 	"CFLAGS=\"" P4_CFLAGS "\"\r\n"
 	"LDFLAGS=\"" P4_LDFLAGS "\"\r\n"
 	"LIBS=\"" P4_LIBS "\"\r\n"
