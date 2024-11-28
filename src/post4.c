@@ -1342,6 +1342,8 @@ p4Repl(P4_Ctx *ctx, int thrown)
 	if (thrown != P4_THROW_OK) {
 		/* Signal thrown overrides context. */
 		rc = thrown;
+		/* Only report once. */
+		thrown = P4_THROW_OK;
 	}
 	if (rc != P4_THROW_OK && ctx->frame != NULL) {
 		/* Throw might be caught, can't fall through. */
