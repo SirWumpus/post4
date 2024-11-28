@@ -62,7 +62,7 @@ title :
 	@echo
 
 tests: test_include_quit test_include_abort test_include_throw \
-	test_stdin_accept test_quit_catch see_all test_unit
+	test_stdin_accept test_quit_catch test_gh_79 see_all test_unit
 
 test test_unit : ${PROG}
 	@printf "== %s == Unit Testing\n" $@
@@ -123,6 +123,10 @@ test_stdin_accept: ${PROG}
 	${PROG} -c ${WORDS} <${top_srcdir}/test/data/accept0.p4
 	${PROG} -c ${WORDS} <${top_srcdir}/test/data/accept1.p4
 	@echo "-OK-"
+
+test_gh_79: ${PROG}
+	! printf "0 @" | ${PROG} -c ${WORDS}
+	printf "0 ' @ CATCH . CR" | ${PROG} -c ${WORDS}
 
 # Test SEE against all words to check if any result in some failure like SEGFAULT.
 see_all: ${PROG}

@@ -87,5 +87,10 @@ test_group_end
 .( -56 THROW ) test_group
 \ https://github.com/ForthHub/discussion/discussions/116#discussioncomment-3541822
 t{ :NONAME 123 [: 456 -56 THROW ;] CATCH ; EXECUTE -> 123 -56 }t
+test_group_end
 
+.( GH-79 ) test_group
+t{ ' DROP CATCH   ->   -4 }t
+\ t{ 0 ' @ CATCH .s -> 0 -9 }t
+\ t{ 1 ' @ CATCH .s -> 1 -9 }t
 test_group_end

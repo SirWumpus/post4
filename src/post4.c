@@ -1045,7 +1045,6 @@ static void
 p4StackIsEmpty(P4_Ctx *ctx, P4_Stack *stack, int under)
 {
 	if (P4_PLENGTH(stack) <= 0) {
-		p4Bp(ctx);
 		LONGJMP(ctx->longjmp, under);
 	}
 }
@@ -1055,7 +1054,6 @@ static void
 p4StackIsFull(P4_Ctx *ctx, P4_Stack *stack, int over)
 {
 	if (stack->size <= P4_PLENGTH(stack)) {
-		p4Bp(ctx);
 		LONGJMP(ctx->longjmp, over);
 	}
 }
@@ -1069,12 +1067,10 @@ p4StackGuard(P4_Ctx *ctx, P4_Stack *stack, int over, int under)
 {
 	ptrdiff_t length = P4_PLENGTH(stack);
 	if (length < 0 || stack->base[-1].u != P4_SENTINEL) {
-		p4Bp(ctx);
 		stack->base[-1].u = P4_SENTINEL;
 		LONGJMP(ctx->longjmp, under);
 	}
 	if (stack->size < length || stack->base[stack->size].u != P4_SENTINEL) {
-		p4Bp(ctx);
 		stack->base[stack->size].u = P4_SENTINEL;
 		LONGJMP(ctx->longjmp, over);
 	}
@@ -1321,7 +1317,10 @@ p4Repl(P4_Ctx *ctx, int thrown)
 #define NEXT		goto _next
 #define THROWHARD(e)	{ rc = (e); goto _thrown; }
 #define THROW(e)	{ if (p4_throw != NULL) { word = p4_throw; \
-				P4_PUSH(ctx->ds, (P4_Int)(e)); goto _forth; } THROWHARD(e); }
+				P4_PUSH(ctx->ds, (P4_Int)(e)); \
+				/* Reset any previous exception. */ \
+				rc = P4_THROW_OK; goto _forth; \
+			} THROWHARD(e); }
 
 #pragma GCC diagnostic push
 /* Ignore pedantic warning about "address of a label", required extension. */
@@ -1344,19 +1343,14 @@ p4Repl(P4_Ctx *ctx, int thrown)
 		/* Signal thrown overrides context. */
 		rc = thrown;
 	}
-	if (ctx->frame != NULL) {
+	if (rc != P4_THROW_OK && ctx->frame != NULL) {
 		/* Throw might be caught, can't fall through. */
 		THROW(rc);
 	}
 _thrown:
 	switch (rc) {
-	case P4_THROW_UNDEFINED:
-	case P4_THROW_COMPILE_ONLY:
-	case P4_THROW_BAD_CONTROL:
-	case P4_THROW_WORDLIST:
-		p4Bp(ctx);
-		/*@fallthrough@*/
 	default:
+		p4Bp(ctx);
 		THROW_MSG(rc);
 		/* Cannot not rely on ctx->state for compilation state, since
 		 * its possible to temporarily change states in the middle of
@@ -1387,6 +1381,7 @@ _thrown:
 			}
 		}
 		/*@fallthrough@*/
+	case P4_THROW_SIGINT:
 	case P4_THROW_ABORT_MSG:
 		/* Ensure ABORT" and other messages print newline.*/
 		(void) fprintf(STDERR, crlf);

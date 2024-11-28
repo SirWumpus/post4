@@ -1,6 +1,6 @@
 set listsize 30
-handle SIGINT nostop pass print
-#handle SIGSEGV stop pass
+#handle SIGINT nostop pass print
+handle SIGSEGV stop pass
 
 define showinput
 p ctx->input.buffer+ctx->input.offset

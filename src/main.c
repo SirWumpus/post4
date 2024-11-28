@@ -152,7 +152,6 @@ main(int argc, char **argv)
 
 	if (argc <= optind || (argv[optind][0] == '-' && argv[optind][1] == '\0')) {
 		rc = SETJMP(sig_break_glass);
-		p4ResetInput(ctx_main, stdin);
 		rc = p4Repl(ctx_main, rc);
 	} else if (optind < argc) {
 		rc = p4EvalFile(ctx_main, argv[optind]);
