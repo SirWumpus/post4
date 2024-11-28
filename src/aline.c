@@ -44,7 +44,10 @@ alineSetMode(int mode)
 {
 	int prev = tty_mode;
 	if (is_tty && tty_mode != mode) {
-		(void) tcsetattr(tty_fd, TCSANOW, &tty_modes[mode]);
+		errno = 0;
+		if (tcsetattr(tty_fd, TCSANOW, &tty_modes[mode])) {
+			(void) fprintf(stderr, "%s mode=%d errno=%d\n", __func__, mode, errno);
+		}
 		tty_mode = mode;
 	}
 	return prev;
