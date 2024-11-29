@@ -101,7 +101,7 @@ aline$E : ansiterm.h aline.h aline.c
 
 aline$O : config.h ansiterm.h aline.h aline.c
 
-build.h : config.h ${CHDR} ${CSRC}
+build.h : config.h ${CHDR} ${CSRC} main.c
 	printf '#define P4_BUILT "%s"\n#define P4_COMMIT "%s"\n' "${BUILT}" "${COMMIT}" >build.h
 
 hooks$O : config.h post4.h hooks.c
