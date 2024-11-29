@@ -69,7 +69,7 @@ $O$E :
 
 GEN	:= config.h build.h
 CHDR	:= aline.h ansiterm.h post4.h
-CSRC	:= post4.c hooks.c aline.c
+CSRC	:= post4.c hooks.c aline.c main.c
 OBJS	:= post4$O hooks$O aline$O
 
 all: build
@@ -81,7 +81,7 @@ clean : title
 	-rm -f a.out$E aline$E post4$E libpost4$A
 
 clobber distclean: clean
-	-rm -f build.h config.h config.h.in makefile
+	-rm -f ${GEN} config.h.in makefile
 
 title :
 	@echo
@@ -106,13 +106,13 @@ build.h : config.h ${CHDR} ${CSRC}
 
 hooks$O : config.h post4.h hooks.c
 
-post4$O : build.h ${CHDR} post4.c
+post4$O : ${GEN} ${CHDR} post4.c
 	${CC} ${CFLAGS} -fPIC -c post4.c
 
 libpost4$A : ${OBJS}
 	ar rcs $@ ${OBJS}
 
-post4$E : build.h ${CHDR} ${CSRC} main.c
+post4$E : ${GEN} ${CHDR} ${CSRC} main.c
 	${CC} ${CFLAGS} ${LDFLAGS} -o $@ main.c ${CSRC} ${LIBS}
 
 test tests: post4$E
