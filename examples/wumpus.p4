@@ -286,7 +286,7 @@ CREATE shoot-path 5 CELLS ALLOT
 ;
 
 : shoot-distance ( -- dist )
-	BEGIN
+	0 BEGIN ( dist-wrong ) DROP
 	  ." NO. OF ROOMS(1-5) " PAD /PAD ACCEPT \ S: len
 	  DROP 0 S>D PAD /PAD >NUMBER 2DROP D>S	\ S: dist
 	  DUP 1 6 WITHIN			\ S: dist bool
@@ -294,7 +294,7 @@ CREATE shoot-path 5 CELLS ALLOT
 ;
 
 : shoot-room ( -- room )
-	BEGIN
+	0 BEGIN ( room-wrong ) DROP
 	  ." ROOM# " PAD /PAD ACCEPT		\ S: len
 	  DROP 0 S>D PAD /PAD >NUMBER 2DROP D>S	\ S: room
 	  DUP 1 max_rooms WITHIN		\ S: room bool
