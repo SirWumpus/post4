@@ -1090,7 +1090,6 @@ int
 p4Repl(P4_Ctx *ctx, volatile int thrown)
 {
 	int rc;
-	P4_Word *word;
 	P4_String str;
 	P4_Cell w, x, y, *ip;
 
@@ -1294,10 +1293,10 @@ p4Repl(P4_Ctx *ctx, volatile int thrown)
 
 	if (p4_builtin_words == NULL) {
 		/* Link up the base dictionary. */
-		for (word = words; word->code != NULL; word++) {
-			word[1].prev = word;
+		for (w.nt = words; w.nt->code != NULL; w.nt++) {
+			w.nt[1].prev = w.nt;
 		}
-		p4_builtin_words = word->prev;
+		p4_builtin_words = w.nt->prev;
 		*ctx->active = p4_builtin_words;
 #ifdef HAVE_HOOKS
 		/* Find _hook_call and install any hooked words, eg. SH SHELL. */
@@ -1316,7 +1315,7 @@ p4Repl(P4_Ctx *ctx, volatile int thrown)
 
 #define NEXT		goto _next
 #define THROWHARD(e)	{ rc = (e); goto _thrown; }
-#define THROW(e)	{ if (p4_throw != NULL) { word = p4_throw; \
+#define THROW(e)	{ if (p4_throw != NULL) { x.nt = p4_throw; \
 				P4_PUSH(ctx->ds, (P4_Int)(e)); \
 				/* Reset any previous exception. */ \
 				rc = P4_THROW_OK; goto _forth; \
@@ -1339,6 +1338,7 @@ p4Repl(P4_Ctx *ctx, volatile int thrown)
 
 	SETJMP_PUSH(ctx->longjmp);
 	rc = SETJMP(ctx->longjmp);
+
 	if (thrown != P4_THROW_OK) {
 		/* Signal thrown overrides context. */
 		rc = thrown;
@@ -1363,14 +1363,14 @@ _thrown:
 			/* A thrown error while compiling a word leaves the
 			 * definition in an incomplete state; discard it.
 			 */
-			word = *ctx->active;
+			w.nt = *ctx->active;
 			(void) fprintf(STDERR, " compiling %s",
-				word->length == 0 ? ":NONAME" : (char *)word->name
+				w.nt->length == 0 ? ":NONAME" : (char *)w.nt->name
 			);
-			*ctx->active = word->prev;
+			*ctx->active = w.nt->prev;
 			/* Rewind HERE, does not free ALLOCATE data. */
-			ctx->here = (P4_Char *) word->data;
-			p4WordFree(word);
+			ctx->here = (P4_Char *) w.nt->data;
+			p4WordFree(w.nt);
 		} else {
 			/* Cannot rely on ip pointint to the xt after the error. */
 			(void) fprintf(STDERR, "\r\ninput: "ANSI_UNDERLINE"%*s"ANSI_NORMAL,
@@ -1425,8 +1425,8 @@ _inter_loop:	while (ctx->input->offset < ctx->input->length) {
 			if (str.length == 0) {
 				break;
 			}
-			word = p4FindName(ctx, str.string, str.length);
-			if (word == NULL) {
+			x.nt = p4FindName(ctx, str.string, str.length);
+			if (x.nt == NULL) {
 				P4_Cell num[2];
 				int is_float, is_double;
 				if (p4StrNum(str, ctx->radix, num, &is_float, &is_double)) {
@@ -1467,12 +1467,12 @@ _inter_loop:	while (ctx->input->offset < ctx->input->length) {
 						P4_PUSH(ctx->ds, num[1]);
 					}
 				}
-			} else if (ctx->state == P4_STATE_INTERPRET && P4_WORD_IS(word, P4_BIT_COMPILE)) {
+			} else if (ctx->state == P4_STATE_INTERPRET && P4_WORD_IS(x.nt, P4_BIT_COMPILE)) {
 				THROW(P4_THROW_COMPILE_ONLY);
-			} else if (ctx->state == P4_STATE_COMPILE && !P4_WORD_IS_IMM(word)) {
-				p4WordAppend(ctx, (P4_Cell) word);
+			} else if (ctx->state == P4_STATE_COMPILE && !P4_WORD_IS_IMM(x.nt)) {
+				p4WordAppend(ctx, (P4_Cell) x.nt);
 			} else {
-_forth:				exec[0].xt = word;
+_forth:				exec[0].xt = x.nt;
 				ip = exec;
 				NEXT;
 			}
@@ -1603,16 +1603,16 @@ _do_colon:	ctx->state = P4_STATE_COMPILE;
 		if (ctx->trace) {
 			(void) printf("%*s%.*s\r\n", 19+2*(int)ctx->level, "", (int)str.length, str.string);
 		}
-		p4AllocStack(ctx, &ctx->ds, 1+(word->length == 0));
-		word = p4WordCreate(ctx, str.string, str.length, &&_enter);
-		if (word->length == 0) {
+		x.nt = p4WordCreate(ctx, str.string, str.length, &&_enter);
+		p4AllocStack(ctx, &ctx->ds, 1+(x.nt->length == 0));
+		if (x.nt->length == 0) {
 			/* :NONAME leaves xt on stack. */
-			P4_PUSH(ctx->ds, word);
+			P4_PUSH(ctx->ds, x.nt);
 		}
 		/* Save sentinel for control imbalance test below. */
 		P4_PUSH(ctx->ds, (P4_Uint) P4_MARKER);
 		/* Keep new word hidden while compiling. */
-		P4_WORD_SET_HIDDEN(word);
+		P4_WORD_SET_HIDDEN(x.nt);
 		NEXT;
 
 		// (C: colon -- ) (R: ip -- )
@@ -1671,25 +1671,25 @@ _eval_file:	P4_DROP(ctx->ds, 1);
 		 */
 		// ( <spaces>name -- )
 _create:	str = p4ParseName(ctx->input);
-		word = p4WordCreate(ctx, str.string, str.length, &&_data_field);
+		x.nt = p4WordCreate(ctx, str.string, str.length, &&_data_field);
 		// Reserve the 1st data cell for possible DOES>; wasted otherwise.
 		p4WordAppend(ctx, (P4_Cell)(P4_Int) 0),
-		P4_WORD_SET(word, P4_BIT_CREATED);
+		P4_WORD_SET(x.nt, P4_BIT_CREATED);
 		NEXT;
 
 		// ( caddr u -- )
 _created:	P4_DROP(ctx->ds, 1);
 		w = P4_POP(ctx->ds);
-		word = p4WordCreate(ctx, w.s, x.z, &&_nop);
-		P4_WORD_SET(word, P4_BIT_CREATED);
+		x.nt = p4WordCreate(ctx, w.s, x.z, &&_nop);
+		P4_WORD_SET(x.nt, P4_BIT_CREATED);
 		NEXT;
 
 		// DOES>
-_does:		word = *ctx->active;
-		if (!P4_WORD_IS(word, P4_BIT_CREATED)) {
+_does:		w.nt = *ctx->active;
+		if (!P4_WORD_IS(w.nt, P4_BIT_CREATED)) {
 			THROW(P4_THROW_NOT_CREATED);
 		}
-		word->code = &&_do_does;
+		w.nt->code = &&_do_does;
 		/*** If we change (again) how a P4_Word and data are
 		 *** stored in memory, then most likely need to fix
 		 *** this and _seext.
@@ -1702,7 +1702,7 @@ _does:		word = *ctx->active;
 		//
 		//	: word CREATE ( store data) DOES> ( words) ;
 		//	                                  ^--- IP
-		word->data[0].p = ip;
+		w.nt->data[0].p = ip;
 		goto _exit;
 
 		// ( -- aaddr)
@@ -1739,10 +1739,10 @@ _allot:		P4_DROP(ctx->ds, 1);
 		// ( xt <spaces>name -- )
 _alias:		P4_DROP(ctx->ds, 1);
 		str = p4ParseName(ctx->input);
-		word = p4WordCreate(ctx, str.string, str.length, x.nt->code);
-		word->ndata = x.nt->ndata;
-		word->data = x.nt->data;
-		word->bits = x.nt->bits;
+		w.nt = p4WordCreate(ctx, str.string, str.length, x.nt->code);
+		w.nt->ndata = x.nt->ndata;
+		w.nt->data = x.nt->data;
+		w.nt->bits = x.nt->bits;
 		NEXT;
 
 		// ( key k -- value v )
