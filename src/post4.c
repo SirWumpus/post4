@@ -1087,7 +1087,7 @@ p4StackGuards(P4_Ctx *ctx)
 }
 
 int
-p4Repl(P4_Ctx *ctx, int thrown)
+p4Repl(P4_Ctx *ctx, volatile int thrown)
 {
 	int rc;
 	P4_Word *word;
