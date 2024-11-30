@@ -1372,14 +1372,12 @@ _thrown:
 			ctx->here = (P4_Char *) w.nt->data;
 			p4WordFree(w.nt);
 		} else {
-			/* Cannot rely on ip pointint to the xt after the error. */
-			(void) fprintf(STDERR, "\r\ninput: "ANSI_UNDERLINE"%*s"ANSI_NORMAL,
-				(int)ctx->input->length, ctx->input->buffer
-			);
+			/* Cannot rely on ip pointing to the xt after the error. */
+			(void) fprintf(STDERR, crlf);
 			for (x.p = ctx->rs.top; ctx->rs.base <= x.p; x.p--) {
 				w = (*x.p).p[-1];
 				y.s = p4IsNt(ctx, w.nt) ? w.nt->name : "";
-				(void) fprintf(STDERR, "\r\n"P4_H0X_FMT"  %s", (long) w.nt, y.s);
+				(void) fprintf(STDERR, P4_H0X_FMT"  %s\r\n", (long) w.nt, y.s);
 			}
 		}
 		/*@fallthrough@*/

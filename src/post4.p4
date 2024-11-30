@@ -265,9 +265,9 @@ END-STRUCTURE
 : UNUSED _end HERE - ; $01 _pp!
 
 \ (S: -- aaddr )
-: _dstk _ctx ctx.ds ;
-: _fstk _ctx ctx.fs ;
-: _rstk _ctx ctx.rs ;
+: _dstk _ctx ctx.ds ; $01 _pp!
+: _fstk _ctx ctx.fs ; $01 _pp!
+: _rstk _ctx ctx.rs ; $01 _pp!
 
 \ (S: aaddr1 -- aaddr2 )
 : CELL+ /CELL + ; $11 _pp!
@@ -323,14 +323,14 @@ END-STRUCTURE
 : 2VARIABLE CREATE 0 , 0 , ; $01 _pp!
 
 \ (S: -- )
-: [ FALSE STATE ! ; IMMEDIATE \ allow interpret
-: ] TRUE STATE ! ; \ allow interpret
+: [ FALSE STATE ! ; IMMEDIATE
+: ] TRUE STATE ! ;
 
 \ ( -- x )(R: x -- x)
 : R@ R> R> DUP >R SWAP >R ; $1101 _pp!
 
 \ (S: xn ... x1 n -- )
-: dropn CELLS dsp@ SWAP - CELL- dsp! ;
+: dropn CELLS dsp@ SWAP - CELL- dsp! ; $10 _pp!
 
 \ ( i*x -- )
 : dropall DEPTH dropn ;
@@ -391,18 +391,18 @@ END-STRUCTURE
 : +! DUP @ ROT + SWAP ! ; $20 _pp!
 
 \ (S: caddr u n -- caddr' u' )
-: /STRING >R R@ - SWAP R> CHARS + SWAP ;
+: /STRING >R R@ - SWAP R> CHARS + SWAP ; $32 _pp!
 
 \ (S: lo hi aaddr -- )
-: 2! TUCK ! CELL+ ! ;
+: 2! TUCK ! CELL+ ! ; $30 _pp!
 
 \ Fetch from aaddr the two cells, hi lo, and place on stack lo hi.
 \
 \ (S: aaddr -- lo hi )
-: 2@ DUP CELL+ @ SWAP @ ;
+: 2@ DUP CELL+ @ SWAP @ ; $12 _pp!
 
 \ (S: x1 -- x2 )
-: 2* 1 LSHIFT ;
+: 2* 1 LSHIFT ; $11 _pp!
 
 \ ... 2/ ...
 \
@@ -415,29 +415,29 @@ END-STRUCTURE
 	DUP cell-bits 1 -			\ S: x x bits
 	RSHIFT NEGATE				\ S: x s
 	DUP >R XOR 1 RSHIFT R> XOR	\ S: x'
-;
+; $11 _pp!
 
-\ x y	2CONSTANT name
-\
 \ (C: x y <spaces>name -- ) (S: -- x y )
-\
-: 2CONSTANT CREATE , , DOES> 2@ ;
+: 2CONSTANT CREATE , , DOES> 2@ ; $02 _pp!
 
-MAX-U MAX-U 2CONSTANT MAX-UD
-MAX-U MAX-N 2CONSTANT MAX-D
-0 MIN-N 2CONSTANT MIN-D
+MAX-U MAX-U 2CONSTANT MAX-UD $02 _pp!
+MAX-U MAX-N 2CONSTANT MAX-D $02 _pp!
+0 MIN-N 2CONSTANT MIN-D $02 _pp!
 
 \ (S: x1 x2 -- )
 : 2DROP DROP DROP ; $20 _pp!
 
 \ (S: x1 x2 -- x1 x2 x1 x2 )
-: 2DUP OVER OVER ; $02 _pp!
+: 2DUP OVER OVER ; $24 _pp!
 
 \ (S: x1 x2 x3 x4 -- x1 x2 x3 x4 x1 x2 )
-: 2OVER 3 PICK 3 PICK ; $02 _pp!
+: 2OVER 3 PICK 3 PICK ; $46 _pp!
 
 \ (S: x1 x2 x3 x4 -- x3 x4 x1 x2 )
-: 2SWAP 3 ROLL 3 ROLL ;
+: 2SWAP 3 ROLL 3 ROLL ; $44 _pp!
+
+\ (S: x1 x2 x3 x4 -- x3 x4 )
+: 2NIP 2SWAP 2DROP ; $42 _pp!
 
 \ (S: -- ; R: x -- )
 : rdrop R> R> DROP >R ; compile-only $1000 _pp!
@@ -452,86 +452,53 @@ MAX-U MAX-N 2CONSTANT MAX-D
 	>R >R					\ S: --	R: x1 x2 ip
 ; compile-only
 
-\ ... 2R> ...
-\
 \ (S: -- x1 x2 )(R: x1 x2 -- )
-\
 : 2R>
 	R> R> R>				\ S: ip x2 x1	R: --
 	ROT						\ S: x2 x1 ip	R: --
 	>R SWAP					\ S: x1 x2	R: ip
-; compile-only
+; compile-only  $2002 _pp!
 
-\ ... 2R@ ...
-\
 \ (S: -- x1 x2 )(R: x1 x2 -- x1 x2 )
-\
 : 2R@
 	R> 2R>					\ S: ip x1 x2	R: --
 	2DUP 2>R				\ S: ip x1 x2	R: x1 x2
 	ROT >R					\ S: x1 x2	R: x1 x2 ip
-; compile-only
+; compile-only $22002 _pp!
 
-\ ... /MOD ...
-\
 \ (S: n1 n2 -- rem quot )
-\
-: /MOD >R S>D R> SM/REM ;
+: /MOD >R S>D R> SM/REM ; $22 _pp!
 
-\ ... */ ...
-\
 \ (S: n1 n2 dsor -- quot )
-\
-: */ >R M* R> SM/REM SWAP DROP ;
+: */ >R M* R> SM/REM SWAP DROP ; $31 _pp!
 
-\ ... */MOD ...
-\
 \ (S: n1 n2 dsor -- rem quot )
-\
-: */MOD >R M* R> SM/REM ;
+: */MOD >R M* R> SM/REM ; $32 _pp!
 
 \ ... 0> ...
 \ Greater than zero.
 \
 \ (S: n -- flag )
 \
-: 0> 0 SWAP - 0< ;
+: 0> 0 SWAP - 0< ; $11 _pp!
 
-\ ... = ...
-\
 \ (S: nu1 nu2 -- flag )
-\
-: = - 0= ;
+: = - 0= ; $21 _pp!
 
-\ ... <> ...
-\
 \ (S: nu1 nu2 -- flag )
-\
-: <> = 0= ;
+: <> = 0= ; $21 _pp!
 
-\ ... > ...
-\
 \ (S: n1 n2 -- flag )
-\
-: > SWAP < ;
+: > SWAP < ; $21 _pp!
 
-\ ... U> ...
-\
 \ (S: n1 n2 -- flag )
-\
-: U> SWAP U< ;
+: U> SWAP U< ; $21 _pp!
 
-\ ... <= ...
-\
 \ (S: n1 n2 -- flag )
-\
-: <= > 0= ;
+: <= > 0= ; $21 _pp!
 
-\ ... >= ...
-\
 \ (S: n1 n2 -- flag )
-\
-: >= < 0= ;
+: >= < 0= ; $21 _pp!
 
 \ ... WITHIN ...
 \
@@ -540,13 +507,13 @@ MAX-U MAX-N 2CONSTANT MAX-D
 \ @note
 \	True if nu2 <= nu1 < nu3, otherwise false.
 \
-: WITHIN OVER - >R - R> U< ;
+: WITHIN OVER - >R - R> U< ; $31 _pp!
 
 \ (S: xl xh -- bool )
-: D0= OR 0= ;
+: D0= OR 0= ; $21 _pp!
 
 \ (S: xl xh -- bool )
-: D0< NIP 0< ;
+: D0< NIP 0< ; $21 _pp!
 
 \ (S: xl xh yl yh -- bool )
 : D=
@@ -555,7 +522,7 @@ MAX-U MAX-N 2CONSTANT MAX-D
 	SWAP R>						\ S: dh x1 yl	R: --
 	-							\ S: dh dl
 	D0=							\ S: bool
-;
+; $41 _pp!
 
 \ (S: <spaces>name.new <spaces>name.old -- )
 : SYNONYM >IN @ PARSE-NAME 2DROP ' >IN @ SPIN >IN ! alias >IN ! ;
@@ -567,16 +534,16 @@ MAX-U MAX-N 2CONSTANT MAX-D
 : SPACE BL EMIT ;
 
 \ (S: caddr1 -- caddr2 u )
-: COUNT DUP CHAR+ SWAP C@ ;
+: COUNT DUP CHAR+ SWAP C@ ; $12 _pp!
 
 \ (S: <spaces>name -- char )
-: CHAR PARSE-NAME DROP C@ ;
+: CHAR PARSE-NAME DROP C@ ; $01 _pp!
 
 \ ... : name ... [ x ] LITERAL ... ;
 \
 \	(C: x -- ) (S: -- x )
 \
-: LITERAL LIT, ; IMMEDIATE compile-only
+: LITERAL LIT, ; IMMEDIATE compile-only $01 _pp!
 
 \ ... test IF ... THEN ...
 \ ... test IF ... ELSE ... THEN ...
@@ -586,7 +553,7 @@ MAX-U MAX-N 2CONSTANT MAX-D
 \ @see
 \	A.3.2.3.2 Control-flow stack
 \
-: IF ['] _branchz COMPILE, >HERE 0 , ; IMMEDIATE compile-only
+: IF ['] _branchz COMPILE, >HERE 0 , ; IMMEDIATE compile-only $10 _pp!
 
 \ ... AHEAD ... THEN ...
 \ ... test IF ... THEN ...
@@ -604,25 +571,22 @@ MAX-U MAX-N 2CONSTANT MAX-D
 	!							\	C: --
 ; IMMEDIATE compile-only
 
-\ ... ?DUP ...
-\
 \ (S: x -- 0 | x x )
-\
-: ?DUP DUP IF DUP THEN ;
+: ?DUP DUP IF DUP THEN ; $12 _pp!
 
 \ (S: xl xh yl yh -- bool )
 : DU<
 	ROT 2DUP = IF				\ S: xl yl yh xh
 		2DROP U< EXIT			\ S: bool
 	THEN U> >R 2DROP R>
-;
+; $41 _pp!
 
 \ (S: xl xh yl yh -- bool )
 : D<
 	ROT 2DUP = IF
 		2DROP < EXIT
 	THEN > >R 2DROP R>
-;
+; $41 _pp!
 
 \ ... NAME>COMPILE ...
 \
@@ -643,7 +607,7 @@ MAX-U MAX-N 2CONSTANT MAX-D
 \ but the test suite fails.
 	THEN
 	['] COMPILE,
-;
+; $12 _pp!
 
 \ ... NAME>INTERPRET ...
 \
@@ -657,7 +621,7 @@ MAX-U MAX-N 2CONSTANT MAX-D
 	IF
 		DROP 0 EXIT
 	THEN
-;
+; $11 _pp!
 
 \ ... FM/MOD ...
 \
@@ -685,31 +649,18 @@ MAX-U MAX-N 2CONSTANT MAX-D
 	THEN
 	\ No, same sign, SM/REM result same as FM/MOD.
 	SM/REM
-;
+; $22 _pp!
 
-\ ... DEFER name ...
-\
 \ (S: <spaces>name -- )
-\
 : DEFER CREATE ['] _nop , DOES> @ EXECUTE ;
 
-\ ... DEFER! ...
-\
 \ (S: xt2 xt1 -- )
-\
-: DEFER! >BODY ! ;
+: DEFER! >BODY ! ; $20 _pp!
 
-\ ... DEFER@ ...
-\
 \ (S: xt1 -- xt2 )
-\
-: DEFER@ >BODY @ ;
+: DEFER@ >BODY @ ; $11 _pp!
 
-\ ... CATCH ...
-\
 \ ( i*x xt -- j*x 0 | i*x n )
-\
-
 : CATCH									\ S: xt
 	DEPTH >R							\ S: xt		R: ds
 	FDEPTH >R							\ S: xt		R: ds fs
@@ -721,10 +672,7 @@ MAX-U MAX-N 2CONSTANT MAX-D
 	0									\ S: 0
 ; $11 _pp!
 
-\ ... THROW ...
-\
 \ ( k*x n -- k*x | i*x n )
-\
 : THROW									\ S: n
 	\ 0 THROW is a no-op.
 	?DUP IF								\ S: n
@@ -750,7 +698,7 @@ MAX-U MAX-N 2CONSTANT MAX-D
 : execute-compiling
 	STATE @ IF EXECUTE EXIT THEN
 	TRUE STATE ! EXECUTE FALSE STATE !
-;
+; $10 _pp!
 
 \ (S: <spaces>name -- )
 \
@@ -774,17 +722,14 @@ MAX-U MAX-N 2CONSTANT MAX-D
 
 \ ( -- xt )
 \ Redefine now that we can THROW for an undefined word.
-: ' PARSE-NAME FIND-NAME DUP 0= -13 AND THROW ;
+: ' PARSE-NAME FIND-NAME DUP 0= -13 AND THROW ; $01 _pp!
 
 \ (C: <spaces>name -- ) (S: -- xt )
 \ Redefine now that ' can THROW on undefined word.
-: ['] LIT LIT COMPILE, ' COMPILE, ; IMMEDIATE compile-only
+: ['] LIT LIT COMPILE, ' COMPILE, ; IMMEDIATE compile-only $01 _pp!
 
-\ ...	[CHAR]	...
-\
-\	(C: <spaces>name -- ) \ (S: -- char )
-\
-: [CHAR] CHAR POSTPONE LITERAL ; IMMEDIATE compile-only
+\	(C: <spaces>name -- ) (S: -- char )
+: [CHAR] CHAR POSTPONE LITERAL ; IMMEDIATE compile-only $01 _pp!
 
 \ ... BEGIN ... AGAIN
 \ ... BEGIN ... test UNTIL ...
@@ -813,10 +758,10 @@ MAX-U MAX-N 2CONSTANT MAX-D
 \ @see
 \	A.3.2.3.2 Control-flow stack
 \
-: UNTIL POSTPONE _branchz >HERE - , ; IMMEDIATE compile-only
+: UNTIL POSTPONE _branchz >HERE - , ; IMMEDIATE compile-only $10 _pp!
 
 \	(C: dest -- ) (S: bool -- )
-: whilst POSTPONE _branchnz >HERE - , ; IMMEDIATE compile-only
+: whilst POSTPONE _branchnz >HERE - , ; IMMEDIATE compile-only $10 _pp!
 
 \ ... AHEAD ... THEN ...
 \
@@ -878,23 +823,20 @@ MAX-U MAX-N 2CONSTANT MAX-D
 	>HERE NEGATE ,
 ; IMMEDIATE compile-only
 
-\ ... ABS ...
-\
 \ (S: n -- u )
-\
-: ABS DUP 0< IF NEGATE THEN ;
+: ABS DUP 0< IF NEGATE THEN ; $11 _pp!
 
 \ (S: n1 n2 -- n3 )
-: MAX 2DUP < IF SWAP THEN DROP ;
-: MIN 2DUP > IF SWAP THEN DROP ;
+: MAX 2DUP < IF SWAP THEN DROP ; $21 _pp!
+: MIN 2DUP > IF SWAP THEN DROP ; $21 _pp!
 
 \ (S: u1 u2 -- u3 )
-: umax 2DUP U< IF SWAP THEN DROP ;
-: umin 2DUP U> IF SWAP THEN DROP ;
+: umax 2DUP U< IF SWAP THEN DROP ; $21 _pp!
+: umin 2DUP U> IF SWAP THEN DROP ; $21 _pp!
 
 \ (S: d1 d2 -- d3 )
-: DMAX 2OVER 2OVER D< IF 2SWAP THEN 2DROP ;
-: DMIN 2OVER 2OVER D< INVERT IF 2SWAP THEN 2DROP ;
+: DMAX 2OVER 2OVER D< IF 2SWAP THEN 2DROP ; $42 _pp!
+: DMIN 2OVER 2OVER D< INVERT IF 2SWAP THEN 2DROP ; $42 _pp!
 
 \ (S: dl dh -- dl' dh' )
 \ *c1 = ~*c1 + ((*c0 = -*c0) == 0);
@@ -903,19 +845,19 @@ MAX-U MAX-N 2CONSTANT MAX-D
 	NEGATE SWAP					\ S: dl' dh"
 	OVER 0= 1 AND				\ S: dl' dh" c
 	+							\ S: dl' dh'
-;
+; $22 _pp!
 
 \ (S: dl dh -- ul uh )
-: DABS DUP 0< IF DNEGATE THEN ;
+: DABS DUP 0< IF DNEGATE THEN ; $22 _pp!
 
 \ (S: xl xh yl yh -- zl zh )
-: D+ ROT + >R DUP >R + DUP R> U< NEGATE R> + ;
+: D+ ROT + >R DUP >R + DUP R> U< NEGATE R> + ; $42 _pp!
 
 \ (S: xl xh yl yh -- zl zh )
-: D- DNEGATE D+ ;
+: D- DNEGATE D+ ; $42 _pp!
 
 \ (S: xl xh -- yl yh )
-: D2* 2DUP D+ ;
+: D2* 2DUP D+ ; $22 _pp!
 
 \ (S: xl xh -- yl yh )
 : D2/
@@ -924,10 +866,10 @@ MAX-U MAX-N 2CONSTANT MAX-D
 	LSHIFT SWAP 2/ >R			\ S: xl msb		R: xh'
 	SWAP 1 RSHIFT				\ S: msb x1'	R: xh'
 	OR R>						\ S: xl' xh'
-;
+; $22 _pp!
 
 \ (S: xl xh n -- yl yh )
-: M+ S>D D+ ;
+: M+ S>D D+ ; $32 _pp!
 
 \ ( ul uh u -- tl tm th )
 : ut*
@@ -935,7 +877,7 @@ MAX-U MAX-N 2CONSTANT MAX-D
 	UM* 2SWAP					\ S: tl tm uh u
 	UM* SWAP					\ S: tl tm th tt
 	0 D+						\ S: tl tm' th'
-;
+; $33 _pp!
 
 \ ( tl tm th u -- ud )
 : ut/
@@ -944,7 +886,7 @@ MAX-U MAX-N 2CONSTANT MAX-D
 	-ROT R>						\ S: q0 tl r0 u
 	UM/MOD						\ S: q0 r1 q1
 	NIP SWAP					\ S: q1 q0
-;
+; $42 _pp!
 
 \ ( d1 n1 n2 -- d2 )
 : M*/
@@ -955,23 +897,23 @@ MAX-U MAX-N 2CONSTANT MAX-D
 	2R> >R						\ S: tl tm th n2	R: sign
 	ut/							\ S: ud				R: sign
 	R> 0< IF DNEGATE THEN		\ S: d2
-;
+; $42 _pp!
 
 \ ... : name ... [ x1 x2 ] 2LITERAL ... ;
 \
 \	(C: x1 x2 -- ) (S: -- x1 x2 )
 \
-: 2LITERAL SWAP POSTPONE LITERAL POSTPONE LITERAL ; IMMEDIATE compile-only
+: 2LITERAL SWAP POSTPONE LITERAL POSTPONE LITERAL ; IMMEDIATE compile-only $02 _pp!
 
 \ (S: addr -- addr' x )
-: @+ DUP CELL+ SWAP @ ;
-: @- DUP cell- SWAP @ ;
+: @+ DUP CELL+ SWAP @ ; $12 _pp!
+: @- DUP cell- SWAP @ ; $12 _pp!
 
 \ (S: caddr -- caddr' x )
-: C@+ DUP CHAR+ SWAP C@ ;
+: C@+ DUP CHAR+ SWAP C@ ; $12 _pp!
 
 \ (S: x addr -- addr' )
-: !+ DUP CELL+ -rot ! ;
+: !+ DUP CELL+ -rot ! ; $21 _pp!
 
 \ (S: x*i i -- )
 : n, DUP , BEGIN SWAP , 1- DUP whilst DROP ; $10 _pp!
