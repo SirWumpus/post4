@@ -128,7 +128,7 @@ alineGetRowCol(int pos[2])
 {
 	char *stop, report[12];
 	int n, fd = fileno(stdout);
-	(void) tcsetattr(fd, TCSANOW, &tty_modes[ALINE_RAW]);
+	(void) tcsetattr(fd, TCSAFLUSH, &tty_modes[ALINE_RAW]);
 	(void) write(fd, ANSI_REPORT, sizeof (ANSI_REPORT)-1);
 	n = read(fd, report, sizeof (report));
 	report[n] = '\0';
