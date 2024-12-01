@@ -261,7 +261,7 @@ CREATE objects max_objects CELLS ALLOT
 	DROP					\ S: --
 ;
 
-: move ( -- )
+: where-to ( -- )
 	BEGIN
 	  BEGIN
 	    ." WHERE TO? " PAD /PAD ACCEPT	\ S: length
@@ -384,8 +384,8 @@ CREATE shoot-path 5 CELLS ALLOT
 	  ." (S)HOOT OR (M)OVE? " PAD /PAD ACCEPT \ S: len
 	  DROP PAD C@				\ S: ch
 	  CASE
-	    'M' OF move EXIT ENDOF
-	    'm' OF move EXIT ENDOF
+	    'M' OF where-to EXIT ENDOF
+	    'm' OF where-to EXIT ENDOF
 	    'S' OF shoot EXIT ENDOF
 	    's' OF shoot EXIT ENDOF
 	  ENDCASE
