@@ -1185,6 +1185,8 @@ p4Repl(P4_Ctx *ctx, volatile int thrown)
 		P4_VAL("/pad",			P4_PAD_SIZE),		// p4
 		P4_VAL("address-unit-bits",	P4_CHAR_BIT),		// p4
 		P4_VAL("WORDLISTS",		P4_WORDLISTS),
+		P4_WORD("post4-path",	&&_post4_path,	0, 0x02),	// p4
+		P4_WORD("post4-commit", &&_post4_commit,0, 0x02),	// p4
 
 		/* Internal support. */
 		P4_WORD("_bp",		&&_bp,		0, 0x00),	// p4
@@ -1263,7 +1265,7 @@ p4Repl(P4_Ctx *ctx, volatile int thrown)
 		/* Tools*/
 		P4_WORD("alias",	&&_alias,	0, 0x10),	// p4
 		P4_WORD("bye-status",	&&_bye_code,	0, 0x10),	// p4
-		P4_WORD("env",		&&_env,		0, 0x22),	// p4
+		P4_WORD("getenv",	&&_getenv,	0, 0x22),	// p4
 
 		/* I/O */
 		P4_WORD(">IN",		&&_input_offset,0, 0x01),
@@ -1738,11 +1740,12 @@ _alias:		P4_DROP(ctx->ds, 1);
 		NEXT;
 
 		// ( key k -- value v )
-_env:		P4_DROP(ctx->ds, 1);		// Ignore k, S" NUL terminates.
-		w = P4_TOP(ctx->ds);
-		x.s = getenv((const char *)w.s);
+_getenv:	w = P4_DROPTOP(ctx->ds);
+		w.s = strndup(w.s, x.u);
+		x.s = getenv(w.s);
+		free(w.s);
 		P4_TOP(ctx->ds) = x;
-		P4_PUSH(ctx->ds, (P4_Int)(x.s == NULL ? 0 : strlen((const char *)x.s)));
+		P4_PUSH(ctx->ds, (P4_Int)(x.s == NULL ? 0 : strlen(x.s)));
 		NEXT;
 
 		// ( -- rows cols )
@@ -2143,6 +2146,27 @@ _stack_dump:	P4_DROP(ctx->ds, 1);
 
 		FILE *fp;
 		struct stat sb;
+
+		// ( -- caddr u )
+_post4_path:	if ((w.s = getenv("POST4_PATH")) == NULL) {
+			w.s = P4_CORE_PATH;
+		}
+		x.z = strlen(w.s);
+		P4_PUSH(ctx->ds, w);
+		P4_PUSH(ctx->ds, x);
+		NEXT;
+
+		// ( -- caddr u )
+_post4_commit:	P4_PUSH(ctx->ds, (char *) p4_commit);
+		P4_PUSH(ctx->ds, sizeof (p4_commit)-1);
+		NEXT;
+
+		// ( -- caddr u ) Be sure to FREE caddr.
+_getcwd:	w.s = getcwd(NULL, 0);
+		x.z = w.s == NULL ? 0 : strlen(w.s);
+		P4_PUSH(ctx->ds, w);
+		P4_PUSH(ctx->ds, x);
+		NEXT;
 
 		// ( -- fd )
 _fa_stdin:	P4_PUSH(ctx->ds, (void *) stdin);

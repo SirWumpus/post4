@@ -1990,7 +1990,7 @@ VARIABLE SCR
 : INCLUDED R/O OPEN-FILE THROW INCLUDE-FILE ; $20 _pp!
 
 \ (S: i*x caddr u -- j*x )
-: included-path S" POST4_PATH" env 2SWAP R/O open-file-path THROW INCLUDE-FILE ; $20 _pp!
+: included-path post4-path 2SWAP R/O open-file-path THROW INCLUDE-FILE ; $20 _pp!
 
 \ ... ACTION-OF ...
 \

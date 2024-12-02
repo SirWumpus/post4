@@ -1110,10 +1110,10 @@ Loop back to `BEGIN` until `x` equals zero (0).
 Create `name` with one cell of data assigned `x`.  When `name` is executed, the value `x` is pushed to the stack.  See `TO`.
 
         ok 69 VALUE position
-        ok postion .
+        ok position .
         69 ok
         ok 66 TO position
-        ok postion .
+        ok position .
         66 ok
 
 - - -
@@ -1302,12 +1302,17 @@ Store `aaddr` into the data stack pointer.
 Fetch the data stack pointer.
 
 - - -
-#### env
-( `key` `k` -- `value` `v` )  
-Lookup the environment variable string `key` `k`.  Return string `value` `v`; if length `v` is `-1`, then the environment variable `key` was not found and `value` is invalid.
+#### getcwd
+( -- `caddr` `u` )  
+The current working directory string `caddr` `u`; otherwise `0` `0`.  Its the caller's responsibility to `FREE` `caddr` when done.
 
-        S" HOME" env TYPE CR
-        S" USER" env TYPE CR
+- - -
+#### getenv
+( `key` `k` -- `value` `v` )  
+Lookup the environment variable string `key` `k` and return string `value` `v`.  If the environment variable is undefined `value` and `v` will both be zero.
+
+        S" HOME" getenv TYPE CR
+        S" USER" getenv TYPE CR
 
 - - -
 #### floored
@@ -1397,6 +1402,16 @@ Backslash followed by any other character escapes that character, ie. `\\` is a 
 A defined word for the implementation.  Currently does nothing but subject to change.
 
 - - -
+#### post4-commit
+( -- `caddr` `u` )  
+The Git commit string of the compiled version.
+
+- - -
+#### post4-path
+( -- `caddr` `u` )  
+The path search list from the `POST4_PATH` environment variable if defined; otherwise the default given by `P4_CORE_PATH`.
+
+- - -
 #### puts
 ( `caddr` -- )  
 Print a NUL terminated string.
@@ -1449,7 +1464,7 @@ Push the data stack's size.
 
 - - -
 #### stow
-( `a` `b` -- `a` a` `b` )  
+( `a` `b` -- `a` `a` `b` )  
 
 - - -
 #### umax
