@@ -115,6 +115,7 @@ install: build
 	install -p -o root -g 0 -d ${datarootdir}
 	install -p -o root -g 0 -d ${datarootdir}/doc
 	install -p -o root -g 0 ./examples/*.p4 ${libdir}
+	install -p -o root -g 0 ./test/assert.p4 ${libdir}
 	install -p -o root -g 0 ./README.md ${datarootdir}
 	install -p -o root -g 0 ./doc/* ${datarootdir}/doc
 	@cd src; $(MAKE) $@
