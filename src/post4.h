@@ -659,6 +659,7 @@ extern int p4EvalString(P4_Ctx *ctx, const char *string, size_t length);
 
 extern void p4AllocStack(P4_Ctx *ctx, P4_Stack *stk, unsigned size);
 
+extern FILE *p4OpenFilePath(const char *path_list, size_t plen, const char *file, size_t flen, const char *mode);
 
 extern const char *p4_exceptions[];
 extern JMP_BUF sig_break_glass;

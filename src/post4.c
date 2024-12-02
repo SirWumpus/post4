@@ -131,7 +131,7 @@ p4Init(P4_Options *opts)
 }
 
 FILE *
-p4OpenFilePath(const char *path_list, size_t plen, const char *file, size_t flen)
+p4OpenFilePath(const char *path_list, size_t plen, const char *file, size_t flen, const char *mode)
 {
 	FILE *fp = NULL;
 	char *paths, *path, *next, filepath[PATH_MAX];
@@ -140,26 +140,24 @@ p4OpenFilePath(const char *path_list, size_t plen, const char *file, size_t flen
 		errno = EINVAL;
 		goto error0;
 	}
-	/* Absolute file path?  Ass*/
-	if (*file == '/') {
-		(void) snprintf(filepath, sizeof (filepath), "%.*s", (int)flen, file);
-		if ((fp = fopen(filepath, "r")) != NULL) {
-			return fp;
-		}
+	/* Try the given file relative the current working directory. */
+	(void) snprintf(filepath, sizeof (filepath), "%.*s", (int)flen, file);
+	if ((fp = fopen(filepath, mode)) != NULL) {
+		return fp;
 	}
 	/* Path list supplied or use the default? */
 	if (path_list == NULL || *path_list == '\0') {
 		plen = STRLEN(P4_CORE_PATH);
 		path_list = P4_CORE_PATH;
 	}
-	/* Need a duplicate because strtok modifies the string with NUL. */
+	/* Need a duplicate because strtok modifies the string with NULs. */
 	if ((paths = strndup(path_list, plen)) == NULL) {
 		goto error1;
 	}
 	/* Search "dir0:dir1:...:dirN" string. */
 	for (next = paths; (path = strtok(next, ":")) != NULL; next = NULL) {
 		(void) snprintf(filepath, sizeof (filepath), "%s/%s", path, file);
-		if ((fp = fopen(filepath, "r")) != NULL) {
+		if ((fp = fopen(filepath, mode)) != NULL) {
 			errno = 0;
 			break;
 		}
@@ -2195,12 +2193,14 @@ _fa_open:	errno = 0;
 
 		// ( paths p file f fam -- fd ior )
 		P4_Cell z;
-_fa_open_path:	P4_DROP(ctx->ds, 1);
+		char *mode;
+_fa_open_path:	mode = fmodes[x.u];
+		P4_DROP(ctx->ds, 1);
 		x = P4_POP(ctx->ds);
 		y = P4_POP(ctx->ds);
 		z = P4_POP(ctx->ds);
 		w = P4_POP(ctx->ds);
-		fp = p4OpenFilePath(w.s, z.u, y.s, x.u);
+		fp = p4OpenFilePath(w.s, z.u, y.s, x.u, mode);
 		P4_PUSH(ctx->ds, (void *) fp);
 		P4_PUSH(ctx->ds, (P4_Int) errno);
 		NEXT;
@@ -2573,7 +2573,7 @@ p4EvalFile(P4_Ctx *ctx, const char *file)
 		p4_path = P4_CORE_PATH;
 	}
 	P4_INPUT_PUSH(ctx->input);
-	if ((fp = p4OpenFilePath(p4_path, strlen(p4_path), file, strlen(file))) != NULL) {
+	if ((fp = p4OpenFilePath(p4_path, strlen(p4_path), file, strlen(file), "r")) != NULL) {
 		p4ResetInput(ctx, fp);
 		rc = p4Repl(ctx, P4_THROW_OK);
 		(void) fclose(fp);
