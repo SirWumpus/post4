@@ -924,14 +924,10 @@ p4Create(P4_Options *opts)
 	ctx->state = P4_STATE_INTERPRET;
 	ctx->trace = opts->trace;
 
-	/* Do not ALLOT the data stack, malloc it so JNI code
-	 * can enlarge it as necessary to unpack arrays.
-	 */
-	p4AllocStack(ctx, &ctx->ds, opts->ds_size);
-	/* Allot these fixed size stacks. */
-	p4AllocStack(ctx, &ctx->rs, opts->rs_size);
+	p4AllocStack(ctx, &ctx->ds, P4_DATA_STACK_SIZE);
+	p4AllocStack(ctx, &ctx->rs, P4_RETURN_STACK_SIZE);
 #ifdef HAVE_MATH_H
-	p4AllocStack(ctx, &ctx->fs, opts->fs_size);
+	p4AllocStack(ctx, &ctx->fs, P4_FLOAT_STACK_SIZE);
 	ctx->precision = 6;
 #endif
 	if ((ctx->input = p4CreateInput()) == NULL) {

@@ -33,6 +33,13 @@ extern "C" {
 #include "config.h"
 #include "build.h"
 
+#ifndef NDEBUG
+/* With debugging, start with small stacks to test stack growth. */
+#define P4_DATA_STACK_SIZE		8		/* in CELLS */
+#define P4_FLOAT_STACK_SIZE		6		/* in CELLS */
+#define P4_RETURN_STACK_SIZE		16		/* in CELLS */
+#endif
+
 #ifndef P4_MEM_SIZE
 /* When selecting the default data space memory size, consider the number
  * of cells that will be available for defining the core and new words.
@@ -291,9 +298,6 @@ typedef struct {
 	P4_Int argc;
 	char **argv;
 	P4_Int trace;
-	P4_Uint ds_size;
-	P4_Uint rs_size;
-	P4_Uint fs_size;
 	P4_Uint mem_size;
 	P4_Uint hist_size;
 	const char *core_file;

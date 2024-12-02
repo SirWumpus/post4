@@ -868,12 +868,6 @@ Java_post4_jni_Post4_p4Create(JNIEnv *env, jobject self, jobject opts)
 
 	fid = (*env)->GetFieldID(env, clazz, "trace", "I");
 	p4_opts->trace = (int)(*env)->GetIntField(env, opts, fid);
-	fid = (*env)->GetFieldID(env, clazz, "ds_size", "I");
-	p4_opts->ds_size = (unsigned)(*env)->GetIntField(env, opts, fid);
-	fid = (*env)->GetFieldID(env, clazz, "fs_size", "I");
-	p4_opts->fs_size = (unsigned)(*env)->GetIntField(env, opts, fid);
-	fid = (*env)->GetFieldID(env, clazz, "rs_size", "I");
-	p4_opts->rs_size = (unsigned)(*env)->GetIntField(env, opts, fid);
 	fid = (*env)->GetFieldID(env, clazz, "mem_size", "I");
 	p4_opts->mem_size = (unsigned)(*env)->GetIntField(env, opts, fid);
 	fid = (*env)->GetFieldID(env, clazz, "hist_size", "I");

@@ -12,17 +12,14 @@
  ***********************************************************************/
 
 static const char usage[] =
-"usage: post4 [-TV][-b file][-c file][-d size][-f size][-h size][-i file]\r\n"
-"             [-m size][-r size][script [args ...]]\r\n"
+"usage: post4 [-TV][-b file][-c file][-h size][-i file][-m size]\r\n"
+"             [script [args ...]]\r\n"
 "\r\n"
 "-b file\t\topen a block file\r\n"
 "-c file\t\tword definition file; default " P4_CORE_FILE " from $POST4_PATH\r\n"
-"-d size\t\tdata stack size in cells; default " QUOTE(P4_DATA_STACK_SIZE) "\r\n"
-"-f size\t\tfloat stack size; default " QUOTE(P4_FLOAT_STACK_SIZE) "\r\n"
 "-h size\t\thistory size in lines; default " QUOTE(ALINE_HISTORY) "\r\n"
 "-i file\t\tinclude file; can be repeated; searches $POST4_PATH\r\n"
 "-m size\t\tdata space memory in KB; default " QUOTE(P4_MEM_SIZE) "\r\n"
-"-r size\t\treturn stack size in cells; default " QUOTE(P4_RETURN_STACK_SIZE) "\r\n"
 "-T\t\tenable tracing; see TRACE\r\n"
 "-V\t\tbuild and version information\r\n\r\n"
 "If script is \"-\", read it from standard input.\r\n"
@@ -33,9 +30,6 @@ static char *flags = "b:c:d:f:h:i:m:r:TV";
 static P4_Ctx *ctx_main;
 
 static P4_Options options = {
-	.ds_size = P4_DATA_STACK_SIZE,
-	.rs_size = P4_RETURN_STACK_SIZE,
-	.fs_size = P4_FLOAT_STACK_SIZE,
 	.mem_size = P4_MEM_SIZE,
 	.hist_size = ALINE_HISTORY,
 	.core_file = P4_CORE_FILE,
@@ -81,16 +75,6 @@ main(int argc, char **argv)
 		case 'c':
 			options.core_file = optarg;
 			break;
-		case 'd':
-			options.ds_size = val;
-			break;
-		case 'f':
-#ifdef HAVE_MATH_H
-			options.fs_size = val;
-#else
-			(void) fprintf(stderr, "float support disabled\r\n");
-#endif
-			break;
 		case 'i':
 			// Ignore for now.
 			break;
@@ -99,9 +83,6 @@ main(int argc, char **argv)
 			break;
 		case 'm':
 			options.mem_size = val;
-			break;
-		case 'r':
-			options.rs_size = val;
 			break;
 		case 'T':
 			options.trace++;
