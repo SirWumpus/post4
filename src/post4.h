@@ -468,6 +468,7 @@ struct p4_ctx {
 
 typedef struct {
 	size_t length;
+	P4_Uint	poppush;
 	const char *name;
 	void (*func)(P4_Ctx *);
 } P4_Hook;
@@ -671,7 +672,7 @@ extern P4_Hook p4_hooks[];
 extern P4_Word *p4_hook_call;
 extern void p4HookInit(P4_Ctx *ctx, P4_Hook *hooks);
 extern P4_Word *p4HookAdd(P4_Ctx *ctx, P4_Hook *hook);
-# define P4_HOOK(name, func)	{ STRLEN(name), name, func }
+# define P4_HOOK(pp, name, func)	{ STRLEN(name), pp, name, func }
 #else
 # define p4HookAdd(ctx, hook)		(NULL)
 # define p4HookInit(ctx, hooks)

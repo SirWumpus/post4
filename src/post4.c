@@ -1265,7 +1265,6 @@ p4Repl(P4_Ctx *ctx, volatile int thrown)
 		/* Tools*/
 		P4_WORD("alias",	&&_alias,	0, 0x10),	// p4
 		P4_WORD("bye-status",	&&_bye_code,	0, 0x10),	// p4
-		P4_WORD("getenv",	&&_getenv,	0, 0x22),	// p4
 
 		/* I/O */
 		P4_WORD(">IN",		&&_input_offset,0, 0x01),
@@ -1281,7 +1280,6 @@ p4Repl(P4_Ctx *ctx, volatile int thrown)
 		P4_WORD("PARSE-NAME",	&&_parse_name,	0, 0x02),
 		P4_WORD("SOURCE",	&&_source,	0, 0x02),
 		P4_WORD("SOURCE-ID",	&&_source_id,	0, 0x01),
-		P4_WORD("TIME&DATE",	&&_time_date,	0, 0x06),
 
 		P4_WORD(NULL,		NULL,		0, 0),
 	};
@@ -1739,15 +1737,6 @@ _alias:		P4_DROP(ctx->ds, 1);
 		w.nt->bits = x.nt->bits;
 		NEXT;
 
-		// ( key k -- value v )
-_getenv:	w = P4_DROPTOP(ctx->ds);
-		w.s = strndup(w.s, x.u);
-		x.s = getenv(w.s);
-		free(w.s);
-		P4_TOP(ctx->ds) = x;
-		P4_PUSH(ctx->ds, (P4_Int)(x.s == NULL ? 0 : strlen(x.s)));
-		NEXT;
-
 		// ( -- rows cols )
 _window:	p4AllocStack(ctx, &ctx->ds, 2);
 		P4_PUSH(ctx->ds, (P4_Uint) window.ws_row);
@@ -2099,19 +2088,6 @@ _ms:		P4_DROP(ctx->ds, 1);
 		p4Nap(x.u / 1000L, (x.u % 1000L) * 1000000L);
 		NEXT;
 
-		// ( -- sec min hour day month year )
-		struct tm *now;
-_time_date:	(void) time(&w.t);
-		now = localtime(&w.t);
-		p4AllocStack(ctx, &ctx->ds, 6);
-		P4_PUSH(ctx->ds, (P4_Int) now->tm_sec);
-		P4_PUSH(ctx->ds, (P4_Int) now->tm_min);
-		P4_PUSH(ctx->ds, (P4_Int) now->tm_hour);
-		P4_PUSH(ctx->ds, (P4_Int) now->tm_mday);
-		P4_PUSH(ctx->ds, (P4_Int) now->tm_mon+1);
-		P4_PUSH(ctx->ds, (P4_Int) now->tm_year+1900);
-		NEXT;
-
 _epoch_seconds:	(void) time(&w.t);
 		p4AllocStack(ctx, &ctx->ds, 1);
 		P4_PUSH(ctx->ds, w);
@@ -2144,9 +2120,6 @@ _stack_dump:	P4_DROP(ctx->ds, 1);
 		p4StackDump(stdout, w.p, x.n);
 		NEXT;
 
-		FILE *fp;
-		struct stat sb;
-
 		// ( -- caddr u )
 _post4_path:	if ((w.s = getenv("POST4_PATH")) == NULL) {
 			w.s = P4_CORE_PATH;
@@ -2161,12 +2134,8 @@ _post4_commit:	P4_PUSH(ctx->ds, (char *) p4_commit);
 		P4_PUSH(ctx->ds, sizeof (p4_commit)-1);
 		NEXT;
 
-		// ( -- caddr u ) Be sure to FREE caddr.
-_getcwd:	w.s = getcwd(NULL, 0);
-		x.z = w.s == NULL ? 0 : strlen(w.s);
-		P4_PUSH(ctx->ds, w);
-		P4_PUSH(ctx->ds, x);
-		NEXT;
+		FILE *fp;
+		struct stat sb;
 
 		// ( -- fd )
 _fa_stdin:	P4_PUSH(ctx->ds, (void *) stdin);
