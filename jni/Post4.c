@@ -820,26 +820,26 @@ error0:
 }
 
 static P4_Hook jHooks[] = {
-	P4_HOOK("jSetLocalCapacity", jSetLocalCapacity),
-	P4_HOOK("jDeleteLocalRef", jDeleteLocalRef),
-	P4_HOOK("jFindClass", jFindClass),
+	P4_HOOK(0x10, "jSetLocalCapacity", jSetLocalCapacity),
+	P4_HOOK(0x10, "jDeleteLocalRef", jDeleteLocalRef),
+	P4_HOOK(0x21, "jFindClass", jFindClass),
 #ifdef HMM
-	P4_HOOK("jObjectClass", jObjectClass),
-	P4_HOOK("jMethodID", jMethodID),
-	P4_HOOK("jFieldID", jFieldID),
+	P4_HOOK(0x11, "jObjectClass", jObjectClass),
+	P4_HOOK(0x52, "jMethodID", jMethodID),
+	P4_HOOK(0x52, "jFieldID", jFieldID),
 #endif
-	P4_HOOK("jPushLocalFrame", jPushLocalFrame),
-	P4_HOOK("jPopLocalFrame", jPopLocalFrame),
-	P4_HOOK("jStringByteLength", jStringByteLength),
-	P4_HOOK("jUnboxString", jUnboxString),
-	P4_HOOK("jArrayLength", jArrayLength),
-	P4_HOOK("jUnboxArray", jUnboxArray),
-	P4_HOOK("jBoxString", jBoxString),
-	P4_HOOK("jBoxArray", jBoxArray),
-	P4_HOOK("jSetField", jSetField),
-	P4_HOOK("jField", jField),
-	P4_HOOK("jCall", jCall),
-	{ 0, NULL, NULL }
+	P4_HOOK(0x10, "jPushLocalFrame", jPushLocalFrame),
+	P4_HOOK(0x00, "jPopLocalFrame", jPopLocalFrame),
+	P4_HOOK(0x11, "jStringByteLength", jStringByteLength),
+	P4_HOOK(0x12, "jUnboxString", jUnboxString),
+	P4_HOOK(0x11, "jArrayLength", jArrayLength),
+	P4_HOOK(0x11, "jUnboxArray", jUnboxArray),
+	P4_HOOK(0x21, "jBoxString", jBoxString),
+	P4_HOOK(0x11, "jBoxArray", jBoxArray),
+	P4_HOOK(0x60, "jSetField", jSetField),
+	P4_HOOK(0x51, "jField", jField),
+	P4_HOOK(0x51, "jCall", jCall),
+	{ 0, 0, NULL, NULL }
 };
 #endif
 
