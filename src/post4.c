@@ -1170,6 +1170,7 @@ p4Repl(P4_Ctx *ctx, volatile int thrown)
 		P4_WORD("DELETE-FILE",		&&_fa_delete,	0, 0x21),
 		P4_WORD("FILE-POSITION",	&&_fa_tell,	0, 0x12),
 		P4_WORD("FILE-SIZE",		&&_fa_fsize,	0, 0x12),
+		P4_WORD("FILE-STATUS",		&&_fa_status,	0, 0x22),
 		P4_WORD("FLUSH-FILE",		&&_fa_flush,	0, 0x11),
 		P4_WORD("_eval_file",		&&_eval_file,	0, 0x10),	// p4
 		P4_WORD("open-file-path",	&&_fa_open_path,0, 0x52),	// p4
@@ -2235,10 +2236,22 @@ _fa_flush:	errno = 0;
 
 		// ( fd -- ud ior )
 _fa_fsize:	errno = 0;
+		MEMSET(&sb, 0, sizeof (sb));
 		(void) fstat(fileno(x.v), &sb);
 		P4_TOP(ctx->ds).n = sb.st_size;
 		p4AllocStack(ctx, &ctx->ds, 2);
 		P4_PUSH(ctx->ds, (P4_Uint) 0);
+		P4_PUSH(ctx->ds, (P4_Int) errno);
+		NEXT;
+
+		// ( caddr u -- x ior )
+_fa_status:	errno = 0;
+		w = P4_DROPTOP(ctx->ds);
+		w.s = strndup(w.s, x.z);
+		MEMSET(&sb, 0, sizeof (sb));
+		(void) stat(w.s, &sb);
+		free(w.s);
+		P4_TOP(ctx->ds).u = sb.st_mode;
 		P4_PUSH(ctx->ds, (P4_Int) errno);
 		NEXT;
 
