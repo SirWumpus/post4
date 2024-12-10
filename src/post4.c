@@ -1279,7 +1279,6 @@ p4Repl(P4_Ctx *ctx, volatile int thrown)
 		P4_WORD("MS",		&&_ms,		0, 0x10),
 		P4_WORD("_parse",	&&_parse,	0, 0x22),	// p4
 		P4_WORD("PARSE-NAME",	&&_parse_name,	0, 0x02),
-		P4_WORD("SOURCE",	&&_source,	0, 0x02),
 		P4_WORD("SOURCE-ID",	&&_source_id,	0, 0x01),
 
 		P4_WORD(NULL,		NULL,		0, 0),
@@ -2001,12 +2000,6 @@ _lt:		w = P4_DROPTOP(ctx->ds);
 		// ( -- u )
 _input_offset:	p4AllocStack(ctx, &ctx->ds, 1);
 		P4_PUSH(ctx->ds, (P4_Cell *) &ctx->input->offset);
-		NEXT;
-
-		// ( -- caddr u )
-_source:	p4AllocStack(ctx, &ctx->ds, 2);
-		P4_PUSH(ctx->ds, ctx->input->buffer);
-		P4_PUSH(ctx->ds, ctx->input->length);
 		NEXT;
 
 		// ( -- -1 | 0 | fp )

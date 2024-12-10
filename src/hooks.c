@@ -7,33 +7,17 @@
 #include "post4.h"
 
 #ifdef HAVE_HOOKS
-
-# ifdef HOOK_SHELL
-/*
- * SH ( `remaining input line` -- )
- */
-static void
-p4System(P4_Ctx *ctx)
-{
-	P4_Input *input = ctx->input;
-	// Assumes input buffer is writeable.
-	input->buffer[input->length] = '\0';
-	(void) system(input->buffer + input->offset);
-	input->offset = input->length;
-}
-
 /*
  * SHELL ( caddr u -- n )
  */
 static void
-p4SystemString(P4_Ctx *ctx)
+p4Shell(P4_Ctx *ctx)
 {
-	P4_DROP(ctx->ds, 1);	/* Ignore u */
-	char *s = P4_TOP(ctx->ds).s;
-	// Assumes caddr NUL terminated.
-	P4_TOP(ctx->ds).n = system(s);
+	size_t len = P4_POP(ctx->ds).z;
+	char *cmd = strndup(P4_TOP(ctx->ds).s, len);
+	P4_TOP(ctx->ds).n = system(cmd);
+	free(cmd);
 }
-# endif
 
 # ifdef HOOK_PRIMATIVES
 /* Examples of how some words, in particular those calling libc
@@ -121,13 +105,10 @@ p4SystemPath(P4_Ctx *ctx)
 }
 
 P4_Hook p4_hooks[] = {
-# ifdef HOOK_SHELL
-	P4_HOOK(0x00, "SH", p4System),
-	P4_HOOK(0x21, "SHELL", p4SystemString),
-# endif
 # ifdef HOOK_PRIMATIVES
 	P4_HOOK(0x30, "MOVE", p4Move),
 # endif
+	P4_HOOK(0x21, "shell", p4Shell),
 	P4_HOOK(0x02, "getcwd", p4GetCwd),
 	P4_HOOK(0x22, "getenv", p4GetEnv),
 	P4_HOOK(0x02, "system-path", p4SystemPath),

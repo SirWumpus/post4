@@ -117,10 +117,6 @@ extern "C" {
 #define HAVE_HOOKS			1
 #endif
 
-#ifdef HAVE_HOOKS
-#define HOOK_SHELL			1
-#endif
-
 /***********************************************************************
  *** No configuration below this point.
  ***********************************************************************/

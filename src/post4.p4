@@ -967,6 +967,9 @@ MAX-U MAX-N 2CONSTANT MAX-D $02 _pp!
 	THEN
 ; IMMEDIATE $10 _pp!
 
+\ (S: -- caddr u )
+: SOURCE _ctx ctx.input @ DUP in.buffer @ SWAP in.length @ ; $20 _pp!
+
 \ (S: -- u )
 : source-offset >IN @ ; $01 _pp!
 
@@ -1979,6 +1982,11 @@ VARIABLE SCR
 \	ANSI / VT100 terminal assumed.
 \
 : PAGE 0 0 AT-XY S\" \e[0J" TYPE ;
+
+[DEFINED] shell [IF]
+\ (S: `remaining input line` -- n )
+: sh source-remaining SOURCE NIP set-source-offset shell ;
+[THEN]
 
 \ (S: i*x fd -- j*x )
 \ *** An uncaught exception within the include file will leak the file
