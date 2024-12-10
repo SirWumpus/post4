@@ -1,0 +1,584 @@
+; Syntax file for Forth 200x draft 19-1
+;
+; from Carl Vogt, March 4, 2002
+;
+; 2024-09-15	Anthony Howe	revised for Post4 (Forth 2019)
+;
+; ANS Forth standard.  Forth also has many 'common use' keywords,
+;  which are included.
+; The keywords are broken into a few groups: ANS Core words, Floating point,
+;  Miscellaneous words, tools, and a fifth group for common usage and
+;  user-defined, words.
+; Forth uses very radical grammer rules which are very taxing on Textpad,
+;  this template won't catch errors due to missing white-space delimiters.
+;
+; Word list reference:  Conklin, Edward K. and Rather, Elizabeth D.
+;                         "Forth Programmers Handbook"  Forth, Inc , 1998
+;
+; To install this syntax file:
+;   Search for "syntax" in the Textpad help index and display it.
+;   Choose: How to Customize Syntax Highlighting
+;   Follow instructions outlined there.
+;
+; Recommended colors:
+;   (First install syntax file as explained above.)
+;   Go into configure->preferences->document classes->
+;    {your Forth setup}->colors:
+;   Keywords 1: Light Blue
+;   Keywords 2: Purple
+;   Keywords 3: Dark Blue
+;   Keywords 4: Red
+;   Keywords 5: Yellow on Black
+;
+; Visit www.forth.org for more info about Forth.
+
+C=1
+
+[Syntax]
+Namespace1 = 6
+IgnoreCase = Yes
+KeyWordLength = 0
+BracketChars = :;[]
+OperatorChars =
+PreprocStart =
+HexPrefix = $
+SyntaxStart =
+SyntaxEnd =
+CommentStart = (
+CommentEnd =  )
+CommentStartAlt =
+CommentEndAlt =
+SingleComment = \
+SingleCommentCol =
+SingleCommentAlt =
+SingleCommentColAlt =
+SingleCommentEsc =
+StringsSpanLines = No
+StringStart = "
+StringEnd = "
+StringAlt =
+StringEsc = \
+CharEsc = \
+CharStart = '
+CharEnd = '
+
+; Operators & Stack words
+[Keywords 1]
+!
+*
+*/
+*/MOD
++
++!
+-
+/
+/MOD
+0<
+0<>
+0=
+0>
+1+
+1-
+2!
+2*
+2/
+2>R
+2@
+2DROP
+2DUP
+2OVER
+2R>
+2R@
+2ROT
+2SWAP
+<
+<>
+=
+>
+>R
+?DUP
+@
+AND
+C!
+C,
+C@
+CELL+
+CELLS
+CHAR+
+CHARS
+CS-PICK
+CS-ROLL
+D+
+D-
+D0<
+D0=
+D2*
+D2/
+D<
+D=
+DNEGATE
+DROP
+DU<
+DUP
+FALSE
+FM/MOD
+I
+INVERT
+J
+LSHIFT
+M*
+M*/
+M+
+MOD
+N>R
+NEGATE
+NIP
+NR>
+OR
+OVER
+PICK
+R>
+R@
+ROLL
+ROT
+RSHIFT
+S>D
+SM/REM
+SWAP
+TRUE
+TUCK
+U<
+U>
+UM*
+UM/MOD
+WITHIN
+XOR
+
+; Control structure words
+[Keywords 2]
++LOOP
+?DO
+2CONSTANT
+2LITERAL
+2VARIABLE
+2VALUE
+AHEAD
+ABORT
+ABORT"
+BEGIN
+BYE
+CATCH
+CONSTANT
+CREATE
+DEPTH
+DO
+DOES>
+ELSE
+THROW
+BEGIN-STRUCTURE
+END-STRUCTURE
++FIELD
+CFIELD:
+FIELD:
+IF
+EVALUATE
+EXECUTE
+EXIT
+LEAVE
+?LEAVE
+LOOP
+POSTPONE
+QUIT
+RECURSE
+REPEAT
+THEN
+UNLOOP
+UNTIL
+VARIABLE
+WHILE
+:NONAME
+AGAIN
+CASE
+ENDCASE
+ENDOF
+OF
+VALUE
+TO
+
+[Keywords 3]
+#
+#>
+#S
+'
+,
+-TRAILING
+.
+."
+.R
+/STRING
+<#
+>BODY
+>IN
+>NUMBER
+[']
+[CHAR]
+ABS
+ACCEPT
+ACTION-OF
+ALIGN
+ALIGNED
+ALLOCATE
+ALLOT
+AT-XY
+BASE
+BIN
+BL
+BLANK
+BLK
+BLOCK
+BUFFER
+BUFFER:
+C"
+CHAR
+CLOSE-FILE
+CMOVE
+CMOVE>
+COMPARE
+COMPILE,
+COUNT
+CR
+CREATE-FILE
+D.
+D.R
+D>S
+DABS
+DECIMAL
+DEFER
+DEFER!
+DEFER@
+DELETE-FILE
+DMAX
+DMIN
+EKEY
+EKEY>CHAR
+EKEY?
+EMIT
+EMIT?
+EMPTY-BUFFERS
+ENVIRONMENT?
+ERASE
+FILE-POSITION
+FILE-SIZE
+FILE-STATUS
+FILL
+FIND
+FIND-NAME
+FIND-NAME-IN
+FLUSH
+FLUSH-FILE
+FREE
+HERE
+HEX
+HOLD
+HOLDS
+IS
+IMMEDIATE
+INCLUDE
+INCLUDE-FILE
+INCLUDED
+KEY
+KEY?
+LIST
+LIT
+LITERAL
+LOAD
+MARKER
+MAX
+MIN
+MOVE
+MS
+NAME>COMPILE
+NAME>INTERPRET
+NAME>STRING
+OPEN-FILE
+PAD
+PAGE
+PARSE
+PARSE-NAME
+R/O
+R/W
+READ-FILE
+READ-LINE
+REFILL
+RENAME-FILE
+REPOSITION-FILE
+REQUIRE
+REQUIRED
+RESIZE
+RESIZE-FILE
+RESTORE-INPUT
+S"
+S\"
+SAVE-BUFFERS
+SAVE-INPUT
+SCR
+SEARCH
+SIGN
+SLITERAL
+SOURCE
+SOURCE-ID
+SPACE
+SPACES
+STATE
+SYNONYM
+THRU
+TIME&DATE
+TYPE
+U.
+U.R
+UNUSED
+UPDATE
+W/O
+WORD
+WRITE-FILE
+WRITE-LINE
+.S
+?
+DUMP
+EDITOR
+SEE
+WORDS
+ALSO
+DEFINITIONS
+FORTH-WORDLIST
+GET-CURRENT
+GET-ORDER
+SEARCH-WORDLIST
+TRAVERSE-WORDLIST
+SET-CURRENT
+SET-ORDER
+WORDLIST
+WORDLISTS
+FORTH
+ONLY
+ORDER
+PREVIOUS
+XCHAR-ENCODING
+MAX-XCHAR
+XCHAR-MAXMEM
+
+; Floating-Point
+[Keywords 4]
+>FLOAT
+D>F
+DF!
+DF@
+DFALIGN
+DFALIGNED
+DFFIELD:
+DFLOAT+
+DFLOATS
+F!
+F*
+F**
+F+
+f,
+F-
+F.
+F/
+F0<
+F0=
+F<
+F=
+F>D
+F@
+FABS
+FACOS
+FACOSH
+FALIGN
+FALIGNED
+FALOG
+FASIN
+FASINH
+FATAN
+FATAN2
+FATANH
+FCONSTANT
+FCOS
+FCOSH
+FDEPTH
+FDROP
+FDUP
+FE.
+FEXP
+FEXPM1
+FFIELD:
+FLITERAL
+FLN
+FLNP1
+FLOAT+
+FLOATS
+FLOG
+FLOOR
+FMAX
+FMIN
+FNEGATE
+FOVER
+FPICK
+FROT
+FROUND
+FS.
+FSIN
+FSINCOS
+FSINH
+FSQRT
+FSWAP
+FTAN
+FTANH
+FVALUE
+FVARIABLE
+F~
+PRECISION
+REPRESENT
+SET-PRECISION
+SF!
+SF@
+SFALIGN
+SFALIGNED
+SFFIELD:
+SFLOAT+
+SFLOATS
+
+; Post4 words.
+[Keywords 5]
+-rot
+.\"
+.ds
+.fs
+.rs
+/cell
+/char
+/counted-string
+/hold
+/hold
+/pad
+<=
+>here
+_bp
+_branch
+_branchnz
+_branchz
+_call
+_ctx
+_ds
+_fs
+_longjmp
+_nop
+_parse
+_rs
+_seext
+_stack_check
+_stack_dump
+_window
+address-unit-bits
+alias
+args
+binary
+block-close
+block-open
+blocks
+bye-status
+c?
+c\"
+catch_frame
+cell-
+cell-bits
+char-
+clit
+compile-only
+compile-only?
+cputs
+ctx
+d>u
+dropn
+dropall
+>f
+dsp!
+dsp@
+epoch-seconds
+flit
+flit,
+floored
+f>
+f>r
+floating-stack
+fsp!
+fsp@
+getenv
+immediate?
+include-path
+included-path
+list+
+lit
+lit,
+MAX-CHAR
+MAX-D
+MAX-N
+MAX-U
+MAX-UD
+MIN-D
+MIN-N
+mu/mod
+n!
+n,
+n@
+not
+octal
+parse-escape
+puts
+require-path
+required-path
+required-wordlist
+reserve
+return-stack-cells
+rise
+rdrop
+2rdrop
+rpick
+fr>
+rsp!
+rsp@
+slit
+spin
+stack-cells
+stow
+strcmp
+strlen
+strncpy
+strrev
+trace
+u>d
+ut*
+ut/
+whilst
+assert
+assert_not
+assert_skip
+assert_not_skip
+test_suite
+test_suite_end
+test_group
+test_group_end
+->
+T{
+}T
+TS{
+
+[Keywords 6]
+
+[Preprocessor keywords]
+[ELSE]
+[IF]
+[THEN]
+[DEFINED]
+[UNDEFINED]
