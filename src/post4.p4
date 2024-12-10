@@ -953,13 +953,7 @@ MAX-U MAX-N 2CONSTANT MAX-D $02 _pp!
 \
 : VALUE 1 _value ; $10 _pp!
 
-\	lo hi 2VALUE name
-\
-\	(C: lo hi <spaces>name -- ) (S: -- lo hi )
-\
-\ @see
-\	TO
-\
+\ (C: lo hi <spaces>name -- ) (S: -- lo hi )
 : 2VALUE 2 _value ; $20 _pp!
 
 \ (S: i*x <spaces>name -- )
@@ -973,13 +967,19 @@ MAX-U MAX-N 2CONSTANT MAX-D $02 _pp!
 	THEN
 ; IMMEDIATE $10 _pp!
 
+\ (S: -- u )
+: source-offset >IN @ ; $01 _pp!
+
+\ (S: u -- )
+: set-source-offset DUP 0 /pad WITHIN 0= -24 AND THROW >IN ! ; $10 _pp!
+
 \ (S: -- )
-: >in+ 1 >IN +! ;
+: source-inc source-offset 1+ set-source-offset ;
 
-\ ( -- caddr u )
-: source-remaining SOURCE >IN @ /STRING ; $02 _pp!
+\ (S: -- caddr u )
+: source-remaining SOURCE source-offset /STRING ; $02 _pp!
 
-\ ( delim escape -- delim escape bool )
+\ (S: delim escape -- delim escape bool )
 \
 \ Scan the input buffer character at a time until either the input
 \ is exhusted, returning true; or an input character matches delim,
@@ -991,9 +991,9 @@ MAX-U MAX-N 2CONSTANT MAX-D $02 _pp!
 		source-remaining 0= IF			\ S: delim caddr
 			DROP R> TRUE EXIT			\ empty input buffer
 		THEN
-		1 >IN +!						\ S: delim caddr
+		source-inc						\ S: delim caddr
 		DUP C@ R@ = IF					\ escape next char?
-			DROP 1 >IN +! 				\ S: delim ch
+			DROP source-inc 			\ S: delim ch
 		ELSE
 			C@ OVER = IF				\ S: delim
 				R> FALSE EXIT			\ input char matches delim
@@ -1108,10 +1108,19 @@ MAX-U MAX-N 2CONSTANT MAX-D $02 _pp!
 : isalpha toupper 'A' [ 'Z' 1+ ] LITERAL WITHIN ; $11 _pp!
 : isalnum DUP isalpha isdigit OR ; $11 _pp!
 
-\ ... strrev ...
-\
+\ (S: caddr u delim -- caddr | 0 )
+: strchr
+	>R bounds						\ S: c" c	R: d
+	BEGIN
+		2DUP U> DUP C@ R@ <> AND	\ S: c" c	R: d
+	WHILE							\ S: c" c	R: d
+		1 CHARS +					\ S: c" c'	R: d
+	REPEAT
+	rdrop							\ S: c" c
+	TUCK = IF DUP - THEN			\ S: c | 0
+; $31 _pp!
+
 \ ( caddr u -- )
-\
 : strrev
 	CHARS OVER +				\ S: x y
 	BEGIN
@@ -1126,10 +1135,7 @@ MAX-U MAX-N 2CONSTANT MAX-D $02 _pp!
 	2DROP						\ S: --
 ;
 
-\ ... -TRAILING ...
-\
 \ (S: caddr u -- caddr u' )
-\
 : -TRAILING
 	BEGIN DUP 0> WHILE
 		2DUP 1- +
@@ -1140,9 +1146,7 @@ MAX-U MAX-N 2CONSTANT MAX-D $02 _pp!
 	REPEAT
 ;
 
-\
 \ ( S: char -- value | 127 )
-\
 : _digit_value
 	DUP isdigit IF						\ S: char
 		'0' - EXIT						\ S: value
@@ -1153,10 +1157,7 @@ MAX-U MAX-N 2CONSTANT MAX-D $02 _pp!
 	DROP #127							\ S: 127
 ;
 
-\ ... >NUMBER ...
-\
 \ ( S: ud1 caddr len -- ud2 caddr' len' )
-\
 : >NUMBER
 	BEGIN
 		DUP 0>					\ S: udl udh caddr len
@@ -1232,14 +1233,14 @@ VARIABLE _>pic
 \ (S: char "<chars>ccc" -- "ccc" )
 : skip_chars
 	BEGIN
-		SOURCE >IN @			\ S: char caddr u off
-		<= SWAP >IN @ + C@		\ S: char len_ge_off input
-		2 PICK <>				\ S: char len_ge_off char_neq
-		OR DUP 0= IF			\ S: char bool
-			1 >IN +!			\ S: char bool
+		SOURCE source-offset			\ S: char caddr u off
+		<= SWAP source-offset + C@		\ S: char len_ge_off input
+		2 PICK <>						\ S: char len_ge_off char_neq
+		OR DUP 0= IF					\ S: char bool
+			source-inc					\ S: char bool
 		THEN
-	UNTIL						\ S: char
-	DROP						\ S: --
+	UNTIL								\ S: char
+	DROP								\ S: --
 ;
 
 \ ... char WORD ...
@@ -1311,9 +1312,9 @@ VARIABLE _>pic
 		source-remaining 0= IF			\ S: delim caddr
 			DROP R> TRUE EXIT			\ empty input buffer
 		THEN
-		1 >IN +!						\ S: delim caddr
+		source-inc						\ S: delim caddr
 		DUP C@ R@ = IF					\ escape next char?
-			1 >IN +! CHAR+ C@			\ S: delim ch
+			source-inc CHAR+ C@			\ S: delim ch
 		ELSE
 			C@ 2DUP = IF				\ S: delim ch
 				DROP R> FALSE EXIT		\ input char matches delim
@@ -1891,7 +1892,7 @@ VARIABLE _str_buf_curr
 
 \ GH-76
 : set-source ( sd -- ) _input_ptr @ TUCK in.length ! in.buffer ! ; $20 _pp!
-: execute-parsing ( any sd xt -- any ) _input_push -rot set-source CATCH _input_pop THROW ;
+: execute-parsing ( any sd xt -- any ) _input_push -rot set-source CATCH _input_pop THROW ; $20 _pp!
 
 \ (S: i*x u -- j*x )
 : LOAD
@@ -1917,17 +1918,18 @@ VARIABLE _str_buf_curr
 		R> 1+ DUP >R			\ S: start'	R: end start'
 		1 rpick >				\ S: bool	R: end start'
 	UNTIL 2rdrop
-;
+; $20 _pp!
 
 \ ... \ comment to end of line
 \
 \ (S: ccc<eol>" -- )
 \
 : \
-	BLK @ IF					( Block input source? )
-		>IN @ $3F OR 1+ >IN !	(	 Advance >IN to next line in 16x64 block. )
-	ELSE						( Streaming input... )
-		'\n' PARSE 2DROP		(	 Skip up to and including newline. )
+	BLK @ IF							( Block input source? )
+		source-offset $3F OR 1+			( Advance >IN to next line in 16x64 block. )
+		set-source-offset
+	ELSE								( Streaming input... )
+		'\n' PARSE 2DROP				( Skip up to and including newline. )
 	THEN
 ; IMMEDIATE
 
@@ -1946,7 +1948,7 @@ VARIABLE SCR
 		SWAP 64 CHARS +			\ S: i' caddr'
 		SWAP DUP 16 >=			\ S: caddr' i' bool
 	UNTIL 2DROP
-;
+; $10 _pp!
 
 \ ... LIST+ ...
 \
@@ -2309,8 +2311,8 @@ VARIABLE _do_sys_stk
 
 \ ( F: f -- ) ( <spaces>name -- )
 : TO
-	>IN @ ' >BODY @ 			\ S: v in type
-	SWAP >IN !					\ S: v type
+	source-offset ' >BODY @ 			\ S: v in type
+	SWAP set-source-offset				\ S: v type
 	IF
 		\ type != 0, eg. 1 or 2
 		['] TO EXECUTE EXIT
@@ -2488,7 +2490,7 @@ MIN-N CONSTANT _sign_mask
 
 \ (S: caddr u -- )
 : \type
-	CHARS bounds								\ S: b a
+	CHARS bounds						\ S: b a
 	BEGIN 2DUP > WHILE					\ S: b a
 		C@+ DUP _literal_backspace		\ S: b a' c e
 		?DUP IF							\ S: b a' c
