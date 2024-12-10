@@ -2671,7 +2671,7 @@ FORTH-WORDLIST SET-CURRENT
 
 \ (S: -- wid )
 : WORDLIST
-	_ctx ctx.lists DUP WORDLISTS CELLS + SWAP
+	_ctx ctx.lists WORDLISTS CELLS bounds
 	BEGIN
 		DUP @ 0= IF
 			NIP _ctx ctx.lists - /CELL / 1+
@@ -2718,6 +2718,7 @@ FORTH-WORDLIST SET-CURRENT
 ; $10 _pp!
 
 \ (S: i*x xt wid -- j*x )
+\ xt ( any nt -- any bool )
 : TRAVERSE-WORDLIST
 	SWAP >R head_of_wordlist			\ S: w			R: xt
 	BEGIN @ DUP WHILE					\ S: w			R: xt
@@ -2725,10 +2726,11 @@ FORTH-WORDLIST SET-CURRENT
 			R@ OVER >R EXECUTE 0= IF	\ S: w xt		R: xt w
 				2rdrop EXIT
 			THEN
+			R>							\ S: w			R: xt
 		THEN
-		R> w.prev						\ S: w'			R: xt
+		w.prev							\ S: w'			R: xt
 	REPEAT
-	R> 2DROP
+	drop rdrop
 ; $20 _pp!
 
 \ (S: caddr u wid -- 0 | xt -1 | xt 1 )

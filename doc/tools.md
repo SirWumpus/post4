@@ -103,6 +103,21 @@ Create `name` in the dictionary, which when executed will remove all the words d
         ok
 
 - - -
+#### SEE
+( `<spaces>name` -- )  
+Display an implementation-defined human-readable representation of the word `name`.
+
+- - -
+#### TRAVERSE-WORDLIST 
+( `i*x` `xt` `wid` -- `j*x` )  
+Execute `xt`, which has stack effect `( k*x nt -- l*x bool )`, once for every word in the word list `wid` passing the name token `nt` of the word to `xt`, until the word list is exhausted or until `xt` returns false.  
+
+- - -
+#### WORDS
+( -- )  
+List defined words
+
+- - -
 #### [:
 (C: -- `quotation-sys` `colon-sys` ) immediate  
 Suspends compilation of the current (enclosing) definition, continues compilation with this nested definition until terminated by `;]` that leaves `xt` on the data stack for the enclosing definition.
@@ -134,16 +149,6 @@ End conditional source block.
 #### [UNDEFINED]
 ( `<spaces>name` -- `bool` ) immediate  
 Return `FALSE` if `name` is word that can be found in the dictionary; otherwise `TRUE`.
-
-- - -
-#### SEE
-( `<spaces>name` -- )  
-Display an implementation-defined human-readable representation of the word `name`.
-
-- - -
-#### WORDS
-( -- )  
-List defined words
 
 - - -
 
