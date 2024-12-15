@@ -130,20 +130,24 @@ p4Init(P4_Options *opts)
 	alineInit(opts->hist_size);
 }
 
-FILE *
-p4OpenFilePath(const char *path_list, size_t plen, const char *file, size_t flen, const char *mode)
+P4_String
+p4FindFilePath(const char *path_list, size_t plen, const char *file, size_t flen)
 {
-	FILE *fp = NULL;
-	char *paths, *path, *next, filepath[PATH_MAX];
+	struct stat sb;
+	char *paths, *path, *next;
+	P4_String str = { 0, NULL };
 	errno = 0;
 	if (file == NULL || *file == '\0') {
 		errno = EINVAL;
 		goto error0;
 	}
+	if ((str.string = calloc(1, PATH_MAX)) == NULL) {
+		goto error0;
+	}
 	/* Try the given file relative the current working directory. */
-	(void) snprintf(filepath, sizeof (filepath), "%.*s", (int)flen, file);
-	if ((fp = fopen(filepath, mode)) != NULL) {
-		return fp;
+	str.length = snprintf(str.string, PATH_MAX, "%.*s", (int)flen, file);
+	if (stat(str.string, &sb) == 0) {
+		return str;
 	}
 	/* Path list supplied or use the default? */
 	if (path_list == NULL || *path_list == '\0') {
@@ -156,16 +160,19 @@ p4OpenFilePath(const char *path_list, size_t plen, const char *file, size_t flen
 	}
 	/* Search "dir0:dir1:...:dirN" string. */
 	for (next = paths; (path = strtok(next, ":")) != NULL; next = NULL) {
-		(void) snprintf(filepath, sizeof (filepath), "%s/%s", path, file);
-		if ((fp = fopen(filepath, mode)) != NULL) {
+		str.length = snprintf(str.string, PATH_MAX, "%s/%s", path, file);
+		if (stat(str.string, &sb) == 0) {
 			errno = 0;
-			break;
+			return str;
 		}
 	}
+	free(str.string);
+	str.string = NULL;
+	str.length = 0;
 error1:
 	free(paths);
 error0:
-	return fp;
+	return str;
 }
 
 /***********************************************************************
@@ -1168,12 +1175,12 @@ p4Repl(P4_Ctx *ctx, volatile int thrown)
 		P4_WORD("CLOSE-FILE",		&&_fa_close,	0, 0x11),
 		P4_WORD("CREATE-FILE",		&&_fa_create,	0, 0x22),
 		P4_WORD("DELETE-FILE",		&&_fa_delete,	0, 0x21),
-		P4_WORD("FILE-POSITION",	&&_fa_tell,	0, 0x12),
-		P4_WORD("FILE-SIZE",		&&_fa_fsize,	0, 0x12),
+		P4_WORD("FILE-POSITION",	&&_fa_tell,	0, 0x13),
+		P4_WORD("FILE-SIZE",		&&_fa_fsize,	0, 0x13),
 		P4_WORD("FILE-STATUS",		&&_fa_status,	0, 0x22),
 		P4_WORD("FLUSH-FILE",		&&_fa_flush,	0, 0x11),
 		P4_WORD("_eval_file",		&&_eval_file,	0, 0x10),	// p4
-		P4_WORD("open-file-path",	&&_fa_open_path,0, 0x52),	// p4
+		P4_WORD("find-file-path",	&&_fa_find_path,0, 0x42),	// p4
 		P4_WORD("OPEN-FILE",		&&_fa_open,	0, 0x32),
 		P4_WORD("READ-FILE",		&&_fa_read,	0, 0x32),
 		P4_WORD("READ-LINE",		&&_fa_rline,	0, 0x33),
@@ -2178,17 +2185,15 @@ _fa_open:	errno = 0;
 		P4_PUSH(ctx->ds, (P4_Int) errno);
 		NEXT;
 
-		// ( paths p file f fam -- fd ior )
+		// ( sd.paths sd.file -- sd.path ior )
 		P4_Cell z;
-		char *mode;
-_fa_open_path:	mode = fmodes[x.u];
-		P4_DROP(ctx->ds, 1);
-		x = P4_POP(ctx->ds);
+_fa_find_path:	x = P4_POP(ctx->ds);
 		y = P4_POP(ctx->ds);
 		z = P4_POP(ctx->ds);
 		w = P4_POP(ctx->ds);
-		fp = p4OpenFilePath(w.s, z.u, y.s, x.u, mode);
-		P4_PUSH(ctx->ds, (void *) fp);
+		str = p4FindFilePath(w.s, z.u, y.s, x.u);
+		P4_PUSH(ctx->ds, str.string);
+		P4_PUSH(ctx->ds, str.length);
 		P4_PUSH(ctx->ds, (P4_Int) errno);
 		NEXT;
 
@@ -2564,6 +2569,7 @@ p4EvalFile(P4_Ctx *ctx, const char *file)
 {
 	FILE *fp;
 	char *p4_path;
+	P4_String str;
 	int rc = P4_THROW_ENOENT;
 	if (file == NULL || *file == '\0') {
 		goto error0;
@@ -2572,10 +2578,12 @@ p4EvalFile(P4_Ctx *ctx, const char *file)
 		p4_path = P4_CORE_PATH;
 	}
 	P4_INPUT_PUSH(ctx->input);
-	if ((fp = p4OpenFilePath(p4_path, strlen(p4_path), file, strlen(file), "r")) != NULL) {
+	str = p4FindFilePath(p4_path, strlen(p4_path), file, strlen(file));
+	if (0 < str.length && (fp = fopen(str.string, "r")) != NULL) {
 		p4ResetInput(ctx, fp);
 		rc = p4Repl(ctx, P4_THROW_OK);
 		(void) fclose(fp);
+		free(str.string);
 	}
 	P4_INPUT_POP(ctx->input);
 error0:

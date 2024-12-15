@@ -323,8 +323,10 @@ END-STRUCTURE
 : 2VARIABLE CREATE 0 , 0 , ; $01 _pp!
 
 \ (S: -- )
-: [ FALSE STATE ! ; IMMEDIATE
-: ] TRUE STATE ! ;
+: enter-compilation TRUE STATE ! ;
+: leave-compilation FALSE STATE ! ;
+' leave-compilation alias [ IMMEDIATE
+' enter-compilation alias ]
 
 \ ( -- x )(R: x -- x)
 : R@ R> R> DUP >R SWAP >R ; $1101 _pp!
@@ -697,7 +699,7 @@ MAX-U MAX-N 2CONSTANT MAX-D $02 _pp!
 \ ( xt -- )
 : execute-compiling
 	STATE @ IF EXECUTE EXIT THEN
-	TRUE STATE ! EXECUTE FALSE STATE !
+	enter-compilation EXECUTE leave-compilation
 ; $10 _pp!
 
 \ (S: <spaces>name -- )
@@ -1581,7 +1583,7 @@ VARIABLE _str_buf_curr
 		\ Append string and NUL terminate for C.
 		DUP >R reserve R>		\ S: src dst u
 		MOVE 0 C, ALIGN			\ S: --
-; IMMEDIATE compile-only
+; IMMEDIATE compile-only $22 _pp!
 
 \ (S: caddr1 u -- caddr2 u' )
 : _string0_store
@@ -1590,19 +1592,19 @@ VARIABLE _str_buf_curr
 	ELSE
 		_str_buf_next SWAP 2DUP 2>R strncpy 2R>
 	THEN
-;
+; $22 _pp!
 
 \ ... S" ccc" ...
 \
 \ (C: ccc<quote>" -- ) || (S: ccc<quote>" -- caddr u )
 \
-: S" [CHAR] " PARSE _string0_store ; IMMEDIATE
+: S" [CHAR] " PARSE _string0_store ; IMMEDIATE $02 _pp!
 
 \ ... S\" ccc" ...
 \
 \ (C: ccc<quote>" -- ) || (S: ccc<quote>" -- caddr u )
 \
-: S\" [CHAR] " parse-escape _string0_store ; IMMEDIATE
+: S\" [CHAR] " parse-escape _string0_store ; IMMEDIATE $02 _pp!
 
 \ ... ." ccc" ...
 \
@@ -2000,7 +2002,10 @@ VARIABLE SCR
 : INCLUDED R/O OPEN-FILE THROW INCLUDE-FILE ; $20 _pp!
 
 \ (S: i*x caddr u -- j*x )
-: included-path post4-path 2SWAP R/O open-file-path THROW INCLUDE-FILE ; $20 _pp!
+: included-path
+	post4-path 2SWAP find-file-path THROW
+	OVER >R ['] INCLUDED CATCH R> FREE DROP THROW
+; $20 _pp!
 
 \ ... ACTION-OF ...
 \

@@ -106,9 +106,9 @@ Write `u` characters from address `caddr` to the file `fid` followed by an imple
 
 ### Post4 Specific Words
 
-#### open-file-path
-( `path` `p` `file` `f`  `mode` -- `fid` `ior` )  
-Search the colon (:) separated path list, `path` `p`, and open the first file, `file` `f`, found using the file access `mode`.  On success return the file id `fid` and `ior` equal to zero; otherwise on error `fid` is zero and `ior` is a non-zero error code (see `errno(2)`).
+#### find-file-path
+( `sd.paths` `sd.file` -- `sd.path` `ior` )  
+Search the colon (:) separated path list, `paths`, and return the first complete filepath, `path`, found.  On success `path` is an allocated string, which needs to be freed, and `ior` equals to zero; otherwise on error `path` is `( 0 0 )` and `ior` is a non-zero error code (see `errno(2)`).
 
 - - -
 #### require-path

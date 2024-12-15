@@ -33,6 +33,7 @@ install.sh
 MANIFEST.TXT
 config.log
 config.status
+src/build.h
 src/config.h
 src/config.h.in
 
