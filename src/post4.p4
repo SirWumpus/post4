@@ -1186,10 +1186,10 @@ MAX-U MAX-N 2CONSTANT MAX-D $02 _pp!
 
 /HOLD CHARS BUFFER: _pic
 
-VARIABLE _>pic
+VARIABLE _pic_off
 
 \ ( char -- )
-: HOLD _pic _>pic @ + C! 1 _>pic +! ;
+: HOLD _pic _pic_off @ + C! 1 _pic_off +! ;
 
 \ ( caddr u -- )
 : HOLDS BEGIN DUP WHILE 1- 2DUP + C@ HOLD REPEAT 2DROP ;
@@ -1198,10 +1198,10 @@ VARIABLE _>pic
 : SIGN 0< IF '-' HOLD THEN ;
 
 \ ( -- )
-: <# _pic /HOLD BLANK 0 _>pic ! ;
+: <# _pic /HOLD BLANK 0 _pic_off ! ;
 
 \ ( xd -- caddr u )
-: #> 2DROP _pic _>pic @ 2DUP strrev ;
+: #> 2DROP _pic _pic_off @ 2DUP strrev ;
 
 \ ( d# n -- rem d#quot )
 \
@@ -1995,6 +1995,28 @@ VARIABLE SCR
 \ Alias FILE *stdin to 0.
 : SOURCE-ID _input_ptr @ in.fp @ DUP stdin = IF DROP 0 THEN ;
 
+\ X/Open PATH_MAX, see limits.h
+1024 CONSTANT path_max
+
+VARIABLE _source_path_length
+path_max BUFFER: _source_path
+VARIABLE _source_base_path_length
+path_max BUFFER: _source_base_path
+
+\ (S: -- sd.path )
+: source-path _source_path _source_path_length @ ;
+: source-base-path _source_base_path _source_base_path_length @ ;
+
+\ (S: ( sd.path caddr uaddr -- )
+: set-filepath
+	2 PICK DUP 0 path_max 1- WITHIN 0= -11 AND THROW
+	SWAP ! SWAP strncpy
+; $20 _pp!
+
+\ (S: sd.path -- )
+: set-source-path _source_path _source_path_length set-filepath ;
+: set-source-base-path _source_base_path _source_base_path_length set-filepath ;
+
 \ (S: i*x fd -- j*x )
 \ *** An uncaught exception within the include file will leak the file
 \ *** handle and some memory.
@@ -2004,7 +2026,7 @@ VARIABLE SCR
 ; $10 _pp!
 
 \ (S: i*x caddr u -- j*x )
-: INCLUDED R/O OPEN-FILE THROW INCLUDE-FILE ; $20 _pp!
+: INCLUDED 2DUP set-source-path R/O OPEN-FILE THROW INCLUDE-FILE ; $20 _pp!
 
 \ (S: i*x caddr u -- j*x )
 : included-path
