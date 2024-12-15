@@ -979,7 +979,7 @@ MAX-U MAX-N 2CONSTANT MAX-D $02 _pp!
 : set-source-offset DUP 0 /pad WITHIN 0= -24 AND THROW >IN ! ; $10 _pp!
 
 \ (S: -- )
-: source-inc source-offset 1+ set-source-offset ;
+: inc-source-offset source-offset 1+ set-source-offset ;
 
 \ (S: -- caddr u )
 : source-remaining SOURCE source-offset /STRING ; $02 _pp!
@@ -996,9 +996,9 @@ MAX-U MAX-N 2CONSTANT MAX-D $02 _pp!
 		source-remaining 0= IF			\ S: delim caddr
 			DROP R> TRUE EXIT			\ empty input buffer
 		THEN
-		source-inc						\ S: delim caddr
+		inc-source-offset				\ S: delim caddr
 		DUP C@ R@ = IF					\ escape next char?
-			DROP source-inc 			\ S: delim ch
+			DROP inc-source-offset 		\ S: delim ch
 		ELSE
 			C@ OVER = IF				\ S: delim
 				R> FALSE EXIT			\ input char matches delim
@@ -1242,7 +1242,7 @@ VARIABLE _>pic
 		<= SWAP source-offset + C@		\ S: char len_ge_off input
 		2 PICK <>						\ S: char len_ge_off char_neq
 		OR DUP 0= IF					\ S: char bool
-			source-inc					\ S: char bool
+			inc-source-offset			\ S: char bool
 		THEN
 	UNTIL								\ S: char
 	DROP								\ S: --
@@ -1317,9 +1317,9 @@ VARIABLE _>pic
 		source-remaining 0= IF			\ S: delim caddr
 			DROP R> TRUE EXIT			\ empty input buffer
 		THEN
-		source-inc						\ S: delim caddr
+		inc-source-offset				\ S: delim caddr
 		DUP C@ R@ = IF					\ escape next char?
-			source-inc CHAR+ C@			\ S: delim ch
+			inc-source-offset CHAR+ C@	\ S: delim ch
 		ELSE
 			C@ 2DUP = IF				\ S: delim ch
 				DROP R> FALSE EXIT		\ input char matches delim
