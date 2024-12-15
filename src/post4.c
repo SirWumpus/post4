@@ -1275,7 +1275,6 @@ p4Repl(P4_Ctx *ctx, volatile int thrown)
 		P4_WORD("bye-status",	&&_bye_code,	0, 0x10),	// p4
 
 		/* I/O */
-		P4_WORD(">IN",		&&_input_offset,0, 0x01),
 		P4_WORD("ACCEPT",	&&_accept,	0, 0x21),
 		P4_WORD("TYPE",		&&_type,	0, 0x20),
 		P4_WORD("epoch-seconds", &&_epoch_seconds, 0, 0x01),	// p4
@@ -1286,7 +1285,6 @@ p4Repl(P4_Ctx *ctx, volatile int thrown)
 		P4_WORD("MS",		&&_ms,		0, 0x10),
 		P4_WORD("_parse",	&&_parse,	0, 0x22),	// p4
 		P4_WORD("PARSE-NAME",	&&_parse_name,	0, 0x02),
-		P4_WORD("SOURCE-ID",	&&_source_id,	0, 0x01),
 
 		P4_WORD(NULL,		NULL,		0, 0),
 	};
@@ -2004,17 +2002,6 @@ _lt:		w = P4_DROPTOP(ctx->ds);
 		/*
 		 * I/O
 		 */
-		// ( -- u )
-_input_offset:	p4AllocStack(ctx, &ctx->ds, 1);
-		P4_PUSH(ctx->ds, (P4_Cell *) &ctx->input->offset);
-		NEXT;
-
-		// ( -- -1 | 0 | fp )
-		// Alias FILE *stdin to NULL.
-_source_id:	p4AllocStack(ctx, &ctx->ds, 1);
-		P4_PUSH(ctx->ds, (P4_Int)(ctx->input->fp == stdin ? NULL : ctx->input->fp));
-		NEXT;
-
 		// ( caddr +n1 -- +n2 )
 _accept:	w = P4_DROPTOP(ctx->ds);
 		if ((x.n = alineInput(stdin, "", w.s, x.z)) < 0) {

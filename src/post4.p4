@@ -257,6 +257,7 @@ END-STRUCTURE
 : catch_frame _ctx ctx.frame ; $01 _pp!
 : trace _ctx ctx.trace ; $01 _pp!
 : BASE _ctx ctx.radix ; $01 _pp!
+: >IN _ctx ctx.input @ in.offset ; $01 _pp!
 
 \ (S: -- argv argc )
 : args _ctx ctx.options @ DUP opt.argv @ SWAP opt.argc @ ; $02 _pp!
@@ -1989,6 +1990,10 @@ VARIABLE SCR
 \ (S: `remaining input line` -- n )
 : sh source-remaining SOURCE NIP set-source-offset shell ;
 [THEN]
+
+\ (S: -- -1 | 0 | fid )
+\ Alias FILE *stdin to 0.
+: SOURCE-ID _input_ptr @ in.fp @ DUP stdin = IF DROP 0 THEN ;
 
 \ (S: i*x fd -- j*x )
 \ *** An uncaught exception within the include file will leak the file
