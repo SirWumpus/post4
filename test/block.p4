@@ -1,6 +1,6 @@
 INCLUDE ../test/assert.p4
 
-[UNDEFINED] BLOCK-OPEN [IF]
+[UNDEFINED] OPEN-BLOCK [IF]
 
 .( Block file support disabled. ) CR
 
@@ -10,11 +10,11 @@ MARKER rm_block_tests
 
 : tw_tmp_blk S" /tmp/tmp.blk" ;
 
-.( BLOCK-OPEN BLOCK-CLOSE DELETE-FILE ) test_group
+.( OPEN-BLOCK CLOSE-BLOCK DELETE-FILE ) test_group
 t{ _ctx ctx.block_fd @ -> 0 }t
-t{ 666 tw_tmp_blk BLOCK-OPEN BLOCK-CLOSE 999 -> 666 0 999 }t
+t{ 666 tw_tmp_blk OPEN-BLOCK CLOSE-BLOCK 999 -> 666 0 999 }t
 t{ tw_tmp_blk DELETE-FILE -> 0 }t
-t{ tw_tmp_blk BLOCK-OPEN -> 0 }t
+t{ tw_tmp_blk OPEN-BLOCK -> 0 }t
 test_group_end
 
 .( BUFFER UPDATE ) test_group
@@ -88,8 +88,8 @@ t{ 5 LOAD -> 123 666 579 -1 0 999 456 }t
 t{ BLOCKS -> 6 }t
 test_group_end
 
-.( BLOCK-CLOSE DELETE-FILE ) test_group
-t{ BLOCK-CLOSE tw_tmp_blk DELETE-FILE -> 0 }t
+.( CLOSE-BLOCK DELETE-FILE ) test_group
+t{ CLOSE-BLOCK tw_tmp_blk DELETE-FILE -> 0 }t
 test_group_end
 
 rm_block_tests

@@ -367,7 +367,7 @@ MARKER rm_ed
 
 : ED ( -- )
 	\ Assert block file has at least one block.
-	['] block_append CATCH ABORT" Try BLOCK-OPEN first."
+	['] block_append CATCH ABORT" Try OPEN-BLOCK first."
 	PAGE 'I' edit_mode ! BEGIN ed_screen ed_command AGAIN
 ;
 

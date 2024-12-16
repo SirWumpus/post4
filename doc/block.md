@@ -97,7 +97,7 @@ First save any dirty blocks, then close the block file.
 ( `caddr` `u` -- `bool` )  
 First close the current block file, if any, then open the file path given by `caddr` `u` and return true on success.
 
-        ok S" .post4.blk" BLOCK-OPEN
+        ok S" .post4.blk" OPEN-BLOCK
         ok BLOCKS .
         3 ok
 

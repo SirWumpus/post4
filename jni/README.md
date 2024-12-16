@@ -101,7 +101,7 @@ The file name of the core word definitions file; default `post4.p4`.  The enviro
 - - -
 * public String block_file
 
-By default no block file is opened.  Use `block_file` to open a block file at start-up; otherwise see [BLOCK-OPEN](../doc/block.md) and [BLOCK-CLOSE](../doc/block.md) words.
+By default no block file is opened.  Use `block_file` to open a block file at start-up; otherwise see [OPEN-BLOCK](../doc/block.md) and [CLOSE-BLOCK](../doc/block.md) words.
 
 - - -
 * public String[] argv

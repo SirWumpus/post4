@@ -1849,13 +1849,13 @@ VARIABLE _str_buf_curr
 : BUFFER ['] DROP _block_or_buffer ; $11 _pp!
 
 \ (S: -- )
-: BLOCK-CLOSE
+: CLOSE-BLOCK
 	_blk_number @ _block_write _block_fd @ CLOSE-FILE DROP
 	0 _block_fd ! _blk_free
 ;
 
 \ (S: caddr u -- ior )
-: BLOCK-OPEN
+: OPEN-BLOCK
 	0 _blk_number !
 	2DUP R/W BIN OPEN-FILE IF
 		DROP R/W BIN CREATE-FILE ?DUP IF

@@ -25,7 +25,7 @@ Post4 is a hosted indirect threaded Forth dialect written in C, based on the ["F
 
 The environment variable `POST4_PATH` provides a colon separated search path for the `post4.p4` core word definitions file and include files.  If `POST4_PATH` is undefined, then an OS specific default path is used.  A specific word definition file can be specified with `-c`.
 
-By default no block file is opened.  Use `-b file` to open a block file at start-up; otherwise see [BLOCK-OPEN](./doc/block.md) and [BLOCK-CLOSE](./doc/block.md) words.
+By default no block file is opened.  Use `-b file` to open a block file at start-up; otherwise see [OPEN-BLOCK](./doc/block.md) and [CLOSE-BLOCK](./doc/block.md) words.
 
 Post4 reads input from standard input and writes to standard output, which can be redirected:
 
