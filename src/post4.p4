@@ -199,6 +199,7 @@ BEGIN-STRUCTURE p4_input
 	FIELD: in.blk
 	FIELD: in.length
 	FIELD: in.offset
+	FIELD: in.path				\ pointer
 	FIELD: in.buffer			\ pointer
 	/pad +FIELD in.data
 END-STRUCTURE
@@ -1998,14 +1999,12 @@ VARIABLE SCR
 \ X/Open PATH_MAX, see limits.h
 1024 CONSTANT path_max
 
-VARIABLE _source_path_length
-path_max BUFFER: _source_path
 VARIABLE _source_base_path_length
 path_max BUFFER: _source_base_path
 
 \ (S: -- sd.path )
-: source-path _source_path _source_path_length @ ;
-: source-base-path _source_base_path _source_base_path_length @ ;
+: source-path _input_ptr @ in.path @ DUP strlen ; $02 _pp!
+: source-base-path _source_base_path _source_base_path_length @ ; $02 _pp!
 
 \ (S: ( sd.path caddr uaddr -- )
 : set-filepath
@@ -2014,19 +2013,21 @@ path_max BUFFER: _source_base_path
 ; $20 _pp!
 
 \ (S: sd.path -- )
-: set-source-path _source_path _source_path_length set-filepath ;
-: set-source-base-path _source_base_path _source_base_path_length set-filepath ;
+: set-source-base-path _source_base_path _source_base_path_length set-filepath ; $20 _pp!
+
+\ (S: i*x caddr u fd -- j*x )
+: _include_file
+	_input_push -rot DROP _input_ptr @ in.path !
+	DUP >R ['] _eval_file CATCH R> CLOSE-FILE DROP _input_pop THROW
+; $30 _pp!
 
 \ (S: i*x fd -- j*x )
 \ *** An uncaught exception within the include file will leak the file
 \ *** handle and some memory.
-: INCLUDE-FILE
-	_input_push DUP >R ['] _eval_file CATCH
-	R> CLOSE-FILE DROP _input_pop THROW
-; $10 _pp!
+: INCLUDE-FILE s" " _include_file ; $10 _pp!
 
 \ (S: i*x caddr u -- j*x )
-: INCLUDED 2DUP set-source-path R/O OPEN-FILE THROW INCLUDE-FILE ; $20 _pp!
+: INCLUDED 2DUP R/O OPEN-FILE THROW _include_file ; $20 _pp!
 
 \ (S: i*x caddr u -- j*x )
 : included-path

@@ -973,7 +973,7 @@ dnl #endif
 	AC_CHECK_FUNCS([chdir getcwd mkdir rmdir closedir opendir readdir])
 	AC_CHECK_FUNCS([chmod chown chroot fchmod stat fstat link rename symlink unlink umask utime])
 	AC_CHECK_FUNCS([close creat dup dup2 ftruncate chsize truncate lseek open pipe read write])
-	AC_CHECK_FUNCS([isatty getdtablesize])
+	AC_CHECK_FUNCS([isatty getdtablesize readlink readlinkat])
 	AC_FUNC_CHOWN
 ])
 

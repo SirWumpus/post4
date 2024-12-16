@@ -846,7 +846,6 @@ p4Free(P4_Ctx *ctx)
 		if (ctx->block_fd != NULL) {
 			(void) fclose(ctx->block_fd);
 		}
-		/* Data stack in allocated, because Java can grow it. */
 		free(ctx->ds.base - P4_GUARD_CELLS/2);
 		free(ctx->fs.base - P4_GUARD_CELLS/2);
 		free(ctx->rs.base - P4_GUARD_CELLS/2);
@@ -938,6 +937,7 @@ p4Create(P4_Options *opts)
 	if ((ctx->input = p4CreateInput()) == NULL) {
 		goto error0;
 	}
+	ctx->input->path = "/dev/stdin";
 	p4ResetInput(ctx, stdin);
 
 	if ((ctx->block = calloc(1, sizeof (*ctx->block))) == NULL) {
@@ -2568,6 +2568,7 @@ p4EvalFile(P4_Ctx *ctx, const char *file)
 	str = p4FindFilePath(p4_path, strlen(p4_path), file, strlen(file));
 	if (0 < str.length && (fp = fopen(str.string, "r")) != NULL) {
 		p4ResetInput(ctx, fp);
+		ctx->input->path = file;
 		rc = p4Repl(ctx, P4_THROW_OK);
 		(void) fclose(fp);
 		free(str.string);
@@ -2591,6 +2592,7 @@ p4EvalString(P4_Ctx *ctx, const char *str, size_t len)
 	input->length = len;
 	input->offset = 0;
 	input->blk = 0;
+	input->path = "about:input/string";
 	rc = p4Repl(ctx, P4_THROW_OK);
 	P4_INPUT_POP(ctx->input);
 	return rc;

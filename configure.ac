@@ -109,7 +109,7 @@ AC_SUBST(CC_O)
 AC_SUBST(CC_O_NAME)
 AC_SUBST(LIBEXT)
 
-AC_CHECK_HEADERS([ctype.h errno.h inttypes.h limits.h stdarg.h stddef.h stdint.h stdio.h unistd.h sys/ioctl.h])
+AC_CHECK_HEADERS([ctype.h errno.h inttypes.h limits.h stdarg.h stddef.h stdint.h stdio.h fcntl.h unistd.h sys/ioctl.h])
 
 AC_CHECK_SIZEOF(short)
 AC_CHECK_SIZEOF(int)

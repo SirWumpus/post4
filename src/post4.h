@@ -310,6 +310,7 @@ typedef struct {
 	P4_Uint		blk;		/* If 0< then buffer is a block and this is the block number. */
 	P4_Size		length;		/* Length of input in buffer. */
 	P4_Size		offset;		/* Offset of unconsumed input. */
+	const char *	path;
 	char *		buffer;
 	char		data[P4_INPUT_SIZE];
 } P4_Input;
