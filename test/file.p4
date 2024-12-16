@@ -85,6 +85,7 @@ test_group_end
 
 .( GH-86 source-base-path ) test_group
 t{ source-base-path s" source-base-path" evaluate compare 0= -> true }t
+ts{ source-path s" ../test/data/empty.p4" included source-path compare 0= -> true }t
 test_group_end
 
 rm_file_access
