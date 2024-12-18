@@ -1904,6 +1904,7 @@ VARIABLE _str_buf_curr
 \ (S: i*x u -- j*x )
 : LOAD
 	_input_push _block_push
+	S" block:" DROP _input_ptr @ in.path !
 	DUP BLK ! BLOCK _blk_size set-source ['] _interpret CATCH
 	_block_pop _input_pop THROW
 ; $10 _pp!
@@ -1996,24 +1997,39 @@ VARIABLE SCR
 \ Alias FILE *stdin to 0.
 : SOURCE-ID _input_ptr @ in.fp @ DUP stdin = IF DROP 0 THEN ;
 
-\ X/Open PATH_MAX, see limits.h
-1024 CONSTANT path_max
+\ _POSIX_PATH_MAX, see limits.h
+256 CONSTANT path_max
 
-VARIABLE _source_base_path_length
-path_max BUFFER: _source_base_path
+\ (S: <spaces>name -- )
+: file-path CREATE 0 , path_max ALLOT DOES> @+ ;
+
+\ (S: sd.path xt -- )
+: set-file-path
+	OVER 0 path_max 1- WITHIN 0= -11 AND THROW		\ S: s u xt
+	EXECUTE DROP SWAP								\ S: s d u
+	2>R 2R@ 										\ S: s d u		R: d u
+	strncpy	R> R> CELL-								\ S: u d'		R: --
+	!												\ S: --
+; $30 _pp!
+
+\ (S: sd.0 -- sd.1 )
+: strndup DUP 1+ ALLOCATE THROW SWAP 2DUP 2>R strncpy 2R> ; $22 _pp!
+
+\ (S: -- sd.path )
+file-path source-base-path
 
 \ (S: -- sd.path )
 : source-path _input_ptr @ in.path @ DUP strlen ; $02 _pp!
-: source-base-path _source_base_path _source_base_path_length @ ; $02 _pp!
-
-\ (S: ( sd.path caddr uaddr -- )
-: set-filepath
-	2 PICK DUP 0 path_max 1- WITHIN 0= -11 AND THROW
-	SWAP ! SWAP strncpy
-; $20 _pp!
 
 \ (S: sd.path -- )
-: set-source-base-path _source_base_path _source_base_path_length set-filepath ; $20 _pp!
+: set-source-base-path ['] source-base-path set-file-path ; $20 _pp!
+
+\ (S: i*x xt sd.path -- j*x )
+: apply-base-path
+	source-base-path strndup 2>r set-source-base-path
+	catch
+	2r> 2dup set-source-base-path drop free drop throw
+; $30 _pp!
 
 \ (S: i*x caddr u fd -- j*x )
 : _include_file
@@ -2031,7 +2047,9 @@ path_max BUFFER: _source_base_path
 
 \ (S: i*x caddr u -- j*x )
 : included-path
-	post4-path 2SWAP find-file-path THROW
+	source-base-path 2OVER find-file-path IF
+		2DROP post4-path 2SWAP find-file-path THROW
+	THEN
 	OVER >R ['] INCLUDED CATCH R> FREE DROP THROW
 ; $20 _pp!
 
