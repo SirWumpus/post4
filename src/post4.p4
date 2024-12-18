@@ -2031,19 +2031,17 @@ file-path source-base-path
 	2r> 2dup set-source-base-path drop free drop throw
 ; $30 _pp!
 
-\ (S: i*x caddr u fd -- j*x )
-: _include_file
-	_input_push -rot DROP _input_ptr @ in.path !
+\ (S: i*x fd caddr u -- j*x )
+: include-file-path
+	_input_push DROP _input_ptr @ in.path !
 	DUP >R ['] _eval_file CATCH R> CLOSE-FILE DROP _input_pop THROW
 ; $30 _pp!
 
 \ (S: i*x fd -- j*x )
-\ *** An uncaught exception within the include file will leak the file
-\ *** handle and some memory.
-: INCLUDE-FILE s" " _include_file ; $10 _pp!
+: INCLUDE-FILE s" " include-file-path ; $10 _pp!
 
 \ (S: i*x caddr u -- j*x )
-: INCLUDED 2DUP R/O OPEN-FILE THROW _include_file ; $20 _pp!
+: INCLUDED 2DUP R/O OPEN-FILE THROW -rot include-file-path ; $20 _pp!
 
 \ (S: i*x caddr u -- j*x )
 : included-path
