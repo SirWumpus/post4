@@ -87,6 +87,26 @@ T{ tw_str_2 tw_str_3 COMPARE ->  1 }T
 T{ tw_str_3 tw_str_2 COMPARE -> -1 }T
 test_group_end
 
+.( strchr strrchr ) test_group
+: tw_empty S" " ;
+: tw_no_delim S" foobar" ;
+: tw_leading_delim S" /foo/bar" ;
+: tw_middle_delim S" foo/bar" ;
+: tw_trailing_delim S" foo/bar/" ;
+
+t{ tw_empty '/' strchr tw_empty COMPARE -> 0 }t
+t{ tw_no_delim '/' strchr tw_empty COMPARE -> 0 }t
+t{ tw_leading_delim '/' strchr tw_leading_delim COMPARE -> 0 }t
+t{ tw_middle_delim '/' strchr S" /bar" COMPARE -> 0 }t
+t{ tw_trailing_delim '/' strchr S" /bar/" COMPARE -> 0 }t
+
+t{ tw_empty '/' strrchr tw_empty COMPARE -> 0 }t
+t{ tw_no_delim '/' strrchr tw_empty COMPARE -> 0 }t
+t{ tw_leading_delim '/' strrchr S" /foo/" COMPARE -> 0 }t
+t{ tw_middle_delim '/' strrchr S" foo/" COMPARE -> 0 }t
+t{ tw_trailing_delim '/' strrchr tw_trailing_delim COMPARE -> 0 }t
+test_group_end
+
 .( starts-with ) test_group
 T{ s" " s" " starts-with -> TRUE }T
 T{ s" " s" foo" starts-with -> FALSE }T

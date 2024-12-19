@@ -1287,7 +1287,7 @@ System clock time in seconds from the epoch.
 Empty the data stack.
 
 - - -
-#### dropn
+#### ndrop
 ( i*x n*x n -- i*x )  
 Drop the top `n` data stack elements.
 

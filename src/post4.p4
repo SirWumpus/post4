@@ -334,10 +334,10 @@ END-STRUCTURE
 : R@ R> R> DUP >R SWAP >R ; $1101 _pp!
 
 \ (S: xn ... x1 n -- )
-: dropn CELLS dsp@ SWAP - CELL- dsp! ; $10 _pp!
+: ndrop CELLS dsp@ SWAP - CELL- dsp! ; $10 _pp!
 
 \ ( i*x -- )
-: dropall DEPTH dropn ;
+: dropall DEPTH ndrop ;
 
 \ (S: -- )
 : DECIMAL #10 BASE ! ;
@@ -488,21 +488,17 @@ MAX-U MAX-N 2CONSTANT MAX-D $02 _pp!
 
 \ (S: nu1 nu2 -- flag )
 : = - 0= ; $21 _pp!
-
-\ (S: nu1 nu2 -- flag )
 : <> = 0= ; $21 _pp!
 
 \ (S: n1 n2 -- flag )
 : > SWAP < ; $21 _pp!
-
-\ (S: n1 n2 -- flag )
-: U> SWAP U< ; $21 _pp!
-
-\ (S: n1 n2 -- flag )
 : <= > 0= ; $21 _pp!
-
-\ (S: n1 n2 -- flag )
 : >= < 0= ; $21 _pp!
+
+\ (S: u1 u2 -- flag )
+: U> SWAP U< ; $21 _pp!
+: U<= U> 0= ; $21 _pp!
+: U>= U< 0= ; $21 _pp!
 
 \ ... WITHIN ...
 \
@@ -915,6 +911,8 @@ MAX-U MAX-N 2CONSTANT MAX-D $02 _pp!
 
 \ (S: caddr -- caddr' x )
 : C@+ DUP CHAR+ SWAP C@ ; $12 _pp!
+: C@- DUP CHAR- SWAP C@ ; $12 _pp!
+: C-@ CHAR- DUP C@ ; $12 _pp!
 
 \ (S: x addr -- addr' )
 : !+ DUP CELL+ -rot ! ; $21 _pp!
@@ -1115,16 +1113,30 @@ MAX-U MAX-N 2CONSTANT MAX-D $02 _pp!
 : isalpha toupper 'A' [ 'Z' 1+ ] LITERAL WITHIN ; $11 _pp!
 : isalnum DUP isalpha isdigit OR ; $11 _pp!
 
-\ (S: caddr u delim -- caddr | 0 )
+\ (S: caddr u delim -- caddr' u' )
+\ Find first occurence of delim.
 : strchr
-	>R bounds						\ S: c" c	R: d
-	BEGIN
-		2DUP U> DUP C@ R@ <> AND	\ S: c" c	R: d
-	WHILE							\ S: c" c	R: d
-		1 CHARS +					\ S: c" c'	R: d
-	REPEAT
-	rdrop							\ S: c" c
-	TUCK = IF DUP - THEN			\ S: c | 0
+	>R CHARS bounds
+	BEGIN 2DUP U> WHILE C@+ R@ = UNTIL
+		\ Found.  Return trailing string.
+		CHAR- TUCK -
+	ELSE
+		\ Nothing found.
+		drop 0
+	THEN rdrop
+; $31 _pp!
+
+\ (S: caddr u delim -- caddr' u' )
+\ Find last occurence of delim.
+: strrchr
+	>R STOW CHARS OVER +
+	BEGIN 2DUP U<= WHILE C-@ R@ = UNTIL
+		\ Found.  Return leading string.
+		CHAR+ SWAP -
+	ELSE
+		\ Nothing found.
+		2DROP 0
+	THEN rdrop
 ; $31 _pp!
 
 \ ( caddr u -- )
@@ -1488,6 +1500,9 @@ VARIABLE _pic_off
 \ (S: src dst u -- )
 \ Copy and NUL terminate string.
 : strncpy 2DUP CHARS + >R MOVE 0 R> C! ;
+
+\ (S: sd.0 -- sd.1 )
+: strndup DUP 1+ ALLOCATE THROW SWAP 2DUP 2>R strncpy 2R> ; $22 _pp!
 
 \ Maximum for octet addressable units.
 MAX-CHAR CONSTANT /COUNTED-STRING
@@ -2011,9 +2026,6 @@ VARIABLE SCR
 	strncpy	R> R> CELL-								\ S: u d'		R: --
 	!												\ S: --
 ; $30 _pp!
-
-\ (S: sd.0 -- sd.1 )
-: strndup DUP 1+ ALLOCATE THROW SWAP 2DUP 2>R strncpy 2R> ; $22 _pp!
 
 \ (S: -- sd.path )
 file-path source-base-path

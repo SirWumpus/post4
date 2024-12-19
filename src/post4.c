@@ -2592,7 +2592,8 @@ p4EvalString(P4_Ctx *ctx, const char *str, size_t len)
 	input->length = len;
 	input->offset = 0;
 	input->blk = 0;
-	input->path = "data:";
+	/* RFC 2397 "data:," equals "data:text/plain;charset=US-ASCII," */
+	input->path = "data:,";
 	rc = p4Repl(ctx, P4_THROW_OK);
 	P4_INPUT_POP(ctx->input);
 	return rc;
