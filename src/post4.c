@@ -144,9 +144,9 @@ p4FindFilePath(const char *path_list, size_t plen, const char *file, size_t flen
 	if ((str.string = calloc(1, PATH_MAX)) == NULL) {
 		goto error0;
 	}
-	/* Try the given file relative the current working directory. */
+	/* Try the given file directly. */
 	str.length = snprintf(str.string, PATH_MAX, "%.*s", (int)flen, file);
-	if (stat(str.string, &sb) == 0) {
+	if (strchr("./", *str.string) != NULL && stat(str.string, &sb) == 0) {
 		return str;
 	}
 	/* Path list supplied or use the default? */

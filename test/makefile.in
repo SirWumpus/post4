@@ -33,7 +33,7 @@ LIBS		= @LIBS@
 
 PROG		= ${top_srcdir}/src/post4$E
 WORDS		= ${top_srcdir}/src/post4.p4
-POST4_PATH	= POST4_PATH='.:${top_srcdir}/src:${top_srcdir}/examples'
+POST4_PATH	= POST4_PATH='${top_srcdir}/examples:${top_srcdir}/src'
 
 BUILT		:= `date +'%a, %d %b %Y %H:%M:%S %z'`
 

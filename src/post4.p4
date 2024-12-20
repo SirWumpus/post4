@@ -2013,7 +2013,7 @@ VARIABLE SCR
 256 CONSTANT path_max
 
 \ (S: <spaces>name -- )
-: file-path CREATE 0 , path_max ALLOT DOES> @+ ;
+: file-path CREATE 0 , 0 , path_max ALLOT DOES> @+ ;
 
 \ (S: sd.path xt -- )
 : set-file-path
