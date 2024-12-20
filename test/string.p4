@@ -96,12 +96,14 @@ test_group_end
 
 t{ tw_empty '/' strchr tw_empty COMPARE -> 0 }t
 t{ tw_no_delim '/' strchr tw_empty COMPARE -> 0 }t
+t{ tw_no_delim 2dup + -rot '#' strchr -rot = -> 0 true }t
 t{ tw_leading_delim '/' strchr tw_leading_delim COMPARE -> 0 }t
 t{ tw_middle_delim '/' strchr S" /bar" COMPARE -> 0 }t
 t{ tw_trailing_delim '/' strchr S" /bar/" COMPARE -> 0 }t
 
 t{ tw_empty '/' strrchr tw_empty COMPARE -> 0 }t
 t{ tw_no_delim '/' strrchr tw_empty COMPARE -> 0 }t
+t{ tw_no_delim over -rot '#' strrchr -rot = -> 0 true }t
 t{ tw_leading_delim '/' strrchr S" /foo/" COMPARE -> 0 }t
 t{ tw_middle_delim '/' strrchr S" foo/" COMPARE -> 0 }t
 t{ tw_trailing_delim '/' strrchr tw_trailing_delim COMPARE -> 0 }t
