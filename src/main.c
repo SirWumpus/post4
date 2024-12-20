@@ -12,17 +12,17 @@
  ***********************************************************************/
 
 static const char usage[] =
-"usage: post4 [-TV][-b file][-c file][-h size][-i file][-m size]\r\n"
-"             [script [args ...]]\r\n"
-"\r\n"
-"-b file\t\topen a block file\r\n"
-"-c file\t\tword definition file; default " P4_CORE_FILE " from $POST4_PATH\r\n"
-"-h size\t\thistory size in lines; default " QUOTE(ALINE_HISTORY) "\r\n"
-"-i file\t\tinclude file; can be repeated; searches $POST4_PATH\r\n"
-"-m size\t\tdata space memory in KB; default " QUOTE(P4_MEM_SIZE) "\r\n"
-"-T\t\tenable tracing; see TRACE\r\n"
-"-V\t\tbuild and version information\r\n\r\n"
-"If script is \"-\", read it from standard input.\r\n"
+"usage: post4 [-TV][-b file][-c file][-h size][-i file][-m size]" NL
+"             [script [args ...]]" NL
+"" NL
+"-b file\t\topen a block file" NL
+"-c file\t\tword definition file; default " P4_CORE_FILE " from $POST4_PATH" NL
+"-h size\t\thistory size in lines; default " QUOTE(ALINE_HISTORY) "" NL
+"-i file\t\tinclude file; can be repeated; searches $POST4_PATH" NL
+"-m size\t\tdata space memory in KB; default " QUOTE(P4_MEM_SIZE) "" NL
+"-T\t\tenable tracing; see TRACE" NL
+"-V\t\tbuild and version information\r\n" NL
+"If script is \"-\", read it from standard input." NL
 ;
 
 static char *flags = "b:c:d:f:h:i:m:r:TV";
@@ -37,13 +37,13 @@ static P4_Options options = {
 };
 
 static const char p4_build_info[] =
-	P4_NAME "/" P4_VERSION "  " P4_COPYRIGHT "\r\n\r\n"
-	"BUILT=\"" P4_BUILT "\"\r\n"
-	"COMMIT=\"" P4_COMMIT "\"\r\n"
-	"CFLAGS=\"" P4_CFLAGS "\"\r\n"
-	"LDFLAGS=\"" P4_LDFLAGS "\"\r\n"
-	"LIBS=\"" P4_LIBS "\"\r\n"
-	"POST4_PATH=\"" P4_CORE_PATH "\"\r\n"
+	P4_NAME "/" P4_VERSION "  " P4_COPYRIGHT "" NL
+	"BUILT=\"" P4_BUILT "\"" NL
+	"COMMIT=\"" P4_COMMIT "\"" NL
+	"CFLAGS=\"" P4_CFLAGS "\"" NL
+	"LDFLAGS=\"" P4_LDFLAGS "\"" NL
+	"LIBS=\"" P4_LIBS "\"" NL
+	"POST4_PATH=\"" P4_CORE_PATH "\"" NL
 ;
 
 static void
@@ -66,7 +66,7 @@ main(int argc, char **argv)
 	while ((ch = getopt(argc, argv, flags)) != -1) {
 		unsigned val = 0;
 		if (optarg != NULL) {
-			val = (unsigned) strtol(optarg, NULL, 10);
+			val = strtoul(optarg, NULL, 10);
 		}
 		switch (ch) {
 		case 'b':
@@ -91,7 +91,7 @@ main(int argc, char **argv)
 			(void) printf(
 				"%s\r\nsizeof char=%zu short=%zu int=%zu long=%zu size_t=%zu "
 				"intptr_t=%zu float=%zu double=%zu\r\nvoid *=%zu long long=%zu "
-				"long double=%zu JMP_BUF=%zu\r\n",
+				"long double=%zu JMP_BUF=%zu" NL,
 				p4_build_info,
 				sizeof (char), sizeof (short), sizeof (int), sizeof (long),
 				sizeof (size_t), sizeof (intptr_t), sizeof (float), sizeof (double),
@@ -113,7 +113,7 @@ main(int argc, char **argv)
 	(void) atexit(cleanup);
 	if ((rc = SETJMP(sig_break_glass)) != 0) {
 		THROW_MSG(rc);
-		(void) fprintf(stderr, "\r\n");
+		(void) fprintf(stderr, "" NL);
 		return P4_EXIT_STATUS(rc);
 	}
 	if ((ctx_main = p4Create(&options)) == NULL) {

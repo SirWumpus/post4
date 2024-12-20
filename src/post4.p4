@@ -302,15 +302,18 @@ END-STRUCTURE
 : stack-cells _dstk stk.size @ ; $01 _pp!
 : return-stack-cells _rstk stk.size @ ; $01 _pp!
 
+\ (S: -- )
+: CR newline TYPE ;
+
 \ (S: char -- )
 \ Assumes little-endian.
 : EMIT dsp@ 1 TYPE DROP ; $10 _pp!
 
 \ ( -- )
-: .S 'd' EMIT 's' EMIT '\r' EMIT '\n' EMIT _ds DROP _stack_dump ;
+: .S 'd' EMIT 's' EMIT CR _ds DROP _stack_dump ;
 
 \ ( -- )
-: .RS 'r' EMIT 's' EMIT '\r' EMIT '\n' EMIT _rs DROP 1 - _stack_dump ;
+: .RS 'r' EMIT 's' EMIT CR _rs DROP 1 - _stack_dump ;
 
 \ ( u "<spaces>name" -- addr )
 : BUFFER: CREATE ALLOT ; $11 _pp!
@@ -526,9 +529,6 @@ MAX-U MAX-N 2CONSTANT MAX-D $02 _pp!
 
 \ (S: <spaces>name.new <spaces>name.old -- )
 : SYNONYM >IN @ PARSE-NAME 2DROP ' >IN @ SPIN >IN ! alias >IN ! ;
-
-\ (S: -- )
-: CR '\r' EMIT '\n' EMIT ;
 
 \ (S: -- )
 : SPACE BL EMIT ;
@@ -1751,10 +1751,7 @@ VARIABLE _str_buf_curr
 
 [DEFINED] WRITE-FILE [IF]
 \ ( caddr u fid -- ior )
-: WRITE-LINE
-	DUP >R WRITE-FILE DROP
-	S\" \r\n" R> WRITE-FILE
-;
+: WRITE-LINE DUP >R WRITE-FILE DROP newline R> WRITE-FILE ;
 [THEN]
 
 \ (S: ctx -- aaddr )
@@ -2312,7 +2309,7 @@ VARIABLE _do_sys_stk
 : FALIGNED ALIGNED ;
 : FFIELD: FIELD: ;
 
-: .fs S\" fs\r\n" TYPE _fs DROP _stack_dump ;
+: .fs S\" fs" TYPE CR _fs DROP _stack_dump ;
 
 \ (S: -- f ; F: f -- )
 \ Move f between stacks _without_ conversion; F>S and S>F convert formats.
@@ -2821,7 +2818,7 @@ FORTH-WORDLIST SET-CURRENT
 : ALSO GET-ORDER OVER SWAP 1+ SET-ORDER ;
 : DEFINITIONS GET-ORDER OVER SET-CURRENT SET-ORDER ;
 
-: show_wid ( wid -- ) S\" \e[36m[ " TYPE #. S\" ]\e[0m\r\n" TYPE ; $10 _pp!
+: show_wid ( wid -- ) S\" \e[36m[ " TYPE #. S\" ]\e[0m" TYPE CR ; $10 _pp!
 
 : ORDER ( -- )
 	." Search: " GET-ORDER 0 DO . SPACE LOOP CR

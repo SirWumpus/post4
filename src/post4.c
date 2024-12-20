@@ -116,7 +116,7 @@ const char *p4_exceptions[] = {
 };
 #endif
 
-static const char crlf[] = "\r\n";
+const char newline[] = NL;
 
 /***********************************************************************
  *** Context
@@ -327,7 +327,7 @@ p4StackDump(FILE *fp, P4_Cell *base, int length)
 	unsigned count;
 
 	if (length < 0 || 1024 <= length) {
-		(void) fprintf(fp, "stack under or over flow, depth=%d\r\n", length);
+		(void) fprintf(fp, "stack under or over flow, depth=%d" NL, length);
 		return;
 	}
 	for (count = 0, cell = base; 0 < length--; cell++) {
@@ -336,11 +336,11 @@ p4StackDump(FILE *fp, P4_Cell *base, int length)
 		}
 		(void) fprintf(fp, P4_H0X_FMT" ", cell->u);
 		if ((++count & 3) == 0) {
-			(void) fprintf(fp, crlf);
+			(void) fprintf(fp, newline);
 		}
 	}
 	if ((count & 3) != 0) {
-		(void) fprintf(fp, crlf);
+		(void) fprintf(fp, newline);
 	}
 }
 
@@ -946,7 +946,7 @@ p4Create(P4_Options *opts)
 	if (opts->block_file != NULL && *opts->block_file != '\0'	/* Block file name? */
 	&& (ctx->block_fd = fopen(opts->block_file, "rb+")) == NULL	/* File exists? */
 	&& (ctx->block_fd = fopen(opts->block_file, "wb+")) == NULL) {	/* Else create file. */
-		(void) fprintf(STDERR, "post4: %s: %s\r\n", opts->block_file, strerror(errno));
+		(void) fprintf(STDERR, "post4: %s: %s" NL, opts->block_file, strerror(errno));
 	}
 	ctx->norder = 1;
 	ctx->order[0] = 1;
@@ -967,7 +967,7 @@ p4Bp(P4_Ctx *ctx)
 	for (unsigned i = 0; i < input->length-has_nl; i++) {
 		(void) fputc(input->buffer[i] == '\t' ? ' ' : input->buffer[i], STDERR);
 	}
-	(void) fprintf(STDERR, "\r\n>> %*c\r\n", (int)input->offset, '^' );
+	(void) fprintf(STDERR, "\r\n>> %*c" NL, (int)input->offset, '^' );
 }
 
 #pragma GCC diagnostic push
@@ -1015,7 +1015,7 @@ p4Trace(P4_Ctx *ctx, P4_Xt xt, P4_Cell *ip)
 #endif
 			p4TraceStack(ctx, &ctx->rs, P4_RS_CAN_POP(xt), " ; ");
 		}
-		(void) fputs(crlf, STDERR);
+		(void) fputs(newline, STDERR);
 	}
 }
 #else
@@ -1190,11 +1190,12 @@ p4Repl(P4_Ctx *ctx, volatile int thrown)
 		/* Constants. */
 		P4_VAL("R/O",			0),
 		P4_VAL("R/W",			1),
-		P4_VAL("/pad",			P4_PAD_SIZE),		// p4
-		P4_VAL("address-unit-bits",	P4_CHAR_BIT),		// p4
+		P4_VAL("/pad",			P4_PAD_SIZE),			// p4
+		P4_VAL("address-unit-bits",	P4_CHAR_BIT),			// p4
 		P4_VAL("WORDLISTS",		P4_WORDLISTS),
-		P4_WORD("post4-path",	&&_post4_path,	0, 0x02),	// p4
-		P4_WORD("post4-commit", &&_post4_commit,0, 0x02),	// p4
+		P4_WORD("post4-path",		&&_post4_path,	0, 0x02),	// p4
+		P4_WORD("post4-commit", 	&&_post4_commit,0, 0x02),	// p4
+		P4_WORD("newline",		&&_newline,	0, 0x02),	// p4
 
 		/* Internal support. */
 		P4_WORD("_bp",		&&_bp,		0, 0x00),	// p4
@@ -1372,18 +1373,18 @@ _thrown:
 			p4WordFree(w.nt);
 		} else {
 			/* Cannot rely on ip pointing to the xt after the error. */
-			(void) fprintf(STDERR, crlf);
+			(void) fprintf(STDERR, newline);
 			for (x.p = ctx->rs.top; ctx->rs.base <= x.p; x.p--) {
 				w = (*x.p).p[-1];
 				y.s = p4IsNt(ctx, w.nt) ? w.nt->name : "";
-				(void) fprintf(STDERR, P4_H0X_FMT"  %s\r\n", (long) w.nt, y.s);
+				(void) fprintf(STDERR, P4_H0X_FMT"  %s" NL, (long) w.nt, y.s);
 			}
 		}
 		/*@fallthrough@*/
 	case P4_THROW_SIGINT:
 	case P4_THROW_ABORT_MSG:
 		/* Ensure ABORT" and other messages print newline.*/
-		(void) fprintf(STDERR, crlf);
+		(void) fprintf(STDERR, newline);
 		/*@fallthrough@*/
 	case P4_THROW_ABORT:
 		/* Historically no message, simply return to REPL. */
@@ -1598,7 +1599,7 @@ _colon:		str = p4ParseName(ctx->input);
 		// Save the current lengths so we can check for imbalance.
 _do_colon:	ctx->state = P4_STATE_COMPILE;
 		if (ctx->trace) {
-			(void) printf("%*s%.*s\r\n", 19+2*(int)ctx->level, "", (int)str.length, str.string);
+			(void) printf("%*s%.*s" NL, 19+2*(int)ctx->level, "", (int)str.length, str.string);
 		}
 		x.nt = p4WordCreate(ctx, str.string, str.length, &&_enter);
 		p4AllocStack(ctx, &ctx->ds, 1+(x.nt->length == 0));
@@ -2106,6 +2107,11 @@ _stack_check:	p4StackGuards(ctx);
 _stack_dump:	P4_DROP(ctx->ds, 1);
 		w = P4_POP(ctx->ds);
 		p4StackDump(stdout, w.p, x.n);
+		NEXT;
+
+		// ( -- caddr u )
+_newline:	P4_PUSH(ctx->ds, (char *) newline);
+		P4_PUSH(ctx->ds, STRLEN(NL));
 		NEXT;
 
 		// ( -- caddr u )
@@ -2638,7 +2644,7 @@ sig_int(int signum)
 static void
 sig_exit(int signum)
 {
-	(void) fputs(crlf, stdout);
+	(void) fputs(newline, stdout);
 	exit(P4_EXIT_SIGNAL(signum));
 }
 

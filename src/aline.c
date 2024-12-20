@@ -114,7 +114,7 @@ alineInit(int hist_size)
 	}
 
 	/* Size as next highest power of 2. */
-	for (histsize = 2, hist_size--; hist_size >>= 1; ) {
+	for (histsize = 0 < hist_size, hist_size -= histsize; histsize < hist_size; ) {
 		histsize = histsize << 1;
 	}
 
@@ -179,7 +179,7 @@ alineInput(FILE *fp, const char *prompt, char *buf, size_t size)
 	int ch, pcol, pos[2], prevline = lastline;
 
 	(void) fflush(stdout);
-	if (!isatty(fileno(fp))) {
+	if (histsize == 0 || !isatty(fileno(fp))) {
 		*buf = '\0';
 		clearerr(fp); errno = 0;
 		(void) alineSetMode(ALINE_CANONICAL);
