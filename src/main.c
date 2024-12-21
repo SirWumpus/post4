@@ -121,7 +121,7 @@ main(int argc, char **argv)
 	}
 
 	for (optind = 1; (ch = getopt(argc, argv, flags)) != -1; ) {
-		if (ch == 'i' && (rc = p4EvalFile(ctx_main, optarg)) != P4_THROW_OK) {
+		if (ch == 'i' && (rc = p4EvalFilePath(ctx_main, optarg)) != P4_THROW_OK) {
 			/* If an exception, other than ABORT or QUIT, occurs
 			 * they will generate an exception message.  Do not
 			 * really need to repeat it here, though including

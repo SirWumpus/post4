@@ -84,7 +84,7 @@ test_include_quit: ${PROG}
 	@printf "== %s ==  Testing INCLUDE with QUIT\n" $@
 	${PROG} -c ${WORDS} <${top_srcdir}/test/data/quit0.p4
 	echo | ${PROG} -c ${WORDS} ${top_srcdir}/test/data/quit0.p4
-	echo | ${PROG} -c ${WORDS} -i ${top_srcdir}/test/data/quit0.p4
+	echo | POST4_PATH=${top_srcdir}/test/data ${PROG} -c ${WORDS} -i quit0.p4
 	printf "INCLUDE ${top_srcdir}/test/data/quit0.p4" | ${PROG} -c ${WORDS}
 	printf "INCLUDE ${top_srcdir}/test/data/quit0.p4 \n BYE" | ${PROG} -c ${WORDS}
 	@echo "-OK-"

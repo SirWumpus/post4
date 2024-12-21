@@ -144,11 +144,6 @@ p4FindFilePath(const char *path_list, size_t plen, const char *file, size_t flen
 	if ((str.string = calloc(1, PATH_MAX)) == NULL) {
 		goto error0;
 	}
-	/* Try the given file directly. */
-	str.length = snprintf(str.string, PATH_MAX, "%.*s", (int)flen, file);
-	if (strchr("./", *str.string) != NULL && stat(str.string, &sb) == 0) {
-		return str;
-	}
 	/* Path list supplied or use the default? */
 	if (path_list == NULL || *path_list == '\0') {
 		plen = STRLEN(P4_CORE_PATH);
@@ -160,7 +155,7 @@ p4FindFilePath(const char *path_list, size_t plen, const char *file, size_t flen
 	}
 	/* Search "dir0:dir1:...:dirN" string. */
 	for (next = paths; (path = strtok(next, ":")) != NULL; next = NULL) {
-		str.length = snprintf(str.string, PATH_MAX, "%s/%s", path, file);
+		str.length = snprintf(str.string, PATH_MAX, "%s/%.*s", path, (int)flen, file);
 		if (stat(str.string, &sb) == 0) {
 			errno = 0;
 			return str;
@@ -1303,7 +1298,8 @@ p4Repl(P4_Ctx *ctx, volatile int thrown)
 		p4_hook_call = p4FindName(ctx, "_hook_call", STRLEN("_hook_call"));
 		p4HookInit(ctx, p4_hooks);
 #endif
-		if ((rc = p4EvalFile(ctx, ctx->options->core_file)) == P4_THROW_OK) {
+		if ((rc = p4EvalFile(ctx, ctx->options->core_file)) == P4_THROW_OK
+		|| (rc = p4EvalFilePath(ctx, ctx->options->core_file)) == P4_THROW_OK) {
 			/* Find THROW to aid with throwing exceptions from C to Forth. */
 			p4_throw = p4FindName(ctx, "THROW", STRLEN("THROW"));
 			p4_2lit = p4FindName(ctx, "2lit", STRLEN("2lit"));
@@ -2561,26 +2557,30 @@ int
 p4EvalFile(P4_Ctx *ctx, const char *file)
 {
 	FILE *fp;
-	char *p4_path;
-	P4_String str;
 	int rc = P4_THROW_ENOENT;
-	if (file == NULL || *file == '\0') {
-		goto error0;
-	}
-	if ((p4_path = getenv("POST4_PATH")) == NULL) {
-		p4_path = P4_CORE_PATH;
-	}
-	P4_INPUT_PUSH(ctx->input);
-	str = p4FindFilePath(p4_path, strlen(p4_path), file, strlen(file));
-	if (0 < str.length && (fp = fopen(str.string, "r")) != NULL) {
+	if (file != NULL && (fp = fopen(file, "r")) != NULL) {
+		P4_INPUT_PUSH(ctx->input);
 		p4ResetInput(ctx, fp);
 		ctx->input->path = file;
 		rc = p4Repl(ctx, P4_THROW_OK);
 		(void) fclose(fp);
+		P4_INPUT_POP(ctx->input);
+	}
+	return rc;
+}
+
+int
+p4EvalFilePath(P4_Ctx *ctx, const char *file)
+{
+	char *p4_path;
+	P4_String str;
+	int rc = P4_THROW_ENOENT;
+	p4_path = getenv("POST4_PATH");
+	str = p4FindFilePath(p4_path, strlen(p4_path), file, strlen(file));
+	if (0 < str.length) {
+		rc = p4EvalFile(ctx, str.string);
 		free(str.string);
 	}
-	P4_INPUT_POP(ctx->input);
-error0:
 	return rc;
 }
 

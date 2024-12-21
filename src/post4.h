@@ -73,10 +73,6 @@ extern "C" {
 #define P4_STACK_EXTRA			16		/* in CELLS, power of 2 */
 #endif
 
-#ifndef P4_STRING_SIZE
-#define P4_STRING_SIZE			256		/* in bytes */
-#endif
-
 #ifndef P4_INPUT_SIZE
 #define P4_INPUT_SIZE			256		/* in bytes */
 #endif
@@ -85,16 +81,13 @@ extern "C" {
 #define P4_WORDLISTS			12
 #endif
 
-#ifndef P4_SAFE_PATH
-#define P4_SAFE_PATH			"/usr/bin:/bin"
-#endif
-
-#ifndef P4_BLOCK_FILE
-#define P4_BLOCK_FILE			".post4.blk"
-#endif
-
 #ifndef P4_CORE_PATH
-#define P4_CORE_PATH			"/usr/local/lib/post4:/usr/pkg/lib/post4:/usr/lib/post4"
+/* Path list of potential package library directories where the core
+ * file and friends can be found.  Used to include /usr/lib/post4,
+ * but /usr/lib should strictly be reserved for OS and tool libraries,
+ * not 3rd party stuff.
+ */
+#define P4_CORE_PATH			"/usr/local/lib/post4:/usr/pkg/lib/post4"
 #endif
 
 #ifndef P4_CORE_FILE
@@ -644,7 +637,8 @@ extern int p4EvalFp(P4_Ctx *ctx, FILE *fp);
  * @return
  *	Zero on success, otherwise an exception code other than BYE.
  */
-extern int p4EvalFile(P4_Ctx *ctx, const char *filepath);
+extern int p4EvalFile(P4_Ctx *ctx, const char *file);
+extern int p4EvalFilePath(P4_Ctx *ctx, const char *file);
 
 /**
  * @param ctx
@@ -662,8 +656,6 @@ extern int p4EvalFile(P4_Ctx *ctx, const char *filepath);
 extern int p4EvalString(P4_Ctx *ctx, const char *string, size_t length);
 
 extern void p4AllocStack(P4_Ctx *ctx, P4_Stack *stk, unsigned size);
-
-extern FILE *p4OpenFilePath(const char *path_list, size_t plen, const char *file, size_t flen, const char *mode);
 
 extern const char *p4_exceptions[];
 extern JMP_BUF sig_break_glass;
