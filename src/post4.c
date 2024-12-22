@@ -144,14 +144,22 @@ p4FindFilePath(const char *path_list, size_t plen, const char *file, size_t flen
 	if ((str.string = calloc(1, PATH_MAX)) == NULL) {
 		goto error0;
 	}
+	if (*file == '/') {
+		/* Try the given absolute file directly. */
+		str.length = snprintf(str.string, PATH_MAX, "%.*s", (int)flen, file);
+		if (stat(str.string, &sb) == 0) {
+			return str;
+		}
+		goto error1;
+	}
 	/* Path list supplied or use the default? */
-	if (path_list == NULL || *path_list == '\0') {
+	if (path_list == NULL || plen == 0) {
 		plen = STRLEN(P4_CORE_PATH);
 		path_list = P4_CORE_PATH;
 	}
 	/* Need a duplicate because strtok modifies the string with NULs. */
 	if ((paths = strndup(path_list, plen)) == NULL) {
-		goto error1;
+		goto error2;
 	}
 	/* Search "dir0:dir1:...:dirN" string. */
 	for (next = paths; (path = strtok(next, ":")) != NULL; next = NULL) {
@@ -161,11 +169,12 @@ p4FindFilePath(const char *path_list, size_t plen, const char *file, size_t flen
 			return str;
 		}
 	}
+error2:
+	free(paths);
+error1:
 	free(str.string);
 	str.string = NULL;
 	str.length = 0;
-error1:
-	free(paths);
 error0:
 	return str;
 }
@@ -958,11 +967,11 @@ p4Bp(P4_Ctx *ctx)
 {
 	P4_Input *input = ctx->input;
 	int has_nl = input->buffer[input->length-(0 < input->length)] == '\n';
-	(void) fprintf(STDERR, "\r\n>> ");
+	(void) fprintf(STDERR, NL ">> ");
 	for (unsigned i = 0; i < input->length-has_nl; i++) {
 		(void) fputc(input->buffer[i] == '\t' ? ' ' : input->buffer[i], STDERR);
 	}
-	(void) fprintf(STDERR, "\r\n>> %*c" NL, (int)input->offset, '^' );
+	(void) fprintf(STDERR, NL ">> %*c" NL, (int)input->offset, '^' );
 }
 
 #pragma GCC diagnostic push
@@ -1080,6 +1089,30 @@ p4StackGuards(P4_Ctx *ctx)
 #ifdef HAVE_MATH_H
 	p4StackGuard(ctx, &ctx->fs, P4_THROW_FS_OVER, P4_THROW_FS_UNDER);
 #endif
+}
+
+static int
+p4CoreFile(P4_Ctx *ctx)
+{
+	int rc;
+	ssize_t plen;
+	P4_String fpath;
+	char path[PATH_MAX];
+	/* Was -c specified? */
+	if (ctx->options->core_file != NULL && strcmp(ctx->options->core_file, P4_CORE_FILE) != 0) {
+		return p4EvalFile(ctx, ctx->options->core_file);
+	}
+	/* Same location as the binary? */
+	(void) readlink("/proc/self/exe", path, sizeof (path));
+	plen = strrchr(path, '/') - path;
+	fpath = p4FindFilePath(path, plen, P4_CORE_FILE, STRLEN(P4_CORE_FILE));
+	rc = p4EvalFile(ctx, fpath.string);
+	free(fpath.string);
+	if (P4_THROW_OK < rc) {
+		/* Search $POST4_PATH or P4_CORE_PATH. */
+		rc =  p4EvalFilePath(ctx, P4_CORE_FILE);
+	}
+	return rc;
 }
 
 int
@@ -1286,6 +1319,14 @@ p4Repl(P4_Ctx *ctx, volatile int thrown)
 	};
 #pragma GCC diagnostic pop
 
+#define NEXT		goto _next
+#define THROWHARD(e)	{ rc = (e); goto _thrown; }
+#define THROW(e)	{ if (p4_throw != NULL) { x.nt = p4_throw; \
+				P4_PUSH(ctx->ds, (P4_Int)(e)); \
+				/* Reset any previous exception. */ \
+				rc = P4_THROW_OK; goto _forth; \
+			} THROWHARD(e); }
+
 	if (p4_builtin_words == NULL) {
 		/* Link up the base dictionary. */
 		for (w.nt = words; w.nt->code != NULL; w.nt++) {
@@ -1298,24 +1339,16 @@ p4Repl(P4_Ctx *ctx, volatile int thrown)
 		p4_hook_call = p4FindName(ctx, "_hook_call", STRLEN("_hook_call"));
 		p4HookInit(ctx, p4_hooks);
 #endif
-		if ((rc = p4EvalFile(ctx, ctx->options->core_file)) == P4_THROW_OK
-		|| (rc = p4EvalFilePath(ctx, ctx->options->core_file)) == P4_THROW_OK) {
-			/* Find THROW to aid with throwing exceptions from C to Forth. */
-			p4_throw = p4FindName(ctx, "THROW", STRLEN("THROW"));
-			p4_2lit = p4FindName(ctx, "2lit", STRLEN("2lit"));
-#ifdef HAVE_MATH_H
-			p4_flit = p4FindName(ctx, "flit", STRLEN("flit"));
-#endif
+		if ((rc = p4CoreFile(ctx)) != P4_THROW_OK) {
+			THROWHARD(rc);
 		}
+		/* Find THROW to aid with throwing exceptions from C to Forth. */
+		p4_throw = p4FindName(ctx, "THROW", STRLEN("THROW"));
+		p4_2lit = p4FindName(ctx, "2lit", STRLEN("2lit"));
+#ifdef HAVE_MATH_H
+		p4_flit = p4FindName(ctx, "flit", STRLEN("flit"));
+#endif
 	}
-
-#define NEXT		goto _next
-#define THROWHARD(e)	{ rc = (e); goto _thrown; }
-#define THROW(e)	{ if (p4_throw != NULL) { x.nt = p4_throw; \
-				P4_PUSH(ctx->ds, (P4_Int)(e)); \
-				/* Reset any previous exception. */ \
-				rc = P4_THROW_OK; goto _forth; \
-			} THROWHARD(e); }
 
 #pragma GCC diagnostic push
 /* Ignore pedantic warning about "address of a label", required extension. */
@@ -2556,27 +2589,32 @@ _f_pow:		w = P4_POP(ctx->P4_FLOAT_STACK);
 int
 p4EvalFile(P4_Ctx *ctx, const char *file)
 {
+	int rc;
 	FILE *fp;
-	int rc = P4_THROW_ENOENT;
-	if (file != NULL && (fp = fopen(file, "r")) != NULL) {
-		P4_INPUT_PUSH(ctx->input);
-		p4ResetInput(ctx, fp);
-		ctx->input->path = file;
-		rc = p4Repl(ctx, P4_THROW_OK);
-		(void) fclose(fp);
-		P4_INPUT_POP(ctx->input);
+	errno = 0;
+	if (file == NULL) {
+		return EINVAL;
 	}
+	if ((fp = fopen(file, "r")) == NULL) {
+		return errno;
+	}
+	P4_INPUT_PUSH(ctx->input);
+	p4ResetInput(ctx, fp);
+	ctx->input->path = file;
+	rc = p4Repl(ctx, P4_THROW_OK);
+	(void) fclose(fp);
+	P4_INPUT_POP(ctx->input);
 	return rc;
 }
 
 int
 p4EvalFilePath(P4_Ctx *ctx, const char *file)
 {
-	char *p4_path;
 	P4_String str;
-	int rc = P4_THROW_ENOENT;
-	p4_path = getenv("POST4_PATH");
-	str = p4FindFilePath(p4_path, strlen(p4_path), file, strlen(file));
+	int rc = ENOENT;
+	str.string = getenv("POST4_PATH");
+	str.length = str.string != NULL ? strlen(str.string) : 0;
+	str = p4FindFilePath(str.string, str.length, file, strlen(file));
 	if (0 < str.length) {
 		rc = p4EvalFile(ctx, str.string);
 		free(str.string);
