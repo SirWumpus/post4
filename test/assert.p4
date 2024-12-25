@@ -10,7 +10,7 @@ VARIABLE tests_passed
 VARIABLE tests_failed
 VARIABLE tests_skipped
 
-INCLUDE-PATH ansiterm.p4
+INCLUDE-PATH post4/ansiterm.p4
 
 : test_pass 1 tests_passed +! ansi_green ." ." ansi_normal ;
 : test_fail 1 tests_failed +! ansi_red ." F" ansi_normal ;

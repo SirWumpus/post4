@@ -17,6 +17,7 @@ E = @EXEEXT@
 #
 top_srcdir 	= @top_srcdir@
 abs_srcdir 	= @abs_srcdir@
+abs_top_srcdir 	= @abs_top_srcdir@
 
 prefix 		= @prefix@
 exec_prefix 	= @exec_prefix@
@@ -33,7 +34,7 @@ LIBS		= @LIBS@
 
 PROG		= ${top_srcdir}/src/post4$E
 WORDS		= ${top_srcdir}/src/post4.p4
-POST4_PATH	= POST4_PATH='${top_srcdir}/examples:${top_srcdir}/src'
+POST4_PATH	= POST4_PATH='${top_srcdir}/lib'
 
 BUILT		:= `date +'%a, %d %b %Y %H:%M:%S %z'`
 

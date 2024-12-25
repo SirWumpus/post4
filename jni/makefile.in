@@ -19,6 +19,7 @@ MAIN		= post4.jni.Post4
 
 top_srcdir 	= @top_srcdir@
 abs_srcdir 	= @abs_srcdir@
+abs_top_srcdir 	= @abs_top_srcdir@
 
 prefix 		= @prefix@
 exec_prefix 	= @exec_prefix@
@@ -26,7 +27,7 @@ bindir 		= @bindir@
 libdir 		= @libdir@/post4
 
 PROG		= ${top_srcdir}/src/post4$E
-POST4_PATH	= ${top_srcdir}/examples:${top_srcdir}/src
+POST4_PATH	= ${top_srcdir}/lib:${top_srcdir}/src
 
 # Override from the command-line, eg. make DBG='-O0 -g'
 DBG		:= @DBG@
@@ -95,9 +96,9 @@ install: Post4.jar
 # https://stackoverflow.com/questions/2937406/how-to-bundle-a-native-library-and-a-jni-library-inside-a-jar
 Post4.jar: ${LIBNAME} Post4Exception$C Post4Options$C Post4Stacks$C Post4$C Post4.mf ${top_srcdir}/src/post4.p4
 	mkdir -p ./post4/jni
-	cp -p ${top_srcdir}/src/post4.p4 ./post4
-	cp -p *.class *.p4 ${LIBNAME} ./post4/jni
-	cd ${top_srcdir}/examples && cp -p ansiterm.p4 ed.p4 rand.p4 ${top_srcdir}/jni/post4
+	cp -pr ${top_srcdir}/lib/post4 ./post4
+	cp -p  ${top_srcdir}/src/post4.p4 ./post4
+	cp -p  *.class *.p4 ${LIBNAME} ./post4/jni
 	jar -v -c -m Post4.mf -f $@ post4/
 	rm -rf post4
 
