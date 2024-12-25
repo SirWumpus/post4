@@ -95,6 +95,9 @@ install: build
 	install -p -o root -g 0 post4.p4 ${libdir}
 	install -p -o root -g 0 post4$E ${bindir}
 
+uninstall:
+	rm -f ${bindir}/post4 ${libdir}/post4.p4
+
 aline$E : ansiterm.h aline.h aline.c
 	${CC} ${CFLAGS} -DALINE_TEST -o $@ aline.c
 
