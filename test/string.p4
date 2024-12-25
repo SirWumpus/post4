@@ -1,4 +1,4 @@
-INCLUDE ../test/assert.p4
+INCLUDE-PATH post4/assert.p4
 
 .( strlen env ) test_group
 \ Environment variables are NUL terminated.

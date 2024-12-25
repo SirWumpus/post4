@@ -1,4 +1,4 @@
-INCLUDE ../test/assert.p4
+INCLUDE-PATH post4/assert.p4
 
 .( TIME&DATE MS ) test_group
 t{ : tw_secs TIME&DATE DROP DROP DROP DROP 60 * + ; -> }t

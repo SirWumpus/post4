@@ -1,4 +1,4 @@
-INCLUDE ../test/assert.p4
+INCLUDE-PATH post4/assert.p4
 
 .( Memory Words ) test_group
 : tw_write_cell_mem ( addr n -- )

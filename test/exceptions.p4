@@ -1,4 +1,4 @@
-INCLUDE ../test/assert.p4
+INCLUDE-PATH post4/assert.p4
 
 .( Exceptions ) test_group
 : tw_abort" $BEEF SWAP ABORT" Should not appear.  BEEF is stack marker." ;

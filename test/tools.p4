@@ -1,4 +1,4 @@
-INCLUDE ../test/assert.p4
+INCLUDE-PATH post4/assert.p4
 
 .( AHEAD THEN ) test_group
 T{ : tw_pt1 AHEAD 1111 2222 THEN 3333 ; -> }T

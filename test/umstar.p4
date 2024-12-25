@@ -1,5 +1,5 @@
 
-INCLUDE ../test/assert.p4
+INCLUDE-PATH post4/assert.p4
 
 .( UM* ) test_group
 T{ 0 0 UM* -> 0 0 }T

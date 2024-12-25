@@ -1,5 +1,5 @@
 
-INCLUDE ../test/assert.p4
+INCLUDE-PATH post4/assert.p4
 
 MARKER rm_core_words
 

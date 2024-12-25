@@ -4,7 +4,7 @@
 	.( Test suite assumes 64b cell size. ) CR
 [ELSE]
 	.( Post4 Unit Tests ) CR
-	INCLUDE ../test/assert.p4
+	INCLUDE-PATH post4/assert.p4
 
 	test_suite
 	INCLUDE ../test/core.p4

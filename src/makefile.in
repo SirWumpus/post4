@@ -94,7 +94,6 @@ install: build
 	install -p -o root -g 0 -d ${libdir}
 	install -p -o root -g 0 post4.p4 ${libdir}
 	install -p -o root -g 0 post4$E ${bindir}
-	install -p -o root -g 0 ../test/assert.p4 ${libdir}
 
 aline$E : ansiterm.h aline.h aline.c
 	${CC} ${CFLAGS} -DALINE_TEST -o $@ aline.c

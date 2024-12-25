@@ -1,4 +1,4 @@
-INCLUDE ../test/assert.p4
+INCLUDE-PATH post4/assert.p4
 
 .( 2* ) test_group
 T{ 0    2* -> 0 }T
