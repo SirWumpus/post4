@@ -8,6 +8,8 @@ Glossary of Words
 -----------------
 
 * [Standard Core](standard.md)
+* [ANSI Terminal](ansiterm.md)
+* [Assertions & Testing](assert.md)
 * [Block File](block.md)
 * [Double-Cell](double.md)
 * [File Access](file.md)

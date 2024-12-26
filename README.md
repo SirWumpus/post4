@@ -58,6 +58,8 @@ Glossary of Words
 -----------------
 
 * [Standard Core](./doc/standard.md)
+* [ANSI Terminal](./doc/ansiterm.md)
+* [Assertions & Testing](./doc/assert.md)
 * [Block File](./doc/block.md)
 * [Double-Cell](./doc/double.md)
 * [File Access](./doc/file.md)
