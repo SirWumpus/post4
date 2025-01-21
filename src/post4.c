@@ -1505,7 +1505,11 @@ _forth:				exec[0].xt = x.nt;
 			}
 		}
 		if (P4_INTERACTIVE(ctx)) {
-			(void) printf(ANSI_CYAN"ok "ANSI_NORMAL);
+			/* GH-96 Add leading space to prompt.  While colour
+			 * helps visually, terminal copy/paste does not have
+			 * colour.
+			 */
+			(void) printf(ANSI_CYAN" ok "ANSI_NORMAL);
 			(void) fflush(stdout);
 		}
 	} while (p4Refill(ctx->input));
