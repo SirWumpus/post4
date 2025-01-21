@@ -88,6 +88,10 @@ t{ source-base-path s" source-base-path" evaluate compare 0= -> true }t
 ts{ source-path s" ../test/data/source_path.p4" included source-path compare 0= -> true }t
 test_group_end
 
+.( GH-95 source-path ) test_group
+ts{ s" source-path nip 0<>" evaluate -> true }t
+test_group_end
+
 rm_file_access
 
 [THEN]

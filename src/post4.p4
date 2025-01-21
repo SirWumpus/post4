@@ -1909,9 +1909,15 @@ VARIABLE _str_buf_curr
 	R> R> _block_ptr ! >R
 ;
 
+: string-path ( -- ) S" data:," ; $02 _pp!
+: set-source-path ( sd -- ) DROP _input_ptr @ in.path ! ; $20 _pp!
+
 \ GH-76
 : set-source ( sd -- ) _input_ptr @ TUCK in.length ! in.buffer ! ; $20 _pp!
-: execute-parsing ( any sd xt -- any ) _input_push -rot set-source CATCH _input_pop THROW ; $20 _pp!
+: execute-parsing ( any sd xt -- any )
+	_input_push string-path set-source-path
+	-rot set-source CATCH _input_pop THROW
+; $20 _pp!
 
 \ (S: i*x u -- j*x )
 : LOAD
