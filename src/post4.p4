@@ -2021,29 +2021,31 @@ VARIABLE SCR
 \ (S: <spaces>name -- )
 : file-path CREATE 0 , 0 , path_max ALLOT DOES> @+ ;
 
-\ (S: sd.path xt -- )
-: set-file-path
-	OVER 0 path_max 1- WITHIN 0= -11 AND THROW		\ S: s u xt
-	EXECUTE DROP SWAP								\ S: s d u
-	2>R 2R@ 										\ S: s d u		R: d u
-	strncpy	R> R> CELL-								\ S: u d'		R: --
-	!												\ S: --
-; $30 _pp!
+\ (S: -- sd.path )
+file-path default-base-path
+
+\ Save the default-base-path to the current working directory.
+getcwd default-base-path DROP CELL- ! DUP default-base-path strncpy FREE DROP
+
+2variable (source-base-path)
 
 \ (S: -- sd.path )
-file-path source-base-path
+: source-base-path
+    (source-base-path) 2@ dup if exit then 2drop
+    default-base-path
+;
 
 \ (S: -- sd.path )
 : source-path _input_ptr @ in.path @ DUP strlen ; $02 _pp!
 
-\ (S: sd.path -- )
-: set-source-base-path ['] source-base-path set-file-path ; $20 _pp!
-
 \ (S: i*x xt sd.path -- j*x )
 : apply-base-path
-	source-base-path strndup 2>r set-source-base-path
-	catch
-	2r> 2dup set-source-base-path drop free drop throw
+    \ NB: resolving sd.path against source-base-path is missing
+    (source-base-path) 2@ 2>r
+    strndup over >r (source-base-path) 2!
+    catch
+    r> free drop
+    2r> (source-base-path) 2! throw
 ; $30 _pp!
 
 \ (S: i*x fd caddr u -- j*x )
