@@ -965,13 +965,20 @@ error0:
 static void
 p4Bp(P4_Ctx *ctx)
 {
+	P4_Size i, j;
 	P4_Input *input = ctx->input;
-	int has_nl = input->buffer[input->length-(0 < input->length)] == '\n';
+	input->length -= input->buffer[input->length-(0 < input->length)] == '\n';
 	(void) fprintf(STDERR, NL ">> ");
-	for (unsigned i = 0; i < input->length-has_nl; i++) {
-		(void) fputc(input->buffer[i] == '\t' ? ' ' : input->buffer[i], STDERR);
+	for (i = input->offset; 0 < i--; ) {
+		if (input->buffer[i] == '\n') {
+			i++;
+			break;
+		}
 	}
-	(void) fprintf(STDERR, NL ">> %*c" NL, (int)input->offset, '^' );
+	for (j = i; j < input->length; j++) {
+		(void) fputc(input->buffer[j] == '\t' ? ' ' : input->buffer[j], STDERR);
+	}
+	(void) fprintf(STDERR, NL ">> %*c" NL, (int)(input->offset-i), '^' );
 }
 
 #pragma GCC diagnostic push
