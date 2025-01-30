@@ -2019,13 +2019,16 @@ VARIABLE SCR
 256 CONSTANT path_max
 
 \ (S: <spaces>name -- )
-: file-path CREATE 0 , 0 , path_max ALLOT DOES> @+ ;
+: file-path CREATE 0 , 0 , path_max 1+ ALLOT DOES> @+ ;
 
 \ (S: -- sd.path )
 file-path default-base-path
 
 \ Save the default-base-path to the current working directory.
 getcwd default-base-path DROP CELL- ! DUP default-base-path strncpy FREE DROP
+default-base-path + 1- C@ '/' <> [IF] \ the directory does not end with "/"
+default-base-path  OVER CELL- 1 SWAP +! + '/' OVER c!  1+ 0 SWAP C!
+[THEN]
 
 2variable (source-base-path)
 
