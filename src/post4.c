@@ -969,13 +969,12 @@ p4Bp(P4_Ctx *ctx)
 	P4_Input *input = ctx->input;
 	input->length -= input->buffer[input->length-(0 < input->length)] == '\n';
 	(void) fprintf(STDERR, NL ">> ");
-	for (i = input->offset; 0 < i--; ) {
-		if (input->buffer[i] == '\n') {
-			i++;
+	for (i = input->offset; 0 < i; i--) {
+		if (input->buffer[i-1] == '\n') {
 			break;
 		}
 	}
-	for (j = i; j < input->length; j++) {
+	for (j = i; j < input->length && input->buffer[j] !='\n'; j++) {
 		(void) fputc(input->buffer[j] == '\t' ? ' ' : input->buffer[j], STDERR);
 	}
 	(void) fprintf(STDERR, NL ">> %*c" NL, (int)(input->offset-i), '^' );
