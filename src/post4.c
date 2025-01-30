@@ -967,7 +967,6 @@ p4Bp(P4_Ctx *ctx)
 {
 	P4_Size i, j;
 	P4_Input *input = ctx->input;
-	input->length -= input->buffer[input->length-(0 < input->length)] == '\n';
 	(void) fprintf(STDERR, NL ">> ");
 	for (i = input->offset; 0 < i; i--) {
 		if (input->buffer[i-1] == '\n') {
