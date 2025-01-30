@@ -2026,7 +2026,7 @@ file-path default-base-path
 
 \ Save the default-base-path to the current working directory.
 getcwd default-base-path DROP CELL- ! DUP default-base-path strncpy FREE DROP
-default-base-path + 1- C@ '/' <> [IF] \ the directory does not ends with "/"
+default-base-path + 1- C@ '/' <> [IF] \ the directory does not end with "/"
 default-base-path  OVER CELL- 1 SWAP +! + '/' OVER c!  1+ 0 SWAP C!
 [THEN]
 
