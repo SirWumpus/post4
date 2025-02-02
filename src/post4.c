@@ -2216,15 +2216,15 @@ _fa_open:	errno = 0;
 		P4_PUSH(ctx->ds, (P4_Int) errno);
 		NEXT;
 
-		// ( sd.paths sd.file -- sd.path ior )
+		// ( sd.file sd.paths -- sd.path 0 | sd.file ior )
 		P4_Cell z;
 _fa_find_path:	x = P4_POP(ctx->ds);
 		y = P4_POP(ctx->ds);
 		z = P4_POP(ctx->ds);
 		w = P4_POP(ctx->ds);
-		str = p4FindFilePath(w.s, z.u, y.s, x.u);
-		P4_PUSH(ctx->ds, str.string);
-		P4_PUSH(ctx->ds, str.length);
+		str = p4FindFilePath(y.s, x.u, w.s, z.u);
+		P4_PUSH(ctx->ds, str.string != NULL ? str.string : w.s);
+		P4_PUSH(ctx->ds, str.string != NULL ? str.length : z.u);
 		P4_PUSH(ctx->ds, (P4_Int) errno);
 		NEXT;
 

@@ -107,7 +107,7 @@ Write `u` characters from address `caddr` to the file `fid` followed by an imple
 ### Post4 Specific Words
 
 #### find-file-path
-( `sd.paths` `sd.file` -- `sd.path` `ior` )  
+( `sd.file` `sd.paths` -- `sd.path` 0 | sd.file `ior` )  
 Search the colon (:) separated path list, `paths`, and return the first complete filepath, `path`, found.  On success `path` is an allocated string, which needs to be freed, and `ior` equals to zero; otherwise on error `path` is `( 0 0 )` and `ior` is a non-zero error code (see `errno(2)`).
 
 - - -

@@ -2065,8 +2065,8 @@ default-base-path  OVER CELL- 1 SWAP +! + '/' OVER c!  1+ 0 SWAP C!
 
 \ (S: i*x caddr u -- j*x )
 : included-path
-	source-base-path 2OVER find-file-path IF
-		2DROP post4-path 2SWAP find-file-path THROW
+	source-base-path find-file-path IF
+		post4-path find-file-path THROW
 	THEN
 	OVER >R ['] INCLUDED CATCH R> FREE DROP THROW
 ; $20 _pp!
