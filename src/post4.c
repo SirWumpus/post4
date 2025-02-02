@@ -2218,7 +2218,7 @@ _fa_open:	errno = 0;
 		P4_PUSH(ctx->ds, (P4_Int) errno);
 		NEXT;
 
-		// ( sd.paths sd.file -- sd.path ior )
+		// ( sd.paths sd.file -- sd.path-found 0 | 2*x ior\0 )
 		P4_Cell z;
 _fa_find_path:	x = P4_POP(ctx->ds);
 		y = P4_POP(ctx->ds);
