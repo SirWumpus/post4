@@ -1096,6 +1096,69 @@ p4StackGuards(P4_Ctx *ctx)
 #endif
 }
 
+/*
+ *	/		-> /
+ *	/foo		-> /
+ *	/foo/		-> /
+ *	/foo/bar	-> /foo/
+ *	/foo/bar/	-> /foo/
+ *	foo		->
+ *	foo/		->
+ */
+static size_t
+p4RemoveLastSegment(const char *path, size_t len)
+{
+	len -= (1 < len && path[len-1] == '/');
+	for ( ; 0 < len && path[len-1] != '/'; len--) {
+		;
+	}
+	return len;
+}
+
+/*
+ * https://www.rfc-editor.org/rfc/rfc3986.html#section-5.2
+ */
+static P4_String
+p4ResolvePath(const char *lhs, size_t llen, const char *rhs, size_t rlen)
+{
+	size_t roff;
+	P4_String path;
+	if (lhs == NULL || *rhs == '/') {
+		/* RHS is already rooted in some reality. */
+		llen = 0;
+		lhs = "";
+	}
+	if ((path.string = calloc(1, PATH_MAX)) == NULL) {
+		path.length = 0;
+		return path;
+	}
+	/* Initialise the path with the LHS base path.  Assumes
+	 * LHS is already resolved and normalised.
+	 */
+	path.length = snprintf(path.string, PATH_MAX, "%*s", (int)llen, lhs);
+	if (0 < path.length && path.string[path.length-1] != '/') {
+		path.string[path.length++] = '/';
+	}
+	/* Scan path for //// ./ and ../ */
+	for (roff = 0; path.length < PATH_MAX-1 && roff < rlen; ) {
+		if (rhs[roff] == '/' && rhs[roff+1] == '/') {
+			/* Compress runs of slashs eg. "/////" to one. */
+			roff++;
+		} else if (rhs[roff] == '.' && rhs[roff+1] == '/') {
+			/* Consume current directory from RHS. */
+			roff += 2;
+		} else if (rhs[roff] == '.' && rhs[roff+1] == '.' && (rhs[roff+2] == '/' || rhs[roff+2] == '\0')) {
+			/* Remove LHS trailing segment and consume parent reference of RHS. */
+			path.length = p4RemoveLastSegment(path.string, path.length);
+			roff += 2 + (rhs[2] == '/');
+		} else {
+			path.string[path.length++] = rhs[roff++];
+		}
+	}
+	path.string[path.length] = '\0';
+	return path;
+}
+
 static int
 p4CoreFile(P4_Ctx *ctx)
 {
@@ -1213,7 +1276,8 @@ p4Repl(P4_Ctx *ctx, volatile int thrown)
 		P4_WORD("FILE-STATUS",		&&_fa_status,	0, 0x22),
 		P4_WORD("FLUSH-FILE",		&&_fa_flush,	0, 0x11),
 		P4_WORD("_eval_file",		&&_eval_file,	0, 0x10),	// p4
-		P4_WORD("find-file-path",	&&_fa_find_path,0, 0x42),	// p4
+		P4_WORD("find-file-path",	&&_fa_find_path,0, 0x43),	// p4
+		P4_WORD("resolve-path",		&&_fa_resolve_path,0, 0x42),	// p4
 		P4_WORD("OPEN-FILE",		&&_fa_open,	0, 0x32),
 		P4_WORD("READ-FILE",		&&_fa_read,	0, 0x32),
 		P4_WORD("READ-LINE",		&&_fa_rline,	0, 0x33),
@@ -2228,6 +2292,17 @@ _fa_find_path:	x = P4_POP(ctx->ds);
 		P4_PUSH(ctx->ds, (P4_Int) errno);
 		NEXT;
 
+		// ( sd.file sd.base -- sd.path )
+_fa_resolve_path:
+		x = P4_POP(ctx->ds);
+		y = P4_POP(ctx->ds);
+		z = P4_POP(ctx->ds);
+		w = P4_POP(ctx->ds);
+		str = p4ResolvePath(y.s, x.u, w.s, z.u);
+		P4_PUSH(ctx->ds, str.string != NULL ? str.string : w.s);
+		P4_PUSH(ctx->ds, str.string != NULL ? str.length : z.u);
+		NEXT;
+
 		// ( caddr u1 fd -- u2 ior )
 _fa_read:	errno = 0;
 		fp = P4_POP(ctx->ds).v;
@@ -2600,19 +2675,27 @@ p4EvalFile(P4_Ctx *ctx, const char *file)
 {
 	int rc;
 	FILE *fp;
+	char *cwd;
+	P4_String path;
 	errno = 0;
 	if (file == NULL) {
 		return EINVAL;
 	}
-	if ((fp = fopen(file, "r")) == NULL) {
-		return errno;
+	cwd = getcwd(NULL, 0);
+	path = p4ResolvePath(cwd, strlen(cwd), file, strlen(file));
+	free(cwd);
+	if ((fp = fopen(path.string, "r")) == NULL) {
+		rc = errno;
+		goto error1;
 	}
 	P4_INPUT_PUSH(ctx->input);
 	p4ResetInput(ctx, fp);
-	ctx->input->path = file;
+	ctx->input->path = path.string;
 	rc = p4Repl(ctx, P4_THROW_OK);
 	(void) fclose(fp);
 	P4_INPUT_POP(ctx->input);
+error1:
+	free(path.string);
 	return rc;
 }
 
