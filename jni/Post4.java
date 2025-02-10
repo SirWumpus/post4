@@ -6,9 +6,9 @@
 
 package post4.jni;
 
-public class Post4
+public class Post4 implements AutoCloseable
 {
-	private final long ctx;
+	private long ctx;
 
 	static
 	{
@@ -34,18 +34,11 @@ public class Post4
 		ctx = p4Create(opts);
 	}
 
-	/*
-	 * https://stackoverflow.com/questions/44095247/should-java-finalizer-really-be-avoided-also-for-native-peer-objects-lifecycle-m
-	 * https://www.hboehm.info/misc_slides/java_finalizers.pdf
-	 *
-	 * @note
-	 *	finalize() has been deprecated; needs to be replaced.
-	 */
-	protected void finalize()
+	@Override
+	public void close()
 	{
-		synchronized (this) {
 			p4Free(ctx);
-		}
+			ctx = 0;
 	}
 
 	public static void main(String[] args)

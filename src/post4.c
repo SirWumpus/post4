@@ -1396,6 +1396,10 @@ p4Repl(P4_Ctx *ctx, volatile int thrown)
 				rc = P4_THROW_OK; goto _forth; \
 			} THROWHARD(e); }
 
+	if (ctx == NULL) {
+		/* You need a context object to do anything, duh. */
+		return P4_THROW_SIGSEGV;
+	}
 	if (p4_builtin_words == NULL) {
 		/* Link up the base dictionary. */
 		for (w.nt = words; w.nt->code != NULL; w.nt++) {
