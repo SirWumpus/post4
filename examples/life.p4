@@ -59,18 +59,18 @@ screen1 VALUE screen_next
 
 ( screen row -- )
 : .row
-	columns * CHARS			\ screen row_off
-	+				\ screen'
-	columns CHARS TYPE		\ --
+	columns * CHARS						\ screen row_off
+	+									\ screen'
+	columns CHARS TYPE					\ --
 	CR
 ;
 
 ( screen -- )
 : .screen
 	rows 0 ?DO
-		DUP I 			\ screen screen row
-		.row			\ screen
-	LOOP DROP CR			\ --
+		DUP I 							\ screen screen row
+		.row							\ screen
+	LOOP DROP CR						\ --
 ;
 
 ( row -- flag )
@@ -93,16 +93,16 @@ screen1 VALUE screen_next
 
 ( column row -- count )
 : #neighbours
-	2>R 0 2R>				\ count col row
-	DUP #2 +				\ count col row row+2
-	SWAP 1-					\ count col row+2 row-1
+	2>R 0 2R>							\ count col row
+	DUP #2 +							\ count col row row+2
+	SWAP 1-								\ count col row+2 row-1
 	?DO
-		DUP #2 +			\ count col col+2
-		OVER 1-				\ count col col+2 col-1
-		?DO				\ count col
-			I J ?screen		\ count col flag
+		DUP #2 +						\ count col col+2
+		OVER 1-							\ count col col+2 col-1
+		?DO								\ count col
+			I J ?screen					\ count col flag
 			IF
-				I J screen@ on = 	\ count col flag
+				I J screen@ on = 		\ count col flag
 				IF SWAP 1+ SWAP THEN	\ count' col
 			THEN
 		LOOP
@@ -112,13 +112,13 @@ screen1 VALUE screen_next
 
 ( count -- char )
 : birth
-	#3 =						\ flag
-	IF on ELSE off THEN				\ char
+	#3 =								\ flag
+	IF on ELSE off THEN					\ char
 ;
 
 ( count -- char )
 : death
-	#3 #5 WITHIN					\ flag
+	#3 #5 WITHIN						\ flag
 	IF on ELSE off THEN 				\ char
 ;
 
@@ -126,7 +126,7 @@ screen1 VALUE screen_next
 : .neighbours
 	rows 0 ?DO
 		columns 0 ?DO
-			I J #neighbours			\ count
+			I J #neighbours				\ count
 			.
 		LOOP
 		CR
@@ -137,11 +137,11 @@ screen1 VALUE screen_next
 : generation
 	rows 0 ?DO
 		columns 0 ?DO
-			I J #neighbours			\ count
-			I J screen@			\ count char
-			on = 				\ count flag
+			I J #neighbours				\ count
+			I J screen@					\ count char
+			on = 						\ count flag
 			IF death ELSE birth THEN	\ char'
-			I J screen!			\ --
+			I J screen!					\ --
 		LOOP
 	LOOP
 ;
@@ -168,24 +168,24 @@ screen1 VALUE screen_next
 	CR
 
 	REFILL 0= IF EXIT THEN
-	BL PARSE				\ input u
-	DUP TO columns				\ input u
+	BL PARSE							\ input u
+	DUP TO columns						\ input u
 
-	0 TO rows				\ input u
+	0 TO rows							\ input u
 	BEGIN
 		rows 1+ TO rows
-		/screen				\ input u size
-		DUP screen_curr SWAP		\ input u size screen size
-		RESIZE DROP TO screen_curr	\ input u size
-		OVER -				\ input	u size'
-		screen_curr + SWAP		\ input screen' u
-		MOVE				\ --
+		/screen							\ input u size
+		DUP screen_curr SWAP			\ input u size screen size
+		RESIZE DROP TO screen_curr		\ input u size
+		OVER -							\ input	u size'
+		screen_curr + SWAP				\ input screen' u
+		MOVE							\ --
 
 		REFILL DROP
-		BL PARSE			\ input u
-		DUP columns <>			\ input u
+		BL PARSE							\ input u
+		DUP columns <>						\ input u
 	UNTIL
-	2DROP					\ --
+	2DROP									\ --
 
 	screen_next /screen ALLOT TO screen_next
 ;

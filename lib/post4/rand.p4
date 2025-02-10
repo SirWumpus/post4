@@ -103,15 +103,15 @@ VARIABLE randC 0 randC !
 )
 : randomXor ( bits -- u )
 	0 SWAP 0 DO
-	  1 LSHIFT
-	  random_xor OR
+		1 LSHIFT
+		random_xor OR
 	LOOP
 ;
 
 : randomMaj ( bits -- u )
 	0 SWAP 0 DO
-	  1 LSHIFT
-	  random_maj OR
+		1 LSHIFT
+		random_maj OR
 	LOOP
 ;
 

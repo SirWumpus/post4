@@ -21,11 +21,11 @@
 WORDLIST CONSTANT editor-wordlist
 : EDITOR ( -- )
 	GET-ORDER DUP 1 = IF
-	  \ Keep Forth and add editor word list to search.
-	  DROP editor-wordlist 2
+		\ Keep Forth and add editor word list to search.
+		DROP editor-wordlist 2
 	ELSE
-	  \ Replace first word list in search.
-	  NIP editor-wordlist SWAP
+		\ Replace first word list in search.
+		NIP editor-wordlist SWAP
 	THEN SET-ORDER
 ;
 ONLY FORTH ALSO EDITOR DEFINITIONS
@@ -41,8 +41,8 @@ block_width block_height * CONSTANT block_size
 
 : block_append ( -- )
 	SCR @ blocks U> IF
-	  \ Extend block file by a blank block.
-	  SCR @ BUFFER block_size BLANK UPDATE SAVE-BUFFERS
+		\ Extend block file by a blank block.
+		SCR @ BUFFER block_size BLANK UPDATE SAVE-BUFFERS
 	THEN
 ;
 
@@ -129,22 +129,22 @@ block_height 1- CONSTANT edit_max_y
 : edit_right key_right edit_on_key edit_inc_x ;
 
 ( row -- )
-: edit_shift_right 			\ row
-	block_row_col			\ c-
-	DUP 1+				\ c- c-'
-	block_row_tail_length 1-	\ c- c-' u
-	MOVE				\ --
+: edit_shift_right 						\ row
+	block_row_col						\ c-
+	DUP 1+								\ c- c-'
+	block_row_tail_length 1-			\ c- c-' u
+	MOVE								\ --
 	UPDATE
 ;
 
 ( row -- )
-: edit_shift_left			\ row
-	DUP block_row block_width 1- +	\ row c-$
-	SWAP block_row_col		\ c-$ c-
-	DUP 1+ SWAP 			\ c-$ c-' c-
-	block_row_tail_length		\ c-$ c-' c- u
-	MOVE				\ c-$
-	BL SWAP C!			\ --
+: edit_shift_left						\ row
+	DUP block_row block_width 1- +		\ row c-$
+	SWAP block_row_col					\ c-$ c-
+	DUP 1+ SWAP 						\ c-$ c-' c-
+	block_row_tail_length				\ c-$ c-' c- u
+	MOVE								\ c-$
+	BL SWAP C!							\ --
 	UPDATE
 ;
 
@@ -174,10 +174,10 @@ block_height 1- CONSTANT edit_max_y
 
 ( row k -- row k )
 : edit_ins_rep
-	edit_only_print			\ row k
-	edit_is_insert			\ row k f
-	IF edit_insert THEN		\ row k
-	edit_replace			\ row
+	edit_only_print						\ row k
+	edit_is_insert						\ row k f
+	IF edit_insert THEN					\ row k
+	edit_replace						\ row
 	UPDATE
 ;
 
@@ -188,11 +188,11 @@ block_height 1- CONSTANT edit_max_y
 
 ( row k -- row k )
 : edit_backspace
-	'\b' edit_on_key		\ row k
-	edit_is_not_col_edge		\ row k f
-	IF 				\ row k
-		edit_dec_x		\ row k
-		OVER edit_shift_left	\ row k
+	'\b' edit_on_key					\ row k
+	edit_is_not_col_edge				\ row k f
+	IF 									\ row k
+		edit_dec_x						\ row k
+		OVER edit_shift_left			\ row k
 	THEN
 ;
 
@@ -200,30 +200,30 @@ block_height 1- CONSTANT edit_max_y
 : edit_cursor edit_x @ 3 + edit_y @ AT-XY ;
 
 ( row -- )
-: edit_row				\ row
+: edit_row								\ row
 	BEGIN
-		'\r' EMIT		\ row
-		DUP print_row		\ row
-		edit_cursor		\ row
-		key_in			\ row k
-		edit_quit		\ row k
-		edit_left		\ row k
-		edit_right		\ row k
-		edit_delete_ascii	\ row k
-		edit_delete_ansi	\ row k
-		edit_backspace		\ row k
-		edit_mode_toggle	\ row k
-		edit_ins_rep		\ row k
-		DROP			\ row
+		'\r' EMIT						\ row
+		DUP print_row					\ row
+		edit_cursor						\ row
+		key_in							\ row k
+		edit_quit						\ row k
+		edit_left						\ row k
+		edit_right						\ row k
+		edit_delete_ascii				\ row k
+		edit_delete_ansi				\ row k
+		edit_backspace					\ row k
+		edit_mode_toggle				\ row k
+		edit_ins_rep					\ row k
+		DROP							\ row
 	AGAIN
 ;
 
 ( row -- )
 : EDIT
-	'I' edit_mode !			\ row
-	ansi_report			\ row x y
-	edit_y ! edit_x !		\ row
-	edit_row			\ --
+	'I' edit_mode !						\ row
+	ansi_report							\ row x y
+	edit_y ! edit_x !					\ row
+	edit_row							\ --
 ;
 
 MARKER rm_ed
@@ -249,21 +249,21 @@ MARKER rm_ed
 : ed_wipe_block 'W' edit_on_key ed_erase_block ;
 
 : ed_line_delete
-	'd' edit_on_key 		\ row k
-	OVER block_row			\ row k c-
-	DUP block_width + SWAP		\ row k c-' c-
-	block_end 2 PICK -		\ row k c-' c- u
-	MOVE				\ row k
-	edit_max_y ed_erase_line	\ row k
+	'd' edit_on_key 					\ row k
+	OVER block_row						\ row k c-
+	DUP block_width + SWAP				\ row k c-' c-
+	block_end 2 PICK -					\ row k c-' c- u
+	MOVE								\ row k
+	edit_max_y ed_erase_line			\ row k
 ;
 
 ( row -- )
-: ed_insert_line			\ row
-	block_row 			\ c-
-	DUP block_width + 		\ c- c-'
-	block_end block_width -		\ c- c-' u
- 	2 PICK -			\ c- c-' u'
-	MOVE				\ --
+: ed_insert_line						\ row
+	block_row 							\ c-
+	DUP block_width + 					\ c- c-'
+	block_end block_width -				\ c- c-' u
+ 	2 PICK -							\ c- c-' u'
+	MOVE								\ --
 	UPDATE
 ;
 
@@ -282,18 +282,18 @@ MARKER rm_ed
 
 ( row k -- row k )
 : ed_newline
-	'\n' edit_on_key				\ row k
-	ed_is_not_last_row				\ row k f
+	'\n' edit_on_key					\ row k
+	ed_is_not_last_row					\ row k f
 	IF
-		edit_inc_y				\ row k
-		edit_is_insert				\ row k f
+		edit_inc_y						\ row k
+		edit_is_insert					\ row k f
 		IF
-			OVER ed_insert_line		\ row k
-			OVER ed_erase_tail		\ row k
-			edit_y @			\ row k row'
-			edit_x @ 0 ?DO			\ row k row'
-				edit_dec_x		\ row k row'
-				DUP edit_shift_left	\ row k row'
+			OVER ed_insert_line			\ row k
+			OVER ed_erase_tail			\ row k
+			edit_y @					\ row k row'
+			edit_x @ 0 ?DO				\ row k row'
+				edit_dec_x				\ row k row'
+				DUP edit_shift_left		\ row k row'
 			LOOP DROP
 		THEN
 		0 edit_x !
@@ -329,14 +329,14 @@ MARKER rm_ed
 	'\e' edit_on_key
 	0 block_height 1+ AT-XY
 	." Cmd (q)uit, (d)el line, (i)ns line, (w)ipe line, (W)ipe block?"
-	key_in NIP			\ row k'
+	key_in NIP							\ row k'
 	ansi_erase_line
-	ed_line_delete			\ row k'
-	ed_line_insert			\ row k'
-	ed_wipe_line			\ row k'
-	ed_wipe_block			\ row k'
-	ed_quit				\ row k'
-	DROP 0				\ row 0
+	ed_line_delete						\ row k'
+	ed_line_insert						\ row k'
+	ed_wipe_line						\ row k'
+	ed_wipe_block						\ row k'
+	ed_quit								\ row k'
+	DROP 0								\ row 0
 ;
 
 : ed_home 0 0 AT-XY ;
@@ -346,23 +346,23 @@ MARKER rm_ed
 : ed_cursor edit_x @ #3 + edit_y @ 1 + AT-XY ;
 : ed_screen ed_status SCR @ LIST ed_cursor ;
 : ed_command
-	key_in				\ k
-	edit_up				\ k
-	edit_down			\ k
-	edit_left			\ k
-	edit_right			\ k
-	edit_mode_toggle		\ k
-	ed_prev				\ k
-	ed_next				\ k
-	ed_goto_block			\ k
-	edit_y @ SWAP			\ row k
-	edit_delete_ascii		\ row k
-	edit_delete_ansi		\ row k
-	edit_backspace			\ row k
-	edit_ins_rep			\ row k
-	ed_newline			\ row k
-	ed_menu				\ row k
-	2DROP				\ --
+	key_in								\ k
+	edit_up								\ k
+	edit_down							\ k
+	edit_left							\ k
+	edit_right							\ k
+	edit_mode_toggle					\ k
+	ed_prev								\ k
+	ed_next								\ k
+	ed_goto_block						\ k
+	edit_y @ SWAP						\ row k
+	edit_delete_ascii					\ row k
+	edit_delete_ansi					\ row k
+	edit_backspace						\ row k
+	edit_ins_rep						\ row k
+	ed_newline							\ row k
+	ed_menu								\ row k
+	2DROP								\ --
 ;
 
 : ED ( -- )

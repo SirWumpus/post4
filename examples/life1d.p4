@@ -51,8 +51,8 @@ CHAR . CONSTANT off
 
 : life1d_transition ( -- )
 	life1d_size 1- 1 DO
-		I life1d_curr_state		\ value
-		I life1d_next_state		\ --
+		I life1d_curr_state				\ value
+		I life1d_next_state				\ --
 	LOOP
 ;
 
@@ -60,16 +60,16 @@ CHAR . CONSTANT off
 : >life1d ( -- )
 	\ Read line depicting state 0.
 	REFILL 0= IF EXIT THEN
-	BL PARSE				\ input u
-	DUP TO life1d_size			\ input u
+	BL PARSE							\ input u
+	DUP TO life1d_size					\ input u
 
 	\ Allocate life lines based on size of state 0.
 	DUP life1d_alloc TO life1d_curr		\ input u
 	DUP life1d_alloc TO life1d_next		\ input u
 
 	\ Copy life state to the current line.
-	life1d_curr SWAP 			\ input line u
-	MOVE					\ --
+	life1d_curr SWAP 					\ input line u
+	MOVE								\ --
 ;
 
 \ Write N generations.
