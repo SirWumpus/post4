@@ -165,6 +165,7 @@ p4FindFilePath(const char *path_list, size_t plen, const char *file, size_t flen
 	for (next = paths; (path = strtok(next, ":")) != NULL; next = NULL) {
 		str.length = snprintf(str.string, PATH_MAX, "%s/%.*s", path, (int)flen, file);
 		if (stat(str.string, &sb) == 0) {
+			free(paths);
 			errno = 0;
 			return str;
 		}

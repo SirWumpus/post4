@@ -129,3 +129,7 @@ strip:
 	${MAKE} DBG='-DNDEBUG ${DBG}' clean build
 	@strip -s ${PROG}
 	@ls -l post4*
+
+debug: clean
+	make DBG='-O0 -g -fsanitize=address -lasan' build
+	paxctl +a ${PROG}
