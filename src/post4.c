@@ -1288,6 +1288,7 @@ p4Repl(P4_Ctx *ctx, volatile int thrown)
 		/* Constants. */
 		P4_VAL("R/O",			0),
 		P4_VAL("R/W",			1),
+		P4_VAL("path_max",		PATH_MAX),			// p4
 		P4_VAL("/pad",			P4_PAD_SIZE),			// p4
 		P4_VAL("address-unit-bits",	P4_CHAR_BIT),			// p4
 		P4_VAL("WORDLISTS",		P4_WORDLISTS),

@@ -2015,9 +2015,6 @@ VARIABLE SCR
 \ Alias FILE *stdin to 0.
 : SOURCE-ID _input_ptr @ in.fp @ DUP stdin = IF DROP 0 THEN ;
 
-\ _POSIX_PATH_MAX, see limits.h
-256 CONSTANT path_max
-
 \ (S: <spaces>name -- )
 : file-path CREATE 0 , 0 , path_max 1+ ALLOT DOES> @+ ;
 
