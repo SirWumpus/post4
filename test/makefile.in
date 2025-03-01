@@ -81,6 +81,8 @@ test_quit_catch : ${PROG}
 	@echo "-OK-"
 
 # GH-54
+# The two INCLUDE cases will generate memory leaks WRT _input_push
+# and _input_pop given how QUIT works, which cannot be caught :-(.
 test_include_quit: ${PROG}
 	@printf "== %s ==  Testing INCLUDE with QUIT\n" $@
 	${PROG} -c ${WORDS} <${top_srcdir}/test/data/quit0.p4
