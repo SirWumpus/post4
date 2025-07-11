@@ -848,6 +848,9 @@ test_group_end
 : tw_paren_0 ( A comment)1234 ;		\ There is no space either side of the ).
 t{ ( A comment)1234			\ There is no space either side of the ).
    -> tw_paren_0 }t
+
+\ https://forth-standard.org/standard/core/p#contribution-380
+t{ ( foo ( bar ) char ) ->  char ) }t	\ cannot nest ( ( ) )
 test_group_end
 
 .( BUFFER: ) test_group
