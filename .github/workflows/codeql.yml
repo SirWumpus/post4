@@ -22,14 +22,14 @@ on:
     paths:
       - 'src/**'
       - 'jni/**'
-  # Manual trigger from Actions
-  workflow_dispatch:
-    branches: [ "master" ]
-    paths:
-      - 'src/**'
-      - 'jni/**'
-  schedule:
-    - cron: '43 20 * * 2'
+//   # Manual trigger from Actions
+//   workflow_dispatch:
+//     branches: [ "master" ]
+//     paths:
+//       - 'src/**'
+//       - 'jni/**'
+//   schedule:
+//     - cron: '43 20 * * 2'
 
 jobs:
   analyze:

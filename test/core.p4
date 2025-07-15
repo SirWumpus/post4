@@ -660,7 +660,11 @@ test_group_end
 t{ S" 123" EVALUATE -> 123 }t
 t{ S\" 123\n432" EVALUATE -> 123 432 }t
 t{ S" 456" tw_eval_0 -> 456 }t
+
+\ Extension S\" supports \" as an escape.
+\ https://forth-standard.org/standard/notation#contribution-382
 t{ S\" 123 S\" 432\" TYPE " EVALUATE -> 123 }t
+
 t{ tw_eval_1 -> 9876 }t
 
 \ See F.6.1.1360
