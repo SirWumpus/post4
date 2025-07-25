@@ -354,7 +354,7 @@ Thinking Forth
 Moving Forth Series  
 <https://www.bradrodriguez.com/papers/>
 
-Threaded Interpretive Languages..
+Threaded Interpretive Languages  
 <https://archive.org/details/R.G.LoeligerThreadedInterpretiveLanguagesTheirDesignAndImplementationByteBooks1981>
 
 Back & Forth (YouTube video series)  
