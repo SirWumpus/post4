@@ -333,6 +333,9 @@ Example:
 References
 ----------
 
+Forth  
+<https://en.wikipedia.org/wiki/Forth_(programming_language)>
+
 Forth 200x  
 <http://www.forth200x.org/>
 
@@ -342,11 +345,17 @@ Forth Standard
 Forth Discussions  
 <https://github.com/ForthHub/discussion/discussions>
 
-Forth  
-<https://en.wikipedia.org/wiki/Forth_(programming_language)>
-
 Starting Forth  
 <https://www.forth.com/starting-forth/>
 
+Thinking Forth  
+<https://thinking-forth.sourceforge.net/>
+
 Moving Forth Series  
 <https://www.bradrodriguez.com/papers/>
+
+Threaded Interpretive Languages..
+<https://archive.org/details/R.G.LoeligerThreadedInterpretiveLanguagesTheirDesignAndImplementationByteBooks1981>
+
+Back & Forth (YouTube video series)  
+<https://www.youtube.com/@HansBezemer>
