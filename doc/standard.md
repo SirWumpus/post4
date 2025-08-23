@@ -1431,7 +1431,7 @@ Push the return stack's size.
 
 - - -
 #### rise
-( `a` `b` `c` -- `b` a` `c` )  
+( `a` `b` `c` -- `b` `a` `c` )  
 
 - - -
 #### rsp!
@@ -1455,7 +1455,7 @@ Pass a NUL terminate string `caddr` `u` to the shell and return the exit status 
 
 - - -
 #### spin
-( `a` `b` `c` -- `c` b` `a` )  
+( `a` `b` `c` -- `c` `b` `a` )  
 
 - - -
 #### stack-cells
