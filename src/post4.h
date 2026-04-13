@@ -133,7 +133,8 @@ extern "C" {
 #include <signal.h>
 #include <time.h>
 
-#include "ansiterm.h"
+#include <aline/ansiterm.h>
+#include <aline/aline.h>
 
 #ifdef HAVE_SYS_TYPES_H
 # include <sys/types.h>

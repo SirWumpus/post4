@@ -78,12 +78,15 @@ CLEAN_DIRS = \
 .MAIN : build
 
 build :
+	git submodule foreach '${MAKE} $@'
 	@for i in $(BUILD_DIRS); do ( cd $$i; ${MAKE} ${MAKEFLAGS} $@ ); done
 
 clean : title _clean
+	git submodule foreach '${MAKE} $@'
 	@for i in $(BUILD_DIRS); do ( cd $$i; ${MAKE} ${MAKEFLAGS} $@ ); done
 
 clobber distclean : title _distclean
+	git submodule foreach '${MAKE} $@'
 	@for i in $(BUILD_DIRS); do ( cd $$i; ${MAKE} ${MAKEFLAGS} $@ ); done
 
 run: build
