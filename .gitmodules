@@ -1,0 +1,3 @@
+[submodule "aline"]
+	path = aline
+	url = ssh://git@codeberg.org/SirWumpus/aline.git
