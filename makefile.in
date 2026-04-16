@@ -77,7 +77,7 @@ CLEAN_DIRS = \
 
 .MAIN : build
 
-build :
+build : aline/Makefile
 	git submodule foreach '${MAKE} $@'
 	@for i in $(BUILD_DIRS); do ( cd $$i; ${MAKE} ${MAKEFLAGS} $@ ); done
 
@@ -111,6 +111,7 @@ _distclean : _clean
 	rm -f *.log config.status configure.scan configure~ makefile
 
 _realclean : _distclean
+	git submodule deinit --all
 	rm -f configure *.md5
 
 install: build
@@ -131,6 +132,9 @@ configure : configure.ac aclocal.m4
 
 makefile: makefile.in config.status
 	./config.status makefile
+
+aline/Makefile:
+	git submodule update --init
 
 predefines:
 	${CC} ${CPPFLAGS} -dM -E -xc /dev/null
