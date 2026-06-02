@@ -207,6 +207,21 @@ t{ tw_boopee -> 2 }t
 ONLY FORTH DEFINITIONS
 test_group_end
 
+.( LATEST-NAME-IN LATEST-NAME ) test_group
+WORDLIST CONSTANT tv_latestname_wid
+
+t{ tv_latestname_wid LATEST-NAME-IN -> 0 }t
+tv_latestname_wid SET-CURRENT
+t{ ' LATEST-NAME CATCH -> -80 }t
+: foo 111 ;
+t{ ' LATEST-NAME CATCH NIP -> 0 }t
+t{ LATEST-NAME NAME>INTERPRET EXECUTE -> 111 }t
+t{ : bar [ LATEST-NAME NAME>INTERPRET ] LITERAL ; -> }t
+t{ LATEST-NAME NAME>INTERPRET EXECUTE EXECUTE -> 111 }t
+
+ONLY FORTH DEFINITIONS
+test_group_end
+
 .( GH-65 empty wordlist ALLOT ) test_group
 t{ WORDLIST SET-CURRENT HERE 0 ' ALLOT CATCH SWAP HERE - -> 0 0 }t
 test_group_end

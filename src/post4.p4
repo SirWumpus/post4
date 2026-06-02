@@ -2812,6 +2812,17 @@ FORTH-WORDLIST SET-CURRENT
 	drop rdrop
 ; $20 _pp!
 
+\ (S: wid -- nt|0 )
+: LATEST-NAME-IN
+  0 [: NIP FALSE ;] ROT TRAVERSE-WORDLIST
+; $11 _pp!
+
+\ (S: -- nt|0 )
+: LATEST-NAME
+  GET-CURRENT LATEST-NAME-IN
+  DUP IF EXIT THEN  -80 THROW
+; $01 _pp!
+
 \ (S: caddr u wid -- 0 | xt -1 | xt 1 )
 : SEARCH-WORDLIST
 	FIND-NAME-IN DUP IF
