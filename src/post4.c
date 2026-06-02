@@ -183,7 +183,7 @@ error0:
  *** Conversion API
  ***********************************************************************/
 
-static const char escape_map[] = "s a\ab\be\033f\fn\nr\rt\tv\v?\177\"\"\\\\z\x00";
+static const char escape_map[] = "s a\ab\be\033f\fl\012n\nr\rt\tv\v?\177\"\"\\\\z\x00";
 
 /**
  * @param ch
@@ -196,6 +196,7 @@ static const char escape_map[] = "s a\ab\be\033f\fn\nr\rt\tv\v?\177\"\"\\\\z\x00
  *	\b	backspace
  *	\e	escape
  *	\f	formfeed
+ *	\l	linefeed
  *	\n	linefeed
  *	\r	carriage-return
  *	\s	space
