@@ -30,6 +30,13 @@ extern "C" {
 # define ECHOCTL			0
 #endif
 
+#if defined(__NetBSD__) || defined(__OpenBSD__) || defined(__FreeBSD__)
+# define HAVE_TCGETWINSIZE
+# define HAVE_TCSETWINSIZE
+#elif defined(__CYGWIN__) || defined(__linux__)
+# include <sys/ioctl.h>
+#endif
+
 #include "config.h"
 #include "build.h"
 
