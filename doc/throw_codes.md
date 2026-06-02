@@ -37,6 +37,7 @@ This is a list of `THROW` codes used internally by Post4.
 * -56 `QUIT`
 * -59 `ALLOCATE`
 * -61 `ALLOT` or `RESIZE`
+* -80 the compilation wordlist is empty
 
 * -256 `SIGTERM`
 * -257 invalid word-list ID.

@@ -113,6 +113,20 @@ Display an implementation-defined human-readable representation of the word `nam
 Execute `xt`, which has stack effect `( k*x nt -- l*x bool )`, once for every word in the word list `wid` passing the name token `nt` of the word to `xt`, until the word list is exhausted or until `xt` returns false.  
 
 - - -
+#### LATEST-NAME-IN
+( `wid` -- `nt|0` )
+If the word list identified by `wid` is empty, return zero (`0`);
+otherwise, return `nt`, the identifier of the definition
+whose name was placed most recently into the word list.
+
+- - -
+#### LATEST-NAME
+( -- `nt` )
+If the compilation word list is empty, throw a `-80` (the compilation wordlist is empty) exception.
+Otherwise, return `nt`, the identifier of the definition
+whose name was placed most recently into the compilation word list.
+
+- - -
 #### WORDS
 ( -- )  
 List defined words
