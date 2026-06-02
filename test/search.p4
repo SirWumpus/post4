@@ -177,15 +177,33 @@ test_group_end
 WORDLIST CONSTANT tv_traverse_wid
 : tw_count_words ( u nt -- u' bool ) DROP 1+ TRUE ;
 : tw_show_name ( nt -- bool ) NAME>STRING TYPE SPACE TRUE ;
+: wordlist-length ( wid -- u )
+  0 ['] tw_count_words ROT TRAVERSE-WORDLIST
+;
+: destination-length ( -- u )
+  GET-CURRENT wordlist-length
+;
+: push-order ( wid -- )
+  >R GET-ORDER R> SWAP 1+ SET-ORDER
+;
 
+t{ tv_traverse_wid wordlist-length -> 0 }t
 t{ tv_traverse_wid SET-CURRENT -> }t
+t{ destination-length -> 0 }t
 : tw_whoopee 1234 ;
 : tw_lots_of 5678 ;
 
 CR .( tw_show_name 2 words: )
 t{ ' tw_show_name GET-CURRENT TRAVERSE-WORDLIST -> }t
 CR
-t{ 0 ' tw_count_words tv_traverse_wid TRAVERSE-WORDLIST -> 2 }t
+t{ destination-length -> 2 }t
+t{ :noname [ destination-length ] LITERAL ; EXECUTE -> 2 }t
+t{ destination-length -> 2 }t
+t{ : tw_boopee [ destination-length ] LITERAL ; -> }t
+t{ destination-length -> 3 }t
+t{ GET-CURRENT push-order -> }t
+t{ tw_boopee -> 2 }t
+
 ONLY FORTH DEFINITIONS
 test_group_end
 

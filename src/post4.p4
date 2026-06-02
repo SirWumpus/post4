@@ -171,6 +171,7 @@ END-STRUCTURE
 \ (S: xt -- bool )
 : immediate? w.bit_imm SWAP _word_bit? ; $11 _pp!
 : compile-only? w.bit_compile SWAP _word_bit? ; $11 _pp!
+: hidden? w.bit_hidden SWAP _word_bit? ; $11 _pp!
 
  0 CONSTANT w.pp_ds_push
  4 CONSTANT w.pp_ds_pop
@@ -2131,7 +2132,8 @@ default-base-path  OVER CELL- 1 SWAP +! + '/' OVER c!  1+ 0 SWAP C!
 	0 >R								\ S: --					R: col
 	head_of_wordlist					\ S: head				R: col
 	BEGIN @ DUP WHILE					\ S: w					R: col
-		w.bit_hidden OVER _word_bit? 0= IF
+		DUP hidden? INVERT IF
+		DUP w.length @ IF
 			DUP NAME>STRING				\ S: w word				R: col
 			DUP R> + 1+					\ S: w name length col' R: --
 			\ Does current column exceed terminal width?
@@ -2139,7 +2141,7 @@ default-base-path  OVER CELL- 1 SWAP +! + '/' OVER c!  1+ 0 SWAP C!
 				CR DROP DUP 1+			\ S: w name length col" R: --
 			THEN						\ S: w name length col	R: --
 			>R TYPE SPACE				\ S: w					R: col
-		THEN
+		THEN THEN
 		w.prev							\ S: w'					R: col
 	REPEAT
 	R> 2DROP CR							\ S: --					R: --
@@ -2798,12 +2800,13 @@ FORTH-WORDLIST SET-CURRENT
 : TRAVERSE-WORDLIST
 	SWAP >R head_of_wordlist			\ S: w			R: xt
 	BEGIN @ DUP WHILE					\ S: w			R: xt
+		DUP hidden? INVERT IF
 		DUP w.length @ IF				\ S: w			R: xt
 			R@ OVER >R EXECUTE 0= IF	\ S: w xt		R: xt w
 				2rdrop EXIT
 			THEN
 			R>							\ S: w			R: xt
-		THEN
+		THEN THEN
 		w.prev							\ S: w'			R: xt
 	REPEAT
 	drop rdrop
