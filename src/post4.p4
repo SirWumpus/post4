@@ -50,7 +50,7 @@
 : C, 1 CHARS reserve C! ; $10 _pp!
 
 \ ( xt -- )
-' , alias COMPILE, compile-only
+' , alias COMPILE,
 
 \ (C: xu ... x1 x0 u -- xu ... x1 x0 xu )
 ' PICK alias CS-PICK compile-only

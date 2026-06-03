@@ -438,6 +438,8 @@ t{ :NONAME DUP + ; CONSTANT tw_compile_0 -> }t
 t{ : tw_compile_1 tw_compile_0 COMPILE, ; -> }t
 t{ : tw_compile_2 [ tw_compile_1 ] ; -> }t
 t{ 123 tw_compile_2 -> 246 }t
+t{ : tw_compile_3 [ tw_compile_0 COMPILE, ] ; -> }t
+t{ 123 tw_compile_3 -> 246 }t
 test_group_end
 
 .( CREATE >BODY HERE ) test_group
