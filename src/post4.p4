@@ -52,6 +52,9 @@
 \ ( xt -- )
 ' , alias COMPILE,
 
+\ (C: dest | orig -- )
+' DROP alias CS-DROP compile-only
+
 \ (C: xu ... x1 x0 u -- xu ... x1 x0 xu )
 ' PICK alias CS-PICK compile-only
 
@@ -2914,6 +2917,12 @@ WORDLIST CONSTANT required-wordlist
 	1 WORDLISTS DO @+ I _free_words -1 +LOOP
 	\ Restore search order.
 	DUP @ CELLS OVER + DO I @ /CELL NEGATE +LOOP SET-ORDER
+;
+
+\ (C: <spaces>name -- ) (S: -- )
+: VOCABULARY
+	CREATE WORDLIST , DOES>
+	@ >R GET-ORDER SWAP DROP R> SWAP SET-ORDER
 ;
 
 MARKER rm_user_words

@@ -38,6 +38,11 @@ Jump ahead over a block of code.  A building block for several flow control word
 Terminate and return to the host OS with exit code zero (0), if any.
 
 - - -
+#### CS-DROP
+(C: `dest` | `orig` -- )  
+Drop `dest` or `orig` from the control-stack.
+
+- - -
 #### CS-PICK
 ( `xu` `xu-1` ... `x1` `x0` `u` -- `xu` `xu-1` ... `x1` `x0` `xu` )  
 Remove `u`.  Copy the `xu` to the top of the control-stack.  `0 CS-PICK` equivalent to `DUP`, `1 CS-PICK` equivalent to `OVER`.

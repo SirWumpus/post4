@@ -71,6 +71,16 @@ Set the word search order to the word lists given by `widn`, ... `wid1` where `w
 Create (or assign) a new empty word list, returning its word list identifier `wid`.
 
 - - -
+#### VOCABULARY
+( `<spaces>name` -- )  
+Create a new empty named word-list.  Example usage:
+
+       VOCABULARY MYVOCAB
+       \ Define words as part of MYVOCAB
+       
+       ONLY FORTH ALSO MYVOCAB DEFINITIONS
+
+- - -
 
 ### Post4 Specific Words
 
