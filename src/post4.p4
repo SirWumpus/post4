@@ -53,13 +53,13 @@
 ' , alias COMPILE,
 
 \ (C: dest | orig -- )
-' DROP alias CS-DROP compile-only
+' DROP alias CS-DROP
 
 \ (C: xu ... x1 x0 u -- xu ... x1 x0 xu )
-' PICK alias CS-PICK compile-only
+' PICK alias CS-PICK
 
 \ (C: xu xu-1 ... x0 u -- xu-1 ... x0 xu )
-' ROLL alias CS-ROLL compile-only
+' ROLL alias CS-ROLL
 
 \ (S: x -- x' )
 ' INVERT alias NOT $11 _pp!
