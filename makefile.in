@@ -61,11 +61,6 @@ VERSION		:= $$(git tag --list | sed -n '/^v[0-9]/s/v//p' | tail -n1)
 ### No further configuration beyond this point.
 ########################################################################
 
-.SUFFIXES :
-O = .@OBJEXT@
-E = @EXEEXT@
-.SUFFIXES : .c $O $E
-
 BUILD_DIRS = \
 	${TOPDIR}/src \
 	@EXTRA_BUILDS@
@@ -150,3 +145,12 @@ snapshot:
 	@${MD5SUM} ../${TARNAME}-${COMMIT}.tar.gz | tee ../${TARNAME}-${COMMIT}.md5
 	@echo '***************************************************************'
 	@echo
+
+debug: clean
+	${MAKE} DBG='-O0 -g -fsanitize=address -fsanitize=pointer-subtract -fsanitize=pointer-compare -lasan' build
+	paxctl +a ${PROG}
+
+tag:
+	@./semver.sh -u -f src/VERSION prompt
+	git commit -m "$$(cat src/VERSION)" VERSION
+	git tag $$(cat src/VERSION)

@@ -45,8 +45,8 @@ CFLAGS		= -Os -std=gnu17 -funsigned-char ${CPPFLAGS} ${CWARNINGS} ${CINCLUDE} ${
 LDFLAGS		= -L${top_srcdir} @LDFLAGS@
 LIBS		= ${top_srcdir}/aline/aline$O @LIBS@
 
-BUILT		:= `date +'%a, %d %b %Y %H:%M:%S %z'`
-COMMIT		:= $$(git describe --tags)
+BUILT		!= date +'%a, %d %b %Y %H:%M:%S %z'
+COMMIT		!= if [ -d .git ]; then git describe --tags; fi
 
 #######################################################################
 
@@ -100,8 +100,11 @@ install: build
 uninstall:
 	rm -f ${bindir}/post4 ${libdir}/post4.p4
 
-build.h : config.h ${CHDR} ${CSRC} main.c
-	printf '#define P4_BUILT "%s"\n#define P4_COMMIT "%s"\n' "${BUILT}" "${COMMIT}" >build.h
+VERSION: ${CSRC}
+	if [ -d ../.git ]; then git describe --tags > ../VERSION; fi
+
+build.h : config.h ${CHDR} VERSION main.c
+	printf '#define P4_BUILT "%s"\n#define P4_COMMIT "%s"\n' "${BUILT}" "$$(cat ../VERSION)" >build.h
 
 hooks$O : config.h post4.h hooks.c
 
