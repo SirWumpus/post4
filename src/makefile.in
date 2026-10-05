@@ -101,7 +101,7 @@ uninstall:
 	rm -f ${bindir}/post4 ${libdir}/post4.p4
 
 VERSION: ${CSRC}
-	if [ -d ../.git ]; then git describe --tags > ../VERSION; fi
+	-if [ -d ../.git ]; then git describe --tags > ../VERSION; fi
 
 build.h : config.h ${CHDR} VERSION main.c
 	printf '#define P4_BUILT "%s"\n#define P4_COMMIT "%s"\n' "${BUILT}" "$$(cat ../VERSION)" >build.h

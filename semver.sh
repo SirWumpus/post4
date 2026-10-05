@@ -61,7 +61,7 @@ else
 		echo "0.0.0" >"$__file"
 	fi
 	# Handle simple version number and git describe tags.
-	version=$(sed -e's/v*\([0-9]*\.[0-9]*\.[0-9]*\).*/\1/' $__file)
+	version=$(sed -e's/\([^0-9]*[0-9]*\.[0-9]*\.[0-9]*\).*/\1/' $__file)
 fi
 
 if [ $# -le 0 ]; then
@@ -70,9 +70,10 @@ if [ $# -le 0 ]; then
 fi
 
 #echo $__file $version
-major=$(expr "$version" : "v*\([0-9]*\)\.[0-9]*\.[0-9]*")
-minor=$(expr "$version" : "v*[0-9]*\.\([0-9]*\)\.[0-9]*")
-patch=$(expr "$version" : "v*[0-9]*\.[0-9]*\.\([0-9]*\)")
+prefix=$(expr "$version" : "\([^0-9]*\)[0-9]*\.[0-9]*\.[0-9]*")
+major=$(expr "$version" : "[^0-9]*\([0-9]*\)\.[0-9]*\.[0-9]*")
+minor=$(expr "$version" : "[^0-9]*[0-9]*\.\([0-9]*\)\.[0-9]*")
+patch=$(expr "$version" : "[^0-9]*[0-9]*\.[0-9]*\.\([0-9]*\)")
 
 if ! $__update ; then
 	case "$1" in
@@ -87,6 +88,8 @@ if [ "$1" = 'prompt' ]; then
 	printf "Version? "; read cmd
 	set -- "$cmd"
 fi
+
+#echo "[$version]" $prefix $major $minor $patch
 
 case "$1" in
 (major)
@@ -109,5 +112,5 @@ if $is_autoconf_file; then
 	sed -e"/AC_INIT/s/[0-9]*\.[0-9]*\.[0-9]*,/$version,/" "$__file" >"$__file.new"
 	mv "$__file.new" "$__file"
 else
-	echo "$version" | tee "$__file"
+	echo "${prefix}${version}" | tee "$__file"
 fi
